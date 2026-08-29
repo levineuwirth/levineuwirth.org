@@ -1,0 +1,16 @@
+grants:
+  - name: MARS V Fellowship, Cambridge AI Safety Hub
+    kind: competitive selection
+    year: 2026
+    # Fellowship description, dates, and mentor live on the MARS V experience
+    # entry; this note carries only the funding terms.
+    note: "Compute, travel, and accommodation provided."
+    cv_visible: true
+    resume_visible: false
+
+  - name: Brown Undergraduate Teaching and Research Award (UTRA)
+    kind: individual recipient
+    year: Summer 2024
+    note: "First funding awarded for NeuroPose; the work has since attracted three additional project-wide grants through the Shu laboratory."
+    cv_visible: true
+    resume_visible: false  # folded into Brown education entry on résumé

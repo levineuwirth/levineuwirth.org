@@ -1,0 +1,26 @@
+# Nightly Forgejo backup on the VPS. Unlike archive-check.service, which is
+# a --user unit on the laptop, this is a system unit on the server:
+#
+#   scp tools/forgejo-backup.sh root@<vps>:/usr/local/bin/forgejo-backup.sh
+#   ssh root@<vps> chmod 755 /usr/local/bin/forgejo-backup.sh
+#   scp systemd/forgejo-backup.{service,timer} root@<vps>:/etc/systemd/system/
+#   ssh root@<vps> systemctl daemon-reload
+#   ssh root@<vps> systemctl enable --now forgejo-backup.timer
+#
+# The script aborts non-zero on a failed integrity check or an unreadable
+# archive, so a bad run shows up as a failed unit rather than as a corrupt
+# file that quietly displaces a good one.
+
+[Unit]
+Description=Forgejo backup (consistent SQLite snapshot + data tarball)
+Documentation=https://git.levineuwirth.org/neuwirth/levineuwirth.org
+# The script checks for the container itself and fails loudly if it is
+# absent, but ordering after docker avoids a guaranteed-failed run at boot.
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/forgejo-backup.sh
+Nice=15
+IOSchedulingClass=idle

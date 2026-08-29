@@ -1,0 +1,115 @@
+<svg class="footer-ornament" viewBox="0 0 1200 44" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <!-- Horizontal rules -->
+    <g fill="none" stroke="currentColor" stroke-linecap="round">
+        <line x1="30" y1="22" x2="420" y2="22" stroke-width="0.6"/>
+        <line x1="780" y1="22" x2="1170" y2="22" stroke-width="0.6"/>
+    </g>
+    <!-- Rule accent diamonds -->
+    <g fill="currentColor">
+        <rect x="148" y="20" width="3.5" height="3.5" rx="0.4" transform="rotate(45,149.75,21.75)"/>
+        <rect x="298" y="20" width="3.5" height="3.5" rx="0.4" transform="rotate(45,299.75,21.75)"/>
+        <rect x="898" y="20" width="3.5" height="3.5" rx="0.4" transform="rotate(45,899.75,21.75)"/>
+        <rect x="1048" y="20" width="3.5" height="3.5" rx="0.4" transform="rotate(45,1049.75,21.75)"/>
+    </g>
+    <!-- Scroll eyes -->
+    <g fill="none" stroke="currentColor" stroke-width="0.9" stroke-linecap="round">
+        <path d="M425 22 C445 22, 455 8, 485 8 C510 8, 505 22, 530 22"/>
+        <path d="M425 22 C445 22, 455 36, 485 36 C510 36, 505 22, 530 22"/>
+        <path d="M775 22 C755 22, 745 8, 715 8 C690 8, 695 22, 670 22"/>
+        <path d="M775 22 C755 22, 745 36, 715 36 C690 36, 695 22, 670 22"/>
+    </g>
+    <!-- Junction dots -->
+    <g fill="currentColor">
+        <circle cx="425" cy="22" r="2"/>
+        <circle cx="775" cy="22" r="2"/>
+        <circle cx="530" cy="22" r="1.5"/>
+        <circle cx="670" cy="22" r="1.5"/>
+    </g>
+    <!-- Leaves inside scroll eyes -->
+    <g fill="currentColor" opacity="0.7">
+        <path d="M460 16 Q475 10, 490 16 Q475 22, 460 16Z"/>
+        <path d="M460 28 Q475 22, 490 28 Q475 34, 460 28Z"/>
+        <path d="M740 16 Q725 10, 710 16 Q725 22, 740 16Z"/>
+        <path d="M740 28 Q725 22, 710 28 Q725 34, 740 28Z"/>
+    </g>
+    <!-- Central rosette -->
+    <g fill="currentColor" transform="translate(600, 22)">
+        <ellipse rx="3.5" ry="11"/>
+        <ellipse rx="3.5" ry="11" transform="rotate(45)"/>
+        <ellipse rx="3.5" ry="11" transform="rotate(90)"/>
+        <ellipse rx="3.5" ry="11" transform="rotate(135)"/>
+        <circle r="3.5"/>
+    </g>
+</svg>
+<div class="page-meta-footer" data-pagefind-ignore="all">
+
+    $if(further-reading-refs)$
+    <div class="meta-footer-full" id="further-reading">
+        <h3>Further Reading</h3>
+        $further-reading-refs$
+    </div>
+    $endif$
+
+    $if(bibliography)$
+    <div class="meta-footer-full" id="bibliography">
+        <h3>Bibliography</h3>
+        $bibliography$
+    </div>
+    $endif$
+
+    $if(backlinks)$
+    <div class="meta-footer-full meta-footer-backlinks" id="backlinks">
+        <h3>Backlinks</h3>
+        $backlinks$
+    </div>
+    $endif$
+
+    $if(similar-links)$
+    <div class="meta-footer-full meta-footer-similar" id="similar-links">
+        <h3>Related</h3>
+        $similar-links$
+    </div>
+    $endif$
+
+    <div class="meta-footer-grid">
+
+        $if(status)$
+        <div class="meta-footer-section meta-footer-epistemic" id="epistemic">
+            <h3><a href="/colophon.html#living-documents">Epistemic</a></h3>
+            <dl class="ep-expanded">
+                <dt data-ep-term="stability">Stability</dt><dd>$stability$</dd>
+                $if(last-reviewed)$<dt>Last reviewed</dt><dd class="date-hover"$if(last-reviewed-iso)$ data-date-start="$last-reviewed-iso$"$endif$>$last-reviewed$</dd>$endif$
+                $if(confidence-trend)$<dt data-ep-term="confidence">Confidence trend</dt><dd>$confidence-trend$</dd>$endif$
+            </dl>
+        </div>
+        $endif$
+
+        <div class="meta-footer-section" id="version-history">
+            <h3>Version history</h3>
+            $if(version-history-primary)$
+            <ul class="version-history-list">
+                $for(version-history-primary)$
+                <li class="date-hover" data-date-start="$vh-date-iso$">$vh-date$$if(vh-message)$ &middot; $vh-message$$endif$</li>
+                $endfor$
+            </ul>
+            $if(version-history-rest)$
+            <details class="version-history-more">
+                <summary>More</summary>
+                <ul class="version-history-list">
+                    $for(version-history-rest)$
+                    <li class="date-hover" data-date-start="$vh-date-iso$">$vh-date$$if(vh-message)$ &middot; $vh-message$$endif$</li>
+                    $endfor$
+                </ul>
+            </details>
+            $endif$
+            $else$
+            <ul class="version-history-list">
+                $if(date-created)$<li>$date-created$ &middot; Created</li>$endif$
+                $if(date-modified)$<li>$date-modified$ &middot; Last modified</li>$endif$
+            </ul>
+            $endif$
+        </div>
+
+    </div>
+
+</div>

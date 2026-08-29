@@ -1,0 +1,27 @@
+presentations:
+  - authors: "Shu L, Neuwirth L†, Wang X†, Zheng H†"
+    title: "Order-Invariant ICD-10-CM Embedding for Readmission and Mortality Prediction: Toward Multimodal Generative Patient Models"
+    venue: "IEEE/ACM Conference on Connected Health: Applications, Systems and Engineering Technologies (CHASE)"
+    year: 2026
+    month: August
+    status: "Presented"
+    cv_visible: true
+    resume_visible: false
+
+  - authors: "Ma J, Arms S, Kaneira L, Lall M, Chen K, Cabral W, Man D, Neuwirth L, Shu L"
+    title: "Early Detection of Neurological Disorders through Video-Captured Kinematic Analysis"
+    venue: "Summer UTRA Symposium, Brown University / Rhode Island Hospital Neurology Department"
+    kind: "Poster presentation"
+    year: 2025
+    month: August
+    cv_visible: true
+    resume_visible: false
+
+  - authors: "Neuwirth L, Dasher AS"
+    title: "Proving What a Datacenter Did: Verified Inference Between Adversaries"
+    venue: "MARS V, Cambridge AI Safety Hub"
+    year: 2026
+    month: July
+    status: "Presented"
+    cv_visible: true
+    resume_visible: false

@@ -1,0 +1,32 @@
+# archive/manifest.yaml — curated list of works to preserve.
+# Edited by hand. Tools never write to this file. See ARCHIVE.md.
+#
+# Per-artifact cap: 25 MB. Above that, archive.py warns and skips the fetch;
+# commit an oversize artifact deliberately with `git add -f`.
+#
+# To evict an entry, see archive/removed.yaml — record there FIRST, then
+# delete the line here, then run `make archive-gc`.
+
+- url: "https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.203.pdf"
+  slug: nist-fips-203
+  title: "FIPS 203 — Module-Lattice-Based Key-Encapsulation Mechanism Standard"
+  type: pdf
+  aliases:
+    # The DOI form the simd paper cites; URL normalisation cannot equate
+    # a DOI with the landing URL it resolves to, so it is authored here.
+    - "https://doi.org/10.6028/NIST.FIPS.203"
+  tags: [research]
+  note: >
+    The ML-KEM standard. Cited in the SIMD / post-quantum systems work;
+    archived so the citation survives any future reorganization of the
+    NIST publications site.
+
+- url: "https://cr.yp.to/aes-speed.html"
+  slug: djb-aes-speed
+  title: "Cache-timing attacks on AES (cr.yp.to)"
+  # type: html — auto-detected from the .html extension; no override needed.
+  tags: [research]
+  note: >
+    Bernstein's cache-timing-attacks page, cited in the SIMD work. The
+    Phase 2 bootstrap entry: a stable, JavaScript-free static page, so its
+    monolith snapshot is reproducible and classifies cleanly as `ok`.

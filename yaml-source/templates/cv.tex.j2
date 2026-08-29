@@ -1,0 +1,194 @@
+\documentclass[11pt]{article}
+
+\input{templates/shared/preamble.tex}
+
+\geometry{
+  letterpaper,
+  top=0.9in,
+  bottom=0.9in,
+  left=1.0in,
+  right=1.0in
+}
+
+\input{templates/shared/commands.tex}
+
+\begin{document}
+
+% HEADER
+\begin{center}
+  {\headerfont\LARGE\bfseries (((personal.name)))}\\[0.3em]
+  {\headerfont\small\color{metagray}CURRICULUM VITAE \textperiodcentered\ Last updated (((build_date)))}\\[0.8em]
+  {\small
+    \href{mailto:(((personal.email)))}{(((personal.email)))}
+    \ \textperiodcentered\
+    (((personal.phone)))
+    \ \textperiodcentered\
+    \href{(((personal.website_url)))}{(((personal.website)))}
+    ((* for link in personal.links if link.cv_visible *))
+    \ \textperiodcentered\
+    \href{(((link.href)))}{(((link.label))): (((link.display)))}
+    ((* endfor *))
+  }
+\end{center}
+
+\vspace{0.4em}
+
+% EDUCATION
+\section*{Education}
+
+((* for edu in education if edu.cv_visible *))
+\entryheader{(((edu.institution)))}{}{(((edu.start)))((* if edu.end *)) -- (((edu.end)))((* endif *))}{(((edu.location)))}
+\textit{(((edu.degree)))}((* if edu.gpa *)). GPA (((edu.gpa))).((* else *)).((* endif *))
+((* if edu.notes_cv *))
+\\[0.2em] {\small (((edu.notes_cv)))}
+((* endif *))
+\par\vspace{0.5em}
+((* endfor *))
+
+% RESEARCH EXPERIENCE
+\section*{Research Experience}
+
+((* for exp in experience if exp.cv_visible and exp.cv_section == 'research' *))
+\entryheader{(((exp.organization)))}{(((exp.role or '')))}{(((exp.start)))((* if exp.end *)) -- (((exp.end)))((* endif *))}{(((exp.location or '')))}
+((* if exp.cv_preamble *))
+(((exp.cv_preamble)))
+\par\vspace{0.3em}
+((* endif *))
+((* if exp.bullets *))
+\begin{itemize}
+((* for bullet in exp.bullets *))
+  \item (((bullet)))
+((* endfor *))
+\end{itemize}
+((* endif *))
+\vspace{0.3em}
+((* endfor *))
+
+% PUBLICATIONS AND PREPRINTS
+\section*{Publications and Preprints}
+
+{\small Equal-contribution undergraduate authors are marked with \textdagger.}\par\vspace{0.4em}
+
+((* for pub in publications if pub.cv_visible *))
+\noindent
+((* if pub.title *))
+\textbf{(((pub.authors))).} \textit{(((pub.title))).} (((pub.venue))).%
+((* if pub.links *))
+((* for link in pub.links *))
+\ \href{(((link.href)))}{[(((link.label)))]}%
+((* endfor *))
+((* endif *))
+\ (((pub.year)))((* if pub.month *)), (((pub.month)))((* endif *)).
+((* else *))
+\textbf{(((pub.authors))).} (((pub.venue)))((* if pub.target *)) (((pub.target)))((* endif *)), (((pub.year))).
+((* endif *))
+\par\vspace{0.5em}
+((* endfor *))
+
+% PRESENTATIONS
+\section*{Presentations}
+
+((* for pres in presentations if pres.cv_visible *))
+\noindent
+\textbf{(((pres.authors))).} \textit{(((pres.title))).}
+((* if pres.kind *)) (((pres.kind))),((* endif *))
+\ (((pres.venue))),((* if pres.month *)) (((pres.month))) (((pres.year))).((* else *)) (((pres.year))).((* endif *))
+((* if pres.status *)) (((pres.status))).((* endif *))
+\par\vspace{0.5em}
+((* endfor *))
+
+% GRANTS AND AWARDS
+\section*{Grants and Awards}
+
+((* for grant in grants if grant.cv_visible *))
+\noindent
+\textbf{(((grant.name)))}((* if grant.kind *)), (((grant.kind)))((* endif *)).((* if grant.year *)) (((grant.year))).((* endif *))
+((* if grant.note *))
+\\[0.15em] {\small (((grant.note)))}
+((* endif *))
+\par\vspace{0.4em}
+((* endfor *))
+
+% RESEARCH AFFILIATIONS
+\section*{Research Affiliations}
+
+((* for aff in affiliations if aff.cv_visible *))
+\entryheader{(((aff.name))) --- (((aff.full_title)))}{(((aff.role)))}{(((aff.start)))((* if aff.end *)) -- (((aff.end)))((* endif *))}{}
+{\small (((aff.description)))}
+\par\vspace{0.4em}
+((* endfor *))
+
+% SYSTEMS AND ENGINEERING PROJECTS
+\section*{Systems and Engineering Projects}
+
+((* for proj in projects if proj.cv_visible *))
+\noindent
+\textbf{(((proj.name)))} {\small\color{metagray}\textit{(((proj.start)))((* if proj.end *)) -- (((proj.end)))((* endif *))}}. (((proj.description)))
+\par\vspace{0.4em}
+((* endfor *))
+
+% INDUSTRY EXPERIENCE
+\section*{Industry Experience}
+
+((* for exp in experience if exp.cv_visible and exp.cv_section != 'research' and not exp.contract_work *))
+\entryheader{(((exp.organization)))}{(((exp.role or '')))}{(((exp.start)))((* if exp.end *)) -- (((exp.end)))((* endif *))}{(((exp.location or '')))}
+((* if exp.scope *))
+(((exp.scope)))
+\par\vspace{0.2em}
+((* endif *))
+((* if not exp.bullets *))
+((* elif exp.bullets|length == 1 *))
+(((exp.bullets[0])))
+\par
+((* else *))
+\begin{itemize}
+((* for bullet in exp.bullets *))
+  \item (((bullet)))
+((* endfor *))
+\end{itemize}
+((* endif *))
+\vspace{0.3em}
+((* endfor *))
+
+% SELECTED CONTRACT WORK
+% Conditional: contract entries normally render inside Industry Experience.
+% This section appears only if an entry opts in with `contract_work: true`,
+% so the heading never renders empty.
+((* set contract_entries = experience | selectattr('cv_visible') | selectattr('contract_work', 'defined') | selectattr('contract_work') | list *))
+((* if contract_entries *))
+\section*{Selected Contract Work}
+
+((* for exp in contract_entries *))
+\noindent
+\textbf{(((exp.organization))) --- (((exp.role)))}. {\small\color{metagray}(((exp.start)))((* if exp.end *)) -- (((exp.end)))((* endif *))}.
+\par\vspace{0.2em}
+((* for bullet in exp.bullets *))
+(((bullet)))
+((* endfor *))
+((* if exp.cv_disclaimer *))
+\par\vspace{0.2em}
+{\small\textit{(((exp.cv_disclaimer)))}}
+((* endif *))
+((* endfor *))
+((* endif *))
+
+% LANGUAGES
+\section*{Languages}
+
+((* for lang in languages *))
+(((lang.name))) (((lang.level)))((* if not loop.last *)) \textperiodcentered\ ((* else *)).((* endif *))
+((* endfor *))
+
+% TECHNICAL SKILLS
+\section*{Technical Skills}
+
+((* for key, group in skills.items() if group.cv_visible *))
+\noindent\textbf{(((group.label))):} (((group['items'] | join(', ')))).\par\vspace{0.2em}
+((* endfor *))
+
+% RESEARCH INTERESTS
+\section*{Research Interests}
+
+(((research_interests)))
+
+\end{document}

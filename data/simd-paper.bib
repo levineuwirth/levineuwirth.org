@@ -1,0 +1,141 @@
+% ── Post-Quantum Cryptography Standards ──────────────────────────────────────
+
+@techreport{fips203,
+  author      = {{National Institute of Standards and Technology}},
+  title       = {{Module-Lattice-Based Key-Encapsulation Mechanism Standard}},
+  institution = {NIST},
+  year        = {2024},
+  number      = {FIPS 203},
+  url         = {https://doi.org/10.6028/NIST.FIPS.203},
+}
+
+@techreport{fips204,
+  author      = {{National Institute of Standards and Technology}},
+  title       = {{Module-Lattice-Based Digital Signature Standard}},
+  institution = {NIST},
+  year        = {2024},
+  number      = {FIPS 204},
+  url         = {https://doi.org/10.6028/NIST.FIPS.204},
+}
+
+@techreport{fips205,
+  author      = {{National Institute of Standards and Technology}},
+  title       = {{Stateless Hash-Based Digital Signature Standard}},
+  institution = {NIST},
+  year        = {2024},
+  number      = {FIPS 205},
+  url         = {https://doi.org/10.6028/NIST.FIPS.205},
+}
+
+% ── Kyber / ML-KEM ───────────────────────────────────────────────────────────
+
+@inproceedings{kyber2018,
+  author    = {Bos, Joppe W. and Ducas, Léo and Kiltz, Eike and Lepoint, Tancrède
+               and Lyubashevsky, Vadim and Schanck, John M. and Schwabe, Peter
+               and Seiler, Gregor and Stehlé, Damien},
+  title     = {{CRYSTALS -- Kyber: A CCA-Secure Module-Lattice-Based KEM}},
+  booktitle = {IEEE European Symposium on Security and Privacy (EuroS\&P)},
+  year      = {2018},
+  pages     = {353--367},
+  doi       = {10.1109/EuroSP.2018.00032},
+}
+
+@misc{kyber-avx2,
+  author    = {Schwabe, Peter and Seiler, Gregor},
+  title     = {{High-Speed {AVX2} Implementation of the {Kyber} Key Encapsulation Mechanism}},
+  note      = {AVX2 implementation in the pqclean project},
+  url       = {https://github.com/pq-crystals/kyber},
+}
+
+% ── SIMD and Microarchitecture ────────────────────────────────────────────────
+
+@inproceedings{intel-avx2,
+  author    = {{Intel Corporation}},
+  title     = {{Intel 64 and IA-32 Architectures Software Developer's Manual}},
+  year      = {2024},
+  note      = {Volume 2: Instruction Set Reference},
+}
+
+@inproceedings{ntt-survey,
+  author    = {Longa, Patrick and Naehrig, Michael},
+  title     = {{Speeding Up the Number Theoretic Transform for Faster Ideal
+                Lattice-Based Cryptography}},
+  booktitle = {CANS},
+  year      = {2016},
+  doi       = {10.1007/978-3-319-48965-0_8},
+}
+
+% ── Energy Measurement ───────────────────────────────────────────────────────
+
+@inproceedings{rapl,
+  author    = {David, Howard and Gorbatov, Eugene and Hanebutte, Ulf R. and
+               Khanna, Rahul and Le, Christian},
+  title     = {{RAPL: Memory Power Estimation and Capping}},
+  booktitle = {ISLPED},
+  year      = {2010},
+  doi       = {10.1145/1840845.1840883},
+}
+
+% ── Related Benchmarking Work ────────────────────────────────────────────────
+
+@misc{pqclean,
+  author    = {{PQClean Contributors}},
+  title     = {{PQClean: Clean, portable, tested implementations of post-quantum
+                cryptography}},
+  url       = {https://github.com/PQClean/PQClean},
+}
+
+@misc{liboqs,
+  author    = {{Open Quantum Safe Project}},
+  title     = {{liboqs: C library for quantum-safe cryptographic algorithms}},
+  url       = {https://github.com/open-quantum-safe/liboqs},
+}
+
+@misc{pqm4,
+  author    = {Kannwischer, Matthias J. and Rijneveld, Joost and Schwabe, Peter
+               and Stoffelen, Ko},
+  title     = {{pqm4: Post-quantum crypto library for the ARM Cortex-M4}},
+  url       = {https://github.com/mupq/pqm4},
+}
+
+@misc{supercop,
+  author    = {Bernstein, Daniel J. and Lange, Tanja},
+  title     = {{SUPERCOP: System for Unified Performance Evaluation Related to
+                Cryptographic Operations and Primitives}},
+  url       = {https://bench.cr.yp.to/supercop.html},
+}
+
+@misc{papi,
+  author    = {{Innovative Computing Laboratory, University of Tennessee}},
+  title     = {{PAPI: Performance Application Programming Interface}},
+  url       = {https://icl.utk.edu/papi/},
+}
+
+@inproceedings{gueron2014,
+  author    = {Gueron, Shay and Krasnov, Vlad},
+  title     = {{Fast Garbling of Circuits Under Standard Assumptions}},
+  booktitle = {ACM CCS},
+  year      = {2013},
+  note      = {See also: Intel white paper on AES-GCM with AVX2},
+}
+
+@misc{bernstein2006,
+  author    = {Bernstein, Daniel J.},
+  title     = {{Curve25519: new Diffie-Hellman speed records}},
+  year      = {2006},
+  url       = {https://cr.yp.to/ecdh.html},
+}
+
+@misc{cachetime,
+  author    = {Bernstein, Daniel J. and Schwabe, Peter},
+  title     = {{New AES Software Speed Records}},
+  year      = {2008},
+  url       = {https://cr.yp.to/aes-speed.html},
+}
+
+@misc{bettini2024,
+  author    = {{Google Security Blog}},
+  title     = {{Protecting Chrome Traffic with Hybrid Kyber KEM}},
+  year      = {2023},
+  url       = {https://security.googleblog.com/2023/08/protecting-chrome-traffic-with-hybrid.html},
+}

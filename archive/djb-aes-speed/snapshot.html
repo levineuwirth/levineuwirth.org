@@ -1,0 +1,470 @@
+<!-- Saved from https://cr.yp.to/aes-speed.html at 2026-05-23T13:04:33Z using monolith v2.10.1 -->
+<html><head><meta content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; style-src-elem 'unsafe-inline'; style-src-attr 'unsafe-inline'; font-src data:; script-src 'none'; object-src 'none'; frame-src 'none'" http-equiv="Content-Security-Policy"/><meta content="noindex, noarchive" name="robots"/><link href="data:text/html;base64,PGh0bWw+PGJvZHk+ZmlsZSBkb2VzIG5vdCBleGlzdDwvYm9keT48L2h0bWw+DQo=" rel="icon"/></head><body>
+<title>AES speed</title>
+<meta content="aes" name="keywords"/>
+<a href="https://cr.yp.to/djb.html">D. J. Bernstein</a>
+<br/><a href="https://cr.yp.to/hash.html">Hash functions and ciphers</a>
+<h1>AES speed</h1>
+<b>Update:</b>
+Peter Schwabe and I now have a paper on this topic:
+<ul>
+<li>
+<a name="aesspeed-paper">[aesspeed]</a>
+15pp.
+<a href="https://cr.yp.to/aes-speed/aesspeed-20080926.pdf">(PDF)</a>
+D. J. Bernstein, Peter Schwabe.
+New AES software speed records.
+Document ID: b90c51d2f7eef86b78068511135a231f.
+URL: https://cr.yp.to/papers.html#aesspeed.
+Date: 2008.09.26.
+Supersedes:
+<a href="https://cr.yp.to/aes-speed/aesspeed-20080908.pdf">(PDF)</a>
+2008.09.08.
+</li></ul>
+The software is now available as part of the
+<a href="https://cr.yp.to/streamciphers/timings.html#toolkit-estreambench">estreambench</a>
+toolkit.
+We have placed the software into the public domain;
+feel free to integrate it into your own AES applications!
+<p>
+Information below this line has not yet been updated.
+</p><hr/>
+This document describes various speedups in AES software.
+This document assumes that
+the software is going to be used in an application
+where timing information is <i>not</i> exposed to attackers.
+<p>
+The reader is expected to already know the standard structure of AES software:
+</p><ul>
+<li>each of the 16 state bytes is used as an index for a table lookup producing a 32-bit word;
+</li><li>16 xors combine these 16 words and 4 expanded key words into 4 new state words;
+</li><li>those 4 words are viewed as the starting 16 bytes for the next round.
+</li></ul>
+See Section 5.2.1 of "AES Proposal: Rijndael" by Daemen and Rijmen.
+<h2>Endianness</h2>
+On a little-endian CPU,
+extracting the first byte of a 32-bit word
+is an &amp;0xff arithmetic instruction;
+on a big-endian CPU,
+extracting the first byte of a 32-bit word
+is a &gt;&gt;24 arithmetic instruction.
+Similar comments apply to the other bytes.
+<p>
+One can write AES software
+that uses arithmetic instructions as if the CPU were little-endian.
+If the CPU is actually big-endian,
+the software swaps the bytes of the AES key, input, and output (at run time).
+The software also swaps the bytes of the table (at compile time),
+for example by expressing the table as a sequence of 32-bit integers.
+</p><p>
+<b>Matched endianness.</b>
+One can easily eliminate the byte-swapping time for the AES key, input, and output:
+simply use the appropriate arithmetic instructions
+for the endianness of the CPU.
+In this case the table must not be swapped.
+</p><h2>Table structure</h2>
+All else being equal, smaller AES tables are faster:
+they take less time to load into cache and are more likely to stay in cache.
+Beware that most benchmarking tools preload caches and thus can't see this speedup.
+<p>
+Daemen and Rijmen suggest "4 KBytes of tables."
+There are 4 tables.
+Each table has 256 words occupying 1024 bytes.
+The loads are spread evenly across the tables.
+</p><p>
+<b>Rotated lookups.</b>
+Daemen and Rijmen suggest an alternative "with a total table size of 1KByte"
+but with extra arithmetic.
+The point is that the tables are rotations of each other:
+for example,
+the first word of the first table is (0xc6,0x63,0x63,0xa5),
+the first word of the second table is (0xa5,0xc6,0x63,0x63),
+the first word of the third table is (0x63,0xa5,0xc6,0x63),
+and the first word of the fourth table is (0x63,0x63,0xa5,0xc6).
+One can store the first table,
+and simulate a lookup in another table at the cost of an extra rotation.
+</p><p>
+<b>Unaligned loads.</b>
+One can instead use a single 2KB table having 256 8-byte entries
+such as (0x00,0x63,0xa5,0xc6,0x63,0x63,0xa5,0xc6).
+There are many reasonable choices of pattern here;
+what's important is that the pattern includes the desired
+(0xc6,0x63,0x63,0xa5) and (0xa5,0xc6,0x63,0x63) and so on as substrings.
+On the Pentium, the PowerPC, et al.,
+one can load 4-byte words from memory addresses that aren't divisible by 4,
+and there's no penalty when the word doesn't cross an 8-byte boundary.
+</p><h2>Masked loads</h2>
+16 of the 160 table lookups in 10-round AES are masked.
+The 40 table lookups in 10-round AES key expansion are also masked.
+The masks are 0x000000ff, 0x0000ff00, 0x00ff0000, and 0xff000000, each used equally often.
+<p>
+The simplest way to compute a mask is with an arithmetic instruction: for example, &amp;0xff00.
+</p><p>
+<b>Byte loads.</b>
+One can eliminate 25% of the masks,
+namely the bottom-byte masks,
+by combining them with load instructions.
+All popular CPUs have single-byte-load instructions.
+</p><p>
+<b>Two-byte loads.</b>
+One can eliminate another 25% of the masks
+on CPUs with two-byte-load instructions.
+This constrains the table pattern:
+it's important to have (0x00,0x63) on little-endian CPUs,
+and (0x63,0x00) on big-endian CPUs.
+</p><p>
+<b>Masked tables.</b>
+One can eliminate all of the masks by precomputing masked tables, using extra table space.
+The simplest table structure uses a total of 8KB.
+Two tables, one with entries such as (0x00,0x63,0xa5,0xc6,0x63,0x63,0xa5,0xc6)
+and another with entries such as (0x00,0x00,0x00,0x00,0x63,0x00,0x00,0x00),
+use a total of 4KB.
+In my experience,
+the cost of larger tables outweighs the benefit of eliminating a few masks.
+</p><h2>Key expansion</h2>
+A 4-word (128-bit) key is expanded in 40 steps.
+Each step produces a new word, totalling 44 words in the expanded key.
+A step has a byte extraction (see below), a masked load, and two xors.
+The total work is 40 byte extractions, 40 masked loads, and 80 xors.
+For comparison, the subsequent work to encrypt a block involves
+160 byte extractions, 160 loads (of which 16 are masked), and 160 xors.
+<p>
+Daemen and Rijmen say (Section 4.3.2)
+that key expansion involves "almost no computational overhead."
+Obviously key expansion is less expensive than encrypting a block.
+On the other hand, the cost of key expansion is still quite noticeable.
+</p><p>
+<b>Expanded keys.</b>
+A typical AES implementation precomputes and stores an expanded key.
+The 40 byte extractions, 40 masked loads, and 80 xors aren't repeated for every block;
+they are done only once, along with 44 stores.
+Each block then involves 44 extra loads for the expanded key.
+Some stores and loads can be eliminated
+if many blocks are handled at once
+and some extra registers are available.
+</p><p>
+Long-term storage of an expanded key can slow down applications that handle many keys:
+the expanded keys take more time to load into cache
+than the original keys and are less likely to stay in cache.
+</p><p>
+<b>Partially expanded keys.</b>
+An alternative is to precompute and store a partially expanded key,
+only 14 words instead of 44 words.
+The partially expanded key consists of words
+0, 1, 2, 3, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40 from the expanded key.
+Loading the partially expanded key, and converting it into the fully expanded key,
+takes only 14 loads and 30 xors.
+</p><p>
+One can interpolate between partial expansion and full expansion,
+using various amounts of storage per key and achieving various balances between load and xor.
+</p><h2>Index extraction</h2>
+The 16 xor operations in an AES round
+produce 4 words in 4 integer registers.
+The 16 bytes of these words are then extracted and used as indices for the next round.
+<p>
+The simplest way to extract 4 bytes is using 6 instructions,
+namely 3 shifts and 3 bottom-byte extractions:
+&amp;255;
+(&gt;&gt;8)&amp;255;
+(&gt;&gt;16)&amp;255;
+&gt;&gt;24.
+</p><p>
+Using a byte as an index then requires multiplying the byte by a constant
+that depends on the table structure.
+Let's assume the 2KB tables described above; then the constant is 8.
+The multiplications use 4 shifts:
+&lt;&lt;3;
+&lt;&lt;3;
+&lt;&lt;3;
+&lt;&lt;3.
+</p><p>
+<b>Scaled-index loads.</b>
+Many CPUs can multiply an index register by 8 for free as part of a load.
+</p><p>
+<b>Scaled-index extractions.</b>
+What about CPUs that can't multiply an index register by 8 for free?
+Two of the multiplications can nevertheless be eliminated,
+because they can be combined with shifts.
+The overall extract-and-scale sequence has 8 instructions:
+(&lt;&lt;3)&amp;2040;
+(&gt;&gt;5)&amp;2040;
+(&gt;&gt;13)&amp;2040;
+(&gt;&gt;21)&amp;2040.
+The PowerPC has a combined rotate-and-mask instruction,
+making this sequence take only 4 instructions.
+</p><p>
+<b>Scaled tables.</b>
+One can rotate table entries by 3 bits,
+reducing the above 8 instructions to 7 instructions.
+</p><p>
+<b>Second-byte instructions.</b>
+The x86 architecture (Pentium, Athlon, etc.)
+includes a combined (&gt;&gt;8)&amp;255 instruction.
+This means that extracting 4 bytes takes only 5 instructions:
+&amp;255;
+(&gt;&gt;8)&amp;255;
+&gt;&gt;16;
+&amp;255;
+&gt;&gt;8.
+Alternate 5-instruction sequence:
+&amp;255;
+(&gt;&gt;8)&amp;255;
+&gt;&gt;16;
+&amp;255;
+(&gt;&gt;8)&amp;255.
+</p><p>
+Of course, the ultimate measure of performance is a cycle count, not an instruction count.
+Matsui states that the (&gt;&gt;8)&amp;255; instruction is "a bit expensive"
+on the Pentium 4 Prescott (f33, f34, f41);
+presumably this means that the instruction takes more cycles than, e.g., a mere &amp;255.
+But all of the measurements I've seen indicate the opposite.
+I'm not sure what I'm missing here.
+</p><p>
+<b>32-bit shifts on 64-bit architectures.</b>
+The amd64 architecture (P4E, Athlon 64, Core 2, etc.) can right-shift a 64-bit register,
+but Matsui comments that this operation is extremely slow on the P4E.
+It's much better to use the amd64's x86-compatible right-shift instruction;
+this instruction sets the top 32 bits of its 64-bit input to 0 before shifting.
+</p><p>
+<b>Byte extraction via loads.</b>
+A completely different way to extract 4 bytes is with 1 store and 4 loads.
+One can mix this with the previous approaches
+to achieve various balances between load and arithmetic.
+</p><p>
+Consider, for example, the UltraSPARC,
+which has 2 integer units and 1 load/store unit.
+A traditional sequence of
+14 partially-expanded-key loads (see below), 30 key-expansion xors,
+160 scaled-index extractions, 160 table-lookup loads, 160 xors, 16 masks,
+4 input loads, and 4 output stores
+occupies a total of 526 integer instructions (at least 263 cycles)
+and 182 loads (at least 182 cycles).
+Using loads for some byte extractions,
+replacing 36 scaled-index extractions with 9 stores and 36 loads,
+means a total of 454 integer instructions (at least 227 cycles)
+and 227 loads/stores (at least 227 cycles).
+</p><h2>Unrolling</h2>
+A typical 9-iteration AES loop
+involves 9 increments of a loop index, 9 comparisons, and 9 branches,
+one of which is mispredicted on most CPUs.
+The loop index also consumes a register,
+forcing an extra 9 stores and 9 loads on CPUs that don't have registers to spare.
+<p>
+<b>Full unrolling.</b>
+One can eliminate all of these costs by fully unrolling the loop.
+Beware, however, that full unrolling costs a few kilobytes of code-cache space.
+</p><p>
+<b>Partial unrolling.</b>
+CPUs are more likely to correctly predict a 4-iteration loop than a 9-iteration loop.
+</p><h2>Instruction scheduling</h2>
+The 16 table lookups in an AES round are independent
+and can be scheduled in many different ways.
+One can, for example,
+perform all the table lookups for the first input from bottom byte to top
+(outputs 0, 3, 2, 1),
+then perform all the table lookups for the second input from bottom byte to top
+(outputs 1, 0, 3, 2),
+then perform all the table lookups for the third input from bottom byte to top
+(outputs 2, 1, 0, 3),
+then perform all the table lookups for the fourth input from bottom byte to top
+(outputs 3, 2, 1, 0).
+One can, as another example,
+first perform all the table lookups for the first output in order of the inputs,
+then perform all the table lookups for the second output in order of the inputs,
+etc.
+<p>
+<b>Maximum parallelism.</b>
+The overall depth of the AES round is
+one byte extraction plus one table lookup plus two xors:
+a mythical CPU offering extensive parallelism
+could perform all sixteen byte extractions in parallel,
+then all sixteen table lookups in parallel,
+then eight xors in parallel,
+then four xors in parallel.
+Note that each output is obtained by xor'ing two parallel xor's,
+rather than by three serial xor's.
+</p><p>
+<b>Deferring loads.</b>
+The amd64 architecture poses several challenges to AES instruction scheduling.
+First,
+most integer instructions require the output register to be one of the input registers.
+Second,
+typical amd64 CPUs handle a load and xor most efficiently as a unified load-xor,
+but a unified load-xor gives no opportunity to switch registers.
+Third,
+only 4 registers (eax, ebx, ecx, edx) allow second-byte instructions.
+</p><p>
+Matsui concludes that, on amd64 (and x86),
+keeping each round's inputs y0, y1, y2, y3 and outputs z0, z1, z2, z3 in eax, ebx, ecx, edx,
+to allow second-byte instructions,
+is "impossible without saving/restoring."
+But that's incorrect.
+No extra copies are required.
+A careful instruction sequence
+uses the minimal conceivable number of instructions:
+20 for byte extraction,
+16 for table lookups,
+and 4 for handling the expanded key.
+The idea is to extract all the bytes from an input,
+freeing the input's register for an output,
+before doing any table lookups involving that output:
+</p><ul>
+<li>Extract the 4 bytes from y0.
+At this point y1, y2, y3, and the 4 bytes are live.
+</li><li>Feed 1 byte into z0.
+At this point y1, y2, y3, z0, and 3 more bytes are live.
+</li><li>Extract the 4 bytes from y1, immediately feeding 1 into z0.
+At this point y2, y3, z0, and 6 more bytes are live.
+</li><li>Feed 2 bytes into z1.
+At this point y2, y3, z0, z1, and 4 more bytes are live.
+</li><li>Extract the 4 bytes from y2, immediately feeding 2 into z0 and z1.
+At this point y3, z0, z1, and 6 more bytes are live.
+</li><li>Feed 3 bytes into z2.
+At this point y3, z0, z1, z2, and 3 more bytes are live.
+</li><li>Extract the 4 bytes from y3, immediately feeding 3 into z0, z1, and z2.
+At this point z0, z1, z2, and 4 more bytes are live.
+</li><li>Feed 4 bytes into z3.
+At this point z0, z1, z2, and z3 are live.
+</li><li>Handle 4 words of the expanded key.
+</li></ul>
+The maximum number of live registers here is 9,
+fitting easily into the amd64 instruction set.
+<p>
+<b>Squeezing inputs and outputs into 7 32-bit registers.</b>
+The x86 architecture poses an additional challenge to AES instruction scheduling:
+there are only 7 general-purpose integer registers.
+</p><p>
+It's still possible to handle a round with 0 stores, 4 expanded-key loads,
+and 16 loads for table lookups.
+The shortest instruction sequence that I know has a total of 46 instructions,
+6 more than what would be possible with extra registers;
+1 of the 46 instructions can be eliminated if the key expansion is changed.
+</p><p>
+The idea of this instruction sequence
+is to rotate y0 by 16 bits,
+use the bottom two bytes of both y0 and y2,
+and then merge the remaining four bytes of y0 and y2 into a single register
+(for example, shifting y0 down 16 bits, masking y1, and adding the results),
+freeing a register at the cost of 3 extra instructions (the rotate, the mask, and the add);
+splitting 3 load-xor instructions into 3 loads and 3 xors
+then easily puts all outputs into suitable registers.
+The rotation can be eliminated if the expanded-key word that corresponds to y0
+is rotated by 16 bits.
+</p><h2>Speed reports</h2>
+Speed reports vary in whether they use CTR, CBC, etc.,
+and in the exact rules for measuring speeds.
+The "eSTREAM" cycles/byte counts are
+for counter-mode AES measured by the eSTREAM benchmarking toolkit;
+future implementors are encouraged to support the eSTREAM interface for direct comparability.
+<table border="">
+<tbody><tr><th>Architecture</th><th>CPU</th><th>eSTREAM cycles/byte</th><th>Ad-hoc cycles/byte</th><th>Software</th></tr>
+<tr><td>amd64</td><td>Intel Core 2 Duo (6f6)?</td><td></td><td>9.2</td><td>Matsui/Nakajima (CHES 2007)</td></tr>
+<tr><td>amd64</td><td>AMD Athlon 64 (15,75,2)?</td><td></td><td>10.625 (170/block)</td><td>Matsui (FSE 2006)</td></tr>
+<tr><td>amd64</td><td>AMD Athlon 64 (15,75,2)?</td><td></td><td>12.4375 (199/block)</td><td>Lipmaa</td></tr>
+<tr><td>amd64</td><td>Intel Core 2 Duo (6f6); katana</td><td>12.56</td><td></td><td>hongjun/v1/1</td></tr>
+<tr><td>amd64</td><td>Intel Core 2 Quad Q6600 (6fb); latour</td><td>12.57</td><td></td><td>hongjun/v1/1</td></tr>
+<tr><td>amd64</td><td>AMD Athlon 64 (15,75,2)?</td><td></td><td>13.125 (210/block)</td><td>Osvik</td></tr>
+<tr><td>amd64</td><td>AMD Athlon 64 X2 (15,75,2); mace</td><td>13.32</td><td></td><td>hongjun/v1/1</td></tr>
+<tr><td>amd64</td><td>AMD Opteron 240 (f58); nmisles8amd64</td><td>13.45</td><td></td><td>bernstein/amd64-1/1</td></tr>
+<tr><td>x86</td><td>Intel Pentium III (68a)?</td><td></td><td>14 (224/block)</td><td>Osvik</td></tr>
+<tr><td>x86</td><td>AMD Athlon (622)?</td><td></td><td>14.0625 (225/block)</td><td>Osvik</td></tr>
+<tr><td>x86</td><td>Intel Pentium III (68a)?</td><td></td><td>14.125 (226/block)</td><td>Lipmaa</td></tr>
+<tr><td>x86</td><td>Intel Pentium 4 (f12)?</td><td></td><td>15 (240/block)</td><td>Osvik</td></tr>
+<tr><td>x86</td><td>Intel Pentium 4 (f12)?</td><td></td><td>15.875 (254/block)</td><td>Lipmaa</td></tr>
+<tr><td>x86</td><td>Intel Pentium M (695); whisper</td><td>15.96</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>amd64</td><td>Intel Pentium 4 (f64)?</td><td></td><td>16 (256/block)</td><td>Matsui (FSE 2006)</td></tr>
+<tr><td>x86</td><td>Intel Pentium III (68a)?</td><td></td><td>16.25 (260/block)</td><td>Gladman</td></tr>
+<tr><td>amd64</td><td>Intel Pentium D (f64); nmi0161</td><td>16.74</td><td></td><td>bernstein/amd64-2/1</td></tr>
+<tr><td>amd64</td><td>Intel Pentium D (f64); svlin001</td><td>16.75</td><td></td><td>bernstein/amd64-2/1</td></tr>
+<tr><td>amd64</td><td>Intel Xeon (f41); nmi0056</td><td>16.75</td><td></td><td>bernstein/amd64-2/1</td></tr>
+<tr><td>amd64</td><td>Intel Xeon (f4a); nmi0090</td><td>16.77</td><td></td><td>bernstein/amd64-2/1</td></tr>
+<tr><td>sparc</td><td>Sun UltraSPARC III</td><td></td><td>16.875 (270/block)</td><td>Lipmaa</td></tr>
+<tr><td>amd64</td><td>Intel Xeon (f41); nmi0057</td><td>16.89</td><td></td><td>bernstein/amd64-2/1</td></tr>
+<tr><td>amd64</td><td>Intel Pentium D (f64); speed</td><td>16.90</td><td></td><td>bernstein/amd64-2/1</td></tr>
+<tr><td>amd64</td><td>Intel Pentium D (f64); nmi0104</td><td>16.90</td><td></td><td>bernstein/amd64-2/1</td></tr>
+<tr><td>amd64</td><td>Intel Pentium D (f64); nmi0241</td><td>16.93</td><td></td><td>bernstein/amd64-2/1</td></tr>
+<tr><td>ppc64</td><td>IBM POWER5; nmi0154</td><td>16.93</td><td></td><td>bernstein/big-1/1</td></tr>
+<tr><td>x86</td><td>Intel Pentium 4 (f24); nmi0086</td><td>16.96</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>Intel Pentium 4 (f12); fireball</td><td>16.98</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>Intel Pentium 4 (f24); nmitest4</td><td>17.01</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>ppc64</td><td>IBM PowerPC G5 970; nmi0048</td><td>17.17</td><td></td><td>bernstein/big-1/1</td></tr>
+<tr><td>x86</td><td>Intel Pentium 2 (652); boris</td><td>17.33</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>Intel Pentium 3 (68a)</td><td>17.49</td><td></td><td>Bernstein aes-128/x86-mmx-1</td></tr>
+<tr><td>x86</td><td>Intel Pentium 3 (672); orpheus</td><td>17.55</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>Intel Pentium M (6d8)</td><td>17.57</td><td></td><td>Wu v0/1</td></tr>
+<tr><td>x86</td><td>Intel Pentium 4 (f33)?</td><td></td><td>17.75 (284/block)</td><td>Matsui/Fukuda (FSE 2005)</td></tr>
+<tr><td>x86</td><td>Intel Xeon (f29); nmibuild40</td><td>17.79</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>Intel Xeon (f27); nmi0059</td><td>17.79</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>Intel Xeon (f25); nmibuild16</td><td>17.79</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>Intel Xeon (f25); nmi0013</td><td>17.79</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>Intel Xeon (f29); nmi0059</td><td>17.80</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>Intel Xeon (f29); nmibuild17</td><td>17.81</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>Intel Xeon (f25); nmibuild15</td><td>17.82</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>Intel Xeon (f25); nmibuild26</td><td>17.83</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>Intel Xeon (f25); nmibuild21</td><td>17.83</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>Intel Xeon (f25); nmi0036</td><td>17.84</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>Intel Xeon (f25); nmibuild22</td><td>17.84</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>AMD Athlon (622); thoth</td><td>18.38</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>ppc32</td><td>IBM POWER4; nmibuild14</td><td>18.55</td><td></td><td>bernstein/little-1/1</td></tr>
+<tr><td>x86</td><td>Intel Xeon (f41); nmi0079</td><td>18.88</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>Intel Xeon (f41); nmi0062</td><td>18.89</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>amd64</td><td>Intel Core 2 Duo (6f6)</td><td></td><td>18.9</td><td>OpenSSL 0.9.8e</td></tr>
+<tr><td>x86</td><td>Intel Xeon (f41); nmi0061</td><td>18.91</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>Intel Pentium 4 (f41); svlin002</td><td>18.94</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>Intel Xeon (f41); nmi0076</td><td>18.96</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>Intel Xeon (f4a); nmi0102</td><td>18.97</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>Intel Xeon (f41); nmi0060</td><td>18.97</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>Intel Xeon (f41); nmi0063</td><td>18.95</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>Intel Pentium 3 (68a)</td><td>19.06</td><td></td><td>Wu v1/1</td></tr>
+<tr><td>ppc32</td><td>Motorola PowerPC G4 7410; gggg</td><td>19.11</td><td></td><td>bernstein/big-1/1</td></tr>
+<tr><td>amd64</td><td>Intel Core 2 Duo (6f6)</td><td></td><td>19.5</td><td>OpenSSL 0.9.8a</td></tr>
+<tr><td>x86</td><td>AMD Athlon (622)?</td><td></td><td>19.9375 (319/block)</td><td>Lipmaa</td></tr>
+<tr><td>x86</td><td>Intel Pentium 1 (52c)</td><td></td><td>20 (320/block)</td><td>Lipmaa</td></tr>
+<tr><td>sparc</td><td>Sun UltraSPARC III</td><td>20.75</td><td></td><td>Bernstein big-1/1</td></tr>
+<tr><td>amd64</td><td>AMD Athlon 64 (15,75,2)</td><td></td><td>20.9</td><td>OpenSSL 0.9.8e</td></tr>
+<tr><td>ppc32</td><td>Motorola PowerPC G4 7400; nmi0042</td><td>20.92</td><td></td><td>bernstein/big-1/1</td></tr>
+<tr><td>x86</td><td>Intel Pentium M (6d8)</td><td></td><td>21</td><td>OpenSSL 0.9.8a</td></tr>
+<tr><td>x86</td><td>Intel Pentium D (f47); shell</td><td>21.58</td><td></td><td>bernstein/x86-mmx-1/1</td></tr>
+<tr><td>x86</td><td>AMD Athlon (622)</td><td></td><td>22</td><td>OpenSSL 0.9.8a</td></tr>
+<tr><td>x86</td><td>Intel Pentium 4 (f29)</td><td></td><td>22</td><td>OpenSSL 0.9.8b</td></tr>
+<tr><td>amd64</td><td>AMD Athlon 64 (15,75,2)?</td><td></td><td>23.5</td><td>OpenSSL 0.9.7e</td></tr>
+<tr><td>x86</td><td>Intel Pentium 4 (f41)</td><td></td><td>23.5</td><td>OpenSSL 0.9.8a</td></tr>
+<tr><td>x86</td><td>Intel Pentium 3 (672); orpheus</td><td></td><td>23.62</td><td>OpenSSL 0.9.8e</td></tr>
+<tr><td>ppc32</td><td>Motorola PowerPC G4 7410</td><td></td><td>24.0625 (385/block)</td><td>Ahrens</td></tr>
+<tr><td>x86</td><td>Intel Pentium 4 (f12)</td><td></td><td>24.4</td><td>OpenSSL 0.9.8a</td></tr>
+<tr><td>sparc</td><td>Sun UltraSPARC III</td><td></td><td>25</td><td>OpenSSL</td></tr>
+<tr><td>ppc32</td><td>Motorola PowerPC G4 7410</td><td></td><td>25.0625 (401/block)</td><td>Ahrens</td></tr>
+<tr><td>x86</td><td>Intel Core Duo; nmi0068</td><td>25.74</td><td></td><td>gladman/1</td></tr>
+<tr><td>amd64</td><td>Intel Pentium D (f64); speed</td><td></td><td>27.33</td><td>OpenSSL 0.9.8e</td></tr>
+<tr><td>ppc32</td><td>Motorola PowerPC G4 7410; gggg</td><td></td><td>29.32</td><td>OpenSSL 0.9.8c</td></tr>
+<tr><td>sparcv9</td><td>Sun UltraSPARC III; nmi0051</td><td>29.45</td><td></td><td>bernstein/big-1/1</td></tr>
+<tr><td>sparcv9</td><td>Sun UltraSPARC III; nmisolaris10</td><td>29.46</td><td></td><td>bernstein/big-1/1</td></tr>
+<tr><td>ppc64</td><td>IBM Cell PPE; nmips3</td><td>35.20</td><td></td><td>bernstein/big-1/1</td></tr>
+<tr><td>amd64</td><td>Intel Pentium 4 (f64)</td><td></td><td>37</td><td>OpenSSL 0.9.7f</td></tr>
+<tr><td>x86</td><td>Intel Pentium 4 (f29)</td><td></td><td>39</td><td>OpenSSL 0.9.7e</td></tr>
+<tr><td>sparc</td><td>Sun UltraSPARC III</td><td></td><td>46.875 (750/block)</td><td>Bassham</td></tr>
+<tr><td>x86</td><td>Intel Pentium 1 (52c); cruncher</td><td>38.20</td><td></td><td>hongjun/v1/1</td></tr>
+</tbody></table>
+<p>
+Regarding amd64 Intel Pentium 4,
+Matsui writes: 
+"The number of memory reads
+for one block encryption of AES
+is 4 (for plaintext loads)
++ 11 x 4 (for subkey loads)
++ 16 x 10 (for table lookups)
+= 208,
+which means that Pentium 4 takes at least 208 cycles/block for one block encryption."
+But this lower bound ignores the possibility of loading partially expanded keys,
+saving as many as 30 loads,
+and using 64-bit loads for keys and plaintext,
+saving 9 more loads.
+</p><p>
+Regarding amd64 AMD Athlon 64,
+Matsui writes:
+"Considering an instruction latency of Athlon 64, the theoretical limit of AES
+performance on this processor seems around 16 cycles/round = 160 cycles/block.
+Our result is hence reaching closely this limit."
+
+
+</p></body></html>

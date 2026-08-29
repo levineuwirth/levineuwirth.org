@@ -1,0 +1,13 @@
+
+
+Three days. That's how long it took me to notice that the database migration had stalled. In an office, I would have seen it in the first hour—someone's screen would have been stuck on an error log, their keyboard would have gone quiet, and I would have leaned over and asked what was happening. Instead, I was in a video call about something else entirely when Alex finally mentioned it, almost as an aside. "Oh, the migration thing. I hit a blocker on Tuesday. Been working around it."
+
+I could feel my stomach drop.
+
+The thing is, Alex had mentioned concerns about that migration in our group call the previous week. I remembered now—I'd been half-listening, nodding along while triaging my inbox, and I'd said something like "keep me posted" before moving to the next agenda item. In an office, I would have caught the note of frustration in his voice. I would have seen him still at his desk when everyone else had gone to lunch. I would have walked by and asked.
+
+We didn't lack for tools. We had Slack, we had documentation, we had a weekly update template that everyone filled out religiously. What we didn't have was a way to notice what wasn't being said.
+
+This is the trap of remote team management. The conversation about remote work has been dominated by tooling—Which chat platform? Which video software? How often should you meet?—as if the problem were logistical. It isn't. The problem is that so much of what makes a team functional happens below the threshold of explicit communication, and remote work strips that away without asking permission. In an office, you absorb information passively: the colleague who didn't laugh at the joke, the developer who left early three days in a row, the design decision that everyone quietly disagreed about but no one escalated. Remote work demands that you become intentional about noticing what you used to just see.
+
+The thesis isn't that tools and rituals don't matter. They do—they're the scaffolding that holds a distributed team together. But they are necessary, not sufficient. The real work is internal. It's the discipline of asking questions whose answers you're not sure you want to hear. It's the humility to admit that your team is constantly sending signals you're missing, not because they're failing to communicate but because you're not paying attention in the right way. And it's the willingness to sit with that discomfort, over and over, without inventing a dashboard to make it go away.

@@ -1,0 +1,106 @@
+<svg viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mark-title-neuropose">
+  <title id="mark-title-neuropose">An articulated kinematic figure with a small dendritic node at the head — pose tracked through the body, signal originating from the brain.</title>
+  <desc>Frontmatter mark for the essay "NeuroPose".</desc>
+
+  <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- Outer roundel -->
+    <circle cx="140" cy="140" r="128" stroke-width="0.6"/>
+
+    <!-- Kinematic skeleton: head, spine, two arms, two legs.
+         Drawn in a slight asymmetric stance to suggest motion-tracking
+         rather than a static anatomical diagram.
+
+         Joint coordinates (the markers tracked):
+           head            (140, 78)
+           neck            (140, 102)
+           shoulder L      (122, 110)
+           shoulder R      (158, 110)
+           elbow L         (108, 134)
+           elbow R         (172, 132)
+           wrist L         (96,  158)
+           wrist R         (180, 156)
+           hip L           (130, 158)
+           hip R           (150, 158)
+           knee L          (124, 192)
+           knee R          (158, 190)
+           ankle L         (118, 222)
+           ankle R         (164, 224)
+    -->
+
+    <!-- Spine (neck → mid-hip) -->
+    <line x1="140" y1="102" x2="140" y2="158" stroke-width="1.2"/>
+
+    <!-- Shoulders crossbar -->
+    <line x1="122" y1="110" x2="158" y2="110" stroke-width="1.0"/>
+
+    <!-- Hips crossbar -->
+    <line x1="130" y1="158" x2="150" y2="158" stroke-width="1.0"/>
+
+    <!-- Left arm -->
+    <line x1="122" y1="110" x2="108" y2="134" stroke-width="1.0"/>
+    <line x1="108" y1="134" x2="96"  y2="158" stroke-width="1.0"/>
+
+    <!-- Right arm: slightly forward stance for asymmetry -->
+    <line x1="158" y1="110" x2="172" y2="132" stroke-width="1.0"/>
+    <line x1="172" y1="132" x2="180" y2="156" stroke-width="1.0"/>
+
+    <!-- Left leg -->
+    <line x1="130" y1="158" x2="124" y2="192" stroke-width="1.0"/>
+    <line x1="124" y1="192" x2="118" y2="222" stroke-width="1.0"/>
+
+    <!-- Right leg: slight stride -->
+    <line x1="150" y1="158" x2="158" y2="190" stroke-width="1.0"/>
+    <line x1="158" y1="190" x2="164" y2="224" stroke-width="1.0"/>
+
+    <!-- Joint markers as small filled circles — these are the tracked points -->
+    <g fill="currentColor" stroke="none">
+      <circle cx="140" cy="102" r="1.6"/>
+      <circle cx="122" cy="110" r="1.6"/>
+      <circle cx="158" cy="110" r="1.6"/>
+      <circle cx="108" cy="134" r="1.6"/>
+      <circle cx="172" cy="132" r="1.6"/>
+      <circle cx="96"  cy="158" r="1.6"/>
+      <circle cx="180" cy="156" r="1.6"/>
+      <circle cx="130" cy="158" r="1.6"/>
+      <circle cx="150" cy="158" r="1.6"/>
+      <circle cx="124" cy="192" r="1.6"/>
+      <circle cx="158" cy="190" r="1.6"/>
+      <circle cx="118" cy="222" r="1.6"/>
+      <circle cx="164" cy="224" r="1.6"/>
+    </g>
+
+    <!-- Head as the neural node: an open ring with a small dendritic spray
+         radiating upward, encoding "neuro" — origin of the motor signal.
+         Larger and more detailed than the joint markers to distinguish. -->
+    <circle cx="140" cy="78" r="9" stroke-width="1.0"/>
+    <!-- Dendrites: short branching strokes from the top half of the head -->
+    <g stroke-width="0.6">
+      <line x1="135" y1="71" x2="129" y2="62"/>
+      <line x1="129" y1="62" x2="124" y2="58"/>
+      <line x1="129" y1="62" x2="131" y2="55"/>
+
+      <line x1="140" y1="69" x2="140" y2="56"/>
+      <line x1="140" y1="56" x2="136" y2="50"/>
+      <line x1="140" y1="56" x2="144" y2="50"/>
+
+      <line x1="145" y1="71" x2="151" y2="62"/>
+      <line x1="151" y1="62" x2="156" y2="58"/>
+      <line x1="151" y1="62" x2="149" y2="55"/>
+    </g>
+    <!-- A central dot at the cortex — the source -->
+    <circle cx="140" cy="78" r="1.8" fill="currentColor" stroke="none"/>
+
+    <!-- Trajectory traces: thin dashed arcs at three of the limb endpoints,
+         indicating tracked motion across frames. Sparse — three is enough. -->
+    <g stroke-width="0.4" stroke-dasharray="1.5 2.5" opacity="0.7">
+      <!-- Right wrist arc -->
+      <path d="M 188 150 Q 192 156 180 156"/>
+      <!-- Left ankle arc -->
+      <path d="M 110 222 Q 114 226 118 222"/>
+      <!-- Right ankle arc -->
+      <path d="M 168 232 Q 165 226 164 224"/>
+    </g>
+
+  </g>
+</svg>

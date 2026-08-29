@@ -1,0 +1,119 @@
+<svg viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mark-title-weenix">
+  <title id="mark-title-weenix">A process tree rooted at PID 1 living inside the kernel boundary, with hardware ticks outside — the roundel is the abstraction.</title>
+  <desc>Frontmatter mark for the essay "Weenix" — a Unix-like kernel from scratch.</desc>
+
+  <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- Outer roundel: this IS the kernel boundary.
+         Slightly heavier weight than usual to mark its semantic role. -->
+    <circle cx="140" cy="140" r="128" stroke-width="1.1"/>
+
+    <!-- Inside: userspace process tree.
+         init (PID 1) sits just inside the top, descendants fan downward.
+
+         Process layout:
+           init   (140, 60)         depth 0
+           a      (108, 100)        depth 1
+           b      (172, 100)        depth 1
+           c      ( 90, 142)        depth 2
+           d      (126, 142)        depth 2
+           e      (158, 142)        depth 2
+           f      (188, 142)        depth 2
+           g      (108, 184)        depth 3
+           h      (172, 184)        depth 3
+    -->
+
+    <!-- Process boxes: small open rectangles. PID 1 is slightly larger. -->
+    <rect x="132" y="52" width="16" height="16" stroke-width="1.0"/>
+    <!-- Tiny "1" mark: a single short vertical inside the box, at offset, suggesting PID 1
+         without literal text. -->
+    <line x1="140" y1="56" x2="140" y2="64" stroke-width="0.7"/>
+
+    <rect x="101" y="93" width="14" height="14" stroke-width="0.9"/>
+    <rect x="165" y="93" width="14" height="14" stroke-width="0.9"/>
+
+    <rect x="84"  y="135" width="12" height="12" stroke-width="0.8"/>
+    <rect x="120" y="135" width="12" height="12" stroke-width="0.8"/>
+    <rect x="152" y="135" width="12" height="12" stroke-width="0.8"/>
+    <rect x="182" y="135" width="12" height="12" stroke-width="0.8"/>
+
+    <rect x="102" y="177" width="12" height="12" stroke-width="0.8"/>
+    <rect x="166" y="177" width="12" height="12" stroke-width="0.8"/>
+
+    <!-- Fork edges: parent → child. Thin lines, drawn box-edge-to-box-edge. -->
+    <g stroke-width="0.7">
+      <!-- init → a -->
+      <line x1="138" y1="68" x2="110" y2="93"/>
+      <!-- init → b -->
+      <line x1="142" y1="68" x2="170" y2="93"/>
+      <!-- a → c -->
+      <line x1="105" y1="107" x2="92" y2="135"/>
+      <!-- a → d -->
+      <line x1="111" y1="107" x2="124" y2="135"/>
+      <!-- b → e -->
+      <line x1="169" y1="107" x2="156" y2="135"/>
+      <!-- b → f -->
+      <line x1="175" y1="107" x2="186" y2="135"/>
+      <!-- d → g -->
+      <line x1="124" y1="147" x2="110" y2="177"/>
+      <!-- e → h -->
+      <line x1="158" y1="147" x2="172" y2="177"/>
+    </g>
+
+    <!-- Syscall traces: a few thin arrows from process boxes to the kernel boundary,
+         showing requests crossing the abstraction. Kept sparse: 3 is enough.
+         Each is a short line ending in a small arrowhead just inside the roundel. -->
+
+    <!-- From box 'd' upward-left toward boundary -->
+    <g stroke-width="0.5" stroke-dasharray="1.5 2">
+      <line x1="123" y1="135" x2="80" y2="60"/>
+    </g>
+    <g stroke-width="0.6">
+      <line x1="80" y1="60" x2="86" y2="60"/>
+      <line x1="80" y1="60" x2="80" y2="66"/>
+    </g>
+
+    <!-- From box 'f' upward-right -->
+    <g stroke-width="0.5" stroke-dasharray="1.5 2">
+      <line x1="188" y1="138" x2="226" y2="100"/>
+    </g>
+    <g stroke-width="0.6">
+      <line x1="226" y1="100" x2="220" y2="100"/>
+      <line x1="226" y1="100" x2="226" y2="106"/>
+    </g>
+
+    <!-- From box 'g' downward-left -->
+    <g stroke-width="0.5" stroke-dasharray="1.5 2">
+      <line x1="108" y1="189" x2="68" y2="222"/>
+    </g>
+    <g stroke-width="0.6">
+      <line x1="68" y1="222" x2="74" y2="222"/>
+      <line x1="68" y1="222" x2="68" y2="216"/>
+    </g>
+
+    <!-- Outside the roundel: hardware. A sparse set of short radial tick marks
+         at compass positions, suggesting the device layer the kernel mediates. -->
+    <g stroke-width="0.7" opacity="0.85">
+      <!-- top-left cluster -->
+      <line x1="36" y1="64" x2="42" y2="68"/>
+      <line x1="32" y1="74" x2="38" y2="76"/>
+      <line x1="28" y1="86" x2="34" y2="86"/>
+
+      <!-- top-right cluster -->
+      <line x1="244" y1="64" x2="238" y2="68"/>
+      <line x1="248" y1="74" x2="242" y2="76"/>
+      <line x1="252" y1="86" x2="246" y2="86"/>
+
+      <!-- bottom-left cluster -->
+      <line x1="36" y1="216" x2="42" y2="212"/>
+      <line x1="32" y1="206" x2="38" y2="204"/>
+      <line x1="28" y1="194" x2="34" y2="194"/>
+
+      <!-- bottom-right cluster -->
+      <line x1="244" y1="216" x2="238" y2="212"/>
+      <line x1="248" y1="206" x2="242" y2="204"/>
+      <line x1="252" y1="194" x2="246" y2="194"/>
+    </g>
+
+  </g>
+</svg>

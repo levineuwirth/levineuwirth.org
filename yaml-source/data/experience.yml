@@ -1,0 +1,127 @@
+# Experience entries. `resume_order` drives the résumé's Experience sort
+# (research-first: MARS V, the two Shu Lab stints, contracting, then NeuroAI).
+# `cv_order` documents intent; the CV template renders in file order within
+# each section, so keep file order and cv_order consistent. The two axes let
+# us order independently per audience without duplicating content.
+
+experience:
+  # MARS V heads both documents. On the CV it is routed into "Research
+  # Experience" via cv_section and sits first because it appears first among
+  # research entries in this file (the CV template preserves file order).
+  - organization: Cambridge AI Safety Hub
+    role: MARS V Fellow
+    location: Cambridge, United Kingdom
+    start: July 2026
+    end: October 2026
+    cv_section: research
+    cv_order: 1
+    resume_order: 1
+    cv_visible: true
+    resume_visible: true
+    bullets:
+      - "Selected for MARS V, a competitive part-time AI-safety research fellowship, working under James Petrie (Future of Life Institute)."
+      - "Research on zero-knowledge proofs for large language models, toward cryptographic verification of claims about model training, inference, and deployment."
+
+  # TOGGLED OFF on both documents as of August 2026 — retained, not deleted.
+  # The entry is accurate and stays in the file so it can be switched back on
+  # by flipping the two visibility flags; the orders below are kept live so it
+  # lands back in the right slot (last among industry entries) if it is.
+  # Held to one line when shown: the grok-code-fast-1 scope is the dated,
+  # externally verifiable part, and the metrics bullets are omitted to keep
+  # both documents' centre of gravity on research.
+  - organization: xAI
+    location: Remote
+    start: May 2025
+    end: August 2025
+    cv_order: 5
+    resume_order: 5
+    cv_visible: false
+    resume_visible: false
+    scope: null
+    bullets:
+      - "Contributed to the training of \\texttt{grok-code-fast-1}, xAI's agentic coding model. Built LLM integrations into autonomous agent frameworks and resolved 50+ agentic tool-execution failures."
+    cv_summary: null
+
+  # Contract work renders inside Industry Experience rather than its own
+  # section, and sits above NeuroAI because it is the more active of the two.
+  # `contract_work: false` keeps it out of the (now conditional) Selected
+  # Contract Work section while leaving that machinery available.
+  - organization: "Independent Research Contractor"
+    role: "Frontier AI labs"
+    contract_work: false
+    location: null
+    start: "2025"
+    end: "Present"
+    cv_order: 6
+    resume_order: 4
+    cv_visible: true
+    resume_visible: true
+    bullets:
+      - "Code and mathematics contributions across agentic workflow design, task and capability evaluation, reasoning assessment, model safety, and red-teaming."
+
+  # Held to one line: the role is stated plainly without framing the venture's
+  # scope or direction.
+  - organization: NeuroAI LLC
+    role:
+    location: neuroai.health
+    location_url: https://neuroai.health
+    start: March 2026
+    end: Present
+    cv_order: 7
+    resume_order: 5
+    cv_visible: true
+    resume_visible: true
+    bullets:
+      - "Early-stage clinical-AI venture. Leading model development and deployment infrastructure."
+
+  # The Shu Lab is the anchor research block, split at the degree boundary:
+  # the undergraduate stint carries the body of work, and the affiliate stint
+  # below carries only what is still open. Splitting rather than retitling
+  # keeps "Undergraduate Researcher" accurate to the years it was true.
+  # Both live under "Research Experience" on the CV (a separate section from
+  # Industry Experience) and under "Experience" on the résumé. The template
+  # handles the section-header difference.
+  - organization: Shu Laboratory, Brown University Department of Neurology
+    role: Undergraduate Researcher and Technical Lead
+    location: Providence, RI
+    start: October 2023
+    end: May 2026
+    cv_section: research # forces this into "Research Experience" on CV
+    cv_order: 2
+    resume_order: 2
+    cv_visible: true
+    resume_visible: true
+    # Preamble paragraph only rendered on CV; résumé jumps straight to bullets.
+    cv_preamble: "Research with Dr.~Liqi Shu spanning clinical machine learning, movement-disorder kinematic analysis, and claims-based outcome prediction. Two distinct research threads:"
+    bullets:
+      - "Technical lead on \\textbf{NeuroPose}, a 3D pose-estimation and kinematic-analysis system for neurological-recovery research. Built end-to-end pipeline: Python/TensorFlow deep-learning inference, MATLAB statistical post-processing, Rust backend with HTML/JS frontends. System supports four externally-funded sub-projects; clinical-implications manuscript in preparation."
+      - "Co-lead developer on an \\textbf{order-invariant ICD-10-CM embedding model} for 30-day readmission (AUC 0.75 vs 0.66 CCI baseline) and postdischarge mortality prediction (AUC 0.86 vs 0.78), Deep Sets architecture trained on 113M+ adult hospitalizations from the HCUP Nationwide Readmissions Database. Preprint under review at \\textit{JAMIA}; public calculator deployed at \\href{https://levineuwirth.github.io/icd_embeddings/}{levineuwirth.github.io}."
+
+  # Post-graduation continuation, deliberately bulletless: the work is fully
+  # described in the block above, so this entry's only job is to show the
+  # collaboration did not stop at the degree. Winding down through 2026.
+  # (The templates skip the itemize when `bullets` is absent.)
+  - organization: Shu Laboratory, Brown University Department of Neurology
+    role: Research Affiliate
+    location: Providence, RI
+    start: May 2026
+    end: Present
+    cv_section: research
+    cv_order: 3
+    resume_order: 3
+    cv_visible: true
+    resume_visible: true
+
+  # CCV / PQC block — research experience on CV only. Not on résumé because
+  # the PQC work appears there under Projects instead.
+  - organization: Brown University Center for Computation and Visualization (CCV)
+    role: Independent Researcher
+    location: Providence, RI
+    start: March 2025
+    end: July 2026
+    cv_section: research
+    cv_order: 4
+    cv_visible: true
+    resume_visible: false
+    bullets:
+      - "Micro-architectural study of SIMD contributions to lattice-based post-quantum cryptography (ML-KEM / Kyber) on x86-64 AVX2, conducted on Brown's OSCAR HPC cluster with staff support. Phase 1 released as a technical report (see Publications)."

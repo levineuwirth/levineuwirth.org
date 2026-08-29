@@ -1,0 +1,18 @@
+# Daily trigger for archive-check.service. See that unit's header for
+# the install commands.
+
+[Unit]
+Description=Daily levineuwirth.org link-rot scan
+
+[Timer]
+# Daily: rot needs 3 consecutive fails spanning >=14 days, so a daily
+# scan gives the design's minimum detection latency (14 days) at one
+# polite HEAD per cited host per day. Persistent=true fires a missed
+# scan at the next login; the canary guard in archive.py makes a fire
+# while offline harmless (scan skipped, state untouched).
+OnCalendar=*-*-* 12:00
+RandomizedDelaySec=30min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

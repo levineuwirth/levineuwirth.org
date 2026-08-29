@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 24" fill="currentColor">
+  <rect x="20" y="11.5" width="80" height="1"/>
+  <circle cx="106" cy="12" r="1.5"/>
+  <path fill-rule="evenodd" d="M120 4 L 126 12 L 120 20 L 114 12 Z M120 8.5 L 123 12 L 120 15.5 L 117 12 Z"/>
+  <circle cx="134" cy="12" r="1.5"/>
+  <rect x="140" y="11.5" width="80" height="1"/>
+</svg>

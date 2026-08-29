@@ -1,0 +1,21 @@
+<div class="photography-controls" role="toolbar" aria-label="Browsing mode">
+    <div class="photography-mode-toggle" role="tablist" aria-label="Photography view mode">
+        <a class="mode-btn"           role="tab" data-mode="masonry"       href="/photography/"     aria-pressed="false" aria-label="Masonry view">Masonry</a>
+        <a class="mode-btn is-active" role="tab" data-mode="grid"          href="/photography/"     aria-pressed="true"  aria-label="Uniform grid view">Grid</a>
+        <!-- Chronological is retired for now, not removed: with a corpus shot
+             mostly in one orientation it read as a wider masonry, and grid
+             plus masonry already cover scanning and reading. The CSS mode and
+             the JS VALID_MODES entry are both intact, so restoring the control
+             is uncommenting this line.
+        <a class="mode-btn"           role="tab" data-mode="chronological" href="/photography/"     aria-pressed="false" aria-label="Chronological view">Chronological</a>
+        -->
+        $if(is-series)$
+        <!-- Series only. On the section landing the grid holds one card per
+             series, so a slideshow there would play a handful of covers
+             rather than photographs — the control implies a sequence the
+             page does not have. -->
+        <button class="mode-btn" type="button" data-mode="slideshow" aria-label="Play as a slideshow">Slideshow</button>
+        $endif$
+        <a class="mode-btn"           role="tab" data-mode="map"           href="/photography/map/" aria-pressed="false" aria-label="Map view">Map</a>
+    </div>
+</div>

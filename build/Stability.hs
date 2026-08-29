@@ -1,0 +1,361 @@
+{-# LANGUAGE GHC2021 #-}
+{-# LANGUAGE OverloadedStrings #-}
+-- | Stability auto-calculation, last-reviewed derivation, and version history.
+--
+-- For each content page:
+--   * If the page's source path appears in @IGNORE.txt@, the stability and
+--     last-reviewed fields fall back to the frontmatter values.
+--   * Otherwise, @git log --follow@ is used.  Stability is derived from
+--     commit count + age; last-reviewed is the most-recent commit date.
+--
+-- Version history (@$version-history$@):
+--   * Prioritises frontmatter @history:@ list (date + note pairs).
+--   * Falls back to the raw git log dates (date-only, no message).
+--   * Falls back to nothing (template shows created/modified dates instead).
+--
+-- @IGNORE.txt@ is cleared by the build target in the Makefile after
+-- every successful build, so pins are one-shot.
+module Stability
+    ( stabilityField
+    , resolveStability
+    , lastReviewedField
+    , lastReviewedIsoField
+    , versionHistoryField
+    , versionHistoryPrimaryField
+    , versionHistoryRestField
+    , versionHistoryRangeField
+    , versionHistoryRangeStartField
+    , versionHistoryRangeEndField
+    , versionHistoryCommitsField
+    ) where
+
+import Control.Exception        (catch, IOException)
+import Data.Aeson               (Value (..))
+import qualified Data.Aeson.KeyMap  as KM
+import qualified Data.Vector        as V
+import Data.List                (sortBy)
+import Data.Maybe               (catMaybes, fromMaybe, listToMaybe)
+import Data.Ord                 (comparing, Down (..))
+import Data.Time.Calendar       (Day, diffDays)
+import Data.Time.Clock          (getCurrentTime, utctDay)
+import Data.Time.Format         (parseTimeM, formatTime, defaultTimeLocale)
+import qualified Data.Text      as T
+import qualified Data.Text.IO   as TIO
+import System.Exit              (ExitCode (..))
+import System.IO                (hPutStrLn, stderr)
+import System.Process           (readProcessWithExitCode)
+import Hakyll
+
+-- ---------------------------------------------------------------------------
+-- IGNORE.txt
+-- ---------------------------------------------------------------------------
+
+-- | Read @IGNORE.txt@ (paths relative to project root, one per line).
+-- Returns an empty list when the file is absent or empty.
+--
+-- Uses strict text IO so the file handle is released immediately rather
+-- than left dangling on the lazy spine of 'readFile'.
+readIgnore :: IO [FilePath]
+readIgnore =
+    (filter (not . null) . map T.unpack . T.lines <$> TIO.readFile "IGNORE.txt")
+    `catch` \(_ :: IOException) -> return []
+
+-- ---------------------------------------------------------------------------
+-- Git helpers
+-- ---------------------------------------------------------------------------
+
+-- | Return commit dates (ISO "YYYY-MM-DD", newest-first) for @fp@.
+--
+-- Logs git's stderr to the build's stderr when present so the author
+-- isn't left in the dark when a file isn't tracked yet (the warning
+-- otherwise vanishes silently).
+gitDates :: FilePath -> IO [String]
+gitDates fp = do
+    (ec, out, err) <- readProcessWithExitCode
+        "git" ["log", "--follow", "--format=%ad", "--date=short", "--", fp] ""
+    case ec of
+        ExitFailure _ -> do
+            let msg = if null err then "git log failed" else err
+            hPutStrLn stderr $ "[Stability] " ++ fp ++ ": " ++ msg
+            return []
+        ExitSuccess   -> do
+            case err of
+                "" -> return ()
+                _  -> hPutStrLn stderr $ "[Stability] " ++ fp ++ ": " ++ err
+            return $ filter (not . null) (lines out)
+
+-- | Parse an ISO "YYYY-MM-DD" string to a 'Day'.
+parseIso :: String -> Maybe Day
+parseIso = parseTimeM True defaultTimeLocale "%Y-%m-%d"
+
+-- | Derive stability label from commit dates (newest-first), judged as
+-- of @today@.
+--
+-- Thresholds (commit count + age in days since first commit):
+--
+--   * @volatile@      — solo commit OR less than two weeks old.
+--   * @revising@      — under six commits AND under three months old.
+--   * @fairly stable@ — under sixteen commits OR under one year old.
+--   * @stable@        — under thirty-one commits OR under two years old.
+--   * @established@   — anything beyond.
+--
+-- These cliffs are deliberately conservative: a fast burst of commits
+-- early in a piece's life looks volatile until enough time has passed
+-- to demonstrate it has settled. Age is measured from the first commit
+-- to /today/, not to the most recent commit — a piece written in a
+-- one-week burst must be able to stabilise as quiet time accumulates.
+stabilityFromDates :: Day -> [String] -> String
+stabilityFromDates _ [] = "volatile"
+stabilityFromDates today dates =
+    classify (length dates) ageDays
+  where
+    -- 'last' is safe: the [] case is handled above.
+    ageDays = case parseIso (last dates) of
+        Just firstDay -> fromIntegral (diffDays today firstDay)
+        Nothing       -> 0
+    classify n age
+        | n <= 1 || age < volatileAge        = "volatile"
+        | n <= 5  && age < revisingAge       = "revising"
+        | n <= 15 || age < fairlyStableAge   = "fairly stable"
+        | n <= 30 || age < stableAge         = "stable"
+        | otherwise                          = "established"
+
+    volatileAge, revisingAge, fairlyStableAge, stableAge :: Int
+    volatileAge     = 14
+    revisingAge     = 90
+    fairlyStableAge = 365
+    stableAge       = 730
+
+-- | Format an ISO date as "%-d %B %Y" (e.g. "16 March 2026").
+fmtIso :: String -> String
+fmtIso s = case parseIso s of
+    Nothing  -> s
+    Just day -> formatTime defaultTimeLocale "%-d %B %Y" (day :: Day)
+
+-- ---------------------------------------------------------------------------
+-- Stability and last-reviewed context fields
+-- ---------------------------------------------------------------------------
+
+-- | Resolve the stability label for an item — frontmatter override
+-- when the source path is pinned via @IGNORE.txt@, else the heuristic
+-- run over @git log --follow@ on the source path.
+--
+-- Used by 'stabilityField' (which exposes the label as a context field)
+-- and by Marks.hs (which feeds the label into the epistemic figure's
+-- outer-ring tick count).
+resolveStability :: Item a -> Compiler String
+resolveStability item = do
+    let srcPath = toFilePath (itemIdentifier item)
+    meta <- getMetadata (itemIdentifier item)
+    unsafeCompiler $ do
+        ignored <- readIgnore
+        if srcPath `elem` ignored
+            then return $ fromMaybe "volatile" (lookupString "stability" meta)
+            else do
+                today <- utctDay <$> getCurrentTime
+                stabilityFromDates today <$> gitDates srcPath
+
+-- | Context field @$stability$@.
+-- Always resolves to a label; prefers frontmatter when the file is pinned.
+stabilityField :: Context String
+stabilityField = field "stability" resolveStability
+
+-- | Context field @$last-reviewed$@.
+-- Returns the formatted date of the most-recent commit, or @noResult@ when
+-- unavailable (making @$if(last-reviewed)$@ false in templates).
+lastReviewedField :: Context String
+lastReviewedField = field "last-reviewed" $ \item -> do
+    let srcPath = toFilePath (itemIdentifier item)
+    meta <- getMetadata (itemIdentifier item)
+    mDate <- unsafeCompiler $ do
+        ignored <- readIgnore
+        if srcPath `elem` ignored
+            -- Frontmatter convention is ISO; format it like the git
+            -- branch so pinned pages don't render a raw "2026-05-01".
+            then return $ fmtIso <$> lookupString "last-reviewed" meta
+            else fmap fmtIso . listToMaybe <$> gitDates srcPath
+    case mDate of
+        Nothing -> fail "no last-reviewed"
+        Just d  -> return d
+
+-- | Raw-ISO companion to @$last-reviewed$@ — for hover-popup
+-- @data-date-start@ attribute. Falls back to the frontmatter value for
+-- pinned files (which is expected to already be ISO, the same convention
+-- used by 'lastReviewedField' before it applied 'fmtIso').
+lastReviewedIsoField :: Context String
+lastReviewedIsoField = field "last-reviewed-iso" $ \item -> do
+    let srcPath = toFilePath (itemIdentifier item)
+    meta <- getMetadata (itemIdentifier item)
+    mIso <- unsafeCompiler $ do
+        ignored <- readIgnore
+        if srcPath `elem` ignored
+            then return $ lookupString "last-reviewed" meta
+            else listToMaybe <$> gitDates srcPath
+    case mIso of
+        Nothing -> fail "no last-reviewed ISO"
+        Just d  -> return d
+
+-- ---------------------------------------------------------------------------
+-- Version history
+-- ---------------------------------------------------------------------------
+
+data VHEntry = VHEntry
+    { vhDate    :: String         -- human-readable, e.g. "12 April 2026"
+    , vhDateIso :: String         -- raw ISO, e.g. "2026-04-12"
+    , vhMessage :: Maybe String   -- Nothing for git-log-only entries
+    }
+
+-- | Parse the optional frontmatter @history:@ list.
+-- Each item must have @date:@ and @note:@ keys.
+parseFmHistory :: Metadata -> [VHEntry]
+parseFmHistory meta =
+    case KM.lookup "history" meta of
+        Just (Array v) -> catMaybes (map parseOne (V.toList v))
+        _              -> []
+  where
+    parseOne (Object o) =
+        case getString =<< KM.lookup "date" o of
+            Nothing -> Nothing
+            Just d  -> Just $ VHEntry (fmtIso d) d (getString =<< KM.lookup "note" o)
+    parseOne _ = Nothing
+
+    getString (String t) = Just (T.unpack t)
+    getString _          = Nothing
+
+-- | Get git log for a file as version history entries (date-only, no message).
+gitLogHistory :: FilePath -> IO [VHEntry]
+gitLogHistory fp = map (\d -> VHEntry (fmtIso d) d Nothing) <$> gitDates fp
+
+-- | Maximum entries shown by default in the version-history footer block.
+-- The remainder is revealed via a <details>/<summary> expand affordance,
+-- matching the cap on the RELATED column.
+versionHistoryHeadCount :: Int
+versionHistoryHeadCount = 3
+
+-- | Load version-history entries for an item.
+-- Priority: frontmatter @history:@ list → git log dates → empty.
+--
+-- Entries are sorted newest-first by ISO date regardless of authored
+-- order: every consumer (primary/rest split, range fields) assumes the
+-- head is the newest entry, and the @history:@ list may be authored in
+-- either direction. Git dates already arrive newest-first; the sort is
+-- idempotent there.
+loadVersionHistory :: Item a -> Compiler [VHEntry]
+loadVersionHistory item = do
+    let srcPath = toFilePath (itemIdentifier item)
+    meta <- getMetadata (itemIdentifier item)
+    let newestFirst = sortBy (comparing (Down . vhDateIso))
+        fmEntries   = newestFirst (parseFmHistory meta)
+    if not (null fmEntries)
+        then return fmEntries
+        else unsafeCompiler (newestFirst <$> gitLogHistory srcPath)
+
+-- | Wrap a list of 'VHEntry' as Hakyll Items with unique paths so the
+-- list field works correctly inside @$for$@.
+vhItems :: String -> [VHEntry] -> [Item VHEntry]
+vhItems tag =
+    zipWith (\i e -> Item (fromFilePath (tag ++ "-" ++ show (i :: Int))) e)
+            [1..]
+
+-- | Shared sub-context for version-history entries: @$vh-date$@,
+-- @$vh-date-iso$@ (raw ISO for hover popups), and (optionally) @$vh-message$@.
+vhEntryCtx :: Context VHEntry
+vhEntryCtx =
+    field "vh-date"     (return . vhDate    . itemBody)
+    <> field "vh-date-iso" (return . vhDateIso . itemBody)
+    <> field "vh-message" (\i -> case vhMessage (itemBody i) of
+            Nothing -> fail "no message"
+            Just m  -> return m)
+
+-- | Context list field @$version-history$@ — full list, kept for callers
+-- (e.g. feeds, stats) that want every entry in one pass.
+versionHistoryField :: Context String
+versionHistoryField =
+    listFieldWith "version-history" vhEntryCtx $ \item -> do
+        entries <- loadVersionHistory item
+        if null entries
+            then fail "no version history"
+            else return (vhItems "vh" entries)
+
+-- | @$version-history-primary$@ — first 'versionHistoryHeadCount' entries,
+-- rendered outside the expand affordance.
+versionHistoryPrimaryField :: Context String
+versionHistoryPrimaryField =
+    listFieldWith "version-history-primary" vhEntryCtx $ \item -> do
+        entries <- loadVersionHistory item
+        let primary = take versionHistoryHeadCount entries
+        if null primary
+            then fail "no version history"
+            else return (vhItems "vh-p" primary)
+
+-- | @$version-history-rest$@ — overflow entries (count > head cap), which
+-- the template wraps in a <details> block. Fails (noResult) when the total
+-- fits inside the head cap, so @$if(version-history-rest)$@ collapses
+-- cleanly.
+versionHistoryRestField :: Context String
+versionHistoryRestField =
+    listFieldWith "version-history-rest" vhEntryCtx $ \item -> do
+        entries <- loadVersionHistory item
+        let rest = drop versionHistoryHeadCount entries
+        if null rest
+            then fail "no overflow"
+            else return (vhItems "vh-r" rest)
+
+-- | @$version-history-range$@ — formatted span between the oldest and
+-- newest entry. A single-date history renders as that date alone; a
+-- multi-date history renders as "OLDEST \x2013 NEWEST" (en-dash).
+-- Fails when no history is available so @$if(version-history-range)$@
+-- in the template falls back to a literal label.
+--
+-- Dates in the underlying VHEntry list are already pre-formatted
+-- ("12 April 2026") by 'parseFmHistory' / 'gitLogHistory'.
+versionHistoryRangeField :: Context String
+versionHistoryRangeField = field "version-history-range" $ \item -> do
+    entries <- loadVersionHistory item
+    case entries of
+        []          -> fail "no version-history range"
+        [one]       -> return (vhDate one)
+        es@(newest:_) ->
+            let oldest = last es           -- safe: es is non-empty by pattern
+                newD   = vhDate newest
+                oldD   = vhDate oldest
+            in  if newD == oldD
+                    then return newD
+                    else return (oldD ++ " \x2013 " ++ newD)
+
+-- | Raw-ISO start date (oldest entry) for hover-popup machine use.
+versionHistoryRangeStartField :: Context String
+versionHistoryRangeStartField =
+    field "version-history-range-start" $ \item -> do
+        entries <- loadVersionHistory item
+        case entries of
+            [] -> fail "no version-history start"
+            _  -> return (vhDateIso (last entries))
+
+-- | Raw-ISO end date (newest entry) for hover-popup machine use.
+-- Only resolves when the range spans more than one calendar day — single-day
+-- histories don't need an end attribute on the popup trigger.
+versionHistoryRangeEndField :: Context String
+versionHistoryRangeEndField =
+    field "version-history-range-end" $ \item -> do
+        entries <- loadVersionHistory item
+        case entries of
+            []          -> fail "no version-history end"
+            [_]         -> fail "single-day history — no end"
+            es@(newest:_) ->
+                let oldest = last es       -- safe: es is non-empty by pattern
+                in  if vhDateIso newest == vhDateIso oldest
+                        then fail "single-day history — no end"
+                        else return (vhDateIso newest)
+
+-- | Commit count — used by the frontmatter popup to surface the *density*
+-- of attention the piece has received. Deliberately only wired into the
+-- metadata-strip date link, not the aftermatter list (where it would be
+-- redundant next to the enumeration of entries).
+versionHistoryCommitsField :: Context String
+versionHistoryCommitsField =
+    field "version-history-commits" $ \item -> do
+        entries <- loadVersionHistory item
+        case entries of
+            [] -> fail "no commits"
+            _  -> return (show (length entries))

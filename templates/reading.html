@@ -1,0 +1,25 @@
+<div id="reading-progress" aria-hidden="true"></div>
+<header class="essay-frontmatter essay-frontmatter--reading">
+    <div class="frontmatter-mark-slot frontmatter-mark-slot--left">$monogramSvg$</div>
+    <div class="frontmatter-title">
+        <h1 class="page-title">$title$</h1>
+        $if(subtitle)$<p class="essay-subtitle">$subtitle$</p>$endif$
+        $partial("templates/partials/metadata-header.html")$
+    </div>
+</header>
+<div class="essay-tailmatter">
+    $partial("templates/partials/metadata-tail.html")$
+    $if(summary)$
+    <div class="essay-summary" data-pagefind-ignore="all">
+        <div class="essay-summary-label">Summary</div>
+        $summary$
+    </div>
+    $endif$
+</div>
+<div class="content-divider content-divider--frontmatter" aria-hidden="true">
+    <a href="/new.html" class="content-divider-logo" aria-label="New"></a>
+</div>
+<main id="markdownBody" data-pagefind-body$if(no-collapse)$ data-no-collapse$endif$>
+    $body$
+</main>
+$partial("templates/partials/page-footer.html")$

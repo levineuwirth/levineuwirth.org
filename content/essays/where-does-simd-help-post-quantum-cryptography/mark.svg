@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" role="img" aria-labelledby="mark-title-simd-pqc">
+  <title id="mark-title-simd-pqc">A scalar lane stacked above eight parallel SIMD lanes, with a lattice of points beside</title>
+  <desc>A frontispiece mark for "Where Does SIMD Help Post-Quantum Cryptography?" — scalar versus vectorized arithmetic over an ML-KEM polynomial.</desc>
+
+  <circle cx="140" cy="140" r="128" stroke="currentColor" stroke-width="0.6" fill="none"/>
+
+  <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="50" y="68" width="180" height="14" stroke-width="1.0"/>
+
+    <line x1="62"  y1="75" x2="218" y2="75" stroke-width="0.4" stroke-dasharray="3 3" opacity="0.6"/>
+  </g>
+  <circle cx="62" cy="75" r="1.4" fill="currentColor" stroke="none"/>
+
+  <g stroke="currentColor" fill="none">
+    <rect x="50" y="98" width="180" height="48" stroke-width="1.0"/>
+  </g>
+
+  <g stroke="currentColor" fill="none" stroke-width="0.5" opacity="0.7">
+    <line x1="72.5"  y1="98" x2="72.5"  y2="146"/>
+    <line x1="95"    y1="98" x2="95"    y2="146"/>
+    <line x1="117.5" y1="98" x2="117.5" y2="146"/>
+    <line x1="140"   y1="98" x2="140"   y2="146"/>
+    <line x1="162.5" y1="98" x2="162.5" y2="146"/>
+    <line x1="185"   y1="98" x2="185"   y2="146"/>
+    <line x1="207.5" y1="98" x2="207.5" y2="146"/>
+  </g>
+
+  <g fill="currentColor" stroke="none">
+    <circle cx="61.25"  cy="122" r="1.4"/>
+    <circle cx="83.75"  cy="122" r="1.4"/>
+    <circle cx="106.25" cy="122" r="1.4"/>
+    <circle cx="128.75" cy="122" r="1.4"/>
+    <circle cx="151.25" cy="122" r="1.4"/>
+    <circle cx="173.75" cy="122" r="1.4"/>
+    <circle cx="196.25" cy="122" r="1.4"/>
+    <circle cx="218.75" cy="122" r="1.4"/>
+  </g>
+
+  <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="0.8">
+    <path d="M 86 88 L 86 96"/>
+    <path d="M 83 93 L 86 96 L 89 93"/>
+    <path d="M 108 88 L 108 96"/>
+    <path d="M 105 93 L 108 96 L 111 93"/>
+    <path d="M 130 88 L 130 96"/>
+    <path d="M 127 93 L 130 96 L 133 93"/>
+    <path d="M 152 88 L 152 96"/>
+    <path d="M 149 93 L 152 96 L 155 93"/>
+    <path d="M 174 88 L 174 96"/>
+    <path d="M 171 93 L 174 96 L 177 93"/>
+    <path d="M 196 88 L 196 96"/>
+    <path d="M 193 93 L 196 96 L 199 93"/>
+  </g>
+
+  <g fill="currentColor" stroke="none">
+    <circle cx="62"  cy="180" r="1.0"/>
+    <circle cx="86"  cy="180" r="1.0"/>
+    <circle cx="110" cy="180" r="1.0"/>
+    <circle cx="134" cy="180" r="1.0"/>
+    <circle cx="158" cy="180" r="1.0"/>
+    <circle cx="182" cy="180" r="1.0"/>
+    <circle cx="206" cy="180" r="1.0"/>
+    <circle cx="62"  cy="200" r="1.0"/>
+    <circle cx="86"  cy="200" r="1.0"/>
+    <circle cx="110" cy="200" r="1.0"/>
+    <circle cx="134" cy="200" r="1.0"/>
+    <circle cx="158" cy="200" r="1.0"/>
+    <circle cx="182" cy="200" r="1.0"/>
+    <circle cx="206" cy="200" r="1.0"/>
+    <circle cx="62"  cy="220" r="1.0"/>
+    <circle cx="86"  cy="220" r="1.0"/>
+    <circle cx="110" cy="220" r="1.0"/>
+    <circle cx="134" cy="220" r="1.0"/>
+    <circle cx="158" cy="220" r="1.0"/>
+    <circle cx="182" cy="220" r="1.0"/>
+    <circle cx="206" cy="220" r="1.0"/>
+  </g>
+
+  <g stroke="currentColor" fill="none" stroke-width="0.4" opacity="0.5" stroke-linecap="round">
+    <line x1="62"  y1="180" x2="206" y2="220"/>
+    <line x1="206" y1="180" x2="62"  y2="220"/>
+  </g>
+</svg>

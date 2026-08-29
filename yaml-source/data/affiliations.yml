@@ -1,0 +1,12 @@
+affiliations:
+  - name: "NSF Award \\#2148451"
+    full_title: "A Learning Ecosystem for Teaching High School Students Machine Learning Concepts and Data Science Skills in Healthcare and Medicine"
+    role: "Undergraduate mentor / research affiliate"
+    start: October 2023
+    end: May 2025
+    # The award title and role line above already state what the project is
+    # and what the role was; this line carries only the two non-obvious
+    # qualifications a reader can't infer from them.
+    description: "Not an author on the study's research outputs; independent of the Shu laboratory research."
+    cv_visible: true
+    resume_visible: false

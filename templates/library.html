@@ -1,0 +1,140 @@
+<div id="markdownBody">
+<h1 class="page-title">Library</h1>
+
+$if(library-intro)$
+<div class="library-intro">
+$library-intro$
+</div>
+$endif$
+
+<nav class="library-see-also" aria-label="See also">
+<a href="/new.html">New</a><span class="library-see-also-sep" aria-hidden="true">·</span><a href="/commonplace.html">Commonplace</a><span class="library-see-also-sep" aria-hidden="true">·</span><a href="/colophon.html">Colophon</a><span class="library-see-also-sep" aria-hidden="true">·</span><a href="/bibliography/">Bibliography</a>
+</nav>
+
+$if(research-entries)$
+<section class="library-section">
+<h2 id="research"><span class="library-section-ornament" data-ornament="research" aria-hidden="true"></span><a href="/research/">Research</a></h2>
+<ul class="item-card-list">
+$for(research-entries)$
+$partial("templates/partials/item-card.html")$
+$endfor$
+</ul>
+$if(research-has-more)$
+<p class="library-more"><a href="/research/">More on this shelf &rarr;</a></p>
+$endif$
+</section>
+$endif$
+
+$if(nonfiction-entries)$
+<section class="library-section">
+<h2 id="nonfiction"><span class="library-section-ornament" data-ornament="nonfiction" aria-hidden="true"></span><a href="/nonfiction/">Nonfiction</a></h2>
+<ul class="item-card-list">
+$for(nonfiction-entries)$
+$partial("templates/partials/item-card.html")$
+$endfor$
+</ul>
+$if(nonfiction-has-more)$
+<p class="library-more"><a href="/nonfiction/">More on this shelf &rarr;</a></p>
+$endif$
+</section>
+$endif$
+
+$if(fiction-entries)$
+<section class="library-section">
+<h2 id="fiction"><span class="library-section-ornament" data-ornament="fiction" aria-hidden="true"></span><a href="/fiction/">Fiction</a></h2>
+<ul class="item-card-list">
+$for(fiction-entries)$
+$partial("templates/partials/item-card.html")$
+$endfor$
+</ul>
+$if(fiction-has-more)$
+<p class="library-more"><a href="/fiction/">More on this shelf &rarr;</a></p>
+$endif$
+</section>
+$endif$
+
+$if(poetry-entries)$
+<section class="library-section">
+<h2 id="poetry"><span class="library-section-ornament" data-ornament="poetry" aria-hidden="true"></span><a href="/poetry/">Poetry</a></h2>
+<ul class="item-card-list">
+$for(poetry-entries)$
+$partial("templates/partials/item-card.html")$
+$endfor$
+</ul>
+$if(poetry-has-more)$
+<p class="library-more"><a href="/poetry/">More on this shelf &rarr;</a></p>
+$endif$
+</section>
+$endif$
+
+$if(music-entries)$
+<section class="library-section">
+<h2 id="music"><span class="library-section-ornament" data-ornament="music" aria-hidden="true"></span><a href="/music/">Music</a></h2>
+<ul class="item-card-list">
+$for(music-entries)$
+$partial("templates/partials/item-card.html")$
+$endfor$
+</ul>
+$if(music-has-more)$
+<p class="library-more"><a href="/music/">More on this shelf &rarr;</a></p>
+$endif$
+</section>
+$endif$
+
+$if(photography-entries)$
+<section class="library-section">
+<h2 id="photography"><span class="library-section-ornament" data-ornament="photography" aria-hidden="true"></span><a href="/photography/">Photography</a></h2>
+<ul class="item-card-list">
+$for(photography-entries)$
+$partial("templates/partials/item-card.html")$
+$endfor$
+</ul>
+$if(photography-has-more)$
+<p class="library-more"><a href="/photography/">More on this shelf &rarr;</a></p>
+$endif$
+</section>
+$endif$
+
+$if(ai-entries)$
+<section class="library-section">
+<h2 id="ai"><span class="library-section-ornament" data-ornament="ai" aria-hidden="true"></span><a href="/ai/">AI</a></h2>
+<ul class="item-card-list">
+$for(ai-entries)$
+$partial("templates/partials/item-card.html")$
+$endfor$
+</ul>
+$if(ai-has-more)$
+<p class="library-more"><a href="/ai/">More on this shelf &rarr;</a></p>
+$endif$
+</section>
+$endif$
+
+$if(tech-entries)$
+<section class="library-section">
+<h2 id="tech"><span class="library-section-ornament" data-ornament="tech" aria-hidden="true"></span><a href="/tech/">Tech</a></h2>
+<ul class="item-card-list">
+$for(tech-entries)$
+$partial("templates/partials/item-card.html")$
+$endfor$
+</ul>
+$if(tech-has-more)$
+<p class="library-more"><a href="/tech/">More on this shelf &rarr;</a></p>
+$endif$
+</section>
+$endif$
+
+$if(miscellany-entries)$
+<section class="library-section">
+<h2 id="miscellany"><span class="library-section-ornament" data-ornament="miscellany" aria-hidden="true"></span><a href="/miscellany/">Miscellany</a></h2>
+<ul class="item-card-list">
+$for(miscellany-entries)$
+$partial("templates/partials/item-card.html")$
+$endfor$
+</ul>
+$if(miscellany-has-more)$
+<p class="library-more"><a href="/miscellany/">More on this shelf &rarr;</a></p>
+$endif$
+</section>
+$endif$
+
+</div>

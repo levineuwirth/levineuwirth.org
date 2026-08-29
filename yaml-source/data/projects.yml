@@ -1,0 +1,154 @@
+# Projects. One list, three consumers, three visibility axes:
+#
+#   cv_visible     — CV, under "Systems and Engineering Projects"
+#   resume_visible — résumé, under "Projects" (ordered by resume_order)
+#   web_visible    — the /cv/projects/ index (defaults to cv_visible)
+#
+# The web index was hand-written markdown until August 2026 and had already
+# drifted from this file (a superseded Weenix line count, dates that ended
+# where the CV said "Present"). It is now generated from here, so the three
+# surfaces cannot disagree. Individual project *writeups* stay as essays —
+# they are informal presentations, not records, and `essay` points at them.
+#
+# `group` drives the index's section headings and renders in first-appearance
+# order, like now.yaml's sections. Descriptions are LaTeX-flavoured because
+# xelatex is the first consumer; build/Vita.hs converts the same subset for
+# the web (\textbf, \textit, \texttt, \href, $\times$, --, ~, {,}).
+
+projects:
+  # ---------------------------------------------------------------------
+  # Systems & Infrastructure
+  # ---------------------------------------------------------------------
+  - name: Post-Quantum Cryptography on x86 AVX2
+    group: Systems & Infrastructure
+    essay: /essays/where-does-simd-help-post-quantum-cryptography/
+    start: March 2025
+    end: Present
+    description: "Micro-architectural study of SIMD contributions to ML-KEM / Kyber on Intel AVX2, conducted on Brown's OSCAR HPC cluster. Hand-written AVX2 assembly achieves 35--56$\\times$ speedup over compiler-optimized C for core NTT arithmetic; 5.4--7.1$\\times$ end-to-end KEM speedup. Full statistical analysis (Mann-Whitney U, Cliff's $\\delta$, bootstrapped CIs). Technical report and reproducible artifact public."
+    links:
+      - label: Report
+        href: /essays/where-does-simd-help-post-quantum-cryptography/
+      - label: Artifact
+        href: https://git.levineuwirth.org/neuwirth/where-simd-helps
+    cv_visible: false # appears under Publications instead on CV
+    resume_visible: true
+    resume_order: 1
+    web_visible: true
+
+  - name: LeVCS
+    group: Systems & Infrastructure
+    essay: /essays/levcs/
+    start: April 2026
+    end: Present
+    description: "Distributed version control system in Rust ($\\sim$10 crates, 194 passing tests at v0.1.0). BLAKE3 content addressing, signed Ed25519 authority chains for protocol-level identity and push authorization, federation as the normal operating mode with three storage modes (full / release / metadata), and a cascading per-file merge engine (textual $\\rightarrow$ format-aware $\\rightarrow$ tree-sitter $\\rightarrow$ wasm plugin) that resolves git's common false conflicts. Substrate complete; workflow surface (PR/review, issues, web UI) deferred."
+    links:
+      - label: Writeup
+        href: /essays/levcs/
+      - label: Artifact
+        href: https://git.levineuwirth.org/neuwirth/levcs
+      - label: Instance
+        href: https://levcs.levineuwirth.org
+    cv_visible: false
+    resume_visible: false
+    web_visible: true
+
+  - name: Weenix
+    group: Systems & Infrastructure
+    essay: /essays/weenix/
+    start: January 2025
+    end: August 2025
+    description: "Full Unix-like kernel in 10{,}000 lines of C: virtual memory, VFS, system calls, threading, device drivers and interrupt handlers, and file systems with custom linker support for running userspace x86-64 ELF binaries. Originally Brown CS 169 (Operating Systems with Lab), extended afterward with pipes and userspace preemption."
+    links:
+      - label: Writeup
+        href: /essays/weenix/
+    cv_visible: true
+    resume_visible: true
+    resume_order: 2
+    web_visible: true
+
+  - name: Networking Stack from Scratch
+    group: Systems & Infrastructure
+    essay: /essays/networking-stack/
+    start: October 2024
+    end: July 2025
+    description: "TCP/IP, RIP, UDP, and DNS implementations in Go, supporting file transmission of up to 1~GB across networks of up to 8 virtual machines. Extended with a fully RFC-compliant SSH implementation (2{,}000+ additional lines) supporting sustained sessions of arbitrary length."
+    links:
+      - label: Writeup
+        href: /essays/networking-stack/
+    cv_visible: true
+    resume_visible: true
+    resume_order: 3
+    web_visible: true
+
+  # ---------------------------------------------------------------------
+  # Personal — self-directed tools, not coursework or employment. Web-only:
+  # they are infrastructure I use rather than academic output, and the
+  # résumé is a full page already.
+  # ---------------------------------------------------------------------
+  - name: Pmacs
+    group: Personal
+    start: "2025"
+    end: Present
+    description: "Parallel Emacs: a Rust-cored, Lua-scripted editor in the Emacs tradition, at v1.1.0 with prebuilt binaries. The hot path (rope, buffers, views, async runtime, process supervision) is Rust; commands, keymaps, hooks, and packages are an embedded Lua VM. Partitioned into a long-lived instance and thin frontends over a typed protocol: a \\texttt{crossterm} TUI attachable over SSH with \\texttt{mosh}-style reconnect, and a GPU frontend (wgpu / winit / glyphon) that renders from a semantic projection of editor state and edits optimistically against a local CRDT replica. Buffers are optionally CRDT-backed, so both frontends can edit the same buffer concurrently."
+    links:
+      - label: Source
+        href: https://github.com/levineuwirth/pmacs
+    cv_visible: false
+    resume_visible: false
+    web_visible: true
+
+  - name: Levshell
+    group: Personal
+    start: "2026"
+    end: Present
+    description: "Wayland-targeted productivity and research shell, in daily use as my main environment. Five Rust crates over a sway/i3-ipc substrate: a capture-and-restore planner for desktop state, an event-logged store with UUIDv7 ids, a daemon whose every action is a persisted job under a global lock with rollback capsules taken before any mutating restore, and a control CLI. Currently growing from a single machine to a fabric of machines that work as one, with project resume as the hero verb."
+    cv_visible: false
+    resume_visible: false
+    web_visible: true
+
+  - name: Epiphany
+    group: Personal
+    start: "2026"
+    end: Present
+    description: "FOSS music-notation platform: a specified, deterministic, CRDT-based score model whose LaTeX specification suite is the source of truth rather than its documentation. Twelve Rust crates across two tracks — the wire format, bundle, operations, and text projection on one; the editing seam, engraving, and layout IR on the other. Work is scoped into ratified contracts with numbered pins, mutation tables, and adversarial review rounds before any code is dispatched."
+    links:
+      - label: Source
+        href: https://github.com/levineuwirth/epiphany
+    cv_visible: false
+    resume_visible: false
+    web_visible: true
+
+  # ---------------------------------------------------------------------
+  # Machine Learning & Deployed
+  # ---------------------------------------------------------------------
+  - name: ICD-10-CM outcome calculator
+    group: Machine Learning & Deployed
+    essay: /essays/beyond-comorbidity-indices/
+    start: "2025"
+    end: Present
+    description: "Public, read-only calculator for the permutation-invariant Deep Sets model underlying the paper under review at \\textit{JAMIA}. Takes a diagnosis-code set; returns 30-day readmission and postdischarge mortality predictions with Integrated-Gradients attribution."
+    links:
+      - label: Calculator
+        href: https://levineuwirth.github.io/icd_embeddings/
+      - label: Preprint
+        href: /essays/beyond-comorbidity-indices/
+      - label: Code
+        href: https://git.levineuwirth.org/neuwirth/beyond_comorbidity_indices
+    cv_visible: false # appears under Publications and the Shu Lab bullet on CV
+    resume_visible: false
+    web_visible: true
+
+  - name: NeuroPose
+    group: Machine Learning & Deployed
+    essay: /essays/neuropose/
+    start: "2023"
+    end: Present
+    description: "3D pose-estimation and kinematic-analysis system for neurological-recovery research in Liqi Shu's laboratory at Brown Neurology. Python/TensorFlow inference pipeline, MATLAB statistical post-processing, Rust backend with HTML/JS frontends. 20{,}000+ lines across four externally-funded sub-projects since 2023."
+    links:
+      - label: Writeup
+        href: /essays/neuropose/
+      - label: Artifact
+        href: https://git.levineuwirth.org/neuwirth/neuropose
+    cv_visible: false # appears via the Shu Lab bullet on CV
+    resume_visible: false
+    web_visible: true

@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" role="img" aria-labelledby="mark-title-library">
+  <title id="mark-title-library">An ex-libris bookplate — eight volumes of varied size on a shelf, with a single ribbon bookmark held between two of them</title>
+  <desc>A frontispiece mark for the Library — drawn in the ex-libris tradition. Eight vertical strokes, one per portal, of irregular height and weight; a small ribbon between two of them marks the reader's place.</desc>
+
+  <circle cx="140" cy="140" r="128" stroke="currentColor" stroke-width="0.6" fill="none"/>
+
+  <line x1="40" y1="200" x2="240" y2="200" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+
+  <g stroke="currentColor" fill="none" stroke-linecap="butt" stroke-linejoin="miter">
+
+    <line x1="58"  y1="125" x2="58"  y2="200" stroke-width="1.2"/>
+
+    <line x1="74"  y1="142" x2="74"  y2="200" stroke-width="0.8"/>
+
+    <line x1="86"  y1="118" x2="86"  y2="200" stroke-width="1.6"/>
+
+    <line x1="104" y1="135" x2="104" y2="200" stroke-width="1.0"/>
+
+    <line x1="120" y1="100" x2="120" y2="200" stroke-width="2.2"/>
+
+    <line x1="142" y1="128" x2="142" y2="200" stroke-width="1.2"/>
+
+    <line x1="158" y1="115" x2="158" y2="200" stroke-width="1.4"/>
+
+    <line x1="172" y1="138" x2="172" y2="200" stroke-width="0.6"/>
+
+    <line x1="186" y1="108" x2="186" y2="200" stroke-width="1.8"/>
+
+    <line x1="206" y1="130" x2="206" y2="200" stroke-width="1.0"/>
+
+    <line x1="222" y1="148" x2="222" y2="200" stroke-width="0.7"/>
+  </g>
+
+  <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="miter">
+    <line x1="55"  y1="125" x2="61"  y2="125" stroke-width="0.5"/>
+    <line x1="83"  y1="118" x2="89"  y2="118" stroke-width="0.5"/>
+    <line x1="116" y1="100" x2="124" y2="100" stroke-width="0.5"/>
+    <line x1="155" y1="115" x2="161" y2="115" stroke-width="0.5"/>
+    <line x1="183" y1="108" x2="189" y2="108" stroke-width="0.5"/>
+  </g>
+
+  <g stroke="currentColor" fill="none" stroke-linejoin="miter" stroke-linecap="butt">
+    <path d="M 130 100 L 130 222 L 134 216 L 138 222 L 138 100 Z" stroke-width="1.0"/>
+  </g>
+
+  <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-width="0.5" opacity="0.7">
+    <line x1="40" y1="206" x2="240" y2="206"/>
+  </g>
+
+  <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-width="0.6">
+    <line x1="60"  y1="206" x2="60"  y2="218"/>
+    <line x1="80"  y1="206" x2="80"  y2="222"/>
+    <line x1="100" y1="206" x2="100" y2="218"/>
+    <line x1="120" y1="206" x2="120" y2="225"/>
+    <line x1="140" y1="206" x2="140" y2="218"/>
+    <line x1="160" y1="206" x2="160" y2="222"/>
+    <line x1="180" y1="206" x2="180" y2="218"/>
+    <line x1="200" y1="206" x2="200" y2="225"/>
+    <line x1="220" y1="206" x2="220" y2="218"/>
+  </g>
+  <line x1="40" y1="226" x2="240" y2="226" stroke="currentColor" stroke-width="1.0" stroke-linecap="round"/>
+</svg>

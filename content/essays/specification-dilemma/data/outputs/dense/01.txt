@@ -1,0 +1,9 @@
+
+
+The Figma file is paused on slide fourteen — the navigation prototype that David spent three weeks refining, the one he's been quietly confident about. Twenty-three people are on the call. A pause stretches long enough to become its own element in the composition. David's camera is off, which means he's either checking his phone or staring at his own face in a way that makes him want to disappear. No one speaks.
+
+This is not awkwardness. Awkwardness would be a start — a signal that something in the room has weight. What happened instead is structural: the pause has nowhere to land, so it dissolves into chat threads that no one will read and private pings that say nothing. David will ship the navigation in the morning.
+
+There was a time when critique meant something because it cost something. The best critiques I received early in my career happened in person, in rooms where the air conditioning was too loud and someone's coffee had gone cold. You could feel the temperature shift when someone picked apart your logic — not their tone, which is easy to perform, but the specific quality of silence when a senior designer reconsidered their own position in real time. That awkwardness was the mechanism, not a side effect. It meant someone was willing to sit in the discomfort of being wrong alongside you.
+
+What remote work removed was not a convenience but a structure. The room held the awkwardness so that critique could be sharp, so that someone could say *this isn't working* without the labor of softening it into something digestible. Without that container, feedback becomes an act of maintenance rather than craft. It becomes the work of keeping peace in a distributed silence.

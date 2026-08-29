@@ -1,0 +1,14 @@
+{
+  "url": "https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.203.pdf",
+  "slug": "nist-fips-203",
+  "title": "FIPS 203 — Module-Lattice-Based Key-Encapsulation Mechanism Standard",
+  "type": "pdf",
+  "artifact": "document.pdf",
+  "sha256": "fe1f12f32a7e44ec9fdebbf400cda843a40b506dee676725234dc6f7923b6cac",
+  "previous-sha256": null,
+  "bytes": 1252341,
+  "archived": "2026-05-22",
+  "source-date": null,
+  "snapshot-quality": "ok",
+  "wayback": "http://web.archive.org/web/20260515100505/https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.203.pdf"
+}

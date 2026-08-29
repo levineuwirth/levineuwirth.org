@@ -1,0 +1,39 @@
+% Custom macros and section formatting.
+
+% \sectionheader — unified section header style, sans-serif, uppercase tracking,
+% thin rule beneath. Used by both templates for consistency.
+\titleformat{\section}
+  {\headerfont\large\bfseries\MakeUppercase}
+  {}{0pt}
+  {}
+  [\vspace{-0.4em}\rule{\linewidth}{0.4pt}]
+
+\titlespacing*{\section}{0pt}{1.2em}{0.6em}
+
+% \subsectionheader — for sub-entries (e.g., NeuroPose within Shu Lab).
+\titleformat{\subsection}
+  {\headerfont\normalsize\bfseries}
+  {}{0pt}
+  {}
+
+\titlespacing*{\subsection}{0pt}{0.6em}{0.2em}
+
+% \entryheader — a standard role/institution block. Two lines:
+%   Line 1: \textbf{Organization} — \textit{Role}
+%   Line 2: \small dates · location
+\newcommand{\entryheader}[4]{%
+  \noindent\textbf{#1}%
+  \ifx&#2&\else~---~\textit{#2}\fi\\[0.1em]
+  {\small\color{metagray}#3\ifx&#4&\else~\textperiodcentered~#4\fi}%
+  \par\vspace{0.2em}%
+}
+
+% \pubentry — a publication/presentation line.
+\newcommand{\pubentry}[3]{%
+  \noindent #1. \textit{#2}. {\small\color{metagray}#3}%
+  \par\vspace{0.35em}%
+}
+
+% \headerblock — document-top name and contact. Rendered differently by the
+% two templates, so the actual layout is defined there; this is just a
+% placeholder hook if we want to factor it out later.

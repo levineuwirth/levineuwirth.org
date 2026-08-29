@@ -1,0 +1,134 @@
+%% ATS-optimized résumé variant.
+%%
+%% Design priorities, in order:
+%%   1. Parses cleanly through ATS pipelines — single column, conventional
+%%      section headings ("Work Experience", "Technical Skills", etc.),
+%%      no images or boxes, no fancy typography hacks.
+%%   2. Keyword density — restores the Technical Skills section and opens
+%%      with a professional summary so keyword matchers have plenty to
+%%      grep over.
+%%   3. Readable for a human recruiter skimming the output of whatever
+%%      ATS the company uses.
+%%
+%% Page budget is unconstrained; ATS pipelines do not penalize 2 pages.
+%% The website-facing résumé (resume.tex.j2) is the 1-page artifact.
+
+\documentclass[11pt]{article}
+
+\input{templates/shared/preamble.tex}
+
+\geometry{
+  letterpaper,
+  top=1in,
+  bottom=1in,
+  left=1in,
+  right=1in
+}
+
+\input{templates/shared/commands.tex}
+
+% Ragged-right reads more naturally than full justification in short lines.
+\RaggedRight
+
+% Conventional section spacing — not tight, not loose. ATS parsers are
+% sensitive to unusual vertical rhythm; stick close to article defaults.
+\titlespacing*{\section}{0pt}{0.8em}{0.3em}
+\setlist[itemize]{
+  leftmargin=1.2em,
+  topsep=0.25em,
+  itemsep=0.2em,
+  parsep=0pt,
+  label={\small\textbullet}
+}
+\setlength{\parskip}{0.3em}
+
+% Entryheader for ATS: organization/role on one line, date/location on
+% the next. Plain black text (no metagray) because some ATS grayscale
+% conversions mangle low-contrast text.
+\renewcommand{\entryheader}[4]{%
+  \noindent
+  \textbf{#1}\ifx&#2&\else~---~\textit{#2}\fi%
+  \par
+  \vspace{-0.15em}%
+  {\small #3\ifx&#4&\else~\textperiodcentered~#4\fi}%
+  \par\vspace{0.2em}%
+}
+
+\begin{document}
+
+%% HEADER
+\begin{center}
+  {\headerfont\Large\bfseries (((personal.name)))}\\[0.25em]
+  {\small
+    \href{mailto:(((personal.email)))}{(((personal.email)))}
+    \ \textperiodcentered\
+    (((personal.phone)))
+    \ \textperiodcentered\
+    \href{(((personal.website_url)))}{(((personal.website)))}
+    ((* for link in personal.links if link.resume_visible *))
+    \ \textperiodcentered\
+    \href{(((link.href)))}{(((link.label)))}
+    ((* endfor *))
+  }
+\end{center}
+
+\vspace{0.3em}
+
+%% SUMMARY
+\section*{Summary}
+
+Computer science and mathematics researcher and engineer building autonomous AI agents, clinical machine-learning systems, and low-level cryptographic software. Summer 2025 intern at xAI contributing to training of \texttt{grok-code-fast-1}. Co-founder of NeuroAI LLC (clinical AI tooling). Undergraduate research at Brown University Department of Neurology; preprint under review at \textit{JAMA Network Open}. Independent research in post-quantum cryptography and SIMD micro-architecture, supported by Brown's HPC staff. Proficient in Python, Rust, Go, C, Assembly (x86-64 AVX2), and modern ML frameworks (PyTorch, TensorFlow).
+
+%% WORK EXPERIENCE
+\section*{Work Experience}
+
+((* for exp in (experience | selectattr('resume_visible') | sort(attribute='resume_order') | list) *))
+\entryheader{(((exp.organization)))}{(((exp.role)))}{(((exp.start)))((* if exp.end *)) -- (((exp.end)))((* endif *))}{(((exp.location or '')))}
+((* if exp.scope *))
+(((exp.scope)))
+\par\vspace{0.1em}
+((* endif *))
+((* if exp.bullets|length == 1 *))
+(((exp.bullets[0])))
+\par
+((* else *))
+\begin{itemize}
+((* for bullet in exp.bullets *))
+  \item (((bullet)))
+((* endfor *))
+\end{itemize}
+((* endif *))
+\vspace{0.3em}
+((* endfor *))
+
+%% PROJECTS
+\section*{Projects}
+
+((* for proj in (projects | selectattr('resume_visible') | sort(attribute='resume_order') | list) *))
+\noindent\textbf{(((proj.name)))} \textit{(((proj.start)))((* if proj.end *)) -- (((proj.end)))((* endif *))}. (((proj.description)))
+\par\vspace{0.3em}
+((* endfor *))
+
+%% EDUCATION
+\section*{Education}
+
+((* for edu in education if edu.resume_visible *))
+\entryheader{(((edu.institution)))}{(((edu.degree)))}{(((edu.start)))((* if edu.end *)) -- (((edu.end)))((* endif *))}{(((edu.location)))}
+((* if edu.gpa or edu.notes_resume *))
+{\small ((* if edu.gpa *))GPA (((edu.gpa))).((* endif *))((* if edu.notes_resume *)) (((edu.notes_resume)))((* endif *))}
+((* endif *))
+\vspace{0.2em}
+((* endfor *))
+
+%% TECHNICAL SKILLS — restored for ATS keyword matching.
+\section*{Technical Skills}
+
+((* for key, group in skills.items() if group.resume_visible *))
+\noindent\textbf{(((group.label))):} (((group['items'] | join(', ')))).\par\vspace{0.15em}
+((* endfor *))
+\noindent\textbf{Human Languages:}
+((* for lang in languages *))
+(((lang.name))) (((lang.level)))((* if not loop.last *)), ((* else *)).((* endif *))
+((* endfor *))
+
+\end{document}

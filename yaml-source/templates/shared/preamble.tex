@@ -1,0 +1,54 @@
+% Shared preamble: packages, fonts, page geometry.
+% Kept intentionally minimal — every package here is mainstream and stable.
+
+\usepackage{fontspec}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{ragged2e}
+\usepackage{fancyhdr}
+
+% Fonts: Source Serif/Sans if available, fall back to TeX Gyre (Termes/Heros).
+% TeX Gyre ships with every TeX Live install, so this compiles anywhere.
+% To force Source fonts on your own machine, just ensure they're installed
+% system-wide or via TeX Live's fontspec search path.
+\IfFontExistsTF{Source Serif Pro}{
+  \setmainfont[Ligatures=TeX, Numbers={Lining,Proportional}]{Source Serif Pro}
+}{
+  \setmainfont[Ligatures=TeX, Numbers={Lining,Proportional}]{TeX Gyre Termes}
+}
+
+\IfFontExistsTF{Source Sans Pro}{
+  \newfontfamily\headerfont[Ligatures=TeX, Numbers={Lining,Proportional}]{Source Sans Pro}
+}{
+  \newfontfamily\headerfont[Ligatures=TeX, Numbers={Lining,Proportional}]{TeX Gyre Heros}
+}
+
+% Black-and-white color palette. `linkcolor` stays black for print-conservative
+% output; the URL is still clickable in PDF readers.
+\definecolor{headerblack}{gray}{0.0}
+\definecolor{rulegray}{gray}{0.15}
+\definecolor{metagray}{gray}{0.35}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=black,
+  citecolor=black,
+  pdfborder={0 0 0}
+}
+
+% No paragraph indent, small inter-paragraph space.
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.35em}
+
+% Tight list defaults — itemize blocks should feel controlled, not sprawling.
+\setlist[itemize]{
+  leftmargin=1.2em,
+  topsep=0.2em,
+  itemsep=0.25em,
+  parsep=0pt,
+  label={\small\textbullet}
+}

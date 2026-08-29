@@ -1,0 +1,65 @@
+# Forgejo deployment for git.levineuwirth.org.
+#
+# Lives at /root/forgejo-server/docker-compose.yml on the VPS; this copy is
+# the tracked source, in the same spirit as nginx/ and systemd/. Until
+# August 2026 it existed only on that box, which meant the sole description
+# of how the forge was deployed was inside its own backup tarball.
+#
+#   scp forgejo/docker-compose.yml root@<vps>:/root/forgejo-server/
+#   ssh root@<vps> "cd /root/forgejo-server && docker compose up -d"
+#
+# Environment variables of the form FORGEJO__section__KEY are applied to
+# /data/gitea/conf/app.ini by the entrypoint at startup. They take effect on
+# container *recreation*, not on restart — `docker compose up -d` after an
+# edit here, not `docker restart forgejo`.
+#
+# Notes on specific settings:
+#
+#   DOMAIN / SSH_DOMAIN / ROOT_URL — these read git.yourdomain.com until
+#   2026-08-11. nginx proxied around the mistake so the site worked, but
+#   Forgejo generates clone URLs, redirects, and mail links from ROOT_URL,
+#   so all of those were wrong.
+#
+#   SSH_PORT 2222 — published on 0.0.0.0 and open on the host, but filtered
+#   by many public networks (it is unreachable from at least one Copenhagen
+#   library). Clone over HTTPS; treat SSH as the convenience path, not the
+#   dependable one.
+#
+#   3000 is bound to 127.0.0.1 deliberately: the web UI is reachable only
+#   through the host's nginx, never directly.
+#
+# The database is SQLite at forgejo-data/gitea/gitea.db. Backups are
+# systemd/forgejo-backup.{service,timer} driving tools/forgejo-backup.sh.
+
+services:
+  forgejo:
+    image: codeberg.org/forgejo/forgejo:1.21.11-0
+    container_name: forgejo
+    restart: unless-stopped
+    environment:
+      USER_UID: "1000"
+      USER_GID: "1000"
+      FORGEJO__server__DOMAIN: git.levineuwirth.org
+      FORGEJO__server__SSH_DOMAIN: git.levineuwirth.org
+      FORGEJO__server__ROOT_URL: https://git.levineuwirth.org/
+      FORGEJO__server__SSH_PORT: "2222"
+      FORGEJO__database__DB_TYPE: sqlite3
+      FORGEJO__service__DISABLE_REGISTRATION: "true"
+      FORGEJO__service__NO_REPLY_ADDRESS: noreply.git.levineuwirth.org
+      FORGEJO__actions__ENABLED: "false"
+    volumes:
+      - ./forgejo-data:/data
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "2222:22"
+      - "127.0.0.1:3000:3000" # Exposes web UI only to the local Nginx server
+    networks:
+      - proxy-net
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    cpus: 1.0
+
+networks:
+  proxy-net:
+    external: true

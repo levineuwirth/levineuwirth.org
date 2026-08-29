@@ -1,0 +1,114 @@
+\documentclass[10pt]{extarticle}
+
+\input{templates/shared/preamble.tex}
+
+% 10.5pt body via extarticle + renewcommand approach.
+% extarticle supports 8pt-20pt in 0.5pt increments; we set via class option
+% above to 10pt then bump with \fontsize locally. Cleaner: just use 11pt
+% class option with compensating \linespread. Simplest approach below:
+\renewcommand{\normalsize}{\fontsize{10.5}{12.5}\selectfont}
+\normalsize
+
+\geometry{
+  letterpaper,
+  top=0.5in,
+  bottom=0.5in,
+  left=0.7in,
+  right=0.7in
+}
+
+\input{templates/shared/commands.tex}
+
+% Ragged-right to prevent awkward word-spacing from full justification.
+\RaggedRight
+
+% Résumé spacing: tightened for one-page fit.
+\titlespacing*{\section}{0pt}{0.4em}{0.15em}
+\setlist[itemize]{
+  leftmargin=1.2em,
+  topsep=0.1em,
+  itemsep=0.08em,
+  parsep=0pt,
+  label={\small\textbullet}
+}
+\setlength{\parskip}{0.1em}
+
+% Looser entryheader: date/location on its own line below the org/role line.
+% This prevents awkward wrap for long org names like Shu Laboratory.
+\renewcommand{\entryheader}[4]{%
+  \noindent
+  \textbf{#1}\ifx&#2&\else~---~\textit{#2}\fi%
+  \par
+  \vspace{-0.15em}%
+  {\small\color{metagray}#3\ifx&#4&\else~\textperiodcentered~#4\fi}%
+  \par\vspace{0.15em}%
+}
+
+\begin{document}
+
+% HEADER
+\begin{center}
+  {\headerfont\Large\bfseries (((personal.name)))}\\[0.25em]
+  {\small
+    \href{mailto:(((personal.email)))}{(((personal.email)))}
+    \ \textperiodcentered\
+    (((personal.phone)))
+    \ \textperiodcentered\
+    \href{(((personal.website_url)))}{(((personal.website)))}
+    ((* for link in personal.links if link.resume_visible *))
+    \ \textperiodcentered\
+    \href{(((link.href)))}{(((link.label)))}
+    ((* endfor *))
+  }
+\end{center}
+
+\vspace{0.1em}
+
+% EXPERIENCE (ordered by resume_order)
+\section*{Experience}
+
+((* for exp in (experience | selectattr('resume_visible') | sort(attribute='resume_order') | list) *))
+\entryheader{(((exp.organization)))}{(((exp.role or '')))}{(((exp.start)))((* if exp.end *)) -- (((exp.end)))((* endif *))}{(((exp.location or '')))}
+((* if exp.scope *))
+(((exp.scope)))
+\par\vspace{0.1em}
+((* endif *))
+((* if not exp.bullets *))
+((* elif exp.bullets|length == 1 *))
+(((exp.bullets[0])))
+\par
+((* else *))
+\begin{itemize}
+((* for bullet in exp.bullets *))
+  \item (((bullet)))
+((* endfor *))
+\end{itemize}
+((* endif *))
+\vspace{0.1em}
+((* endfor *))
+
+% PROJECTS
+\section*{Projects}
+
+((* for proj in (projects | selectattr('resume_visible') | sort(attribute='resume_order') | list) *))
+\noindent\textbf{(((proj.name)))} {\small\color{metagray}\textit{(((proj.start)))((* if proj.end *)) -- (((proj.end)))((* endif *))}}. (((proj.description)))
+\par\vspace{0.1em}
+((* endfor *))
+
+% EDUCATION
+\section*{Education}
+
+((* for edu in education if edu.resume_visible *))
+\entryheader{(((edu.institution)))}{(((edu.degree)))}{(((edu.start)))((* if edu.end *)) -- (((edu.end)))((* endif *))}{(((edu.location)))}
+((* if edu.gpa or edu.notes_resume *))
+{\small ((* if edu.gpa *))GPA (((edu.gpa))).((* endif *))((* if edu.notes_resume *)) (((edu.notes_resume)))((* endif *))}
+((* endif *))
+\vspace{0.1em}
+((* endfor *))
+
+% Skills are intentionally omitted from this résumé — the projects and
+% experience entries above prove the stack more credibly than a list can.
+% A keyword-dense ATS variant can be rendered from the same YAMLs via a
+% separate template when needed.
+
+\end{document}

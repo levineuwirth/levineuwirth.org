@@ -1,0 +1,20 @@
+# Nightly trigger for forgejo-backup.service. See that unit's header for
+# the install commands.
+
+[Unit]
+Description=Nightly Forgejo backup
+
+[Timer]
+# 03:30 UTC: after any realistic evening of work, before the morning. The
+# backup does not stop the service, so the hour matters less than being
+# consistently outside the window where a push might be mid-flight.
+OnCalendar=*-*-* 03:30
+RandomizedDelaySec=20min
+# The VPS is not always up (it rebooted this morning). Persistent=true runs
+# a missed backup shortly after the next boot instead of silently skipping
+# the night — the failure mode that turns "we have nightly backups" into
+# "we had nightly backups until the reboot".
+Persistent=true
+
+[Install]
+WantedBy=timers.target

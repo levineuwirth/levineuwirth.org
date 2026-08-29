@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" role="img" aria-labelledby="mark-title-ozymandias">
+  <title id="mark-title-ozymandias">A half-buried fluted column on a desert horizon, with a low sun-disk behind</title>
+  <desc>A frontispiece mark for "Ozymandias: A Static Site Framework".</desc>
+
+  <circle cx="140" cy="140" r="128" stroke="currentColor" stroke-width="0.6" fill="none"/>
+
+  <circle cx="140" cy="155" r="34" stroke="currentColor" stroke-width="1.0" fill="none"/>
+
+  <line x1="32" y1="180" x2="248" y2="180" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+
+  <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 110 100 L 168 96 L 172 110 L 106 114 Z" stroke-width="1.4"/>
+    <line x1="108" y1="107" x2="170" y2="103" stroke-width="1.4"/>
+
+    <line x1="118" y1="114" x2="120" y2="180" stroke-width="1.4"/>
+    <line x1="160" y1="110" x2="162" y2="180" stroke-width="1.4"/>
+
+    <line x1="128" y1="116" x2="130" y2="180" stroke-width="0.6"/>
+    <line x1="138" y1="115" x2="140" y2="180" stroke-width="0.6"/>
+    <line x1="148" y1="114" x2="150" y2="180" stroke-width="0.6"/>
+  </g>
+
+  <path d="M 32 180 Q 70 196 110 188 T 180 192 T 248 184" stroke="currentColor" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+  <path d="M 50 180 Q 80 210 140 205 T 230 198" stroke="currentColor" stroke-width="0.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+
+  <g fill="currentColor" stroke="none">
+    <circle cx="80"  cy="220" r="0.8"/>
+    <circle cx="200" cy="225" r="0.8"/>
+    <circle cx="155" cy="235" r="0.8"/>
+    <circle cx="100" cy="240" r="0.8"/>
+    <circle cx="180" cy="245" r="0.8"/>
+  </g>
+</svg>

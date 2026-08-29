@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd">
+  <path d="M7 7 L17 7 L17 17 L7 17 Z M9.5 9.5 L14.5 9.5 L14.5 14.5 L9.5 14.5 Z"/>
+  <rect x="3" y="9" width="4" height="1"/>
+  <rect x="3" y="11.5" width="4" height="1"/>
+  <rect x="3" y="14" width="4" height="1"/>
+  <rect x="17" y="9" width="4" height="1"/>
+  <rect x="17" y="11.5" width="4" height="1"/>
+  <rect x="17" y="14" width="4" height="1"/>
+  <rect x="9" y="3" width="1" height="4"/>
+  <rect x="11.5" y="3" width="1" height="4"/>
+  <rect x="14" y="3" width="1" height="4"/>
+  <rect x="9" y="17" width="1" height="4"/>
+  <rect x="11.5" y="17" width="1" height="4"/>
+  <rect x="14" y="17" width="1" height="4"/>
+</svg>

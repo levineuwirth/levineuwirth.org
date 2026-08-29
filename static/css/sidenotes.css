@@ -1,0 +1,252 @@
+/* sidenotes.css — Inline sidenote layout.
+   The Haskell Sidenotes filter converts Pandoc footnotes to:
+     <sup class="sidenote-ref"><a href="#sn-N">N</a></sup>
+     <span class="sidenote" id="sn-N"><sup class="sidenote-num">N</sup> …</span>
+
+   Layout strategy
+   ───────────────
+   On wide viewports (≥ 1500px) the sidenote <span> is positioned
+   absolutely relative to #markdownBody (which is position: relative).
+   We do NOT use float because float with negative margin is unreliable
+   across browsers when the float's margin box is effectively zero-width;
+   it tends to wrap below the paragraph rather than escaping to the right.
+
+   position: absolute with no explicit top/bottom uses the "hypothetical
+   static position" — the spot the element would occupy if position: static.
+   For an inline <span> inside a <p>, this is roughly the line containing
+   the sidenote reference, giving correct vertical alignment without JS.
+
+   On narrow viewports the <span> is hidden and the
+   <section class="footnotes"> the Sidenotes filter appends at document
+   end is shown instead (Pandoc's own footnote section never exists —
+   the filter consumes every Note, and re-emits this fallback itself).
+*/
+
+/* ============================================================
+   SIDENOTE REFERENCE (in-text superscript)
+   ============================================================ */
+
+.sidenote-ref {
+    font-size: 0.7em;
+    line-height: 0;
+    position: relative;
+    top: -0.4em;
+    font-family: var(--font-sans);
+    font-feature-settings: normal;
+}
+
+.sidenote-ref a {
+    color: var(--text-faint);
+    text-decoration: none;
+    padding: 0 0.1em;
+    transition: color var(--transition-fast);
+}
+
+.sidenote-ref a:hover,
+.sidenote-ref.is-active a {
+    color: var(--text);
+}
+
+/* Highlight the sidenote when its ref is hovered (CSS: adjacent sibling). */
+.sidenote-ref:hover + .sidenote,
+.sidenote.is-active {
+    color: var(--text);
+}
+
+
+/* ============================================================
+   SIDENOTE SPAN
+   position: absolute anchors to #markdownBody (position: relative).
+   left: 100% + gap puts the left edge just past the right side of
+   the body column.  No top/bottom → hypothetical static position.
+   ============================================================ */
+
+.sidenote {
+    position: absolute;
+    left: calc(100% + 1.5rem);   /* 1.5rem gap from body right edge */
+    width: clamp(200px, calc(50vw - var(--body-max-width) / 2 - var(--page-padding) - 1.5rem), 320px);
+
+    font-family: var(--font-serif);
+    font-size: 0.82rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+
+    text-indent: 0;
+    font-feature-settings: normal;
+    hyphens: none;
+    hanging-punctuation: none;
+}
+
+/* Number badge inside the sidenote — inline box, not a superscript */
+.sidenote-num {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-size: 0.65em;
+    font-weight: 600;
+    line-height: 1.35;
+    vertical-align: baseline;
+    color: var(--text-faint);
+    border: 1px solid var(--border-muted);
+    border-radius: 2px;
+    padding: 0 0.3em;
+    margin-right: 0.35em;
+}
+
+/* Paragraphs injected by blocksToHtml (rendered as inline-block spans
+   to keep them valid inside the outer <span class="sidenote">) */
+.sidenote-para {
+    display: block;
+    margin: 0;
+    text-indent: 0;
+}
+
+.sidenote-para + .sidenote-para {
+    margin-top: 0.4em;
+}
+
+.sidenote a {
+    color: var(--text-muted);
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ─────────────────────────────────────────────────────────────
+   Side columns are 1fr (fluid). Sidenotes need at least
+   body(800px) + gap(24px) + sidenote(200px) + padding(48px) ≈ 1072px,
+   but a comfortable threshold is kept at 1500px so sidenotes
+   have enough room not to feel cramped.
+   ============================================================ */
+
+@media (min-width: 1500px) {
+    section.footnotes {
+        display: none;
+    }
+}
+
+@media (max-width: 1499px) {
+    .sidenote {
+        display: none;
+    }
+
+    section.footnotes {
+        display: block;
+        margin-top: 3.3rem;
+        padding-top: 1.65rem;
+        border-top: 1px solid var(--border-muted);
+    }
+}
+
+
+/* ============================================================
+   FOOTNOTES FALLBACK LIST — the section the Sidenotes filter
+   appends at document end; visible on narrow viewports only
+   (see the media queries above). Letter labels are rendered
+   explicitly because an <ol>'s automatic numbers would disagree
+   with the in-text letter refs.
+   ============================================================ */
+
+section.footnotes .footnotes-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.footnote-item {
+    position: relative;
+    padding-left: 1.5rem;
+    margin-bottom: 0.85rem;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+}
+
+.footnote-label {
+    position: absolute;
+    left: 0;
+    top: 0.15em;
+    font-family: var(--font-sans);
+    font-size: 0.75em;
+    color: var(--text-faint);
+}
+
+/* First paragraph flows on the label's line; later ones stack. */
+.footnote-item > p {
+    margin: 0 0 0.5em;
+}
+.footnote-item > p:first-of-type {
+    display: inline;
+}
+
+.footnote-back {
+    margin-left: 0.35em;
+    text-decoration: none;
+    font-family: var(--font-sans);
+    color: var(--text-faint);
+    transition: color var(--transition-fast);
+}
+
+.footnote-back:hover {
+    color: var(--text-muted);
+}
+
+
+/* ============================================================
+   MOBILE SIDENOTE POPUP
+   Bottom sheet shown when tapping a sidenote ref on narrow
+   viewports (where .sidenote is hidden).  The overlay is
+   display:none by default; sidenotes.js adds .is-open to show it.
+   No media query needed — JS only opens the popup when the
+   sidenote span is hidden, so it never fires on wide viewports.
+   ============================================================ */
+
+.sidenote-popup-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: rgba(0, 0, 0, 0.45);
+    align-items: flex-end;
+}
+
+.sidenote-popup-overlay.is-open {
+    display: flex;
+}
+
+.sidenote-popup {
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    border-radius: 0.75rem 0.75rem 0 0;
+    padding: 1.25rem 1.25rem 2.75rem;
+    width: 100%;
+    max-height: 65vh;
+    overflow-y: auto;
+    position: relative;
+    font-family: var(--font-serif);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text);
+    outline: none;
+}
+
+.sidenote-popup-close {
+    position: absolute;
+    top: 0.7rem;
+    right: 0.9rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--text-faint);
+    cursor: pointer;
+    padding: 0.1rem 0.35rem;
+}
+
+.sidenote-popup-close:hover {
+    color: var(--text);
+}
+
+/* Preserve sidenote-num badge style inside the popup */
+.sidenote-popup .sidenote-num {
+    display: inline-block;
+}

@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" role="img" aria-labelledby="mark-title-memento-mori">
+  <title id="mark-title-memento-mori">A succession of waves making toward a pebbled shore beneath a low sun</title>
+  <desc>A frontispiece mark for "Memento Mori" — drawn from Sonnet 60: "Like as the waves make towards the pebbled shore, so do our minutes hasten to their end; each changing place with that which goes before, in sequent toil all forwards do contend."</desc>
+
+  <circle cx="140" cy="140" r="128" stroke="currentColor" stroke-width="0.6" fill="none"/>
+
+  <circle cx="140" cy="74" r="22" stroke="currentColor" stroke-width="1.0" fill="none"/>
+
+  <line x1="48" y1="200" x2="232" y2="200" stroke="currentColor" stroke-width="1.0" stroke-linecap="round"/>
+
+  <g stroke="currentColor" fill="none" stroke-linecap="round">
+    <path d="M 48 196 Q 95 188 140 196 Q 185 204 232 196" stroke-width="0.4" opacity="0.35"/>
+    <path d="M 48 188 Q 95 178 140 188 Q 185 198 232 188" stroke-width="0.5" opacity="0.45"/>
+    <path d="M 48 178 Q 95 166 140 178 Q 185 190 232 178" stroke-width="0.7" opacity="0.6"/>
+    <path d="M 48 166 Q 95 152 140 166 Q 185 180 232 166" stroke-width="0.9" opacity="0.78"/>
+    <path d="M 48 152 Q 95 134 140 152 Q 185 170 232 152" stroke-width="1.2" opacity="1"/>
+  </g>
+
+  <circle cx="140" cy="152" r="1.4" fill="currentColor" stroke="none"/>
+
+  <g fill="currentColor" stroke="none">
+    <circle cx="62"  cy="206" r="0.9"/>
+    <circle cx="78"  cy="208" r="0.7"/>
+    <circle cx="92"  cy="205" r="0.8"/>
+    <circle cx="108" cy="207" r="1.1"/>
+    <circle cx="122" cy="205" r="0.7"/>
+    <circle cx="135" cy="208" r="0.9"/>
+    <circle cx="148" cy="206" r="0.8"/>
+    <circle cx="162" cy="208" r="1.0"/>
+    <circle cx="176" cy="205" r="0.7"/>
+    <circle cx="190" cy="207" r="0.9"/>
+    <circle cx="204" cy="206" r="0.8"/>
+    <circle cx="218" cy="208" r="0.7"/>
+
+    <circle cx="70"  cy="216" r="0.6"/>
+    <circle cx="100" cy="218" r="0.7"/>
+    <circle cx="128" cy="216" r="0.5"/>
+    <circle cx="156" cy="218" r="0.8"/>
+    <circle cx="182" cy="217" r="0.6"/>
+    <circle cx="210" cy="218" r="0.7"/>
+
+    <circle cx="84"  cy="227" r="0.5"/>
+    <circle cx="118" cy="228" r="0.6"/>
+    <circle cx="148" cy="226" r="0.5"/>
+    <circle cx="178" cy="229" r="0.6"/>
+    <circle cx="208" cy="227" r="0.5"/>
+  </g>
+</svg>

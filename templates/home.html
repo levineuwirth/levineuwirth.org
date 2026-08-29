@@ -1,0 +1,10 @@
+<div id="markdownBody">
+$body$
+<nav class="hp-portals">
+$for(portals)$
+<div class="hp-portal-item">
+<p><a class="hp-portal-name" href="$portal-url$">$portal-name$</a>$if(portal-tooltip)$<span class="hp-portal-dash" aria-hidden="true">—</span><span class="hp-portal-desc">$portal-tooltip$</span>$endif$</p>
+</div>
+$endfor$
+</nav>
+</div>

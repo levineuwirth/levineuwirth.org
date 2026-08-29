@@ -1,0 +1,19 @@
+# archive/removed.yaml — record of evicted archive entries.
+#
+# Append an entry here BEFORE deleting its line from manifest.yaml, then
+# run `make archive-gc`. The GC deletes only archive/<slug>/ directories
+# whose slug is recorded here; an orphaned directory absent from this file
+# is reported, never deleted. See ARCHIVE.md § Eviction & removal.
+#
+# Schema (all fields but `note` required):
+#   url:      original URL at time of removal
+#   slug:     the archive/<slug>/ directory archive-gc may delete
+#   removed:  ISO date of removal
+#   reason:   takedown | author-request | legal | quality
+#   note:     optional free-text context
+#
+# This is not a hostile-tracking list — it exists so GC knows what is safe
+# to delete, re-adding a removed URL is surfaced loudly, and the link-rot
+# scanner and `archive-suggest` skip removed works.
+
+[]

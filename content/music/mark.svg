@@ -1,0 +1,13 @@
+<svg viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mark-music-title">
+    <title id="mark-music-title">Music: staff and treble curve</title>
+    <desc>Placeholder monogram for the Music index — a five-line staff crossed by a treble-clef-derived curve, abstracted to a single sweep through the staff lines.</desc>
+    <circle cx="140" cy="140" r="128" fill="none" stroke="currentColor" stroke-width="0.6"/>
+    <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5">
+        <line x1="80" y1="110" x2="200" y2="110"/>
+        <line x1="80" y1="125" x2="200" y2="125"/>
+        <line x1="80" y1="140" x2="200" y2="140"/>
+        <line x1="80" y1="155" x2="200" y2="155"/>
+        <line x1="80" y1="170" x2="200" y2="170"/>
+    </g>
+    <path d="M 140 90 Q 165 125 145 145 Q 120 165 140 185 Q 160 205 130 200" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+</svg>

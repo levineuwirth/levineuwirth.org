@@ -1,0 +1,68 @@
+# vhost.conf.example — reference vhost for levineuwirth.org.
+#
+# The live vhost on the VPS is the source of truth and lives at
+# /etc/nginx/sites-available/levineuwirth.conf. `make deploy` does not
+# touch the vhost — it only rsyncs _site/ to the document root. This
+# file exists so the canonical structure (which snippets to include,
+# in what order) is documented in the repo.
+#
+# To adopt: copy this file to /etc/nginx/sites-available/levineuwirth.conf
+# on the VPS, fill in the certificate paths, and `nginx -t && systemctl
+# reload nginx`. The three snippets it includes ship from this repo's
+# nginx/ directory and should be installed under /etc/nginx/snippets/.
+
+# ── http { } scope ──────────────────────────────────────────────────
+# popup-proxy.conf consumes a `proxy_cache_path` defined in http { }.
+# Place this directive in nginx.conf or a conf.d/ file:
+#
+#   proxy_cache_path /var/cache/nginx/popup-proxy
+#                    levels=1:2 keys_zone=popup_proxy:16m
+#                    max_size=512m inactive=60d use_temp_path=off;
+#
+# popup-proxy.conf also defines a `limit_req_zone` for PubMed; place
+# its companion zone definition in http { } as well:
+#
+#   limit_req_zone $binary_remote_addr zone=pubmed:1m rate=3r/s;
+
+# ── HTTPS server ────────────────────────────────────────────────────
+server {
+    listen 443 ssl;
+    http2  on;
+    listen [::]:443 ssl;
+
+    server_name levineuwirth.org;
+    root        /var/www/levineuwirth.org;
+    index       index.html;
+
+    ssl_certificate     /etc/letsencrypt/live/levineuwirth.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/levineuwirth.org/privkey.pem;
+
+    # Order matters: security-headers first so add_header directives
+    # propagate into the locations defined by the other snippets.
+    include snippets/security-headers.conf;
+    include snippets/static-assets.conf;
+    include snippets/popup-proxy.conf;
+    # archive.conf must come *after* security-headers.conf — it declares
+    # its own add_header inside `location ^~ /archive/`, which (per the
+    # nginx add_header inheritance rules) would otherwise drop the
+    # baseline headers within that subtree. The snippet re-includes
+    # security-headers.conf inside its location to compensate.
+    include snippets/archive.conf;
+
+    # Static-site fallback. Pretty URLs first (foo/index.html, foo.html),
+    # then 404.
+    location / {
+        try_files $uri $uri/index.html $uri.html =404;
+    }
+
+    # Custom 404. The build emits _site/404.html.
+    error_page 404 /404.html;
+}
+
+# ── HTTP → HTTPS redirect ───────────────────────────────────────────
+server {
+    listen      80;
+    listen      [::]:80;
+    server_name levineuwirth.org;
+    return      301 https://$host$request_uri;
+}

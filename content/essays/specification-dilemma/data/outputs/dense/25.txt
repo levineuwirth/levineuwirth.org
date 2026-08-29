@@ -1,0 +1,13 @@
+
+
+Minneapolis
+
+Dmitri's offer letter came through on a Tuesday in March, and his girlfriend immediately started doing the math. $165,000 base, plus equity that vesting schedule looked like a staircase to somewhere he'd never been. For a 27-year-old backend engineer who'd spent three years at a regional healthcare SaaS company paying him $92,000, the number was absurd enough that he laughed. Then he did his own math: a one-bedroom in the North Loop, student loans, a car he'd bought when gas was still cheap. He could actually see a path to saving money.
+
+The company was based in San Francisco—a fact that appeared exactly nowhere in the offer letter, which just listed "Bay Area" as the compensation band and a link to a PDF explaining how they'd adjusted for cost of labor. The PDF was fourteen pages. He'd read three of them before his phone buzzed with a calendar invite: "Compensation Philosophy Overview." The HR rep on the call talked about "market competitiveness" and "internal equity," but what she really meant was that his salary was being calculated against Minneapolis costs, not San Francisco costs. He was getting paid like he lived in the city where the company was headquartered, but his actual cost of living was a fraction of that.
+
+The contradiction didn't bother him at first. The number was still bigger than anything else on the table, and Minneapolis was where his life was—his girlfriend's job, his aging mother's proximity, the winter running habit he'd built his mental health around. He signed.
+
+Two years later, he's watching the Slack channel where new hires announce themselves. There's a pattern he can't stop noticing: engineers in Minneapolis, Chicago, Denver, get the same title and roughly the same comp, but every cohort's band creeps lower. Last month's new backend hire in Minneapolis came in at $152,000. When he asked his manager about the trajectory, the answer was vague—market adjustments, budget cycles, nothing personal. But Dmitri has started doing the math again, and this time the numbers don't work in his favor.
+
+Here's what nobody tells you about geographic arbitrage: the same infrastructure that lets a company in San Francisco hire you in Minneapolis—the remote collaboration stack, the standardized interview loops, the tight role definitions that make location feel like a detail rather than a constraint—also lets them hire someone in Belgrade for half what they pay you. Not next month. Maybe not next year. But the direction is structural, and it's been pointing this way since the first company decided that your address was a line item on a spreadsheet rather than a reason to pay you what you're worth. The forces that made this job possible are the same forces making it temporary.

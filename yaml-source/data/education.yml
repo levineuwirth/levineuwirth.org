@@ -1,0 +1,33 @@
+# Education entries, most recent first.
+education:
+  - institution: Technical University of Denmark (DTU)
+    location: Kongens Lyngby, Denmark
+    degree: MSc in Computer Science and Engineering
+    start: September 2026
+    end: expected 2028
+    notes_cv: "Intended path toward PhD upon completion."
+    notes_resume: null
+    cv_visible: true
+    resume_visible: true
+
+  - institution: Brown University
+    location: Providence, RI
+    degree: "Sc.B., Mathematics and Computer Science"
+    start: August 2022
+    end: May 2026
+    gpa: "3.8/4.0"
+    notes_cv: "Primary undergraduate advisor: D. Ellis Hershkowitz (Computer Science). Primary research supervisor: Liqi Shu, MD (Neurology, Warren Alpert Medical School)."
+    # Résumé keeps the UTRA credential only; DIS lives on the CV as its own entry.
+    notes_resume: "Brown Undergraduate Teaching and Research Award (UTRA), individual recipient, Summer 2024."
+    cv_visible: true
+    resume_visible: true
+
+  - institution: DIS Copenhagen / Københavns Universitet
+    location: Copenhagen, Denmark
+    degree: Semester abroad
+    start: Fall 2024
+    end: null
+    notes_cv: null
+    notes_resume: null
+    cv_visible: true
+    resume_visible: false # folded into Brown entry on résumé

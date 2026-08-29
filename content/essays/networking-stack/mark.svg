@@ -1,0 +1,89 @@
+<svg viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mark-title-networking-stack">
+  <title id="mark-title-networking-stack">A four-layer protocol stack with addressing arrows passing vertically through, headers nested as concentric brackets at each layer.</title>
+  <desc>Frontmatter mark for the essay "Networking Stack from Scratch".</desc>
+
+  <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- Outer roundel -->
+    <circle cx="140" cy="140" r="128" stroke-width="0.6"/>
+
+    <!-- Four protocol layers as horizontal bands, stacked.
+         Width 130, centered at x=140. Vertical band spacing: 30 px.
+         Layer order (top to bottom): Application, Transport, Internet, Link.
+         Visual encoding: stroke-style varies per layer to distinguish
+         without color and without text. -->
+
+    <!-- Layer 1: Application (e.g. SSH, DNS) — solid rule -->
+    <line x1="75" y1="80" x2="205" y2="80" stroke-width="1.2"/>
+    <line x1="75" y1="98" x2="205" y2="98" stroke-width="0.4"/>
+
+    <!-- Layer 2: Transport (TCP, UDP) — dashed rule -->
+    <line x1="75" y1="118" x2="205" y2="118" stroke-width="1.2" stroke-dasharray="6 3"/>
+    <line x1="75" y1="136" x2="205" y2="136" stroke-width="0.4"/>
+
+    <!-- Layer 3: Internet (IP, RIP) — densely-dashed rule -->
+    <line x1="75" y1="156" x2="205" y2="156" stroke-width="1.2" stroke-dasharray="2 2"/>
+    <line x1="75" y1="174" x2="205" y2="174" stroke-width="0.4"/>
+
+    <!-- Layer 4: Link — double rule -->
+    <line x1="75" y1="194" x2="205" y2="194" stroke-width="1.2"/>
+    <line x1="75" y1="198" x2="205" y2="198" stroke-width="0.6"/>
+    <line x1="75" y1="212" x2="205" y2="212" stroke-width="0.4"/>
+
+    <!-- Headers nesting: at each layer, a small bracket on the left margin
+         of the band indicates encapsulation. They get progressively wider
+         as we descend (each layer wraps the one above). -->
+    <g stroke-width="0.7">
+      <!-- Layer 1 bracket -->
+      <path d="M 88 84 L 84 84 L 84 94 L 88 94"/>
+      <!-- Layer 2 bracket -->
+      <path d="M 86 122 L 80 122 L 80 132 L 86 132"/>
+      <!-- Layer 3 bracket -->
+      <path d="M 84 160 L 76 160 L 76 170 L 84 170"/>
+      <!-- Layer 4 bracket -->
+      <path d="M 82 198 L 72 198 L 72 208 L 82 208"/>
+    </g>
+
+    <!-- Address arrows: a downward flow on the left, an upward flow on the right.
+         These are the data path — packet descending the stack on send,
+         ascending on receive. Each is interrupted at every layer with a
+         small horizontal tick (per-layer header attachment / strip). -->
+
+    <!-- Down arrow (left side): outbound -->
+    <g stroke-width="1.0">
+      <line x1="58" y1="62" x2="58" y2="226"/>
+      <!-- Arrowhead at bottom -->
+      <line x1="58" y1="226" x2="54" y2="220"/>
+      <line x1="58" y1="226" x2="62" y2="220"/>
+      <!-- Per-layer ticks crossing the arrow shaft -->
+      <line x1="54" y1="89" x2="62" y2="89"/>
+      <line x1="54" y1="127" x2="62" y2="127"/>
+      <line x1="54" y1="165" x2="62" y2="165"/>
+      <line x1="54" y1="203" x2="62" y2="203"/>
+    </g>
+
+    <!-- Up arrow (right side): inbound -->
+    <g stroke-width="1.0">
+      <line x1="222" y1="226" x2="222" y2="62"/>
+      <!-- Arrowhead at top -->
+      <line x1="222" y1="62" x2="218" y2="68"/>
+      <line x1="222" y1="62" x2="226" y2="68"/>
+      <!-- Per-layer ticks -->
+      <line x1="218" y1="89" x2="226" y2="89"/>
+      <line x1="218" y1="127" x2="226" y2="127"/>
+      <line x1="218" y1="165" x2="226" y2="165"/>
+      <line x1="218" y1="203" x2="226" y2="203"/>
+    </g>
+
+    <!-- Below the stack, two filled small circles connected by a horizontal line
+         indicating the wire / virtual machines. Two endpoints, one segment. -->
+    <g>
+      <line x1="100" y1="240" x2="180" y2="240" stroke-width="0.7"/>
+      <circle cx="100" cy="240" r="2.5" fill="currentColor" stroke="none"/>
+      <circle cx="180" cy="240" r="2.5" fill="currentColor" stroke="none"/>
+      <!-- A tiny squiggle between them indicating signal in transit -->
+      <path d="M 130 240 q 5 -3 10 0 t 10 0" stroke-width="0.5"/>
+    </g>
+
+  </g>
+</svg>

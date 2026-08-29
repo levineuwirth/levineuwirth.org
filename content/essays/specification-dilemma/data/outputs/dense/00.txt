@@ -1,0 +1,9 @@
+
+
+The thing you miss most isn't meetings. It's the sound of someone else figuring something out.
+
+Three years into remote work, I've stopped noticing the absence of conference rooms. What I notice is that my desk faces a wall. Not metaphorically—the monitor is three feet from drywall, and the only sound during "deep work" hours is the refrigerator humming in the kitchen. I've traded the ambient noise of a floor full of engineers for the compressor cycling on my refrigerator, and somewhere in that trade, I stopped learning in the way I used to learn.
+
+At my last office, I sat near a senior engineer named David who debugged out loud. This was in 2019, back when we still had an office. He wasn't performing for anyone—he simply thought audibly, and his thinking happened to be loud enough to carry across the half-empty desk area. I'd catch fragments: "so if that's null here, then... wait, no, the race condition's in the connection pool, not the handler." I'd half-listen while writing my own code, and within a week I'd internalized his debugging pattern—the way he traced null checks, the moment he switched from logging to reading source. I didn't learn this from a PR review or a pairing session; I learned it by proximity, the way you pick up a regional accent.
+
+The post will argue that remote work's real cost is not productivity metrics or team cohesion, but something more difficult to measure: the erosion of ambient professional development, those fragments of expertise that used to drift across an office and become part of your mental inventory without you noticing. The question is whether this loss matters, and if it does, what we do about it when the office isn't coming back.

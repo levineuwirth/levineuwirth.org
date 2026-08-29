@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" role="img" aria-labelledby="mark-title-asymmetric-forgetting-a2">
+  <title id="mark-title-asymmetric-forgetting-a2">A vertical chain of links that thins and fades as it rises, beside a tall ladder-scaffold that stays uniform in weight throughout, with three inward arrows touching it and one empty rung-stub extending toward the chain</title>
+  <desc>A frontispiece mark for "Asymmetric Forgetting." Both figures rise from a heavy horizontal baseline (the moment of instruction). On the left, a vertical chain of links thins to hairline as it rises — the procedure, decaying without reactivation. On the right, a ladder-scaffold of rungs between two rails stays uniform in weight throughout — the concept, persistent. Three inward arrows touch the ladder from outside the figure at irregular heights — the world's analogues reaching in to refresh the schema. One empty rung extends from the ladder toward the chain side, capped with a small open circle: the docking slot where a procedure can re-attach when re-acquired. The chain has no such reach back; the absence is the point.</desc>
+
+  <circle cx="140" cy="140" r="128" stroke="currentColor" stroke-width="0.6" fill="none"/>
+
+  <line x1="40" y1="220" x2="240" y2="220" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+
+  <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="72" cy="210" rx="8" ry="5" stroke-width="1.3"/>
+    <ellipse cx="72" cy="197" rx="5" ry="8" stroke-width="1.3"/>
+
+    <ellipse cx="72" cy="182" rx="8" ry="5" stroke-width="1.1"/>
+    <ellipse cx="72" cy="169" rx="5" ry="8" stroke-width="1.1"/>
+
+    <ellipse cx="72" cy="154" rx="8" ry="5" stroke-width="0.85"/>
+    <ellipse cx="72" cy="141" rx="5" ry="8" stroke-width="0.85"/>
+
+    <ellipse cx="72" cy="126" rx="8" ry="5" stroke-width="0.55"/>
+    <ellipse cx="72" cy="113" rx="5" ry="8" stroke-width="0.45"/>
+
+    <ellipse cx="72" cy="98"  rx="8" ry="5" stroke-width="0.3" opacity="0.5"/>
+    <ellipse cx="72" cy="86"  rx="5" ry="8" stroke-width="0.25" opacity="0.3"/>
+
+    <ellipse cx="72" cy="72"  rx="7" ry="4" stroke-width="0.2" opacity="0.15"/>
+  </g>
+
+  <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3">
+    <line x1="180" y1="220" x2="180" y2="72"/>
+    <line x1="222" y1="220" x2="222" y2="72"/>
+
+    <line x1="180" y1="206" x2="222" y2="206"/>
+    <line x1="180" y1="192" x2="222" y2="192"/>
+    <line x1="180" y1="178" x2="222" y2="178"/>
+    <line x1="180" y1="164" x2="222" y2="164"/>
+    <line x1="180" y1="150" x2="222" y2="150"/>
+    <line x1="180" y1="136" x2="222" y2="136"/>
+    <line x1="180" y1="122" x2="222" y2="122"/>
+    <line x1="180" y1="108" x2="222" y2="108"/>
+    <line x1="180" y1="94"  x2="222" y2="94"/>
+    <line x1="180" y1="80"  x2="222" y2="80"/>
+  </g>
+
+  <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="miter" stroke-width="0.9">
+    <line x1="158" y1="150" x2="180" y2="150"/>
+    <circle cx="155" cy="150" r="2.2" stroke-width="0.9" fill="none"/>
+  </g>
+
+  <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="miter" stroke-width="0.8" opacity="0.85">
+    <line x1="244" y1="94"  x2="226" y2="94"/>
+    <path d="M 230 91 L 226 94 L 230 97"/>
+
+    <line x1="244" y1="178" x2="226" y2="178"/>
+    <path d="M 230 175 L 226 178 L 230 181"/>
+
+    <line x1="244" y1="206" x2="226" y2="206"/>
+    <path d="M 230 203 L 226 206 L 230 209"/>
+  </g>
+
+</svg>

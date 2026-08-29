@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" role="img" aria-labelledby="mark-title-branch-based">
+  <title id="mark-title-branch-based">Two cones meeting at a vertex on a regular tree, with a depth-budget bracket beneath</title>
+  <desc>A frontispiece mark for "Branch-Tube Persistence and Static Coverage in Tree-Ball Geometry".</desc>
+
+  <circle cx="140" cy="140" r="128" stroke="currentColor" stroke-width="0.6" fill="none"/>
+
+  <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+
+    <line x1="140" y1="78" x2="140" y2="118" stroke-width="1.2"/>
+
+    <line x1="140" y1="118" x2="105" y2="148" stroke-width="1.0"/>
+    <line x1="140" y1="118" x2="175" y2="148" stroke-width="1.0"/>
+
+    <line x1="105" y1="148" x2="85"  y2="178" stroke-width="0.8"/>
+    <line x1="105" y1="148" x2="125" y2="178" stroke-width="0.8"/>
+    <line x1="175" y1="148" x2="155" y2="178" stroke-width="0.8"/>
+    <line x1="175" y1="148" x2="195" y2="178" stroke-width="0.8"/>
+
+    <line x1="85"  y1="178" x2="73"  y2="200" stroke-width="0.5"/>
+    <line x1="85"  y1="178" x2="97"  y2="200" stroke-width="0.5"/>
+    <line x1="125" y1="178" x2="113" y2="200" stroke-width="0.5"/>
+    <line x1="125" y1="178" x2="137" y2="200" stroke-width="0.5"/>
+    <line x1="155" y1="178" x2="143" y2="200" stroke-width="0.5"/>
+    <line x1="155" y1="178" x2="167" y2="200" stroke-width="0.5"/>
+    <line x1="195" y1="178" x2="183" y2="200" stroke-width="0.5"/>
+    <line x1="195" y1="178" x2="207" y2="200" stroke-width="0.5"/>
+  </g>
+
+  <g fill="currentColor" stroke="none">
+    <circle cx="140" cy="78"  r="2.4"/>
+    <circle cx="140" cy="118" r="1.8"/>
+    <circle cx="105" cy="148" r="1.6"/>
+    <circle cx="175" cy="148" r="1.6"/>
+    <circle cx="85"  cy="178" r="1.2"/>
+    <circle cx="125" cy="178" r="1.2"/>
+    <circle cx="155" cy="178" r="1.2"/>
+    <circle cx="195" cy="178" r="1.2"/>
+  </g>
+
+  <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-width="0.6">
+    <path d="M 105 148 Q 140 168 175 148"/>
+    <path d="M  85 178 Q 195 215 195 178"/>
+  </g>
+
+  <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="58"  y1="226" x2="222" y2="226" stroke-width="0.8"/>
+    <line x1="58"  y1="226" x2="58"  y2="220" stroke-width="0.8"/>
+    <line x1="222" y1="226" x2="222" y2="220" stroke-width="0.8"/>
+    <line x1="140" y1="226" x2="140" y2="232" stroke-width="0.8"/>
+  </g>
+</svg>

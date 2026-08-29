@@ -1,0 +1,263 @@
+/* item-card.css — shared list-page components (item cards, count toggle, See Also) */
+
+/* ============================================================
+   SEE ALSO
+   Supplementary navigation block at the top of a tag page —
+   parent, siblings, and direct children of the current scope.
+   Quieter than the home portal grid; reads as a subordinate
+   wayfinding aid rather than primary content. Content flows
+   inline (name, em-dash, description) so long descriptions
+   wrap naturally on narrow screens instead of overflowing.
+   ============================================================ */
+
+.see-also {
+    margin: 0.15rem 0 1.5rem;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+
+.see-also-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.see-also-item {
+    padding: 0.03rem 0;
+}
+
+.see-also-name {
+    color: var(--text-muted);
+    text-decoration: underline;
+    text-decoration-color: var(--border);
+    text-decoration-thickness: 0.08em;
+    text-underline-offset: 0.2em;
+    transition: color var(--transition-fast), text-decoration-color var(--transition-fast);
+}
+
+.see-also-name:hover {
+    color: var(--text);
+    text-decoration-color: var(--border-muted);
+}
+
+.see-also-dash {
+    color: var(--text-faint);
+    padding: 0 0.2em;
+    user-select: none;
+}
+
+.see-also-desc {
+    color: var(--text-faint);
+}
+
+/* Hierarchy markers — parent up, children right-and-down.
+   Subtle enough that it reads at a glance without calling attention. */
+.see-also-parent .see-also-name::before {
+    content: "↑ ";
+    color: var(--text-faint);
+}
+
+.see-also-child {
+    padding-left: 0.9rem;
+}
+
+.see-also-child .see-also-name::before {
+    content: "↳ ";
+    color: var(--text-faint);
+    padding-right: 0.1em;
+}
+
+
+
+/* ============================================================
+   COUNT CONTROL
+   ============================================================ */
+
+.list-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.75rem;
+}
+
+.list-controls-label {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    color: var(--text-faint);
+}
+
+.list-controls-options {
+    display: flex;
+    gap: 0.3rem;
+}
+
+.list-count-btn {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 0.15em 0.55em;
+    cursor: pointer;
+    transition: border-color 0.1s, color 0.1s;
+}
+
+.list-count-btn:hover {
+    border-color: var(--border-muted);
+    color: var(--text);
+}
+
+.list-count-btn.is-active {
+    border-color: var(--text-muted);
+    color: var(--text);
+    font-weight: 600;
+}
+
+/* ============================================================
+   ENTRY LIST
+   ============================================================ */
+
+.item-card-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.item-card {
+    display: flex;
+    gap: 0.9rem;
+    align-items: flex-start;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.item-card:first-child {
+    border-top: 1px solid var(--border);
+}
+
+/* ============================================================
+   KIND BADGE
+   ============================================================ */
+
+.item-card-kind {
+    font-family: var(--font-sans);
+    font-size: 0.68rem;
+    font-variant: all-small-caps;
+    letter-spacing: 0.07em;
+    color: var(--text-faint);
+    flex-shrink: 0;
+    margin-top: 0.35em;
+    min-width: 5.5rem;
+    text-align: left;
+    line-height: 1.6;
+}
+
+/* ============================================================
+   ENTRY CONTENT
+   ============================================================ */
+
+.item-card-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.item-card-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.item-card-title {
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    color: var(--text);
+    text-decoration: none;
+    line-height: 1.35;
+}
+
+.item-card-title:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+}
+
+.item-card-date {
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    color: var(--text-faint);
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.item-card-abstract {
+    font-family: var(--font-sans);
+    font-size: var(--text-size-small);
+    color: var(--text-muted);
+    margin: 0.3rem 0 0;
+    line-height: 1.55;
+    /* Clamp to two lines */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Library (and any other surface that sets $full-abstract$) renders the
+   abstract unclamped. Resetting display drops the -webkit-box flex that
+   drives the clamp; overflow reset keeps long abstracts visible. */
+.item-card-abstract.is-full {
+    display: block;
+    overflow: visible;
+}
+
+/* Revision note — italicized line under the abstract carrying the
+   most-recent 'revised:' entry's note. Muted color, smaller than
+   body, matches the card's secondary-text register. */
+.item-card-revision-note {
+    font-family: var(--font-sans);
+    font-size: 0.78rem;
+    color: var(--text-faint);
+    margin: 0.2rem 0 0;
+    line-height: 1.4;
+}
+
+/* ============================================================
+   MOBILE (≤540px)
+   The desktop layout packs [badge | title  ...  date] in a
+   single flex row. On narrow phones the date's nowrap width +
+   title min-content + gap overflows the viewport, pushing
+   titles off the right edge. Stack title-over-date and shrink
+   the badge so .item-card-main gets real room.
+   ============================================================ */
+
+@media (max-width: 540px) {
+    .item-card {
+        gap: 0.65rem;
+    }
+
+    .item-card-kind {
+        min-width: 0;
+        font-size: 0.62rem;
+    }
+
+    .item-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.15rem;
+    }
+
+    .item-card-title {
+        font-size: 0.95rem;
+        overflow-wrap: anywhere;
+    }
+
+    .item-card-date {
+        font-size: 0.68rem;
+    }
+}

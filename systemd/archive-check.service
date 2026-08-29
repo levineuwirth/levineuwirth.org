@@ -1,0 +1,20 @@
+# levineuwirth.org link-rot scan — runs `make archive-check` in the repo.
+#
+# Installed as a symlink into this repo (so edits here take effect after
+# `systemctl --user daemon-reload`):
+#
+#   systemctl --user link   ~/Repos/personal/levineuwirth.org/systemd/archive-check.service
+#   systemctl --user enable --now ~/Repos/personal/levineuwirth.org/systemd/archive-check.timer
+#
+# The scan only updates the gitignored data/archive-state.json; the next
+# `make deploy` consumes it. See ARCHIVE.md — Link-rot detection.
+
+[Unit]
+Description=levineuwirth.org link-rot scan (archive.py check)
+Documentation=file://%h/Repos/personal/levineuwirth.org/ARCHIVE.md
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/Repos/personal/levineuwirth.org
+ExecStart=/usr/bin/make archive-check
+Nice=10

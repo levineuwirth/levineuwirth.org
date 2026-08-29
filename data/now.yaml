@@ -1,0 +1,121 @@
+# Now — research-first status feed for /current.html.
+#
+# `last-updated` is the page-level temporal stamp. Bump it whenever
+# you push any change here, even a one-line note edit; the value is
+# rendered prominently and a relative-time tail ("4 days ago") is
+# computed at build time.
+#
+# `entries:` are active items. Each carries:
+#   - title    : display name
+#   - section  : free-form section key (research, engineering, …);
+#                sections render in first-appearance order
+#   - status   : accepted | in-review | revising | drafting | building |
+#                early-stage | paused. Free-form, but the listed values are
+#                the canonical ladder (closest-to-shipping → furthest) and
+#                have CSS accents. "accepted" is for a paper/talk past review
+#                and locked in for publication or presentation.
+#   - updated  : YYYY-MM-DD when this entry last moved (NOT page-stamp)
+#   - link     : optional URL (artifact, preprint, repo, etc.)
+#   - note     : optional one-sentence what's-happening-now line
+#   - priority : optional integer (default 0). Manual override on the sort
+#                order: positive floats up, negative sinks down. Use sparingly
+#                — the status ladder already captures most of the signal;
+#                priority is for "this is the headline regardless of where
+#                its status puts it" (or vice versa).
+#
+# Sort within each section: priority desc → status rank asc → updated desc.
+# Section order: first-appearance in this file. Rearrange to taste.
+#
+# `shipped:` are recently-completed items. Each carries:
+#   - title, completed (date), optional link, optional note
+# Sorted newest-first at render time. Curate by hand — items don't
+# auto-prune. Move things off the list when they stop earning the slot.
+
+last-updated: 2026-08-20
+
+entries:
+  - title: "MARS V: Zero-Knowledge Proofs for LLM Verification"
+    section: research
+    status: building
+    updated: 2026-08-20
+    priority: 1
+    link: https://caish.org/mars
+    note: "Zero-knowledge proofs for cryptographic verification of claims about LLM training, inference, and deployment, as a MARS V fellow mentored by James Petrie (FLI). Now porting from single-chip to multi-GPU, across both the mathematics and the engineering. Write-up expected October 2026."
+
+  - title: "Branch-Tube Persistence and Static Coverage in Tree-Ball Geometry"
+    section: research
+    status: revising
+    updated: 2026-08-10
+    link: /essays/branch-based-local-capture-in-tree-balls/
+    note: "Mathematics preprint on path-tube persistence, exhaustive static coverage, conditional sampling thresholds, and information loss in d-regular tree-balls."
+
+  - title: "The Annealed Critical Window for Growing-Radius Domination in Random Regular Graphs"
+    section: research
+    status: revising
+    updated: 2026-08-10
+    link: /essays/near-critical-growing-radius-domination.html
+    note: "Mathematics preprint determining the bounded annealed critical window for growing-radius domination in random regular graphs — its universal scaling function and a scalar coupon-root asymptotic expansion — resolving what an earlier near-critical version left open."
+
+  - title: "Order-Invariant ICD-10-CM Embedding (JAMIA submission)"
+    section: research
+    status: in-review
+    updated: 2026-07-10
+    link: /essays/beyond-comorbidity-indices/
+    note: "Under review at JAMIA (Journal of the American Medical Informatics Association), after moving from JAMA Network Open. Calculator deployed at levineuwirth.github.io/icd_embeddings."
+
+  - title: "SIMD / PQC, Phase 2 & 3"
+    section: research
+    status: paused
+    updated: 2026-08-10
+    link: /essays/where-does-simd-help-post-quantum-cryptography/
+    note: "Paused pending a compute move to DTU."
+
+  - title: "NeuroPose clinical-implications manuscript"
+    section: research
+    status: drafting
+    updated: 2026-04-08
+    link: /essays/neuropose/
+    note: "In preparation; target submission 2026–2027."
+
+  - title: "Magic: The Gathering reinforcement learning"
+    section: research
+    status: building
+    updated: 2026-08-10
+    note: "Reinforcement-learning agent under active development; expected late 2026."
+
+  - title: "Levshell"
+    section: engineering
+    status: building
+    updated: 2026-08-10
+    note: "Wayland-targeted productivity and research shell, in daily use as my main environment. Now growing from a single box to a fabric of machines that work as one, with project resume as the hero verb."
+
+  - title: "Pmacs"
+    section: engineering
+    status: building
+    updated: 2026-08-10
+    link: https://github.com/levineuwirth/pmacs
+    note: "v1.1.0 shipped, with prebuilt binaries. Rust core and embedded Lua VM, split into a long-lived instance and thin TUI and GPU frontends that attach over a typed protocol and edit CRDT-backed buffers concurrently."
+
+  - title: "Epiphany"
+    section: engineering
+    status: building
+    updated: 2026-08-10
+    link: https://github.com/levineuwirth/epiphany
+    note: "FOSS music-notation platform: a deterministic, CRDT-based score model whose LaTeX specification suite is the source of truth. Spec and editor tracks advancing in parallel."
+
+  - title: "Levo"
+    section: engineering
+    status: building
+    updated: 2026-08-20
+    note: "A Python-successor language designed adversarially: statically inferred without annotations, no GIL, no MRO. Spec and reference machine exist and .levo files run — but it is a conformance machine, not yet a runtime."
+
+shipped:
+  - title: "CHASE 2026 conference presentation"
+    completed: 2026-08-03
+    link: /essays/beyond-comorbidity-indices/
+    note: "Order-invariant ICD-10-CM embedding work presented at the IEEE/ACM Conference on Connected Health (CHASE)."
+
+  - title: "Where Does SIMD Help Post-Quantum Cryptography?"
+    completed: 2026-04-15
+    link: /essays/where-does-simd-help-post-quantum-cryptography/
+    note: "Phase 1 technical report and reproducible artifact. Brown CS Department."

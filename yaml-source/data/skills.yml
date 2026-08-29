@@ -1,0 +1,56 @@
+skills:
+  programming:
+    label: Programming
+    items:
+      - "Assembly (x86-64, inline SIMD)"
+      - C
+      - C++
+      - "C\\#"
+      - Go
+      - Haskell
+      - Java
+      - JavaScript
+      - Python
+      - Rust
+    cv_visible: true
+    resume_visible: true
+
+  ml_ai:
+    label: ML and AI
+    items:
+      - PyTorch
+      - TensorFlow
+      - NumPy
+      - Pandas
+      - OpenCV
+    cv_visible: true
+    resume_visible: true
+
+  tools:
+    label: Tools and platforms
+    items:
+      - Git
+      - LaTeX
+      - Linux (Arch, Debian, Gentoo)
+      - make
+      - SLURM
+      - perf
+      - Docker
+    cv_visible: true
+    resume_visible: true
+
+# Human languages — separate section on CV, folded into Skills on résumé.
+languages:
+  - name: English
+    level: native
+  - name: Spanish
+    level: C1
+  - name: German
+    level: B1
+  - name: Danish
+    level: A2
+  - name: French
+    level: A1
+
+# Research interests line — CV only; absent from résumé.
+research_interests: "AI safety; graph theory, number theory, and theoretical computer science; computer systems and high-performance computing; artificial intelligence and machine learning; reinforcement learning; deep learning; cryptography; computer vision; computer architecture; security; clinical and biomedical ML"

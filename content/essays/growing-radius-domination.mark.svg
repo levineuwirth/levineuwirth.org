@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" role="img" aria-labelledby="mark-title-growing-radius">
+  <title id="mark-title-growing-radius">The same radius-2 ball with a soft circumscribing arc, a reverse-shooting orbit of growing dots leading from a terminal wall at right back toward the root, and a printer's signature stub beneath</title>
+  <desc>A frontispiece mark for "From Path Tubes to a Near-Critical Domination Bound" — the narrative companion to the preprint. The central figure is the same radius-2 ball in the 3-regular tree used by the preprint mark, so the two marks read as a matched pair. To the right of the ball, a small vertical bar marks the terminal parameter; from there, a sequence of dots grows leftward-and-downward toward the root, each successively larger than the last, encoding the reverse-shooting orbit that reconstructs the stationary point from a terminal parameter. Beneath the ball, a small printer's signature stub with an open circle: the piece's whole point is auditable code as part of the mathematics, and the stub is the visual echo of the SHA-256 signing hash the paper insists on. The mark says: here is the ball, here is how it was found, here is the artifact of the process.</desc>
+
+  <circle cx="140" cy="140" r="128" stroke="currentColor" stroke-width="0.6" fill="none"/>
+
+  <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="140" y1="180" x2="102" y2="160" stroke-width="1.0"/>
+    <line x1="140" y1="180" x2="140" y2="154" stroke-width="1.0"/>
+    <line x1="140" y1="180" x2="178" y2="160" stroke-width="1.0"/>
+
+    <line x1="102" y1="160" x2="82"  y2="134" stroke-width="0.8"/>
+    <line x1="102" y1="160" x2="112" y2="130" stroke-width="0.8"/>
+    <line x1="140" y1="154" x2="126" y2="124" stroke-width="0.8"/>
+    <line x1="140" y1="154" x2="154" y2="124" stroke-width="0.8"/>
+    <line x1="178" y1="160" x2="168" y2="130" stroke-width="0.8"/>
+    <line x1="178" y1="160" x2="198" y2="134" stroke-width="0.8"/>
+  </g>
+
+  <g fill="currentColor" stroke="none">
+    <circle cx="140" cy="180" r="2.4"/>
+
+    <circle cx="102" cy="160" r="1.7"/>
+    <circle cx="140" cy="154" r="1.7"/>
+    <circle cx="178" cy="160" r="1.7"/>
+
+    <circle cx="82"  cy="134" r="1.3"/>
+    <circle cx="112" cy="114" r="1.3"/>
+    <circle cx="126" cy="124" r="1.3"/>
+    <circle cx="154" cy="124" r="1.3"/>
+    <circle cx="168" cy="114" r="1.3"/>
+    <circle cx="198" cy="134" r="1.3"/>
+  </g>
+
+  <path
+    d="M 70 136 Q 70 112 90 102 Q 120 92 140 92 Q 160 92 190 102 Q 210 112 210 136"
+    stroke="currentColor" stroke-width="0.5" fill="none" stroke-linecap="round"
+    stroke-dasharray="3 2" opacity="0.55"/>
+
+  <line x1="238" y1="60" x2="238" y2="100" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+
+  <g fill="currentColor" stroke="none">
+    <circle cx="234" cy="76" r="0.7"/>
+    <circle cx="224" cy="82" r="0.9"/>
+    <circle cx="212" cy="90" r="1.1"/>
+    <circle cx="198" cy="100" r="1.3"/>
+    <circle cx="182" cy="112" r="1.5"/>
+  </g>
+
+  <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-width="0.4" opacity="0.6">
+    <path d="M 232 78 L 226 80"/>
+    <path d="M 222 84 L 214 88"/>
+    <path d="M 210 92 L 200 98"/>
+    <path d="M 196 102 L 184 110"/>
+  </g>
+
+  <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="140" y1="220" x2="140" y2="234" stroke-width="0.8"/>
+    <line x1="132" y1="234" x2="148" y2="234" stroke-width="0.9"/>
+    <line x1="134" y1="238" x2="146" y2="238" stroke-width="0.7"/>
+  </g>
+
+  <circle cx="140" cy="216" r="2.2" stroke="currentColor" stroke-width="0.8" fill="none"/>
+
+</svg>

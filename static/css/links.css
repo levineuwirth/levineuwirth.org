@@ -1,0 +1,140 @@
+/* links.css — /links.html only.
+   Mirrors library.css's fine-press section + ornament treatment so the page
+   reads as a sibling to /library.html, but with a cooler "indigo" accent.
+   Loaded via $if(links)$ in templates/partials/head.html, so the palette is
+   effectively page-scoped.
+
+   Per-link brand icons (GitHub, ORCID, etc.) are NOT styled here — they're
+   stamped onto external <a>s by build/Filters/Links.hs and rendered by the
+   shared a[data-link-icon-type="svg"]::after rule in typography.css. To add
+   a new brand: drop /static/images/link-icons/<name>.svg and add a
+   `domain → name` entry to Filters/Links.hs's `domainIcon` table. */
+
+:root {
+    --links-accent:        #3a4258;
+    --links-accent-muted:  #6f7790;
+    --links-intro-ink:     #2d3344;
+}
+
+[data-theme="dark"] {
+    --links-accent:        #a9b3cc;
+    --links-accent-muted:  #7d8499;
+    --links-intro-ink:     #bcc3d6;
+}
+
+[data-theme="cappuccino"] {
+    --links-accent:        #c0c8e0;
+    --links-accent-muted:  #8e95ad;
+    --links-intro-ink:     #cdd4e8;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+        --links-accent:        #a9b3cc;
+        --links-accent-muted:  #7d8499;
+        --links-intro-ink:     #bcc3d6;
+    }
+}
+
+/* Leading prose (the paragraph at the top of content/links.md, before the
+   first <section>). Same epigraph register as .library-intro. */
+#markdownBody > p:first-of-type {
+    max-width: 32rem;
+    margin: 1.5rem 0 2.75rem;
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--links-intro-ink);
+}
+
+/* Section frame + heading — same chapter-marker rhythm as the library. */
+.links-section {
+    margin-bottom: 3rem;
+}
+
+.links-section h2 {
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
+    font-variant: all-small-caps;
+    font-feature-settings: "smcp" 1;
+    letter-spacing: 0.09em;
+    color: var(--links-accent);
+    text-transform: none;
+    font-weight: 400;
+    margin: 0 0 0.9rem 0;
+}
+
+.links-section-ornament {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    margin-right: 0.5em;
+    background-color: currentColor;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+    vertical-align: -0.12em;
+}
+
+.links-section-ornament[data-ornament="academic"] {
+    mask-image: url('/images/dingbats/academic.svg');
+    -webkit-mask-image: url('/images/dingbats/academic.svg');
+}
+.links-section-ornament[data-ornament="artistic"] {
+    mask-image: url('/images/dingbats/artistic.svg');
+    -webkit-mask-image: url('/images/dingbats/artistic.svg');
+}
+.links-section-ornament[data-ornament="code"] {
+    mask-image: url('/images/dingbats/tech.svg');
+    -webkit-mask-image: url('/images/dingbats/tech.svg');
+}
+.links-section-ornament[data-ornament="miscellaneous"] {
+    mask-image: url('/images/dingbats/trefoil.svg');
+    -webkit-mask-image: url('/images/dingbats/trefoil.svg');
+}
+.links-section-ornament[data-ornament="professional"] {
+    mask-image: url('/images/dingbats/professional.svg');
+    -webkit-mask-image: url('/images/dingbats/professional.svg');
+}
+
+/* Inter-section divider, lifted from library.css. */
+.links-section + .links-section::before {
+    content: "";
+    display: block;
+    width: 240px;
+    max-width: 60%;
+    height: 24px;
+    margin: 2.5rem auto;
+    color: var(--links-accent-muted);
+    background-color: currentColor;
+    mask-image: url('/images/dingbats/library-divider.svg');
+    -webkit-mask-image: url('/images/dingbats/library-divider.svg');
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+}
+
+/* Section list — markdown-rendered <ul>. One row per item. Bullet markers
+   suppressed; the brand icon stamped by typography.css's
+   a[data-link-icon-type="svg"]::after rule already reads as the row's
+   ornament. */
+.links-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.3rem;
+}
+
+.links-section li {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+}

@@ -1,0 +1,14 @@
+{
+  "url": "https://cr.yp.to/aes-speed.html",
+  "slug": "djb-aes-speed",
+  "title": "Cache-timing attacks on AES (cr.yp.to)",
+  "type": "html",
+  "artifact": "snapshot.html",
+  "sha256": "8da2d5aedeccf9f602e1680631aa77308683803c0cc9b04caad52c7a70c60832",
+  "previous-sha256": "0a50bf6d64b2ec08771d83be5ef47721ecbfc431e3512ff55978e76f452dbd3f",
+  "bytes": 26186,
+  "archived": "2026-05-23",
+  "source-date": null,
+  "snapshot-quality": "ok",
+  "wayback": null
+}

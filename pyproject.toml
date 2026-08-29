@@ -1,0 +1,41 @@
+[project]
+name = "levineuwirth-tools"
+version = "0.1.0"
+description = "Build-time tooling for levineuwirth.org"
+requires-python = ">=3.14"
+dependencies = [
+    # Visualization
+    "matplotlib>=3.9,<4",
+    "altair>=5.4,<6",
+    # Embedding pipeline
+    # Upper bounds are intentionally generous (next major) but always
+    # present so that an unrelated `uv sync` upgrade can't silently pull
+    # an API-breaking 4.x release. Bump deliberately when validating.
+    "sentence-transformers>=3.4,<4",
+    "faiss-cpu>=1.9,<2",
+    "numpy>=2.0,<3",
+    "beautifulsoup4>=4.12,<5",
+    # CPU-only torch — avoids pulling ~3 GB of CUDA libraries
+    "torch>=2.5,<3",
+    # Photography pipeline
+    # Pillow handles EXIF reading when exiftool is not installed (the
+    # preferred path); colorthief computes the 5-color palette strip.
+    # PyYAML is used to write the sidecar files alongside each photo.
+    "pillow>=10.0,<12",
+    "colorthief>=0.2,<1",
+    "pyyaml>=6.0,<7",
+    # Not imported by this repo: required at runtime by nomic-embed's
+    # remote modeling code (nomic-bert-2048, loaded by embed.py's page
+    # pass under trust_remote_code with a pinned code_revision).
+    "einops>=0.8.2,<1",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
+
+[tool.uv]
