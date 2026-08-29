@@ -57,6 +57,7 @@ Technical write-up expected Q4 2026, for review and publication.
 :::
 
 ::: {.work-entry-links}
+[Case study](/essays/verified-inference/) ·
 [Merged pull requests](https://github.com/JamesPetrie/VerInf/pulls?q=is%3Apr+author%3Alevineuwirth) ·
 [Upstream repository](https://github.com/JamesPetrie/VerInf) ·
 [MARS](https://caish.org/mars)
