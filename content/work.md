@@ -151,14 +151,15 @@ against 0.655 for the Charlson index. The calculator is deployed.
 ## The question
 
 ::: {.work-thesis}
-How do you establish trustworthy claims about an AI system when the system, the
-operator, and the evaluator may each be untrusted?
+Those four are one problem approached from different sides. Cryptography works
+from below, certifying properties of a computation without trusting the party
+that ran it. Evaluations work from above, measuring what a model actually does
+under conditions you control. Formal methods supply the machinery for checking a
+claim without trusting its author.
 
-Cryptography attacks this from below, certifying properties of a computation
-without trusting the party who ran it. Evaluations attack it from above,
-measuring what a model actually does under conditions you control. Formal
-methods supply the machinery for checking a claim without trusting its author.
-The four projects above are attempts on different faces of the same problem.
+The question underneath all of it: how do you establish trustworthy claims about
+an AI system when the system, the operator, and the evaluator may each be
+untrusted?
 :::
 
 ## More work
