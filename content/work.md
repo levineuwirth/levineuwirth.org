@@ -34,7 +34,7 @@ mathematics at Brown.
 ## Selected work
 
 ::: {.work-entry}
-### Verifiable LLM inference
+### [Verifiable LLM inference](/essays/verified-inference/)
 
 ::: {.work-meta}
 MARS V fellowship · Cambridge AI Safety Hub · ongoing
@@ -57,7 +57,6 @@ Technical write-up expected Q4 2026, for review and publication.
 :::
 
 ::: {.work-entry-links}
-[Case study](/essays/verified-inference/) ·
 [Merged pull requests](https://github.com/JamesPetrie/VerInf/pulls?q=is%3Apr+author%3Alevineuwirth) ·
 [Upstream repository](https://github.com/JamesPetrie/VerInf) ·
 [MARS](https://caish.org/mars)
@@ -65,7 +64,7 @@ Technical write-up expected Q4 2026, for review and publication.
 :::
 
 ::: {.work-entry}
-### Frontier-model evaluation and red-teaming
+### [Frontier-model evaluation and red-teaming](/essays/specification-dilemma/)
 
 ::: {.work-meta}
 Independent research contracts · ongoing
@@ -124,7 +123,7 @@ end-to-end, other backends are not.
 :::
 
 ::: {.work-entry}
-### Order-invariant ICD-10-CM embeddings
+### [Order-invariant ICD-10-CM embeddings](/essays/beyond-comorbidity-indices/)
 
 ::: {.work-meta}
 Research engineering · manuscript under review
@@ -144,7 +143,6 @@ against 0.655 for the Charlson index. The calculator is deployed.
 
 ::: {.work-entry-links}
 [Repository](https://github.com/levineuwirth/icd_embeddings) ·
-[Write-up](/essays/beyond-comorbidity-indices/) ·
 [Calculator](https://levineuwirth.github.io/icd_embeddings)
 :::
 :::
