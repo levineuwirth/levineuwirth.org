@@ -15,9 +15,9 @@ tags:
   - research/machine-learning
 status: "Working model"
 confidence: 85
-importance: 4
+importance: 5
 evidence: 4
-scope: broad
+scope: civilizational
 novelty: moderate
 practicality: moderate
 history:

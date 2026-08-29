@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" role="img" aria-labelledby="mark-title-verified-inference">
+  <title id="mark-title-verified-inference">Two facing brackets enclosing a sealed disc, with a single line escaping upward</title>
+  <desc>A frontispiece mark for "Verified Inference Between Adversaries" — a prover and a verifier on either side of a computation neither can inspect, from which exactly one public value emerges.</desc>
+
+  <defs>
+    <clipPath id="vi-seal">
+      <circle cx="140" cy="140" r="34"/>
+    </clipPath>
+  </defs>
+
+  <circle cx="140" cy="140" r="128" stroke="currentColor" stroke-width="0.6" fill="none"/>
+
+  <!-- Challenge ticks: the columns the verifier opens at random. -->
+  <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-width="0.6">
+    <line x1="140.0" y1="21.0" x2="140.0" y2="13.0"/>
+    <line x1="199.5" y1="36.9" x2="203.5" y2="30.0"/>
+    <line x1="243.1" y1="80.5" x2="250.0" y2="76.5"/>
+    <line x1="259.0" y1="140.0" x2="267.0" y2="140.0"/>
+    <line x1="243.1" y1="199.5" x2="250.0" y2="203.5"/>
+    <line x1="199.5" y1="243.1" x2="203.5" y2="250.0"/>
+    <line x1="140.0" y1="259.0" x2="140.0" y2="267.0"/>
+    <line x1="80.5" y1="243.1" x2="76.5" y2="250.0"/>
+    <line x1="36.9" y1="199.5" x2="30.0" y2="203.5"/>
+    <line x1="21.0" y1="140.0" x2="13.0" y2="140.0"/>
+    <line x1="36.9" y1="80.5" x2="30.0" y2="76.5"/>
+    <line x1="80.5" y1="36.9" x2="76.5" y2="30.0"/>
+  </g>
+
+  <!-- Two parties, facing but not symmetric in what they want. -->
+  <g stroke="currentColor" fill="none" stroke-linecap="round">
+    <path d="M 75 75 A 92 92 0 0 0 75 205" stroke-width="1.2"/>
+    <path d="M 205 75 A 92 92 0 0 1 205 205" stroke-width="1.2"/>
+  </g>
+
+  <!-- The witness: committed, hidden, and very large. -->
+  <g clip-path="url(#vi-seal)" stroke="currentColor" fill="none" stroke-width="0.5">
+    <line x1="104" y1="108.0" x2="176" y2="108.0"/>
+    <line x1="104" y1="112.5" x2="176" y2="112.5"/>
+    <line x1="104" y1="117.0" x2="176" y2="117.0"/>
+    <line x1="104" y1="121.5" x2="176" y2="121.5"/>
+    <line x1="104" y1="126.0" x2="176" y2="126.0"/>
+    <line x1="104" y1="130.5" x2="176" y2="130.5"/>
+    <line x1="104" y1="135.0" x2="176" y2="135.0"/>
+    <line x1="104" y1="139.5" x2="176" y2="139.5"/>
+    <line x1="104" y1="144.0" x2="176" y2="144.0"/>
+    <line x1="104" y1="148.5" x2="176" y2="148.5"/>
+    <line x1="104" y1="153.0" x2="176" y2="153.0"/>
+    <line x1="104" y1="157.5" x2="176" y2="157.5"/>
+    <line x1="104" y1="162.0" x2="176" y2="162.0"/>
+    <line x1="104" y1="166.5" x2="176" y2="166.5"/>
+    <line x1="104" y1="171.0" x2="176" y2="171.0"/>
+  </g>
+
+  <!-- The commitment enclosing it. -->
+  <g stroke="currentColor" fill="none">
+    <circle cx="140" cy="140" r="34" stroke-width="1.4"/>
+    <circle cx="140" cy="140" r="42" stroke-width="0.8"/>
+  </g>
+
+  <!-- One public value leaves. Nothing else does. -->
+  <g stroke="currentColor" fill="none" stroke-linecap="round">
+    <line x1="140" y1="98" x2="140" y2="46" stroke-width="0.9"/>
+  </g>
+  <circle cx="140" cy="42" r="2.4" fill="currentColor" stroke="none"/>
+</svg>
