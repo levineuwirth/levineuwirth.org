@@ -75,6 +75,11 @@ models, execute models against them, debug agent scaffolds when they fail, and
 analyze the failures that result. I have led environment design and evaluator
 calibration; most of it is built in [Harbor](https://github.com/harbor-framework/harbor).
 
+Calibration passes often reveal that a rubric is measuring something other than
+what the task was designed to measure: a task-design failure, not a grading one.
+I calibrate before a task is scaled, because redesigning a task is cheap and
+rescoring a finished run is not.
+
 For a similar methodology on public data, see [The Specification
 Dilemma](/essays/specification-dilemma/) — pre-registered, matched-pairs, with
 its instrumentation failures reported in full.
