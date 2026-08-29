@@ -5,8 +5,8 @@ abstract: >
   A compute operator who claims to have run a particular model can be lying, and
   the logs that would settle it are written by the party under suspicion. VerInf
   produces zero-knowledge proofs of LLM inference, bounding the information in an
-  output stream that a committed model does not account for. This is a working
-  note on what the system certifies, what it does not, and what I contributed to
+  output stream that a committed model does not account for. This living document
+  details what the system certifies, what it does not, and what I contributed to
   it during the MARS V fellowship.
 tags:
   - ai
@@ -17,7 +17,7 @@ status: "Working model"
 confidence: 85
 importance: 5
 evidence: 4
-scope: civilizational
+scope: broad
 novelty: moderate
 practicality: moderate
 history:
