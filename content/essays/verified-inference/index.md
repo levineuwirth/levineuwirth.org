@@ -37,12 +37,15 @@ models that meet certain thresholds, have been approved by regulatory boards, et
 The same problem applies; there is not any obvious way for one party to such an
 agreement to verify the claims of the other.
 
-This is not a hypothetical failure mode so much as an unresolved gap in every
-current deployment. Evaluations measure a model under conditions you
-control, saying nothing about the model served to somebody else afterward.
-Attestation binds a binary to a machine, rather than binding an output to a
-computation. What is missing is a way for an independent verifier, run on independent hardware,
-to check a claim about a computation without trusting the party that ran it, or the hardware it ran on.
+This remains an unresolved gap wherever the verifier cannot trust the operator,
+or the attestation stack the operator controls. Evaluations measure a model
+under conditions you control, and say nothing about the model served to somebody
+else afterward. Hardware-backed attestation can say a great deal about platform
+and software state — but it buys that by requiring trust in a hardware
+root-of-trust ecosystem, and it still does not yield an operator-independent
+statement about *this* computation producing *that* output. What is missing is a
+way to replace trust in the operator's execution environment with a proof that
+an independent verifier can check on hardware it controls.
 
 [VerInf](https://github.com/JamesPetrie/VerInf) is a research prototype
 addressing that gap, led by James Petrie at the Future of Life Institute. I
@@ -61,11 +64,17 @@ VerInf instead bounds the **unexplained information** in an output stream: the
 number of bits in the output that the committed model does not account for. If
 the operator swapped in a different model, the outputs it produced would be
 poorly predicted by the model it committed to, and the bound rises. A cheap
-substitution is therefore expensive to hide. Our certified statement is a conjunction of three parts held to different standards:
+substitution is therefore expensive to hide. The intended end-to-end certificate combines three pieces, held to different
+standards — and one of them is not yet integrated:
 
-- a **transcript anchor**, which binds the committed token streams to digests
-  recorded independently at generation time. This ensures proof is about the run that
-  actually happened, rather than a convenient reconstruction;
+- a **transcript anchor**, binding the committed token streams to digests
+  recorded independently at generation time, so the certificate is about the run
+  that actually happened rather than a convenient reconstruction. *The AES and
+  SHA-256 circuits for this are implemented and tested; they are not yet wired
+  end to end against recorded digests.* The demonstrated runs below are therefore
+  internally consistent — the scored tokens are the tokens the proven forward
+  pass consumed — but not yet externally anchored to a record made at generation
+  time;
 - the **forward pass**, where every claim must admit exactly one satisfying
   assignment. Slack in an intermediate value would propagate through the
   remaining layers in directions nobody can analyze;
@@ -94,11 +103,18 @@ be genuine. Their interface is a public claim list stating what kind of
 computation was performed — which reveals the model architecture, though not the
 weights.
 
-Each side trusts only its own code, and only its own hardware. 
-The verifier's trusted base is deliberately small, and it shares no code with the prover. A fault anywhere on the prover's
-side can cause a proof to fail; it cannot cause one to falsely verify. Similarly, we envision that in a setup between 
-Governments, each government would be able to use their own hardware for their verifier of the other party's proofs, and no
-trust of the datacenter in which this takes place would be required.
+Under the protocol's soundness assumptions and a correct verifier
+implementation, the prover need not be trusted for correctness: a fault on the
+prover's side causes a proof to fail rather than to falsely verify. Those are
+real assumptions, not decoration — soundness rests on the cryptographic
+primitives, the challenge generation, the verifier's own parser boundaries, and
+the per-challenge bound of the chosen configuration. The verifier's trusted base
+is deliberately small and shares no code with the prover, which narrows that
+surface without eliminating it. VerInf has not had a full security audit.
+
+The arrangement this enables between mutually distrustful parties: each runs its
+own verifier on its own hardware, and neither has to trust the datacenter where
+the proving happened.
 
 ## Results on record
 
@@ -202,13 +218,25 @@ measurement disagrees — otherwise the numbers above would be worth very little
 
 ### What is upstream, and what is not
 
-**Merged** — the dry-run profiler (manifest contract, cost model, execution DAG,
-partition scorecard) and the RMSNorm cost-model correction.
+**Merged code** — the dry-run profiler and its parts: manifest contract,
+extractor, cost model, execution DAG, partition scorecard; and the RMSNorm
+cost-model correction.
 
-**Not yet merged, landing shortly** — the calibration suite, the tape-walker's
-first run against real tapes, the measured Blackwell machine profile, and the
-B200 figures reported above. Treat those as reported-by-me until they appear in
-the pull request list.
+**Publicly reported validation** — the B200 tape extraction and the measurements
+that came out of it, recorded in the profiler pull request itself.
+
+**Pending upstream** — the calibration suite, the machine-profile tooling, and
+the remaining B200 artifacts. Until those land, treat the figures above as
+reported by me rather than independently inspectable.
+
+**On agent assistance.** Implementation was agent-assisted. I owned the research
+direction, the cost-model derivation and checking, the experimental design, the
+validation, and the review; generated code was kept only after it was tested and
+cross-checked. This is project-wide practice rather than a personal one — agent
+co-authorship is recorded on the great majority of commits in the repository,
+across contributors, as part of how the fellowship's compute is used. I mention
+it because it is visible in the commit trailers, and a reader who finds it there
+rather than here would be right to wonder why it went unsaid.
 
 ::: {.work-entry-links}
 [Merged pull requests](https://github.com/JamesPetrie/VerInf/pulls?q=is%3Apr+author%3Alevineuwirth) ·
