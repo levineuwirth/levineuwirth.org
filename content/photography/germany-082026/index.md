@@ -7,4 +7,7 @@ tags: [photography, photography/germany]
 photo: munich-283.jpg
 location: "Germany"
 captured: 2026-08-13
+history:
+  - date: "2026-08-20"
+
 ---

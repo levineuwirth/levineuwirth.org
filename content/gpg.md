@@ -1,5 +1,9 @@
 ---
 title: GPG Key
+history:
+  - date: "2026-03-25"
+  - date: "2026-03-17"
+
 ---
 
 Public key for [ln@levineuwirth.org](mailto:ln@levineuwirth.org).

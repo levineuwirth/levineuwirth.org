@@ -16,5 +16,8 @@ location: "Bénouville, France"
 #
 geo: [49.2, -0.3]
 geo-precision: city
+history:
+  - date: "2026-08-21"
+
 ---
 

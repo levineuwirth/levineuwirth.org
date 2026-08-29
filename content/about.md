@@ -1,6 +1,18 @@
 ---
 title: Levi Neuwirth — Vita
 tags: meta
+history:
+  - date: "2026-08-11"
+  - date: "2026-08-10"
+  - date: "2026-07-25"
+  - date: "2026-07-21"
+  - date: "2026-07-18"
+  - date: "2026-07-10"
+  - date: "2026-05-06"
+  - date: "2026-04-26"
+  - date: "2026-04-22"
+  - date: "2026-03-17"
+
 ---
 
 The formal record. For a less formal, more detailed introduction to who I am, see [[Me]]; for what I am actively working on this month, see [Current](/current.html).

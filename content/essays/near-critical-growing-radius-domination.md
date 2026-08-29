@@ -51,6 +51,11 @@ further-reading:
   - ZhaoHabibullaZhou
   - HabibullaQin
   - RockafellarWets
+history:
+  - date: "2026-07-27"
+  - date: "2026-07-24"
+  - date: "2026-07-22"
+
 ---
 
 # Introduction and Related Work {#sec-intro}

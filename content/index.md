@@ -1,6 +1,20 @@
 ---
 title: Levi Neuwirth
 home: true
+history:
+  - date: "2026-08-26"
+  - date: "2026-08-07"
+  - date: "2026-08-05"
+  - date: "2026-07-25"
+  - date: "2026-05-08"
+  - date: "2026-04-28"
+  - date: "2026-04-26"
+  - date: "2026-04-22"
+  - date: "2026-04-19"
+  - date: "2026-04-12"
+  - date: "2026-03-27"
+  - date: "2026-03-23"
+
 ---
 
 For as long as I can remember, I have believed that the deepest understanding comes from the insatiable urge to create something new in response to what you have encountered. I see no boundary on the forms such a response may take. Encountering a system invokes the urge to master and reshape it; hearing a masterpiece invokes the urge to write a symphony; finishing a novel becomes an unanswered question about that strange, irreplaceable power of fiction. This restless inquiry — consuming and creating in the same breath — is at the core of who I am.

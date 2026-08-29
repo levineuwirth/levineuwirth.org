@@ -24,6 +24,10 @@ confidence: proved
 evidence: 5
 peer-status: unreviewed
 result-shape: mixed
+history:
+  - date: "2026-07-24"
+  - date: "2026-07-22"
+
 ---
 
 This page is a companion to the preprint [**The Annealed Critical Window for Growing-Radius Domination in Random Regular Graphs**](/papers/growing-radius-domination-paper.pdf) — [the full theorem-and-proof form is here](/essays/near-critical-growing-radius-domination.html). A complete, runnable version — [`growing-radius-domination-demo.py`](/papers/growing-radius-domination-demo.py) — ships alongside this page, together with [the CSV of diagnostic output](/papers/growing-radius-domination-demo-output.csv) it produces.

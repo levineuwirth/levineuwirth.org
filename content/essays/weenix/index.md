@@ -14,6 +14,10 @@ importance: 1
 scope: local
 novelty: moderate
 practicality: low
+history:
+  - date: "2026-06-10"
+  - date: "2026-04-22"
+
 ---
 
 A fuller write-up follows. In the meantime, see the [projects index](/cv/projects/).

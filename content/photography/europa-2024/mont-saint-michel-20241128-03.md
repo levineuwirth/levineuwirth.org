@@ -16,5 +16,8 @@ location: "Mont-Saint-Michel, France"
 #
 geo: [48.6, -1.5]
 geo-precision: city
+history:
+  - date: "2026-08-21"
+
 ---
 

@@ -4,6 +4,11 @@ date: 2026-03-17
 abstract: The power of vanitas through vanity, herein serving to emanate motivation and tranquility.
 tags: [miscellany]
 js: scripts/memento-mori.js
+history:
+  - date: "2026-04-22"
+  - date: "2026-03-19"
+  - date: "2026-03-17"
+
 ---
 
 <figure class="poem-excerpt">

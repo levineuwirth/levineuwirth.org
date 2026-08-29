@@ -1,6 +1,11 @@
 ---
 title: Links
 links: true
+history:
+  - date: "2026-05-03"
+  - date: "2026-05-02"
+  - date: "2026-05-01"
+
 ---
 
 A directory of where else I exist on the internet. Most of it falls into one

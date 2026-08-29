@@ -1,6 +1,13 @@
 ---
 title: Search
 search: true
+history:
+  - date: "2026-06-19"
+  - date: "2026-04-12"
+  - date: "2026-03-23"
+  - date: "2026-03-19"
+  - date: "2026-03-17"
+
 ---
 
 <div class="search-tabs" role="tablist">

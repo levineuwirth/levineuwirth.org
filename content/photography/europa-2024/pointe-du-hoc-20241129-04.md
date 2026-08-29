@@ -16,5 +16,8 @@ location: "Pointe du Hoc, France"
 #
 geo: [49.4, -1.0]
 geo-precision: city
+history:
+  - date: "2026-08-21"
+
 ---
 

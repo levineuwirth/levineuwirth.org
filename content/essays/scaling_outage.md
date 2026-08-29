@@ -15,6 +15,11 @@ evidence: 1
 scope: broad
 novelty: moderate
 practicality: high
+history:
+  - date: "2026-06-10"
+  - date: "2026-04-17"
+  - date: "2026-04-15"
+
 ---
 
 Running a lab that develops frontier LLMs is somewhat like playing a game that, by all measurable metrics external, you are bound to lose. The amount of compute required to train a frontier LLM is unbelievably expensive. The expense of inference is even more astronomical. OpenAI claims at the time of this writing to have somewhere between 900 Million and 1 Billion active users, all of whom require some amount of inference cost, and some small subset of whom consume an enormous amount of compute - to use their words, this is ["commercial scale."](https://openai.com/index/accelerating-the-next-phase-ai/). This isn't to mention the immense amount of competition - there are many major players in the United States alone contributing models that push the boundaries. OpenAI may have been the first, but Anthropic, Google, Meta, xAI, and, yes, even Amazon and Bytedance are following right along. 

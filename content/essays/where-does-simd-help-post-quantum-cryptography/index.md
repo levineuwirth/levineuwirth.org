@@ -20,6 +20,11 @@ affiliation:
   - "Department of Computer Science, Brown University | https://cs.brown.edu"
 bibliography: data/simd-paper.bib
 repository: "https://git.levineuwirth.org/neuwirth/where-simd-helps"
+history:
+  - date: "2026-06-10"
+  - date: "2026-05-05"
+  - date: "2026-04-04"
+
 ---
 
 ## Introduction

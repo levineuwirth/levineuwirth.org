@@ -20,6 +20,12 @@ evidence: 5
 scope: civilizational
 novelty: innovative
 practicality: moderate
+history:
+  - date: "2026-08-29"
+  - date: "2026-06-10"
+  - date: "2026-05-02"
+  - date: "2026-05-01"
+
 ---
 
 There are at least two distinct ways to reduce the search space over which AGI^[The definition of "Artificial General Intelligence", or whether such a definition exists, is contentious. My use of the term is not intended to endorse any proposed timeline for AGI, nor to suggest that it is inevitable. It is rather to provide calibration through a hypothetical goal that clearly justifies pursuit.] will have to operate. The first involves a harmonious interaction of agent and human, not transactional in origin, not fully autonomous nor fully human-driven, but rather collaborative in nature - the agent augments the capacity of the human, just as any other good tool for thought does, by working within the scope of something well specified and ideated upon. This is not to say that the agent cannot have a place in such planning, but rather that the human is ultimately the driver of the actions and tasks, defining the scope of what is to be done in as much detail as possible without being the one to actually do it.

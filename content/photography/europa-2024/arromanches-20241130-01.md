@@ -16,5 +16,8 @@ location: "Arromanches-les-Bains, France"
 #
 geo: [49.3, -0.6]
 geo-precision: city
+history:
+  - date: "2026-08-21"
+
 ---
 

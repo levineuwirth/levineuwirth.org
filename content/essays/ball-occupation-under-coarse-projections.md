@@ -30,6 +30,9 @@ confidence: proved
 evidence: 5
 peer-status: unreviewed
 result-shape: mixed
+history:
+  - date: "2026-07-27"
+
 ---
 
 # Introduction and main conclusions

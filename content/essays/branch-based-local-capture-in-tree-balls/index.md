@@ -44,6 +44,12 @@ further-reading:
   - PralatWormald
   - BradshawHosseiniMoharStacho
   - HMG
+history:
+  - date: "2026-07-27"
+  - date: "2026-07-21"
+  - date: "2026-05-08"
+  - date: "2026-05-06"
+
 ---
 
 # Introduction

@@ -18,5 +18,8 @@ location: "Kongens Lyngby, Denmark"
 #
 geo: [55.8, 12.5]
 geo-precision: city
+history:
+  - date: "2026-08-20"
+
 ---
 

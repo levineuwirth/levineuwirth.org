@@ -18,5 +18,8 @@ location: "Furesø, Denmark"
 #
 geo: [55.8, 12.4]
 geo-precision: city
+history:
+  - date: "2026-08-20"
+
 ---
 

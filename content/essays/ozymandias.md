@@ -14,6 +14,9 @@ evidence: 3
 scope: average
 novelty: moderate
 practicality: high
+history:
+  - date: "2026-04-12"
+
 ---
 
 <figure class="poem-excerpt">

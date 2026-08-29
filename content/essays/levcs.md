@@ -15,6 +15,9 @@ evidence: 5
 scope: broad
 novelty: innovative
 practicality: moderate
+history:
+  - date: "2026-05-01"
+
 ---
 
 Naming a version control system after yourself is a mild hubris. Linus has been candid that this is exactly what he did with git — *"I'm an egotistical bastard, and I name all my projects after myself. First 'Linux', now 'git'."* LeVCS — Levi's [VCS]{.smallcaps} — admits the same joke up front and gets on with it. The work itself is the substrate: an object model, a federation [API]{.smallcaps}, a merge engine, and a small instance server, written in Rust, sized to fit on a [VPS]{.smallcaps} and audit-able by one person in a weekend.

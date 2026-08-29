@@ -5,6 +5,20 @@ status: "Durable"
 confidence: 93
 tags: [meta]
 abstract: On the design, tools, and philosophy of this site — and by extension, its author.
+history:
+  - date: "2026-06-10"
+  - date: "2026-05-08"
+  - date: "2026-04-27"
+  - date: "2026-04-17"
+  - date: "2026-04-12"
+  - date: "2026-04-11"
+  - date: "2026-04-10"
+  - date: "2026-03-27"
+  - date: "2026-03-26"
+  - date: "2026-03-25"
+  - date: "2026-03-24"
+  - date: "2026-03-23"
+
 ---
 
 ::: dropcap

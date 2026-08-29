@@ -16,5 +16,8 @@ location: "Sainte-Mère-Église, France"
 #
 geo: [49.4, -1.3]
 geo-precision: city
+history:
+  - date: "2026-08-21"
+
 ---
 

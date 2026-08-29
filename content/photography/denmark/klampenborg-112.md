@@ -18,5 +18,8 @@ location: "Klampenborg, Denmark"
 #
 geo: [55.8, 12.6]
 geo-precision: city
+history:
+  - date: "2026-08-20"
+
 ---
 

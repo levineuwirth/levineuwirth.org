@@ -9,6 +9,16 @@ importance: 2
 scope: personal
 novelty: moderate
 practicality: high
+history:
+  - date: "2026-08-27"
+  - date: "2026-07-25"
+  - date: "2026-04-22"
+  - date: "2026-04-12"
+  - date: "2026-03-25"
+  - date: "2026-03-19"
+  - date: "2026-03-18"
+  - date: "2026-03-17"
+
 ---
 
 How does one resolve the age-old dilemma of earnest self description? Is any such act of description overly humiliating and reductive in nature? Hubristic and egotistical, on the contrary? I have pondered over this subject for years, my greatest conclusion being that my actions and character should be the pinnacle of how I am described, for these form the pinnacle of what constitutes me. 

@@ -18,5 +18,8 @@ location: "Copenhagen, Denmark"
 #
 geo: [55.7, 12.6]
 geo-precision: city
+history:
+  - date: "2026-08-20"
+
 ---
 

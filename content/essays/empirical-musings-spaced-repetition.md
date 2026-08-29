@@ -19,4 +19,8 @@ novelty: idiosyncratic
 practicality: high
 confidence-history:
    - 65
+history:
+  - date: "2026-04-26"
+  - date: "2026-03-26"
+
 ---
