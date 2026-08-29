@@ -46,7 +46,7 @@ settle it are written by the party under suspicion.
 [VerInf](https://github.com/JamesPetrie/VerInf), a Future of Life Institute project led by James Petrie, proves
 LLM inference in zero knowledge with no trusted setup by bounding the
 *unexplained information* in an output stream rather than re-running the
-computation. I have contributed the dry-run profiler (manifest contract, cost model, 
+computation. I have contributed the dry-run profiler (manifest contract, cost model,
 execution DAG, partition scorecard) and an RMSNorm cost-model correction. My current
 work is on proving multi-GPU, which is the ceiling on model scale, context
 length, and mixture-of-experts breadth.

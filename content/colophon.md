@@ -23,7 +23,7 @@ history:
 
 ::: dropcap
 A personal website is not a publication. It is a position. A publication presents work
-in a finalized, immutable state, and carries with it some sort of declaration - "this is my most polished and prized work!"; 
+in a finalized, immutable state, and carries with it some sort of declaration - "this is my most polished and prized work!";
 a position is something you inhabit, argue from, and continuously
 revise in public. This page explains the design decisions forming my broader **position** and why they took the form they did.
 
@@ -48,7 +48,7 @@ shrunken full caps, and ligatures prevent collisions in letter pairs like *fi* a
 
 The UI and headers are Fira Sans. Variation is good, and moreover, humanist sans are rather ubiquitous (we have Frutiger to thank for this fact!) - perhaps I am making some type of statement by not choosing one of the more corporation variations of it, like the dreaded Calibri and Tahoma you might recognize from Microslop (formerly known as *Microsoft*) products. Code uses Jetbrains Mono, which is simply the font that I use within my editor. Code should look like code, simple as that.
 
-The monochrome palette is an application of restraint grounded in my studies of Tools for Thought. 
+The monochrome palette is an application of restraint grounded in my studies of Tools for Thought.
 Color is often used to do work that typography
 should do, such as demonstrating hierarchy, creating emphasis, etc. When those
 functions are handled by weight, size, and spacing instead^[Color and saturation/hue are actually well known to be less effective than other means of distinguishment. I refer you to Tufte's *The Visual Display of Quantitative Information* for more.], color becomes available for the things it cannot be substituted for — and on a site with no data visualizations
@@ -112,7 +112,7 @@ The principle underlying all of these choices is the same one underlying the sit
 I will never use AI to write, whether for my personal communications with anyone or for pieces on this website. I take this extremely seriously - writing is religious in severity to me. The writing on this website is wholly human and wholly my own, to the extent that any writing can be.
 :::
 
-Much of the code that comprises the build system of this website was created in collaboration with AI. Rather than "vibe coding" proper, this was the result of an intensive engineering process where AI and I were equals in collaboration. Notably, all of the major architectural choices, design decisions, idiosyncracies, and elements of the tech stack were chosen entirely by me, and AI systems were only used to automate production of some (but not all) of the code that was required. 
+Much of the code that comprises the build system of this website was created in collaboration with AI. Rather than "vibe coding" proper, this was the result of an intensive engineering process where AI and I were equals in collaboration. Notably, all of the major architectural choices, design decisions, idiosyncracies, and elements of the tech stack were chosen entirely by me, and AI systems were only used to automate production of some (but not all) of the code that was required.
 
 The commit history, of course, is available for you to view and licensed accordingly - see **No Tracking** for more.
 
@@ -134,7 +134,7 @@ by omission. The Content Security Policy prevents any script not explicitly whit
 from executing. The whitelist is short.] The Hetzner VPS that provides this content runs
 only open source software, and my machines use *almost exclusively*^[It is nearly impossible to run an entirely free system, but in approximation, it is actually wonderfully easy.] the same. The code is licensed under MIT and hosted
 on a [self-hosted Forgejo instance](https://git.levineuwirth.org/neuwirth/levineuwirth.org) at this domain, with a [GitHub mirror](https://github.com/levineuwirth/levineuwirth.org); you are welcome
-to inspect it, fork it, or, more broadly, do whatever you please with it. 
+to inspect it, fork it, or, more broadly, do whatever you please with it.
 
 ### Living Documents
 
@@ -176,7 +176,7 @@ The point of all this is simple: when you read something on this site, you shoul
 
 The amount of influences on this website is immense, and cannot be detailed in the fullest extent. Every other webpage that I have visited, whether beautiful or pitiful, has evoked some type of reaction or response in me, and that response has played some role, even if minute, in the design of this website. I can point to Tufte's influence on many of my design choices, and for the introduction to Tufte, I am thankful to CSCI1377 at Brown. I am thankful to the many other courses I took in my undergrad that influenced how I interact or ideologically view visualizations, networks, systems, etc.
 
-The tradition of the personal website is one that is built on a sense of community and interaction. I am thankful to everyone else who has a personal website and shares their content with the world. I am also particularly greatful to the open source and broader open culture movements, who have given me and the world so much. This website would not exist without you - and I wouldn't be the person I am without your influence - what a role model! 
+The tradition of the personal website is one that is built on a sense of community and interaction. I am thankful to everyone else who has a personal website and shares their content with the world. I am also particularly greatful to the open source and broader open culture movements, who have given me and the world so much. This website would not exist without you - and I wouldn't be the person I am without your influence - what a role model!
 
 ---
 

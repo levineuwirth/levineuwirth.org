@@ -22,7 +22,7 @@ For as long as I can remember, I have believed that the deepest understanding co
 
 You have found the working library of a mind that takes that spirit seriously. Here live research papers and living essays, compositions and scores, poetry and prose, and the countless smaller investigations that refuse to fit neatly into any one category. The documents here are far from immutable; they grow, are revised, accumulate footnotes and second thoughts. I welcome you to all of it.
 
-This website is *not* an academic homepage, nor a blog, nor a portfolio — though it borrows from each. It is something I built because no existing format could hold what I wanted to make. I carry a copy of *The Brothers Karamazov* everywhere; I compose symphonies and concerti for orchestras; I am currently a MARS V AI safety research fellow with CAISH and FLI, an independent contractor doing work on frontier LLMs, and a graduate student in computer science and engineering at DTU. These facts coexist in one life, and this is the place where they coexist on one shelf. 
+This website is *not* an academic homepage, nor a blog, nor a portfolio — though it borrows from each. It is something I built because no existing format could hold what I wanted to make. I carry a copy of *The Brothers Karamazov* everywhere; I compose symphonies and concerti for orchestras; I am currently a MARS V AI safety research fellow with CAISH and FLI, an independent contractor doing work on frontier LLMs, and a graduate student in computer science and engineering at DTU. These facts coexist in one life, and this is the place where they coexist on one shelf.
 
 ::: {.hp-latin lang="la"}
 *Te accipio, hospes benignus.*
