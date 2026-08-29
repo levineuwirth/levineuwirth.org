@@ -38,14 +38,14 @@ The same problem applies; there is not any obvious way for one party to such an
 agreement to verify the claims of the other.
 
 This remains an unresolved gap wherever the verifier cannot trust the operator,
-or the attestation stack the operator controls. Evaluations measure a model
-under conditions you control, and say nothing about the model served to somebody
-else afterward. Hardware-backed attestation can say a great deal about platform
-and software state — but it buys that by requiring trust in a hardware
-root-of-trust ecosystem, and it still does not yield an operator-independent
-statement about *this* computation producing *that* output. What is missing is a
-way to replace trust in the operator's execution environment with a proof that
-an independent verifier can check on hardware it controls.
+or the attestation stack the operator controls. Evaluations measure a model under
+conditions you control, and say nothing about the model served to somebody else
+afterward. Hardware-backed attestation can say a great deal about platform and
+software state — but it buys that by requiring trust in a hardware root-of-trust
+ecosystem, and it still does not yield an operator-independent statement about
+*this* computation producing *that* output. What is missing is a way to replace
+trust in the operator's execution environment with a proof an independent
+verifier can check on hardware it controls.
 
 [VerInf](https://github.com/JamesPetrie/VerInf) is a research prototype
 addressing that gap, led by James Petrie at the Future of Life Institute. I
@@ -64,7 +64,9 @@ VerInf instead bounds the **unexplained information** in an output stream: the
 number of bits in the output that the committed model does not account for. If
 the operator swapped in a different model, the outputs it produced would be
 poorly predicted by the model it committed to, and the bound rises. A cheap
-substitution is therefore expensive to hide. The intended end-to-end certificate combines three pieces, held to different
+substitution is therefore expensive to hide.
+
+The intended end-to-end certificate combines three pieces, held to different
 standards — and one of them is not yet integrated:
 
 - a **transcript anchor**, binding the committed token streams to digests
@@ -104,13 +106,15 @@ computation was performed — which reveals the model architecture, though not t
 weights.
 
 Under the protocol's soundness assumptions and a correct verifier
-implementation, the prover need not be trusted for correctness: a fault on the
-prover's side causes a proof to fail rather than to falsely verify. Those are
-real assumptions, not decoration — soundness rests on the cryptographic
-primitives, the challenge generation, the verifier's own parser boundaries, and
-the per-challenge bound of the chosen configuration. The verifier's trusted base
-is deliberately small and shares no code with the prover, which narrows that
-surface without eliminating it. VerInf has not had a full security audit.
+implementation, the prover need not be trusted for correctness: prover
+deviations can cause false acceptance only within the protocol's soundness
+error, and otherwise cause verification to fail. Those are real assumptions,
+not decoration — soundness rests on the cryptographic primitives, the challenge
+generation, the verifier's own parser boundaries, and the per-challenge bound of
+the chosen configuration, which is a deployment parameter rather than a fixed
+property. The verifier's trusted base is deliberately small and shares no code
+with the prover, which narrows that surface without eliminating it. VerInf has
+not had a full security audit.
 
 The arrangement this enables between mutually distrustful parties: each runs its
 own verifier on its own hardware, and neither has to trust the datacenter where
@@ -177,8 +181,8 @@ against what that run actually recorded.
 Prove time is deliberately a *bracket*, not a point estimate. The floor is the
 bandwidth-bound target the design should reach after planned reorganization;
 the aggregate is calibrated on today's code. The gap between bracket and
-measurement is not error — it is the itemized implementation overhead, which
-is to say the work-list.
+measurement largely reflects itemized implementation overhead, and so functions
+as a work-list rather than an unexplained residual.
 
 The second round I ran end to end myself, on hardware the tooling had never
 seen: a single rented B200, the class of machine the multi-GPU effort actually
