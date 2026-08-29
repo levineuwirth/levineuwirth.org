@@ -34,6 +34,10 @@ summary: |
 
   **Meaning.** Using the full set of discharge diagnosis codes may improve short-term claims-based outcome prediction beyond summary comorbidity indices.
 history:
+  - date: "2026-05-08"
+  - date: "2026-04-15"
+  - date: "2026-04-11"
+  - date: "2026-04-10"
   - date: "2026-03-28"
     note: Preprint auto-formatted for levineuwirth.org
 ---

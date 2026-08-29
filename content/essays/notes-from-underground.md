@@ -9,8 +9,11 @@ tags:
 authors:
   - "Levi Neuwirth | /me.html"
 history:
+  - date: "2026-04-26"
+  - date: "2026-04-19"
   - date: "2026-04-17"
     note: "expanded section on Shestov's divergence from Nietzsche"
+  - date: "2026-03-17"
   - date: "2025-12-03"
 ---
 

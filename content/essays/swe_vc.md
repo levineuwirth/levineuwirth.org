@@ -14,6 +14,11 @@ novelty: idiosyncratic
 practicality: moderate
 confidence-history: [10, 60]
 history:
+  - date: "2026-08-10"
+  - date: "2026-08-10"
+  - date: "2026-08-10"
+  - date: "2026-08-10"
+  - date: "2026-08-10"
   - date: "2026-08-09"
 ---
 
