@@ -257,16 +257,6 @@ While VerInf looks promising, there are currently limitations:
   SHA-256 circuits are implemented and tested; binding them against
   independently recorded digests is not yet shown.
 
-## Future Directions
-[TODO: review, and potentially rewrite or reposition. This should be a very strong place]
-My vision is to combine this work with other research projects of mine. LeVCS is a 
-federated version control system that is undergoing a rewrite for an agentic focus. 
-Similarly, my recent contract work on model evaluation alongside less recent work on
-agentic debugging has demonstrated many gaps to which bounding the information that
-comes from a model. I believe that there are major safety implications to applying
-ZKP proof techniques developed in VerInf to agentic contexts, and that further extensions
-of my work will also allow for breakthroughs in detection of and handling of alignment faking.
-
 ## Why this matters for assurance
 
 The reason to care is not that datacenters are presumed dishonest. It is that
