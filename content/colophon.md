@@ -46,7 +46,7 @@ than hanging above it, small capitals are drawn to match the x-height rather tha
 shrunken full caps, and ligatures prevent collisions in letter pairs like *fi* and *fl*.]
 :::
 
-The UI and headers are Fira Sans. Variation is good, and moreover, humanist sans are rather ubiquitous (we have Frutiger to thank for this fact!) - perhaps I am making some type of statement by not choosing one of the more corporation variations of it, like the dreaded Calibri and Tahoma you might recognize from Microslop (formerly known as *Microsoft*) products. Code uses Jetbrains Mono, which is simply the font that I use within my editor. Code should look like code, simple as that.
+The UI and headers are Fira Sans. Variation is good, and moreover, humanist sans are rather ubiquitous (we have Frutiger to thank for this fact!) - perhaps I am making some type of statement by not choosing one of the more corporate variations of it, like the dreaded Calibri and Tahoma you might recognize from Microsoft products. Code uses Jetbrains Mono, which is simply the font that I use within my editor. Code should look like code, simple as that.
 
 The monochrome palette is an application of restraint grounded in my studies of Tools for Thought.
 Color is often used to do work that typography
