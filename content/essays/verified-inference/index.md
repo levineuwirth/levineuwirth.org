@@ -61,9 +61,7 @@ VerInf instead bounds the **unexplained information** in an output stream: the
 number of bits in the output that the committed model does not account for. If
 the operator swapped in a different model, the outputs it produced would be
 poorly predicted by the model it committed to, and the bound rises. A cheap
-substitution is therefore expensive to hide.
-
-Our certified statement is a conjunction of three parts held to different standards:
+substitution is therefore expensive to hide. Our certified statement is a conjunction of three parts held to different standards:
 
 - a **transcript anchor**, which binds the committed token streams to digests
   recorded independently at generation time. This ensures proof is about the run that
@@ -104,10 +102,7 @@ trust of the datacenter in which this takes place would be required.
 
 ## Results on record
 
-These are the published single-chip results, and they predate my involvement.
-My own measurements — validation of the cost model, and the first figures from
-Blackwell hardware — are in [What I contributed](#what-i-contributed) below,
-separated there by what has merged upstream and what has not.
+First, the single-chip results, which predate my involvement.
 
 | | Llama-4-Maverick | Llama-2-7B |
 |:---|:---|:---|
@@ -121,11 +116,11 @@ separated there by what has merged upstream and what has not.
 All on a single NVIDIA DGX Spark. The committed witness for the Maverick run is
 roughly 7.2 TB, streamed at the working set rather than held.
 
- At 0.880 bits per token against a 202,048-token vocabulary, the proof accounts for about 95% of the information a
+At 0.880 bits per token against a 202,048-token vocabulary, the proof accounts for about 95% of the information a
 token could carry. That is not "the model produced this"; it is "very little
 here is unexplained by the model that was committed."
 
-## What I contributed
+## What I have contributed thus far
 
 Parallelizing the prover across GPUs is named future work in the paper, and it
 is the direction I am working in. It runs into an immediate problem: you cannot
