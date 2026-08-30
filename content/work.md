@@ -52,8 +52,10 @@ work is on proving multi-GPU, which is the ceiling on model scale, context
 length, and mixture-of-experts breadth.
 
 ::: {.work-limit}
-**Ongoing.** The multi-GPU work is unmerged and its results are preliminary.
-Technical write-up expected Q4 2026, for review and publication.
+**Ongoing.** The profiler and calibration tooling are merged upstream; the
+multi-GPU figures are projections from a validated cost model rather than
+measurements at that scale. Technical write-up expected Q4 2026, for review and
+publication.
 :::
 
 ::: {.work-entry-links}

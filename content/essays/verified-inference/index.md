@@ -220,18 +220,27 @@ A profiler that only ever confirms its author is not a measurement instrument.
 Predictions go out before the measurement, and get corrected in public when the
 measurement disagrees — otherwise the numbers above would be worth very little.
 
+The correction is now upstream rather than only narrated here. The original
+scorecard reported roughly 950 GB per sweep of cross-shard traffic and returned
+a binding verdict on interconnect; with the traffic model corrected — settlement
+vectors reduce to per-shard scalars rather than shipping whole — the same
+configuration moves 2.4 to 2.8 GB per sweep, and communication is negligible at
+every bandwidth swept. Nearly all of the original figure was my own modeling
+error. The retraction is part of the merged record, not a footnote to it.
+
 ### What is upstream, and what is not
 
 **Merged code** — the dry-run profiler and its parts: manifest contract,
-extractor, cost model, execution DAG, partition scorecard; and the RMSNorm
-cost-model correction.
+extractor, cost model, execution DAG, partition scorecard; the RMSNorm
+cost-model correction; and, as of 30 August 2026, the calibration suite, the
+machine-profile tooling, and the corrected traffic model.
 
-**Publicly reported validation** — the B200 tape extraction and the measurements
-that came out of it, recorded in the profiler pull request itself.
-
-**Pending upstream** — the calibration suite, the machine-profile tooling, and
-the remaining B200 artifacts. Until those land, treat the figures above as
-reported by me rather than independently inspectable.
+**Publicly inspectable evidence** — the B200 session archive, the extracted
+manifests, the calibration logs, and the measured machine profile are all in the
+repository. An earlier version of this section asked you to treat the figures
+above as reported by me rather than independently checkable. That caveat has
+been discharged: the inputs that produced them can now be read, and the
+cross-checks rerun.
 
 **On agent assistance.** Implementation was agent-assisted. I owned the research
 direction, the cost-model derivation and checking, the experimental design, the
