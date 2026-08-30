@@ -106,7 +106,9 @@ Lean 4 and Rocq can outsource proof search to external provers — SMT solvers,
 automated theorem provers, even LLMs — without extending what they trust. Proof
 Broker routes a goal out to those provers, checks whatever comes back, and lifts
 the result into a proof term the home system verifies for itself. The provers
-stay untrusted; the kernel remains the trusted base.
+stay untrusted; the kernel remains the trusted base. The verified-inference work
+grew out of this one — the same question about checking a claim without trusting
+its author, moved from proof terms to model outputs.
 
 Concretely: a function-composition goal closes under `by proof_broker` through a
 real Vampire invocation, axiom-free.
