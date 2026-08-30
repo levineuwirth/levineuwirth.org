@@ -199,11 +199,10 @@ targets. One morning and about eleven dollars of GPU time later:
 - the extracted Maverick manifest reported **109,273,513 witness rows,
   against the production run's measured 109.27 M** — the profiler reproducing
   reality, not merely its own model of it;
-- the first cost bracket priced on measured Blackwell constants put the full
-  Maverick proof at a **376-second floor** on one B200 — roughly 28× the
-  development box, tracking the measured bandwidth ratio almost exactly,
-  which is what the cost model's scaling story says should happen when the
-  dominant terms ride memory bandwidth.
+- the cost bracket priced on measured Blackwell constants puts the
+  routed-projected Maverick proof at S=1000 at a **254-second floor** on one
+  B200, the dominant terms riding memory bandwidth and tracking that 29×
+  ratio — which is what the cost model's scaling story says should happen.
 
 I also corrected the cost model's RMSNorm row to the wrap-free bracket
 constants, bringing it into line with the paper's own analysis.
@@ -264,12 +263,18 @@ context length, and mixture-of-experts breadth — the dimensions along which a
 single box runs out first.
 
 The honest projection carries the same bracket as everything else here. The
-anchor is a **376-second floor for the full Maverick proof on one B200**: a
-floor, not today's code, and it assumes the reorganization the cost model
-already itemizes. Distributing that across 2–8 devices puts a 400B proof in the
-low minutes if the partition scales cleanly, and under a minute at the
-optimistic end. Both numbers are projections from a model validated against one
-archived run and one live machine — good enough to plan against, not yet a
+anchor is a **254-second floor for the routed-projected Maverick proof at
+S=1000 on one B200**: a floor, not today's code, and it assumes the
+reorganization the cost model already itemizes. On that same model, four-way
+sharding predicts **3.95× of a possible 4×**, with interconnect traffic
+negligible — near-linear scaling is plausible here only because the traffic
+model was corrected, which makes this the direct payoff of the retraction
+above. Distributing across 2–8 devices puts a 400B proof in the low minutes,
+and under a minute at the optimistic end.
+
+Every figure in that paragraph is a prediction priced on measured constants,
+not a multi-GPU measurement. The model behind them has been validated against
+one archived run and one live machine — good enough to plan against, not yet a
 measurement.
 
 Beyond that, fleets of 64–128 GPUs are what an order-of-magnitude larger model
