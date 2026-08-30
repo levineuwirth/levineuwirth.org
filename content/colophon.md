@@ -142,7 +142,7 @@ The dominant convention of academic and professional publication is that a docum
 
 Every essay and post on this site carries an **epistemic footer** — a structured block that reports my current relationship to the work. The footer only appears when a `status` field is set in the document's frontmatter; standalone pages and very short items omit it.
 
-The vocabulary below is genre-general but reads differently across genres. For a personal essay, *confidence* reflects credence in a thesis — "I might change my mind." For an empirical research paper, it reflects expected generalization — "this would replicate." For formal mathematics, it reflects credence in proof correctness, with a special value `proved` available for theorems with complete proofs (where any numeric value would be false precision). *Evidence* reads analogously: the strength of arguments and supporting writing in essays, the empirical base in research, the structure of the proof in mathematics. The fields are the same; the interpretive frame shifts with the work.
+The vocabulary below is genre-general but reads differently across genres. For a personal essay, *confidence* reflects credence in a thesis — "I might change my mind." For an empirical research paper, it reflects expected generalization — "this would replicate." For formal mathematics, it reflects credence in proof correctness, with a special value `proved` available for theorems with complete proofs (where any numeric value would be false precision). *Evidence* reads analogously: the strength of arguments and supporting writing in essays, the empirical base in research, the structure of the proof in mathematics.
 
 The full set of fields:
 
