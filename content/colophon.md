@@ -6,6 +6,7 @@ confidence: 93
 tags: [meta]
 abstract: On the design, tools, and philosophy of this site — and by extension, its author.
 history:
+  - date: "2026-08-31"
   - date: "2026-06-10"
   - date: "2026-05-08"
   - date: "2026-04-27"
@@ -108,13 +109,20 @@ The principle underlying all of these choices is the same one underlying the sit
 
 ## [AI]{.smallcaps} and This Site
 
+<figure class="prose-excerpt">
+<blockquote>
+<p>Ac proinde haec cognitio, ego cogito, ergo sum, est omnium prima & certissima, quae cuilibet ordine philosophanti occurrat.</p>
+</blockquote>
+<figcaption>Descartes — <em>Principia Philosophiae</em></figcaption>
+</figure>
+
 ::: dropcap
-I will not have an AI system autonomously write anything that goes out under my name, whether in my personal communications or in pieces on this website. The line is about authority rather than contact: I keep the final say and every direction call, without exception, and the argument a piece makes is mine. For longer writing — essays, letters, the pieces here that are actually *writing* — I work entirely by hand. Writing is religious in severity to me, and I do not intend to outsource it.
+I will never have an AI system of any type autonomously write anything that goes out under my name, whether in my personal communications or in pieces on this website. This is a boundary of authority: I keep the final say and every direction call, without exception, and the argument a piece makes is mine. For substantive writing — on this website in particular, essays, letters — I work entirely by hand. Writing is religious in severity to me, and I do not intend to outsource it. Doing so would also constitute outsourcing of my thinking, and though I may not agree with everything he says, I won't go against [Descartes](https://en.wikipedia.org/wiki/Cogito,_ergo_sum) so easily. 
 :::
 
-That is a narrower claim than "I never touch the tools," and I would rather state it accurately than strike a pose. I use AI extensively as something to argue with: to get pushback on an idea, to surface the objection I have not thought of, to draft an excerpt I will then rewrite. What I will not do is let it hold the pen on something I sign.
+I hope it is clear that this is a narrower claim than "I never touch the tools." I use AI extensively as something to ideate with, typically through arguments. I will use it to get relentless pushback on an idea, to surface objections and similar writings, and to draft what I call "variant outlines," which serve to help me consider multiple various structures for a project before I commit to trying one^[This is something that I have long struggled with. I can vividly remember being in fourth grade and getting feedback on my essays that I would probably still get now, along the lines of "this could be organized to be more conducive to the point you are making!" The process of struggling against organizational challenges, which at a high level are perhaps *the* challenges involved in any task of considerable complexity, is a process I still greatly enjoy and will not fully automate. AI thus serves to augment me in the way that I propose it should augment us all in other writings on this website.]. I am averse to even having AI generate entire drafts for me, and will absolutely under no conditions let it "hold the pen" on something I sign. 
 
-Technical write-ups sit slightly differently, and the difference is worth naming rather than leaving for a reader to discover. Where a piece exists to document an artifact — a case study about code anyone can read, results anyone can rerun — I am more willing to work with AI on the prose, because the artifact is the claim and the write-up is secondary to it. The discipline that matters in that case is the one recorded in the work itself: what was measured, what was modeled, what is mine and what is upstream. Where the writing *is* the artifact, the paragraph above applies without qualification.
+I do treat technical write-ups as an exception. Where a piece exists to document an artifact — say, for example, a case study about code anyone can read, results anyone can rerun — I am more willing to work with AI on the prose, because the artifact is the claim and the write-up is secondary to it. The discipline that matters in that case is the one recorded in the work itself: what was measured, what was modeled, issues of provenance (what is mine and what is upstream). Where the writing *is* the artifact, the paragraph above applies without qualification.
 
 Much of the code that comprises the build system of this website was created in collaboration with AI. Rather than "vibe coding" proper, this was the result of an intensive engineering process where AI and I were equals in collaboration. Notably, all of the major architectural choices, design decisions, idiosyncracies, and elements of the tech stack were chosen entirely by me, and AI systems were only used to automate production of some (but not all) of the code that was required.
 
@@ -186,7 +194,6 @@ The tradition of the personal website is one that is built on a sense of communi
 
 ## The Future
 
-This site is unfinished. Several portals have no content yet. The annotated bibliography
-is sparse. I am in the progress of migrating content, so stay tuned!
+This site is unfinished, deliberately! The nature of (and beauty of) living documents is that they can never be finished in the absolute sense. Thus the website has a future for as long as I have one. I think that is something to appreciate.
 
 The colophon itself is a living document. When the site changes substantially, this page will change with it. The git repository on Forgejo (hosted on the git subdomain here) should always be considered to take precedence.
