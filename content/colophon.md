@@ -109,8 +109,12 @@ The principle underlying all of these choices is the same one underlying the sit
 ## [AI]{.smallcaps} and This Site
 
 ::: dropcap
-I will never use AI to write, whether for my personal communications with anyone or for pieces on this website. I take this extremely seriously - writing is religious in severity to me. The writing on this website is wholly human and wholly my own, to the extent that any writing can be.
+I will not have an AI system autonomously write anything that goes out under my name, whether in my personal communications or in pieces on this website. The line is about authority rather than contact: I keep the final say and every direction call, without exception, and the argument a piece makes is mine. For longer writing — essays, letters, the pieces here that are actually *writing* — I work entirely by hand. Writing is religious in severity to me, and I do not intend to outsource it.
 :::
+
+That is a narrower claim than "I never touch the tools," and I would rather state it accurately than strike a pose. I use AI extensively as something to argue with: to get pushback on an idea, to surface the objection I have not thought of, to draft an excerpt I will then rewrite. What I will not do is let it hold the pen on something I sign.
+
+Technical write-ups sit slightly differently, and the difference is worth naming rather than leaving for a reader to discover. Where a piece exists to document an artifact — a case study about code anyone can read, results anyone can rerun — I am more willing to work with AI on the prose, because the artifact is the claim and the write-up is secondary to it. The discipline that matters in that case is the one recorded in the work itself: what was measured, what was modeled, what is mine and what is upstream. Where the writing *is* the artifact, the paragraph above applies without qualification.
 
 Much of the code that comprises the build system of this website was created in collaboration with AI. Rather than "vibe coding" proper, this was the result of an intensive engineering process where AI and I were equals in collaboration. Notably, all of the major architectural choices, design decisions, idiosyncracies, and elements of the tech stack were chosen entirely by me, and AI systems were only used to automate production of some (but not all) of the code that was required.
 
