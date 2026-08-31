@@ -21,6 +21,8 @@ scope: broad
 novelty: moderate
 practicality: moderate
 history:
+  - date: "2026-08-31"
+  - date: "2026-08-30"
   - date: "2026-08-29"
 ---
 
@@ -50,15 +52,15 @@ verifier can check on hardware it controls.
 [VerInf](https://github.com/JamesPetrie/VerInf) is a research prototype
 addressing that gap, led by James Petrie at the Future of Life Institute. I
 work on it as a [MARS V](https://caish.org/mars) fellow. This living document
-details what the system does and does not currently prove, where we think it is heading,
-and my future ambitions for this line of work.
+records what the system does and does not currently prove, where the work is
+heading, and which parts of it are mine.
 
 ## What the proof certifies
 
 The naive framing — chiefly, "prove the model produced this output" — is the wrong one.
 Frontier inference runs in floating point, on nondeterministic kernels, across hardware that does not
-reproduce bit-for-bit. Demanding exact reproduction would make the problem intractable, and even worse,
-it isn't really even addressing the right problem. 
+reproduce bit-for-bit. Demanding exact reproduction would make the problem intractable, and would
+still answer the wrong question.
 
 VerInf instead bounds the **unexplained information** in an output stream: the
 number of bits in the output that the committed model does not account for. If
@@ -83,16 +85,16 @@ standards — and one of them is not yet integrated:
 - the **surprisal bound** itself, where freedom *is* permitted, provided every
   free direction pushes the reported number up rather than down.
 
-Upstream of the logits the prover must have no room at all; 
+Upstream of the logits the prover must have no room at all;
 downstream, in the short arithmetic from logits to the reported
 bound, the prover may have room, so long as every rounding is forced upward.
-In an elegant twist, cheating can only make your own number worse.
+Cheating there can only make the prover's own number worse.
 
 A related move governs our predictor. The bound is computed against a predictor
 of the deployment's outputs that the *prover* supplies.
-By [Gibbs' inequality](https://en.wikipedia.org/wiki/Gibbs%27_inequality) the resulting sum 
+By [Gibbs' inequality](https://en.wikipedia.org/wiki/Gibbs%27_inequality) the resulting sum
 is a valid upper bound for *any* predictor, so the choice can indeed be left to the prover
-entirely. 
+entirely.
 
 Underneath, matrix products are checked with Freivalds projections over [Ligero](https://link.springer.com/content/pdf/10.1007/s10623-023-01222-8.pdf)
 commitments, which are hash-based — so there is no trusted setup, and the construction is plausibly post-quantum^[Future research intends to make this statement of "plausible" post-quantum security into one of "definitive" post-quantum security.].
@@ -147,7 +149,7 @@ is the direction I am working in. It runs into an immediate problem: you cannot
 measure a cluster you do not yet have access to, and partitioning decisions have
 to be made before the hardware arrives.
 
-My first deliverable was the measurement scaffolding that parallelism needs. 
+My first deliverable was the measurement scaffolding that parallelism needs.
 I built a **dry-run profiler** that predicts a
 proving run's time, memory, bandwidth, and proof size *before* running it, from
 a workload manifest plus measured hardware constants, and exposes the dependency
@@ -207,7 +209,7 @@ targets. One morning and about eleven dollars of GPU time later:
 I also corrected the cost model's RMSNorm row to the wrap-free bracket
 constants, bringing it into line with the paper's own analysis.
 
-### Splitting the prover without touching the verifier
+### Splitting the enrolled weights without touching the verifier
 
 The first piece of real multi-GPU work is now on a review branch, and the result
 worth reporting is not a speedup. It is that there is no new trust surface.
@@ -346,7 +348,9 @@ While VerInf looks promising, there are currently limitations:
 - **Soundness is a per-challenge bound** (about 2⁻¹⁶·⁶ in the demonstrated
   configuration), raised by opening more columns at a measured cost in
   verification time. It is a deployment choice, not a fixed property.
-- **The claim list reveals the architecture.** 
+- **The claim list reveals the architecture.** The public claim list states what
+  kind of computation was performed, so layer counts and expert breadth are
+  visible to the verifier even though the weights are not.
 - **No multi-GPU speedup has been measured.** The weight split is verified
   byte-identical on hardware, but every scaling ratio here is modeled. The first
   end-to-end multi-device timing is the next milestone.
