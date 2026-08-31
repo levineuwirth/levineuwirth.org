@@ -9,10 +9,10 @@ abstract: >
   details what the system certifies, what it does not, and what I contributed to
   it during the MARS V fellowship.
 tags:
-  - ai
-  - tech
   - research
   - research/machine-learning
+  - ai
+  - tech
 status: "Working model"
 confidence: 85
 importance: 5
