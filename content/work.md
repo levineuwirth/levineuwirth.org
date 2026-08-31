@@ -187,7 +187,12 @@ untrusted?
 - [NeuroPose](https://github.com/levineuwirth/neuropose) — 3D pose estimation and kinematic analysis, built in Liqi Shu's laboratory at Brown Neurology
 - [NeuroAI](https://neuroai.health) — ongoing research engineering
 
-### Writing
+### Selected essays
+
+- [The Specification Dilemma](/essays/specification-dilemma/) — pre-registered, matched-pairs, with its instrumentation failures reported in full
+- [Provenance Is Not Warrant](/essays/swe_vc.html) — where an artifact came from, and why anyone is entitled to rely on it, are different questions
+
+### On this website
 
 - [Essays](/nonfiction/) — on the above, and on much else
 - [Current](/current.html) — what is actually moving this month
