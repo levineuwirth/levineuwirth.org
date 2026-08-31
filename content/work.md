@@ -66,7 +66,7 @@ publication.
 :::
 
 ::: {.work-entry}
-### [Frontier-model evaluation and red-teaming](/essays/specification-dilemma/)
+### Frontier-model evaluation and red-teaming
 
 ::: {.work-meta}
 Independent research contracts · ongoing
