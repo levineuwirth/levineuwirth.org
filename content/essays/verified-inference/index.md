@@ -207,6 +207,35 @@ targets. One morning and about eleven dollars of GPU time later:
 I also corrected the cost model's RMSNorm row to the wrap-free bracket
 constants, bringing it into line with the paper's own analysis.
 
+### Splitting the prover without touching the verifier
+
+The first piece of real multi-GPU work is now on a review branch, and the result
+worth reporting is not a speedup. It is that there is no new trust surface.
+
+Under enrollment the weights are touched by exactly two per-proof passes, and
+both are exact field sums over ranges of rows. A sum does not care which device
+computed its addends. So the enrolled-weight work can be cut across devices and
+recombined into a proof that is **byte-identical** to the one a single device
+would have produced — not equivalent, not accepted under some new rule, but the
+same bytes. The unmodified Rust verifier accepts it because, as far as the
+verifier can tell, nothing happened.
+
+That matters more than the phrasing suggests. Parallelism normally costs
+protocol surface: a new aggregation step, a new commitment, a fresh argument
+about why the combined object is as sound as the original. Here it costs none,
+by construction, and [the trust boundary](#where-trust-is-required) stays
+exactly where it was. The acceptance gate passed 4/4 on hardware — including a
+Rust ACCEPT on a sharded proof — at every N=2 cut and with deliberately
+non-nesting N=3 stage cuts.
+
+Byte-identity also makes correctness cheap to test. If the sharded output must
+equal the single-device output bit for bit, the roles can be run sequentially on
+one GPU and the proof bytes diffed; no cluster is required. The whole gate ran
+on a rented A40 for about forty cents, against the eleven dollars the B200
+calibration session cost. That partly retires the problem this section opened
+with. After this branch, only *speed* needs hardware I do not have. Correctness
+does not.
+
 ### A retraction
 
 The same B200 session produced a finding I later had to withdraw: an apparent
@@ -241,14 +270,22 @@ above as reported by me rather than independently checkable. That caveat has
 been discharged: the inputs that produced them can now be read, and the
 cross-checks rerun.
 
+**On a review branch** — the stage-aware weight-split model, the
+verifier-transparent weight split itself, and per-variable packed-source
+provenance for the storage mode: three commits on
+[`weight-split-model`](https://github.com/JamesPetrie/VerInf/tree/weight-split-model),
+pushed and readable, but not merged. They are pending review at the next project
+meeting, and should be read as committed work in the open rather than as
+accepted work.
+
 **On agent assistance.** Implementation was agent-assisted. I owned the research
 direction, the cost-model derivation and checking, the experimental design, the
 validation, and the review; generated code was kept only after it was tested and
-cross-checked. This is project-wide practice rather than a personal one — agent
-co-authorship is recorded on the great majority of commits in the repository,
-across contributors, as part of how the fellowship's compute is used. I mention
-it because it is visible in the commit trailers, and a reader who finds it there
-rather than here would be right to wonder why it went unsaid.
+cross-checked. This is project-wide practice rather than a personal one, across contributors,
+as part of how the fellowship's compute is used. Much of the repository's
+history records it in commit trailers; the convention is changing, and my newest
+commits carry none. That is precisely why it belongs here in prose rather than
+left to be inferred from metadata that may or may not be present.
 
 ::: {.work-entry-links}
 [Merged pull requests](https://github.com/JamesPetrie/VerInf/pulls?q=is%3Apr+author%3Alevineuwirth) ·
@@ -265,17 +302,33 @@ single box runs out first.
 The honest projection carries the same bracket as everything else here. The
 anchor is a **254-second floor for the routed-projected Maverick proof at
 S=1000 on one B200**: a floor, not today's code, and it assumes the
-reorganization the cost model already itemizes. On that same model, four-way
-sharding predicts **3.95× of a possible 4×**, with interconnect traffic
-negligible — near-linear scaling is plausible here only because the traffic
-model was corrected, which makes this the direct payoff of the retraction
-above. Distributing across 2–8 devices puts a 400B proof in the low minutes,
-and under a minute at the optimistic end.
+reorganization the cost model already itemizes. The sharding numbers have already moved once, downward, and the correction is
+worth more than the original figure was. An earlier version of this section
+reported 3.95× of a possible 4× at four devices. That model quietly allowed an
+imbalance in one stage to cancel against the other. It cannot: the fold and open
+stages are separated by a transcript barrier, so each stage's slowest shard sets
+its own pace. Modeling the stages separately gives **1.90× at two devices and
+3.47× at four**, saturating near 3.75× as the coordinator's own fresh-path work
+becomes the wall. These are modeled zero-overhead ratios under a stated
+stage-split assumption — the tool prints a 2.00×–1.79× sensitivity band on the
+two-device case — and none of them is a ceiling or a promise.
 
-Every figure in that paragraph is a prediction priced on measured constants,
-not a multi-GPU measurement. The model behind them has been validated against
-one archived run and one live machine — good enough to plan against, not yet a
-measurement.
+That saturation is what orders the work rather than merely describing it: split
+the weights first, then the fresh rows, then attention for long context. The
+wall moves each time. And even at saturation this is the 254-second floor
+divided by less than four, which is minutes rather than seconds.
+
+The first wall in practice was not the GPU at all. Streaming the 226.5 GB
+enrolled block from the rental's shared network volume capped proving at roughly
+1,523 seconds however many devices were attached — 0.17× of the floor, with the
+disk setting the pace. Local NVMe recovers about 1.9× at two devices; only
+keeping the block resident in HBM reaches the modeled ratio, and residency is
+named engineering work rather than a free consequence of adding GPUs.
+
+No multi-GPU speedup has been measured. Every ratio above is a prediction priced
+on measured constants, from a model validated against one archived run and one
+live machine — good enough to plan against, and the first measurement is the
+next milestone.
 
 Beyond that, fleets of 64–128 GPUs are what an order-of-magnitude larger model
 would require. That figure comes from the same cost model and has not been
@@ -294,6 +347,9 @@ While VerInf looks promising, there are currently limitations:
   configuration), raised by opening more columns at a measured cost in
   verification time. It is a deployment choice, not a fixed property.
 - **The claim list reveals the architecture.** 
+- **No multi-GPU speedup has been measured.** The weight split is verified
+  byte-identical on hardware, but every scaling ratio here is modeled. The first
+  end-to-end multi-device timing is the next milestone.
 - **The transcript anchor is not yet demonstrated end to end.** The AES and
   SHA-256 circuits are implemented and tested; binding them against
   independently recorded digests is not yet shown.
