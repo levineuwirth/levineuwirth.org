@@ -267,27 +267,19 @@ machine-profile tooling, and the corrected traffic model.
 
 **Publicly inspectable evidence** — the B200 session archive, the extracted
 manifests, the calibration logs, and the measured machine profile are all in the
-repository. An earlier version of this section asked you to treat the figures
-above as reported by me rather than independently checkable. That caveat has
-been discharged: the inputs that produced them can now be read, and the
-cross-checks rerun.
+repository.
 
 **On a review branch** — the stage-aware weight-split model, the
 verifier-transparent weight split itself, and per-variable packed-source
 provenance for the storage mode: three commits on
 [`weight-split-model`](https://github.com/JamesPetrie/VerInf/tree/weight-split-model),
-pushed and readable, but not merged. They are pending review at the next project
-meeting, and should be read as committed work in the open rather than as
-accepted work.
+pushed and readable, but not merged.
 
 **On agent assistance.** Implementation was agent-assisted. I owned the research
 direction, the cost-model derivation and checking, the experimental design, the
 validation, and the review; generated code was kept only after it was tested and
 cross-checked. This is project-wide practice rather than a personal one, across contributors,
-as part of how the fellowship's compute is used. Much of the repository's
-history records it in commit trailers; the convention is changing, and my newest
-commits carry none. That is precisely why it belongs here in prose rather than
-left to be inferred from metadata that may or may not be present.
+as part of how the fellowship's compute is used. 
 
 ::: {.work-entry-links}
 [Merged pull requests](https://github.com/JamesPetrie/VerInf/pulls?q=is%3Apr+author%3Alevineuwirth) ·
