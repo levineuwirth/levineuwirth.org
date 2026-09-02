@@ -1,0 +1,47 @@
+{
+  "files": {
+    "cliffs_delta.csv": {
+      "bytes": 248,
+      "rows": 9,
+      "sha256": "ce773a41b4b12f87471cad081071430db2d56dee214e1158d041d1c9c0970218",
+      "source": "TODO: the command or run that produced this"
+    },
+    "cross_param.csv": {
+      "bytes": 559,
+      "rows": 4,
+      "sha256": "752b4919e479d7e4ce732e9bb2a0c502c1df4ea9ed5152d33724ebcc0288b9a3",
+      "source": "TODO: the command or run that produced this"
+    },
+    "decomp_mlkem1024.csv": {
+      "bytes": 1556,
+      "rows": 9,
+      "sha256": "9ae19fbadca2f10c5d62829c7123f1b2e85675ac53770772be9bf26c6c5cc37f",
+      "source": "TODO: the command or run that produced this"
+    },
+    "decomp_mlkem512.csv": {
+      "bytes": 1505,
+      "rows": 9,
+      "sha256": "412d920bac2dad2425eedb2b5a7e731c380bc0365404c143f0009c91062a1644",
+      "source": "TODO: the command or run that produced this"
+    },
+    "decomp_mlkem768.csv": {
+      "bytes": 1529,
+      "rows": 9,
+      "sha256": "b3f9ee1b1416dbd36a32bc94ade6b638084142ecba059ca2c8eee1ac4b88d70e",
+      "source": "TODO: the command or run that produced this"
+    },
+    "hand_simd.csv": {
+      "bytes": 1440,
+      "rows": 9,
+      "sha256": "4b250c2529a93d9ef0a00a3f7588f6334ff479910b9a2be7cecf67a883b3e69b",
+      "source": "TODO: the command or run that produced this"
+    },
+    "kem_level.csv": {
+      "bytes": 654,
+      "rows": 3,
+      "sha256": "23578e0e763061a4e5db2f8180d8d178298f58829dc8d4ceca5e57de9b90137c",
+      "source": "TODO: the command or run that produced this"
+    }
+  },
+  "generated_by": "tools/viz-provenance.py"
+}

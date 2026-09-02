@@ -54,11 +54,18 @@ With this said, there is one major exception, and that is my favorite book: *The
 
 ### University
 
-I graduated from **Brown University** in May 2026 with degrees in Mathematics and Computer Science. This autumn I begin my graduate studies in Computer Science at the Technical University of Denmark. I chose these areas because their generality and broad interaction with abstraction captivated me in a notable way. This fact is still true to this day - I have never felt significant burnout, nor felt that I had exhausted some finite supply of interest and curiosity in my chosen fields.
+I graduated from **Brown University** in May 2026 with degrees in Mathematics and Computer Science. I chose these areas because their generality and broad interaction with abstraction captivated me in a notable way. This fact is still true to this day - I have never felt significant burnout, nor felt that I had exhausted some finite supply of interest and curiosity in my chosen fields.
 
 ### Autodidacticism
 
 The bulk of what I have learned has been on an individual basis rather than in affiliation with some institution. This is merely a personal preference; I do not think that autodidactic learning is uniformly intrinsically better, nor do I believe that is necessarily more efficient or otherwise superior to learning through an institution. It is simply what I have always known works for me, and my intuition in this regard has been substantiated by years of empirical evidence.^[Read: progressing through the formalisms of various educational institutions. My grievances are primarily with the public school system that I endured for 13 years of my life, in which autodidacticism was actively perceived as contrary to the goals of the institution, whereas autodidacticism is essentially implied at the University level, or, at a minimum, at a University as rigorous at Brown.]
+
+### Independence
+For a long time, autodidacticism was an essential fact about how I learned, becoming axiomatic in severity, but little more. This is no longer the case: it has become a fundamental fact about how I work. The research on this website is largely carried out independently, in the sense that no institution sets its direction. This is a broad preference of mine rather than a circumstance, and thus something that I choose voluntarily, with exceptions: the chief current exception is MARS V with the Cambridge AI Safety Hub and the Future of Life institute. My institutional attachments are now incredibly deliberate: I work with collaborators whose problems I deeply wish to work on, with preprint servers and journals the eventual venues for much of it. The connecting bridge between autodidacticism and independence is that my questions and curiosity remain my own, as I feel this is the only way it can be for me.
+
+I am able to sustain this model by work that is clearly separate: I am an independent contractor working on frontier LLMs, spanning RL, failure analysis, evaluation, red teaming, and more at various points. This work serves the dual purpose of supporting my inquiry on the questions that I decide I would like to pursue, and also providing me an environment in which I can continually do work that I learn a great deal from. That learning has transferred well so far to my research and I expect as LLMs continue to scale and improve that this trend will only continue.
+
+I am certainly not against institutions in the abstract, nor do I think that independence is intrinsically the best model. Let it be known that the record of my work is here, in public, and that this record is what I hope to be judged by, rather than any affilitations past or present (as it is highly likely more will come in the future).
 
 ### Study Habits
 

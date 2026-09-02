@@ -1,36 +1,33 @@
 import sys
-import csv
 import numpy as np
 
 sys.path.insert(0, 'tools')
-from viz_theme import apply_monochrome, save_svg
+from viz_theme import apply_monochrome, save_svg, load_csv
 
 apply_monochrome()
 import matplotlib.pyplot as plt
 
-def read_data(filepath):
+def read_data(rows):
     ops = []
     m512 = []; m512_err = []
     m768 = []; m768_err = []
     m1024 = []; m1024_err = []
-    with open(filepath, 'r') as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            ops.append(row['op'])
-            m512.append(float(row['m512_sp']))
-            m512_err.append([float(row['m512_elo']), float(row['m512_ehi'])])
-            m768.append(float(row['m768_sp']))
-            m768_err.append([float(row['m768_elo']), float(row['m768_ehi'])])
-            m1024.append(float(row['m1024_sp']))
-            m1024_err.append([float(row['m1024_elo']), float(row['m1024_ehi'])])
-            
+    for row in rows:
+        ops.append(row['op'])
+        m512.append(float(row['m512_sp']))
+        m512_err.append([float(row['m512_elo']), float(row['m512_ehi'])])
+        m768.append(float(row['m768_sp']))
+        m768_err.append([float(row['m768_elo']), float(row['m768_ehi'])])
+        m1024.append(float(row['m1024_sp']))
+        m1024_err.append([float(row['m1024_elo']), float(row['m1024_ehi'])])
+        
     m512_err = np.array(m512_err).T
     m768_err = np.array(m768_err).T
     m1024_err = np.array(m1024_err).T
     return ops, m512, m512_err, m768, m768_err, m1024, m1024_err
 
-filepath = "content/essays/where-does-simd-help-post-quantum-cryptography/figures/data/cross_param.csv"
-ops, m512, m512_err, m768, m768_err, m1024, m1024_err = read_data(filepath)
+DATA = "cross_param.csv"
+ops, m512, m512_err, m768, m768_err, m1024, m1024_err = read_data(load_csv(DATA))
 
 fig, ax = plt.subplots(figsize=(8, 4))
 bar_width = 0.25
@@ -50,4 +47,18 @@ ax.set_ylim(bottom=0, top=70)
 
 ax.legend(loc='upper right', frameon=False, fontsize='small')
 
-save_svg(fig)
+save_svg(
+    fig,
+    alt=(
+        "Grouped bar chart comparing AVX2 speedup for four per-polynomial "
+        "ML-KEM operations across the three parameter sets."
+    ),
+    desc=(
+        "The four operations -- frommsg, INVNTT, basemul and NTT -- all "
+        "work on 256-coefficient polynomials, so their speedups would be "
+        "expected to be independent of the parameter set. They are close "
+        "but not identical: frommsg rises from about 46 to 55 times as the "
+        "parameter set grows, while basemul falls from about 52 to 42 "
+        "times."
+    ),
+)

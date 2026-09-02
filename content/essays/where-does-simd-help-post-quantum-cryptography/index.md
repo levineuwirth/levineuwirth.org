@@ -3,6 +3,7 @@ title: "Where Does SIMD Help Post-Quantum Cryptography? A Micro-Architectural St
 date: 2026-04-04
 abstract: >
   We systematically decompose the sources of SIMD speedup for ML-KEM (Kyber) on Intel x86-64 AVX2. By benchmarking four compilation variants, we demonstrate that GCC's auto-vectorizer provides negligible benefit, and that hand-written AVX2 assembly delivers a $35\times$–$56\times$ performance increase for core arithmetic operations. This drives an end-to-end KEM speedup of $5.4\times$–$7.1\times$.
+figure-numbering: true
 tags:
   - research
   - research/cryptography
@@ -138,7 +139,7 @@ All benchmarks were conducted on Brown University's [OSCAR HPC cluster](https://
 
 ### Statistical Methodology
 
-Cycle count distributions are right-skewed with occasional outliers from OS interrupts and cache-cold starts (the figure). We therefore use nonparametric statistics throughout:
+Cycle count distributions are right-skewed with occasional outliers from OS interrupts and cache-cold starts ([](#fig-distributions)). We therefore use nonparametric statistics throughout:
 
 - **Speedup**: ratio of group medians, $\hat{s} = \text{median}(X_\text{baseline}) / \text{median}(X_\text{variant})$.
 - **Confidence interval**: 95% bootstrap CI on $\hat{s}$, computed by resampling both groups independently $B = 5{,}000$ times with replacement.
@@ -161,7 +162,7 @@ The figure shows the cycle count distributions for three representative operatio
 
 The separation between `ref` and `avx2` is qualitatively different across operation types: for `INVNTT` the distributions do not overlap at all (disjoint spikes separated by two orders of magnitude on the log scale); for `gen_a` there is partial overlap; for noise sampling the distributions are nearly coincident.
 
-![Cycle count distributions for three representative ML-KEM-512 operations. Log $x$-axis. Dashed lines mark medians. Right-skew and outlier structure motivate nonparametric statistics.](figures/distributions.pdf)
+![Cycle count distributions for three representative ML-KEM-512 operations. Log $x$-axis. Dashed lines mark medians. Right-skew and outlier structure motivate nonparametric statistics.](figures/distributions.pdf){#fig-distributions}
 
 ### Speedup Decomposition
 
@@ -173,7 +174,7 @@ Several structural features are immediately apparent:
 - The `avx2` bars are 1–2 orders of magnitude taller than the `ref` bars for arithmetic operations, indicating that hand-written SIMD dominates the speedup.
 - For SHAKE-heavy operations (gen_a, noise), all three bars are much closer together, reflecting the memory-bandwidth bottleneck that limits SIMD benefit.
 
-::: {.figure script="figures/fig_decomp.py" caption="Cumulative speedup at each optimization stage, normalized to `refo0` (1×). Three bars per operation: O3 no auto-vec, O3 + auto-vec, O3 + hand SIMD (AVX2). Log $y$-axis; 95% bootstrap CI shown on `avx2` bars. Sorted by `avx2` speedup."}
+::: {.figure #fig-decomp script="figures/fig_decomp.py" caption="Cumulative speedup at each optimization stage, normalized to `refo0` (1×). Three bars per operation: O3 no auto-vec, O3 + auto-vec, O3 + hand SIMD (AVX2). Log $y$-axis; 95% bootstrap CI shown on `avx2` bars. Sorted by `avx2` speedup."}
 :::
 
 ### Hand-Written SIMD Speedup
@@ -187,7 +188,7 @@ Key observations:
 - **Noise sampling** achieves only $1.2\times$–$1.4\times$, the smallest SIMD benefit. The centered binomial distribution (CBD) sampler is bit-manipulation-heavy with sequential bitstream reads that do not parallelise well.
 - Speedups are broadly consistent across parameter sets for per-polynomial operations, as expected (the corresponding section).
 
-::: {.figure script="figures/fig_hand_simd.py" caption="Hand-written SIMD speedup (`ref` $\to$ `avx2`) per operation, across all three ML-KEM parameter sets. Log $y$-axis. 95% bootstrap CI error bars (often sub-pixel). Sorted by ML-KEM-512 speedup."}
+::: {.figure #fig-hand-simd script="figures/fig_hand_simd.py" caption="Hand-written SIMD speedup (`ref` $\to$ `avx2`) per operation, across all three ML-KEM parameter sets. Log $y$-axis. 95% bootstrap CI error bars (often sub-pixel). Sorted by ML-KEM-512 speedup."}
 :::
 
 | Operation | ML-KEM-512 | ML-KEM-768 | ML-KEM-1024 |
@@ -206,12 +207,9 @@ Key observations:
 
 ### Statistical Significance
 
-All `ref` vs. `avx2` comparisons pass the Mann-Whitney U test at $p < 10^{-300}$. Cliff's $\delta = +1.000$ for all operations except `NTT` at ML-KEM-512 and ML-KEM-1024 ($\delta = +0.999$), meaning AVX2 achieves a strictly smaller cycle count than `ref` in effectively every observation pair.
+All `ref` vs. `avx2` comparisons pass the Mann-Whitney U test at $p < 10^{-300}$. Cliff's $\delta = +1.000$ for every operation at every parameter set except `noise` at ML-KEM-1024 ($\delta = +0.999$), meaning AVX2 achieves a strictly smaller cycle count than `ref` in effectively every observation pair.
 
-The figure shows the heatmap of Cliff's $\delta$ values across all operations and parameter sets.
-
-::: {.figure script="figures/cliffs_delta_heatmap.py" caption="Cliff's $\delta$ (`ref` vs. `avx2`) for all operations and parameter sets. $\delta = +1$: AVX2 is faster in every observation pair. Nearly all cells are at $+1.000$."}
-:::
+The per-cell values are in [`cliffs_delta.csv`](figures/data/cliffs_delta.csv).
 
 ### Cross-Parameter Consistency
 
@@ -219,7 +217,7 @@ The figure shows the `avx2` speedup for the four per-polynomial operations acros
 
 `NTT` shows a more pronounced variation ($35.5\times$ at ML-KEM-512, $39.4\times$ at ML-KEM-768, $34.6\times$ at ML-KEM-1024) that is statistically real (non-overlapping 95% CIs). We attribute this to *cache state effects*: the surrounding polyvec loops that precede each NTT call have a footprint that varies with $k$, leaving different cache residency patterns that affect NTT latency in the scalar `ref` path. The AVX2 path is less sensitive because its smaller register footprint keeps more state in vector registers.
 
-::: {.figure script="figures/fig_cross_param.py" caption="Per-polynomial operation speedup (`ref` $\to$ `avx2`) across security parameters. Polynomial dimension is 256 for all; variation reflects cache-state differences in the calling context."}
+::: {.figure #fig-cross-param script="figures/fig_cross_param.py" caption="Per-polynomial operation speedup (`ref` $\to$ `avx2`) across security parameters. Polynomial dimension is 256 for all; variation reflects cache-state differences in the calling context."}
 :::
 
 ### Hardware Counter Breakdown
@@ -271,7 +269,7 @@ The $13\%$ variation in NTT speedup across parameter sets (the corresponding sec
 
 ### Implications for Deployment
 
-The end-to-end KEM speedups of $5.4\times$–$7.1\times$ (Supplementary, the figure) represent the practical deployment benefit. Deployments that cannot use hand-written SIMD (e.g., some constrained environments, or languages without inline assembly support) should expect performance within a factor of $5$–$7$ of the AVX2 reference. Auto-vectorization provides essentially no shortcut: the gap between compiler-optimized C and hand-written SIMD is the full $5$–$7\times$, not a fraction of it.
+The end-to-end KEM speedups of $5.4\times$–$7.1\times$ (Supplementary, [](#fig-kem-level)) represent the practical deployment benefit. Deployments that cannot use hand-written SIMD (e.g., some constrained environments, or languages without inline assembly support) should expect performance within a factor of $5$–$7$ of the AVX2 reference. Auto-vectorization provides essentially no shortcut: the gap between compiler-optimized C and hand-written SIMD is the full $5$–$7\times$, not a fraction of it.
 
 ### Limitations
 
@@ -329,7 +327,7 @@ The figure shows the hand-written SIMD speedup for the top-level KEM operations:
 
 Decapsulation achieves the highest speedup ($6.9\times$–$7.1\times$) because it involves the largest share of arithmetic operations (two additional NTT and INVNTT calls for re-encryption verification). Key generation achieves the lowest ($5.3\times$–$5.9\times$) because it involves one fewer polynomial multiplication step relative to encapsulation.
 
-::: {.figure script="figures/fig_kem_level.py" caption="End-to-end KEM speedup (`ref` $\to$ `avx2`) for `kyber_keypair`, `kyber_encaps`, and `kyber_decaps`. Intel Xeon Platinum 8268; 95% bootstrap CI."}
+::: {.figure #fig-kem-level script="figures/fig_kem_level.py" caption="End-to-end KEM speedup (`ref` $\to$ `avx2`) for `kyber_keypair`, `kyber_encaps`, and `kyber_decaps`. Intel Xeon Platinum 8268; 95% bootstrap CI."}
 :::
 
 ### Full Operation Set

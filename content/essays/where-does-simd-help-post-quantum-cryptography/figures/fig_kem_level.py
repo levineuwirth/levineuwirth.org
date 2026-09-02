@@ -1,36 +1,33 @@
 import sys
-import csv
 import numpy as np
 
 sys.path.insert(0, 'tools')
-from viz_theme import apply_monochrome, save_svg
+from viz_theme import apply_monochrome, save_svg, load_csv
 
 apply_monochrome()
 import matplotlib.pyplot as plt
 
-def read_data(filepath):
+def read_data(rows):
     ops = []
     m512 = []; m512_err = []
     m768 = []; m768_err = []
     m1024 = []; m1024_err = []
-    with open(filepath, 'r') as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            ops.append(row['op'])
-            m512.append(float(row['m512_sp']))
-            m512_err.append([float(row['m512_elo']), float(row['m512_ehi'])])
-            m768.append(float(row['m768_sp']))
-            m768_err.append([float(row['m768_elo']), float(row['m768_ehi'])])
-            m1024.append(float(row['m1024_sp']))
-            m1024_err.append([float(row['m1024_elo']), float(row['m1024_ehi'])])
-            
+    for row in rows:
+        ops.append(row['op'])
+        m512.append(float(row['m512_sp']))
+        m512_err.append([float(row['m512_elo']), float(row['m512_ehi'])])
+        m768.append(float(row['m768_sp']))
+        m768_err.append([float(row['m768_elo']), float(row['m768_ehi'])])
+        m1024.append(float(row['m1024_sp']))
+        m1024_err.append([float(row['m1024_elo']), float(row['m1024_ehi'])])
+        
     m512_err = np.array(m512_err).T
     m768_err = np.array(m768_err).T
     m1024_err = np.array(m1024_err).T
     return ops, m512, m512_err, m768, m768_err, m1024, m1024_err
 
-filepath = "content/essays/where-does-simd-help-post-quantum-cryptography/figures/data/kem_level.csv"
-ops, m512, m512_err, m768, m768_err, m1024, m1024_err = read_data(filepath)
+DATA = "kem_level.csv"
+ops, m512, m512_err, m768, m768_err, m1024, m1024_err = read_data(load_csv(DATA))
 
 fig, ax = plt.subplots(figsize=(8, 4))
 bar_width = 0.25
@@ -50,4 +47,18 @@ ax.set_ylim(bottom=0, top=9)
 
 ax.legend(loc='upper left', frameon=False, fontsize='small')
 
-save_svg(fig)
+save_svg(
+    fig,
+    alt=(
+        "Grouped bar chart of end-to-end AVX2 speedup for the three ML-KEM "
+        "operations, at three parameter sets."
+    ),
+    desc=(
+        "Key generation, encapsulation and decapsulation all land between "
+        "roughly 5.4 and 7.1 times faster than the scalar reference, a much "
+        "narrower band and a much smaller factor than the per-operation "
+        "speedups elsewhere in the essay, because the arithmetic AVX2 "
+        "accelerates is only part of the whole operation. Confidence "
+        "intervals are too small to see at this scale."
+    ),
+)
