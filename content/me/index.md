@@ -10,6 +10,7 @@ scope: personal
 novelty: moderate
 practicality: high
 history:
+  - date: "2026-09-03"
   - date: "2026-08-27"
   - date: "2026-07-25"
   - date: "2026-04-22"

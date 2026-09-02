@@ -6,6 +6,7 @@ confidence: 93
 tags: [meta]
 abstract: On the design, tools, and philosophy of this site — and by extension, its author.
 history:
+  - date: "2026-09-03"
   - date: "2026-08-31"
   - date: "2026-06-10"
   - date: "2026-05-08"
@@ -86,7 +87,7 @@ My primary desktop is a rig I built myself, running **Gentoo Linux** with **Hypr
 
 - Compiling software from source delivers measurable performance increases — not marginal ones.
 - It provides fine-grained control over software configuration via [USE]{.smallcaps} flags, linking options, and the like. This matters for a machine tuned to a high degree of specificity.
-- It is, in my experience, the best-maintained Linux distribution I have ever used.
+- It is, in my experience, the best-maintained Linux distribution.
 - The community is phenomenal.
 
 I have strong hardware preferences to match; [AMD]{.smallcaps} hardware is used in favor of Intel and NVIDIA. I have used at least 2 distinct chips from each manufacturer and consistently find that, as far as x86-64 is concerned, AMD is the clear winner. As for my preference for AMD gpus, not only do I quite disagree with the business direction of NVIDIA, but the VRAM offerings are simply superior from AMD.
