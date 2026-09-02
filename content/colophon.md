@@ -98,7 +98,9 @@ For mobile computing, I use a [P]{.smallcaps}-series ThinkPad running **Arch Lin
 
 ### Editor
 
-Everything on this site — every word of prose, every line of Haskell, every [CSS]{.smallcaps} rule — was written in **Emacs**. I have used most of the major editors, and consistently experiment with others, but have yet to find any which come close to the power of Emacs. I intend to complete a project called "Pmacs," which will introduce much moderner parallelization, among other features, to Emacs. This is a project I intend to tackle in the Summer of 2026 at high intensity.
+For a long time I was an **Emacs** enthusiast. I have since decided that the shortcomings of Emacs due to its age are too severe. In September 2025 I first envisioned writing a new text editor in the vein of my beloved, but with more modern features and in a more modern programming language.
+
+I did not have the time to see this through until 2026. I now write all of my code in [Pmacs](https://github.com/levineuwirth/pmacs), which stands for "Parallel Emacs." You can guess from this title what the primary improvement is, but there are many other modifications and modernizations. The editor is still quite young and not really suitable for widespread use yet, but this will change.
 
 ### Privacy-First Computing
 
