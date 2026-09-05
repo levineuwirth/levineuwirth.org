@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" role="img" aria-labelledby="mark-title-proof-broker">
+  <title id="mark-title-proof-broker">A heavy sealed disc on the left, a dashed enclosure of scattered open circles on the right, and between them a vertical line broken by one small square through which every line from the right must pass</title>
+  <desc>A frontispiece mark for "Proof Broker: Separating Proof Search from Trust." On the right, inside a dashed enclosure, several open circles of different sizes and weights — heterogeneous, untrusted search. On the left, a heavy ring around a single point — the kernel, the only judge. Between them a vertical boundary line, broken at its middle by a small square: the certificate, the one shape that crosses. Every thin line from the right converges on that square, and one line continues from it to the kernel, marked by three short ticks — the graded tiers. Nothing else crosses the boundary.</desc>
+
+  <circle cx="140" cy="140" r="128" stroke="currentColor" stroke-width="0.6" fill="none"/>
+
+  <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- Untrusted search: a dashed enclosure, drawn loosely on purpose. -->
+    <rect x="170" y="86" width="78" height="108" rx="10" stroke-width="0.6" stroke-dasharray="3 3"/>
+
+    <!-- Heterogeneous backends: no two alike, none trusted. -->
+    <circle cx="196" cy="108" r="7"  stroke-width="1.0"/>
+    <circle cx="232" cy="120" r="10" stroke-width="0.6"/>
+    <circle cx="190" cy="152" r="5"  stroke-width="1.2"/>
+    <circle cx="224" cy="170" r="8"  stroke-width="0.8"/>
+    <circle cx="214" cy="140" r="4"  stroke-width="0.5" stroke-dasharray="2 2"/>
+
+    <!-- Everything they return converges on one aperture. -->
+    <g stroke-width="0.5">
+      <line x1="190.5" y1="112.4" x2="156" y2="140"/>
+      <line x1="222.3" y1="122.5" x2="156" y2="140"/>
+      <line x1="185.3" y1="150.3" x2="156" y2="140"/>
+      <line x1="216.7" y1="166.8" x2="156" y2="140"/>
+      <line x1="210"   y1="140"   x2="156" y2="140"/>
+    </g>
+
+    <!-- The acceptance boundary. -->
+    <line x1="148" y1="44"  x2="148" y2="126" stroke-width="1.0"/>
+    <line x1="148" y1="154" x2="148" y2="236" stroke-width="1.0"/>
+
+    <!-- The certificate: the only shape that crosses. -->
+    <rect x="140" y="132" width="16" height="16" stroke-width="1.2"/>
+
+    <!-- From certificate to kernel, through the graded tiers. -->
+    <line x1="140" y1="140" x2="94" y2="140" stroke-width="0.9"/>
+    <g stroke-width="0.8">
+      <line x1="128" y1="136.5" x2="128" y2="143.5"/>
+      <line x1="118" y1="136.5" x2="118" y2="143.5"/>
+      <line x1="108" y1="136.5" x2="108" y2="143.5"/>
+    </g>
+
+    <!-- The kernel: the only judge. -->
+    <circle cx="76" cy="140" r="18" stroke-width="1.4"/>
+    <circle cx="76" cy="140" r="26" stroke-width="0.6"/>
+  </g>
+  <circle cx="76" cy="140" r="2.4" fill="currentColor" stroke="none"/>
+</svg>
