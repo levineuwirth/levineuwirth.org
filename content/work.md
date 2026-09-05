@@ -3,6 +3,7 @@ title: Work
 work: true
 description: Research engineer working on technical AI assurance — verifiable inference, model evaluations, systems and cryptography.
 history:
+  - date: "2026-09-05"
   - date: "2026-09-03"
   - date: "2026-08-29"
   - date: "2026-08-28"
@@ -66,6 +67,40 @@ publication.
 :::
 
 ::: {.work-entry}
+### [Proof Broker](/essays/proof-broker/)
+
+::: {.work-meta}
+Independent · OCaml, Lean 4, Rocq · ongoing
+:::
+
+Proof Broker separates proof search from trust. Lean and Rocq can dispatch
+goals through a shared intermediate representation to external SMT solvers,
+saturation provers, and learned search, while returned evidence is graded,
+checked, and ultimately reconstructed or replayed as a proof term the home
+kernel verifies. The search machinery itself never enters the logical trusted
+base.
+
+The R4 downstream demonstration applies the system to a real VerInf Lean
+development: 19/19 targeted arithmetic obligations close through broker calls,
+spanning reconstructed Farkas witnesses, cvc5/Alethe trace replay,
+certificate-gated tactics, and one explicitly reported oracle-tier case.
+Integrating the unmodified downstream file also exposed three defects that the
+broker's own test suite had missed.
+
+The next work pushes the same boundary into richer theories — beginning with
+finite-field certificates for VerInf's uniqueness queries — while strengthening
+certificate reconstruction, bringing the Rocq bridge to parity, and testing the
+abstraction against additional independent consumers.
+
+::: {.work-entry-links}
+[Technical write-up](/essays/proof-broker/) ·
+[Downstream demo](https://github.com/levineuwirth/proof-broker-demo) ·
+[Repository](https://github.com/levineuwirth/proof-broker) ·
+[Releases](https://github.com/levineuwirth/proof-broker/releases)
+:::
+:::
+
+::: {.work-entry}
 ### Frontier-model evaluation and red-teaming
 
 ::: {.work-meta}
@@ -94,35 +129,6 @@ responsibilities.
 
 ::: {.work-entry-links}
 [Code and results](https://github.com/levineuwirth/specification-dilemma)
-:::
-:::
-
-::: {.work-entry}
-### Proof Broker
-
-::: {.work-meta}
-Independent · OCaml · ongoing research program
-:::
-
-Lean 4 and Rocq can outsource proof search to external provers — SMT solvers,
-automated theorem provers, even LLMs — without extending what they trust. Proof
-Broker routes a goal out to those provers, checks whatever comes back, and lifts
-the result into a proof term the home system verifies for itself. The provers
-stay untrusted; the kernel remains the trusted base. The verified-inference work
-grew out of this one — the same question about checking a claim without trusting
-its author, moved from proof terms to model outputs.
-
-Concretely: a function-composition goal closes under `by proof_broker` through a
-real Vampire invocation, axiom-free.
-
-::: {.work-limit}
-**Boundary.** Individual inference steps are not re-derived — the kernel check
-is what closes the proof. Breadth is in progress: the Vampire path is complete
-end-to-end, other backends are not.
-:::
-
-::: {.work-entry-links}
-[Repository](https://github.com/levineuwirth/proof-broker)
 :::
 :::
 
