@@ -20,8 +20,8 @@ status: "Working system"
 confidence: 87
 importance: 4
 evidence: 4
-scope: average
-novelty: moderate
+scope: broad
+novelty: idiosyncratic
 practicality: moderate
 history:
   - date: "2026-09-05"
