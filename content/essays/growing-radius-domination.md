@@ -1,10 +1,13 @@
 ---
 title: "From Path Tubes to a Near-Critical Domination Bound"
 date: 2026-07-22
+revised:
+  - date: "2026-09-05"
+    note: "Clarified the scope of the tube interpretation, linked the corrected current preprint, and recorded the resolved bounded critical window."
 abstract: >
-  A first-person, code-heavy companion to the preprint *Near-Critical
-  First-Moment Lower Bounds for Growing-Radius Domination in Random Regular
-  Graphs*. Rather than reproducing its theorem-and-proof form, this page
+  A first-person, code-heavy companion tracing the near-critical bound that
+  led to *The Annealed Critical Window for Growing-Radius Domination in
+  Random Regular Graphs*. Rather than reproducing its theorem-and-proof form, this page
   traces where the problem came from — a cops-and-robbers hypergraph question
   that collapsed into a domination bound — why the answer carries an
   unnecessary coupon-collector logarithm, and how a chain of computational
@@ -18,21 +21,23 @@ tags:
   - tech/python
 authors:
   - "Levi Neuwirth | /me.html"
-preprint: /papers/growing-radius-domination-paper.pdf
+preprint: /papers/near-critical-growing-radius-domination-paper.pdf
 status: "Durable"
 confidence: proved
 evidence: 5
 peer-status: unreviewed
 result-shape: mixed
 history:
+  - date: "2026-09-05"
+    note: "Corrected the global tube interpretation and reconciled the companion with the bounded-window preprint."
   - date: "2026-07-24"
   - date: "2026-07-22"
 
 ---
 
-This page is a companion to the preprint [**The Annealed Critical Window for Growing-Radius Domination in Random Regular Graphs**](/papers/growing-radius-domination-paper.pdf) — [the full theorem-and-proof form is here](/essays/near-critical-growing-radius-domination.html). A complete, runnable version — [`growing-radius-domination-demo.py`](/papers/growing-radius-domination-demo.py) — ships alongside this page, together with [the CSV of diagnostic output](/papers/growing-radius-domination-demo-output.csv) it produces.
+This page traces the near-critical argument that led to the preprint [**The Annealed Critical Window for Growing-Radius Domination in Random Regular Graphs**](/papers/near-critical-growing-radius-domination-paper.pdf) — [the full theorem-and-proof form is here](/essays/near-critical-growing-radius-domination.html). The earlier download URL also serves the corrected current paper. A complete, runnable version — [`growing-radius-domination-demo.py`](/papers/growing-radius-domination-demo.py) — ships alongside this page, together with [the CSV of diagnostic output](/papers/growing-radius-domination-demo-output.csv) it produces.
 
-The main theorem is the following. Fix a degree $d\ge 3$ and let
+The theorem followed by the computations below is the earlier near-critical bound, retained as a consequence of the current result. The bounded critical window has since been proved; Section 14 records that stronger conclusion. Fix a degree $d\ge 3$ and let
 
 $$
 B_h=1+d\frac{(d-1)^h-1}{d-2}
@@ -52,7 +57,7 @@ $$
 
 with high probability.
 
-The $-W_h$ is deliberate, and it is the honest part of the statement. Letting $W_h$ diverge arbitrarily slowly walks the bound arbitrarily close to the predicted bounded critical window without ever resolving that window. The theorem reaches to within a diverging additive whisker of the transition and stops. At the comparison scale $B_h\asymp\sqrt n$, with such a slowly growing $W_h$, the lower bound has order
+The $-W_h$ is deliberate. Letting $W_h$ diverge arbitrarily slowly walks this earlier bound arbitrarily close to the bounded critical window. Resolving the window itself required the additional argument described in Section 14. At the comparison scale $B_h\asymp\sqrt n$, with such a slowly growing $W_h$, the lower bound has order
 
 $$
 \sqrt n\log n,
@@ -127,17 +132,19 @@ The theorem says this heuristic scale survives optimization over the selected se
 
 The [preceding project](/essays/branch-based-local-capture-in-tree-balls/index.html) studied a rigid local certificate in the cops-and-robbers game. Around a fixed robber position, every outward nonbacktracking path indexed a descendant "tube," and if every tube held a cop, then every surviving round ended in capture, blockage, or pressure from at least two branches. It was a clean local statement, and it left an obvious global question hanging over it: could one cop placement, chosen once, hit every such tube for every possible robber root at the same time?
 
-At first this looked like a monstrous hypergraph problem — many roots, exponentially many paths through each — and I spent far longer than I would like to admit intimidated by it. Then, as they somehow often do, the combinatorics simply collapsed. Once the root is allowed to vary, a tube remembers nothing^[I think we mathematicians should really have a term for amnesia. We have the [Markov Property](https://en.wikipedia.org/wiki/Markov_property), but can we facetciously generalize further?] about its interior. It remembers only its **terminal directed edge** and the unused residual radius
+At first this looked like a monstrous hypergraph problem — many roots, exponentially many paths through each — and I spent far longer than I would like to admit intimidated by it. There is a useful simplification: a tube from an admissible tree-ball root remembers nothing^[I think we mathematicians should really have a term for amnesia. We have the [Markov Property](https://en.wikipedia.org/wiki/Markov_property), but can we facetciously generalize further?] about the interior of its indexing path. It remembers only its **terminal directed edge** and the unused residual radius
 
 $$
 h=R-t.
 $$
 
-For a directed edge $p\to w$, the associated set is the forward cone from $w$ of depth $h$, with the branch back through $p$ excluded. A vertex set hits every such directed cone at $w$ exactly when either $w$ is itself selected, or at least two distinct branches at $w$ contain selected vertices within distance $h$. The exponential path structure was never really there. It was an artifact of insisting on a fixed root, and the clean way to say this uses no tree at all.
+For a directed edge $p\to w$, the associated set is the forward cone from $w$ of depth $h$, with the branch back through $p$ excluded. If every incoming directed edge at every vertex is represented, and the relevant balls are trees, hitting those cones is equivalent to having selected vertices in at least two branches at every unselected vertex.
+
+There is a qualification I originally missed: allowing every *admissible* root does not ensure that every directed edge is represented. The original hypergraph includes only roots whose radius-$R$ balls are trees. Its tubes can all be hit while other vertices remain undominated; the [branch paper's global-overlap section](/essays/branch-based-local-capture-in-tree-balls/index.html#rem-admissible-roots) gives an explicit cubic counterexample. The terminal-edge simplification therefore motivates a stronger graph-general question, rather than identifying the unrestricted transversal problem with domination.
 
 A set $S$ is **internally two-path $(h,2)$-dominating** if every $v\notin S$ has two paths of length at most $h$ from $v$ to $S$ whose only shared vertex is $v$. Any such set is automatically ordinary distance-$h$ dominating, because either path on its own already witnesses a selected vertex within distance $h$.
 
-So, a lower bound for ordinary distance-$h$ domination is, for free, a lower bound for this stronger global tube certificate. The theorem therefore says something I find satisfying: exhaustive static tube coverage keeps its logarithmic overhead even after you allow all roots to share a single placement. Collapsing the hypergraph bought no asymptotic mercy.
+So, a lower bound for ordinary distance-$h$ domination is, for free, a lower bound for internally two-path domination. This stronger all-vertex certificate keeps its logarithmic overhead. Transferring that conclusion to the original tube hypergraph requires an additional hypothesis ensuring its coverage condition implies domination; tree geometry at only the admissible roots does not supply it.
 
 It does **not** say that cops need $\sqrt n\log n$ in the actual game. Adaptive strategies, partial coverage, motion between epochs, and entirely different certificates all remain outside the argument, exactly as they did in the previous paper. I will return to how narrow this obstruction is, deliberately, at the end. For now it is enough that the pursuit question handed the domination problem a reason to care about the scale $B_h\asymp\sqrt n$, and then got out of the way.
 
@@ -380,7 +387,9 @@ def _w_e(rho: mp.mpf, b: int):
 
 
 def reverse_step(rho_next: mp.mpf, v_next: mp.mpf, b: int):
-    """Invert one stationary transfer step."""
+    """Invert one stationary transfer step, excluding the endpoint (1,1)."""
+    if not (0 < rho_next <= v_next <= 1 and rho_next < 1):
+        raise ValueError("require 0 < rho <= v <= 1 and rho < 1")
     w, e = _w_e(rho_next, b)
     R = v_next * e / w
     M = mp.power(e + w / v_next, b)
@@ -793,6 +802,7 @@ def make_table(cases, csv_path=None):
             writer = csv.DictWriter(
                 handle,
                 fieldnames=list(rows[0].keys()),
+                lineterminator="\n",
             )
             writer.writeheader()
             writer.writerows(rows)
@@ -809,7 +819,7 @@ The code finds one exact finite-$h$ stationary orbit. The proof has to understan
 
 There are two exact outer regimes. On the **free side**, a transverse defect $q_i$ is tiny and the main coordinate rides the free-coverage orbit. On the **stable side**, the occupied-message coordinate $\rho_i$ is tiny and the orbit approaches the empty-root manifold. I choose a matching layer where both transverse quantities are exponentially small at once, and shadow the true orbit against whichever exact outer solution is nearby.
 
-The reverse map supplies one-step estimates that stay uniform even as the main coordinate itself shrinks toward nothing. That uniformity, rather than any single clever identity, is what makes the whole scheme go. It yields
+The reverse map supplies one-step estimates that stay uniform even as the main coordinate itself shrinks toward nothing. A small error in $1-\rho_i$ alone does not control the much smaller $\rho_i$: the proof transports $\lambda_i=-\log(1-\rho_i)$ multiplicatively and sums the transverse errors. That extra estimate supplies the relative accuracy needed at the matching layer. It yields
 
 $$
 \alpha=a_h(t)(1+o(1)),
@@ -861,50 +871,58 @@ uniformly across the near-critical window. The first moment then closes the rand
 
 ---
 
-## 13. What the theorem says about exhaustive tube coverage
+## 13. What the theorem says about the stronger all-vertex certificate
 
-Finally! I can pay off the pursuit problem it started with, as promised..
+The pursuit application now has a precise scope.
 
-The original local certificate placed a cop in every path tube at a *known* root. Make the root unknown and force all roots to share one placement, and the path prefix collapses — as in Section 2 — to a single directed terminal edge. Hitting every resulting forward cone is equivalent, in the tree geometry, to having selected vertices in at least two branches at every unselected vertex, and the graph-general form of that condition is internally two-path $(h,2)$-domination.
+The original local certificate placed a cop in every path tube at a *known* admissible root. Its global hypergraph tests the terminal directed edges reachable from such roots. If those edges exhaust all directed edges and the relevant balls are trees, coverage gives the two-branch condition at every unselected vertex. Without that additional coverage hypothesis, the original hypergraph need not even imply ordinary domination.
 
-Since $(h,2)$-domination implies ordinary distance-$h$ domination, the theorem hands the same lower bound to the exhaustive global certificate at no extra cost. At $B_h\asymp\sqrt n$, that certificate needs
+Internally two-path $(h,2)$-domination imposes its condition at every vertex and implies ordinary distance-$h$ domination on every graph. At $B_h\asymp\sqrt n$, the theorem therefore requires
 
 $$
 \Omega(\sqrt n\log n)
 $$
 
-selected vertices with high probability. One tempting route from the local tube theorem to a root-independent, Meyniel-scale placement is therefore closed.
+selected vertices with high probability for this stronger certificate. That obstructs a Meyniel-scale placement based on internally two-path domination. It does not close the original admissible-root transversal problem, nor does the comparison scale make all radius-$R$ balls in a random regular graph trees.
 
 ---
 
-## 14. Three remaining problems
+## 14. The bounded window and the remaining problems
 
-### The bounded critical window
+### The bounded critical window is now proved
 
-The theorem reaches
+The near-critical argument above reaches
 
 $$
 \log B_h-2\log\log B_h-W_h
 $$
 
-for every $W_h\to\infty$, and stops one diverging step short of the bounded additive term. The stationary computation points hard at a specific answer: the annealed transition looks governed by the scalar balance
+for every $W_h\to\infty$. The current preprint goes further: with $L_h=\log B_h$, uniformly for bounded $s$,
+
+$$
+\frac{B_h}{L_h^2}\Psi_{d,h}\!\left(
+\frac{L_h-2\log L_h+s}{B_h}\right)\longrightarrow1-e^{-s}.
+$$
+
+The additional ingredient is an explicit capped-free profile whose entropy loss supplies the matching upper bound on the entropy defect. Together with quantitative orbit matching, this pins the annealed transition to the scalar balance
 
 $$
 H(C/B_h)=(1-C/B_h)^{B_h},
 $$
 
-whose solution satisfies
+to within $B_h^{-1/7+o(1)}$ in the coordinate $C$. In particular,
 
 $$
 C=
-\log B_h-2\log\log B_h+o(1).
+L_h-2\log L_h+\frac{3\log L_h-1}{L_h}
++O\!\left(\frac{(\log L_h)^2}{L_h^2}\right).
 $$
 
-Proving the full bounded window, though, needs uniform matching sharper than the slack theorem ever required — errors controlled down to the same order as the competing entropy and coupon terms.
+The corresponding random-regular lower bound now allows any fixed slack $\omega>0$ in place of $W_h$, under $nL_h^2/B_h\gg h\log n$. This settles the annealed window; existence of dominating sets near that crossing remains a separate question.
 
 ### Quenched matching
 
-What I have is a lower bound. A simple random placement followed by patching the uncovered vertices gives an upper bound of order
+What I have for the random graph is a lower bound. In ideal tree-ball geometry, a simple random placement followed by patching the uncovered vertices gives an upper bound of order
 
 $$
 \frac{n\log B_h}{B_h},
@@ -922,7 +940,7 @@ Ordinary distance domination is only a relaxation of internally two-path dominat
 
 The code was never a numerical appendix bolted onto a finished proof. It kept reaching back into the mathematics and rearranging it, and I can name some of the specific occasions:
 
-- exact ILPs first revealed that the global path hypergraph collapsed to a domination problem;
+- exact ILPs exposed the terminal-edge structure of the tube hypergraph and motivated the stronger all-vertex domination problem;
 - transfer numerics suggested the $\log B_h-2\log\log B_h$ scale before I could prove it;
 - an independent implementation caught a stale stationary value hiding in a comparison table;
 - Hessian probes killed a plausible, load-bearing, and entirely false concavity conjecture;

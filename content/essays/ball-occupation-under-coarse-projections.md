@@ -2,15 +2,18 @@
 title: "Ball-Occupation Certificates under Coarse Graph Projections"
 subtitle: "Degree Reduction, Square-Root Hard Families, and Toroidal Barriers"
 date: 2026-07-27
+revised:
+  - date: "2026-09-05"
+    note: "Corrected the cloud-product estimate and expansion loss, completed the core and metric proofs, and clarified upper-bound tightness and traversal-time claims."
 abstract: >
   We isolate an abstract strategy-transfer principle for Cops and Robber: a
   coarse graph projection with bounded fibers and bounded distance distortion
-  lets cops occupy a lifted macro-ball before the robber escapes, giving cop
-  number O(sqrt N) up to polylogarithmic factors. Applied to the
+  lets cops occupy a lifted macro-ball before the robber escapes, giving a
+  quantitative cop-number bound from uniform growth on the base. Applied to the
   Hosseini-Mohar-Gonzalez Hermosillo de la Maza degree-reduction
-  construction, this shows the known hard family for Meyniel's conjecture
-  already meets the square-root exponent, sharper than the usual notation
-  suggests. A counting argument then proves a sharp limit on the strategy
+  construction, this gives the known hard family an upper bound within a
+  polylogarithmic factor of the square-root scale. A counting argument then
+  proves a sharp limit on the strategy
   class itself: Cartesian tori of cycles have bounded doubling and constant
   cop number but linear occupation cost at every radius, so weak expansion
   alone cannot certify a universal robustness theorem.
@@ -31,6 +34,8 @@ evidence: 5
 peer-status: unreviewed
 result-shape: mixed
 history:
+  - date: "2026-09-05"
+    note: "Corrected the cloud-product estimate and expansion loss, completed the core and metric proofs, and clarified upper-bound tightness and traversal-time claims."
   - date: "2026-07-27"
 
 ---
@@ -50,7 +55,7 @@ The final result marks the boundary of the mechanism. A one-shot occupation cert
 # Scale-adaptive cores and the robustness window
 
 For a connected graph $J$, write $$h(J)=\min_{\varnothing\ne A\subseteq V(J),\ |A|\le |J|/2}
-\frac{|\partial_J A|}{|A|}.$$ The following elementary reduction explains why polynomially weak expansion is the relevant robustness window for the universal problem.
+\frac{|\partial_J A|}{|A|},\qquad h(K_1)=+\infty.$$ The following elementary reduction explains why polynomially weak expansion is the relevant robustness window for the universal problem.
 
 ::: {#prop-adaptive-core .exhibit .exhibit--proposition data-exhibit-type="proposition" data-exhibit-name="Proposition 1 (Scale-adaptive induced core)"}
 **Proposition 1** (Scale-adaptive induced core). *Let $J$ be a connected graph of order $n$, and let $\eta(1)\ge\cdots\ge\eta(n)\ge0$. Then $J$ contains a connected induced subgraph $K$, of order $m$, such that $$\boxed{h(K)\ge\eta(m)}
@@ -59,9 +64,9 @@ For a connected graph $J$, write $$h(J)=\min_{\varnothing\ne A\subseteq V(J),\ |
 :::
 
 ::: proof
-*Proof.* Maintain the connected induced region $J_i$ containing the robber. Whenever $|J_i|=m_i$ and $h(J_i)<\eta(m_i)$, choose $A_i\subseteq V(J_i)$ with $0<|A_i|\le m_i/2$ and $|\partial_{J_i}A_i|<\eta(m_i)|A_i|$, and occupy its boundary. The robber is then confined to one component $J_{i+1}$ of $J_i-\partial_{J_i}A_i$. Whether that component lies inside $A_i$ or outside it, one has $$|A_i|\le m_i-m_{i+1}.$$ Consequently the separator costs at most $$\eta(m_i)(m_i-m_{i+1})
+*Proof.* Induct on $n$. If $h(J)\ge\eta(n)$, take $K=J$; this also covers $n=1$ by the singleton convention. Otherwise choose $A\subseteq V(J)$ with $0<|A|\le n/2$ and $|S|<\eta(n)|A|$, where $S=\partial_J A$. Placing $|S|$ stationary cops on $S$ confines the robber to a component of $J-S$. The remaining cops can then move to a winning initial placement in that component while $S$ stays guarded. Hence $$c(J)\le |S|+\max_{C\text{ a component of }J-S}c(C).$$ Choose a component $C$ attaining this maximum, and write $t=|C|$. If $C\subseteq A$, then $t\le |A|\le n/2$; otherwise $C$ is disjoint from $A$. In both cases $|A|\le n-t$, so monotonicity of $\eta$ gives $$|S|<\eta(n)|A|\le\eta(n)(n-t)
 \le
-\sum_{j=m_{i+1}+1}^{m_i}\eta(j).$$ These integer intervals are disjoint along the robber's nested component chain. The process terminates at a connected induced $K$ with $h(K)\ge\eta(|K|)$, and the separator costs telescope to the displayed sum. ◻
+\sum_{j=t+1}^{n}\eta(j).$$ Apply the induction hypothesis to $C$ and the restricted sequence $\eta(1),\ldots,\eta(t)$. It supplies a fixed connected induced subgraph $K\subseteq C$, of order $m$, with $h(K)\ge\eta(m)$ and $c(C)\le c(K)+\sum_{j=m+1}^{t}\eta(j)$. Combining the two estimates proves the claim. Since $C$ is induced in $J$, so is $K$. ◻
 :::
 
 Taking $\eta(j)=j^{-a}$ shows that a polynomial cop-number saving on subcubic graphs with $h(K)\ge |K|^{-a}$ would imply a weak form of Meyniel for arbitrary graphs after the bounded-degree transfer of Hosseini–Mohar–Gonzalez Hermosillo de la Maza [@HMG]. Bradshaw–Hosseini–Mohar–Stacho already treat constant expansion restricted to sublinear set scales [@BradshawHosseiniMoharStacho]; the unresolved axis in this reduction is expansion that itself shrinks polynomially.
@@ -135,6 +140,8 @@ To leave $X_v$, the robber must enter a fiber over a base vertex at distance at 
 
 For a vertex of degree $r$, the HMGHM replacement has one external port for every incident edge. The ports are partitioned into nearly equal classes, and for each pair of classes there is an internal vertex adjacent to every port in the two classes [@HMG].
 
+For degree zero or one, use a singleton cloud, serving as the external port in the degree-one case. Each round replaces every vertex according to its current degree, including vertices of degree two or three. For degree reduction, stop when the entire graph is subcubic.
+
 ::: {#lem-portgeometry .exhibit .exhibit--lemma data-exhibit-type="lemma" data-exhibit-name="Lemma 5 (One-round port geometry)"}
 **Lemma 5** (One-round port geometry). *For every HMGHM replacement cloud of degree at least two:*
 
@@ -148,7 +155,7 @@ For a vertex of degree $r$, the HMGHM replacement has one external port for ever
 ::: proof
 *Proof.* Two ports in different classes share the internal vertex associated with their class pair. Two ports in the same class share any internal vertex associated with that class and another nonempty class. Since ports are mutually nonadjacent, their distance is exactly two.
 
-An internal vertex is adjacent to every port in either of two classes. If a specified port lies in neither class, travel to a port in one of the two classes, then through the internal vertex corresponding to that class and the specified port's class, and finally to the specified port. This takes three steps. The diameter bound follows by routing arbitrary endpoints through a specified port. ◻
+An internal vertex is adjacent to every port in either of two classes. If a specified port lies in neither class, travel to a port in one of the two classes, then through the internal vertex corresponding to that class and the specified port's class, and finally to the specified port. This takes three steps. For the diameter bound, two internal vertices whose class pairs intersect share a port. If their pairs are disjoint, choose one class from each pair and route through the internal vertex associated with those two classes, using four edges. The port–port and port–internal cases have already been bounded by two and three edges, respectively. ◻
 :::
 
 Let $$G=G_0,G_1,\ldots,G_k=H$$ be an iterated HMGHM tower, and let $\pi:V(H)\to V(G)$ map every final vertex to its original ancestor. Put $$F_v=\pi^{-1}(v),
@@ -168,7 +175,7 @@ P=\max_v|F_v|,
 :::
 
 ::: proof
-*Proof.* For one round, a shortest path between distinct clouds uses $e\ge r$ external edges. Between consecutive external edges it enters and leaves an intermediate cloud through distinct ports: otherwise it immediately traverses one external edge back. By [Lemma 5](#lem-portgeometry), each intermediate port change costs at least two internal edges, and hence $$\operatorname{dist}_{G_1}(x,y)\ge e+2(e-1)\ge3r-2.$$ For the upper bound, follow a base geodesic. Reaching the first prescribed port costs at most three, each intermediate port change costs two, the external edges cost $r$, and reaching the final endpoint costs at most three. Thus $$\operatorname{dist}_{G_1}(x,y)\le3+r+2(r-1)+3=3r+4.$$ The one-round fiber diameter is at most four.
+*Proof.* For one round, a shortest path between distinct clouds uses $e\ge r$ external edges. Between consecutive external edges it enters and leaves an intermediate cloud through distinct ports: otherwise it immediately traverses one external edge back. By [Lemma 5](#lem-portgeometry), each intermediate port change costs at least two internal edges, and hence $$\operatorname{dist}_{G_1}(x,y)\ge e+2(e-1)\ge3r-2.$$ For the upper bound, follow a base geodesic. Reaching the first prescribed port costs at most three, each intermediate port change costs two, the external edges cost $r$, and reaching the final endpoint costs at most three. Thus $$\operatorname{dist}_{G_1}(x,y)\le3+r+2(r-1)+3=3r+4.$$ The one-round fiber diameter is at most four. A singleton cloud contributes zero endpoint cost and cannot be an intermediate cloud on a shortest path, so the degree-zero and degree-one conventions preserve these bounds.
 
 The lower and upper affine recurrences are $$L_j(r)=3L_{j-1}(r)-2,
 \qquad
@@ -204,18 +211,36 @@ Let $U$ be the set of base vertices whose clouds have majority in $S$, and put $
 \min\left\{1,\frac{\iota(G)}{L_0}\right\}|S|.$$ Combining the inequalities proves the proposition. ◻
 :::
 
-The HMGHM cloud-size recurrence turns the one-round estimate into a subpolynomial-loss statement in the polylogarithmic-degree regime. If $D$ is the initial maximum degree, $L_i$ is the largest cloud order in round $i$, and $k$ rounds are used, HMGHM prove $$\prod_{i=0}^{k-1}L_i
-\le C D^2(\log D)^{\log_2(11/5)},
+The following estimate derives the cloud product directly from the one-round HMGHM gadget, retaining the factors introduced at every step.
+
+::: {#lem-cloud-product .exhibit .exhibit--lemma data-exhibit-type="lemma" data-exhibit-name="Lemma (Cloud-product bound)"}
+**Lemma** (Cloud-product bound). *Let $D\ge4$ be the initial maximum degree, let $k$ be the first round at which the replacement tower is subcubic, and let $L_i$ be the largest cloud order in round $i$, for $0\le i<k$. Then $$\prod_{i=0}^{k-1}L_i\le C D^2(\log D)^2,
 \qquad
-2^k=O(\log D).$$ Iterating [Proposition 7](#prop-port-exp) therefore gives the following.
+2^k=O(\log D).$$ The power two of $\log D$ is attained by a sequence of regular bases.*
+:::
+
+::: proof
+*Proof.* For degree $d\ge5$, HMGHM use $m=\lceil\sqrt{2d}\rceil$ classes, so the cloud order is $$d+\binom m2\le2d+\sqrt{d/2}.$$ Together with the small-degree gadgets, this bounds the largest cloud order at maximum degree $x\ge4$ by $L(x)\le2x+\sqrt{x/2}$. Writing $D_i=\Delta(G_i)$, the one-round degree bound is $D_{i+1}\le2\lceil\sqrt{D_i/2}\rceil$ until the final special round at maximum degree four [@HMG, Theorem 3].
+
+Put $q=D/2$, $t_i=q^{2^{-i}}$, and $r=\lceil\log_2(\log_2 q)\rceil$. The identity $\lceil\sqrt{\lceil y\rceil}\rceil=\lceil\sqrt y\rceil$ gives $D_i\le2\lceil t_i\rceil$ by induction for every round reached. Since $t_r\le2$, we have $k\le r+1$, and hence $2^k=O(\log D)$. For each such round, $$L_i\le4(t_i+1)+\sqrt{t_i+1}
+\le4t_i(1+C_0t_i^{-1/2}).$$ If $r\ge1$, then $\sqrt2<t_r\le2$ and $t_{r-j}=t_r^{2^j}$, so $$\sum_{i=0}^r t_i^{-1/2}
+\le\sum_{j=0}^{\infty}2^{-2^j/4}<\infty.$$ Thus the product of the factors $1+C_0t_i^{-1/2}$ is bounded by an absolute constant. Extending the upper product to $r+1$ terms if the tower stops earlier gives $$\prod_{i=0}^{k-1}L_i
+\le C4^{r+1}\prod_{i=0}^r t_i
+=C4^{r+1}q^{2-2^{-r}}
+\le CD^2(\log D)^2.$$ The case $D=4$, for which $r=0$, follows directly from the seven-vertex degree-four gadget.
+
+For sharpness, let $a_j=2^{2^j+1}$, so $a_0=4$, and start from any connected $a_j$-regular graph. At degree $a_i$ the gadget has $m=\sqrt{2a_i}=a_{i-1}$ equal classes, each of size $m/2$. Both its ports, after attaching external edges, and its internal vertices have degree $m$. Thus the next graph is $a_{i-1}$-regular and every cloud has order $2a_i-a_{i-1}/2$. After the final degree-four round, every ancestry fiber therefore has order $$7\prod_{i=1}^j(2a_i-a_{i-1}/2)
+=7a_j^2 4^{j-2}\prod_{i=1}^j\left(1-\frac1{2a_{i-1}}\right)
+=\Theta\bigl(a_j^2(\log a_j)^2\bigr).$$ The last product converges to a positive constant. In particular, the smaller logarithmic exponent stated in the iteration estimate of HMGHM [@HMG, Section 3] does not bound the cloud product of this tower. ◻
+:::
+
+Iterating [Proposition 7](#prop-port-exp) with the [cloud-product bound](#lem-cloud-product) gives the following.
 
 ::: {#cor-exp-retention .exhibit .exhibit--corollary data-exhibit-type="corollary" data-exhibit-name="Corollary 8 (Expansion retained by HMGHM reduction)"}
 **Corollary 8** (Expansion retained by HMGHM reduction). *Let $H$ be the final subcubic graph obtained from a connected graph $G$ of maximum degree $D\ge4$. Then $$\boxed{
 h(H)
 \ge
-\frac{\iota(G)}{C D^4(\log D)^{\kappa}},
-\qquad
-\kappa=1+2\log_2(11/5)<3.28.
+\frac{\iota(G)}{C D^4(\log D)^5}.
 }$$ In particular, if $D=|G|^{o(1)}$ and $\iota(G)=|G|^{-o(1)}$, then $|H|=|G|^{1+o(1)}$ and $h(H)=|H|^{-o(1)}$.*
 :::
 
@@ -224,14 +249,14 @@ h(H)
 \ge
 \frac{\iota(G)}{2^k(\prod_iL_i)^2}
 \ge
-\frac{\iota(G)}{C D^4(\log D)^\kappa}.$$ Since $H$ has maximum degree at most three, its vertex expansion is at least one third of its edge expansion. The order statement follows from the same cloud-product bound. ◻
+\frac{\iota(G)}{C D^4(\log D)^5}.$$ Since $H$ has maximum degree at most three, its vertex expansion is at least one third of its edge expansion. The order statement follows from the same cloud-product bound. ◻
 :::
 
 ::: {#rem-replacement-products .exhibit .exhibit--remark data-exhibit-type="remark" data-exhibit-name="Remark 9 (Relation to replacement products)"}
 *Remark 9* (Relation to replacement products). The regular replacement-product literature proves stronger spectral conclusions under much stronger hypotheses on the clouds; see, for example, Reingold–Vadhan–Wigderson [@ReingoldVadhanWigderson]. [Proposition 7](#prop-port-exp) allows arbitrary connected, nonuniform clouds and consequently gives only a crude isoperimetric estimate. No novelty claim is made here beyond this precise form without a fuller graph-substitution review.
 :::
 
-# A polylogarithmically tight square-root family
+# A square-root-exponent family with a polylogarithmic upper bound
 
 Take $$d=(\log N)^4,
 \qquad
@@ -241,9 +266,9 @@ G\sim G(N,p).$$ Iterate the HMGHM replacement until the graph $H$ is subcubic, a
 
 With high probability, $\Delta(G)\le2d$. By [Remark 4](#rem-pw-uniform), the dense Prałat–Wormald theorem supplies the uniform lower growth needed above; in the volume range used here it also supplies the matching upper growth [@PralatWormald]. Choose $R$ minimally so that $d^{R-2}\ge\sqrt N$. Since $d$ is polylogarithmic, the scale conditions of [Theorem 3](#thm-abstract-transfer) hold.
 
-HMGHM give, both globally and along one ancestry fiber, $$P\le C d^2(\log d)^{1.14},
+The [cloud-product bound](#lem-cloud-product) gives, both globally and along one ancestry fiber, $$P\le C d^2(\log d)^2,
 \qquad
-N\le M\le PN.$$ Their shadow strategy gives $c(H)\ge c(G)$, and the random-graph lower bound of Bollobás–Kun–Leader used in their argument [@BollobasKunLeader] yields $$c(G)
+N\le M\le PN.$$ The HMGHM shadow strategy gives $c(H)\ge c(G)$, and the random-graph lower bound of Bollobás–Kun–Leader used in their argument [@BollobasKunLeader] yields $$c(G)
 \ge
 d^{-2}N^{\frac12-\frac{9}{2\log\log d}}.$$ The abstract transfer theorem gives $$c(H)
 \le
@@ -271,7 +296,7 @@ c(H)=M^{1/2+o(1)}.$$ More precisely, they obey the two-sided bounds of [Theorem 
 
 ::: {#rem-robustness-endpoint .exhibit .exhibit--remark data-exhibit-type="remark" data-exhibit-name="Remark 12 (What is forced, and what is achieved)"}
 *Remark 12* (What is forced, and what is achieved). By [Proposition 1](#prop-adaptive-core), polynomially weak expansion is a natural robustness window for weak Meyniel. The HMGHM lower bound alone already forces every proposed estimate $$c(J)\le C\phi^{-p}|J|^{1-\varepsilon+o(1)}
-\qquad(h(J)\ge\phi=|J|^{-o(1)})$$ to have $\varepsilon\le1/2$. That restriction predates the upper transfer proved here. The new conclusion is that the known stressing family itself achieves the endpoint order $\sqrt M$ up to polylogarithmic factors, so this family is not an obstruction to a Meyniel-strength theorem on polynomially weak subcubic expanders.
+\qquad(h(J)\ge\phi=|J|^{-o(1)})$$ to have $\varepsilon\le1/2$. That restriction predates the upper transfer proved here. The new conclusion is an upper bound within a polylogarithmic factor of $\sqrt M$ for the known stressing family. The available lower bound does not locate its cop number within polylogarithmic factors of $\sqrt M$; the displayed estimates leave that stronger conclusion open.
 :::
 
 # Why chase strategies need not transfer
@@ -411,13 +436,13 @@ Given $\delta>0$, choose $k=\max\{2,\lfloor1/\delta\rfloor+1\}$. Then $1/k<\delt
 
 # Outlook
 
-For vertex expansion $h(G)\ge\phi$, iterating the elementary growth factor $1+\phi$ reaches global scale after $O(\phi^{-1}\log |G|)$ layers. The same iteration gives the standard diameter bound of that order; these are two forms of the same calculation, not independent evidence. The strategic consequence is that, when $\phi=|G|^{-a}$, an amplification-based pursuit scheme must operate over a full-traversal timescale $\Theta(|G|^a\log|G|)$.
+For vertex expansion $h(G)\ge\phi$, iterating the elementary growth factor $1+\phi$ reaches global scale after $O(\phi^{-1}\log |G|)$ layers. The same iteration gives the standard diameter bound of that order; these are two forms of the same calculation, not independent evidence. When $\phi=|G|^{-a}$, this supplies an $O(|G|^a\log|G|)$ upper bound on the number of layers needed to reach global scale. It does not establish a necessary pursuit timescale: for example, the fixed-dimensional tori above have $h(G)=\Theta(|G|^{-1/k})$ and diameter $\Theta(|G|^{1/k})$, without the extra logarithm.
 
 The present paper separates three phenomena:
 
 1. bounded normalized metric distortion preserves a strong occupation certificate through degree reduction;
 
-2. the HMGHM stressing family itself meets the square-root endpoint up to polylogarithmic factors;
+2. the HMGHM stressing family has an upper bound within a polylogarithmic factor of the square-root scale;
 
 3. one-shot occupation is nevertheless incapable of proving a universal robustness theorem throughout any polynomial weak-expansion window, even on bounded-degree graphs with constant cop number; a cubic instance already appears at exponent $1/2$.
 
@@ -428,5 +453,7 @@ The remaining universal question is therefore an adaptive one. On the tori, ball
 The author is grateful to Anthony Clow, Peter Bradshaw, Bojan Mohar, and Florian Lehner for work and perspectives that helped shape the questions addressed here. Additional acknowledgments will be added in a later version. The author welcomes corrections concerning priority, related graph-substitution inequalities, and the scope of the occupation framework.
 
 # Audit and reproducibility
+
+The September 5, 2026 revision replaces the cloud-product estimate by a direct proof of $O(D^2(\log D)^2)$, changes the resulting expansion denominator to $CD^4(\log D)^5$, and completes the core and metric proofs. It also distinguishes the upper bound from two-sided polylogarithmic tightness and removes an unsupported traversal-time necessity claim.
 
 The metric inequalities were independently tested on HMGHM towers rebuilt from the published gadget description, including structured base graphs not used in the original audit. The Hall inequalities and timing margins were checked numerically, and exact small replacement games were solved by retrograde analysis. The toroidal barrier audit computes exact ball profiles of $C_L^{\square k}$ by convolving cyclic distance distributions, verifies the $(5k)^k$ doubling bound for $k=2,3,4,5$, constructs $Q_L$, checks cubicity, connectivity, and the displayed rotation automorphism, and evaluates the counting lower bound at every radius. No theorem depends on the computations.

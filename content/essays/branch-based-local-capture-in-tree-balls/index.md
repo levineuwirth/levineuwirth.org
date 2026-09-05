@@ -1,6 +1,9 @@
 ---
 title: "Branch-Tube Persistence and Static Coverage in Tree-Ball Geometry"
 date: 2026-07-21
+revised:
+  - date: "2026-09-05"
+    note: "Corrected the root-degree statement and clarified admissible-root coverage with a counterexample to residual domination."
 abstract: >
   We analyze exhaustive static coverage by path tubes indexed by length-$t$
   nonbacktracking robber paths from $v_0$ in a finite-horizon local chase on a
@@ -45,6 +48,8 @@ further-reading:
   - BradshawHosseiniMoharStacho
   - HMG
 history:
+  - date: "2026-09-05"
+    note: "Corrected the root-degree statement and clarified admissible-root coverage with a counterexample to residual domination."
   - date: "2026-07-27"
   - date: "2026-07-21"
   - date: "2026-05-08"
@@ -97,7 +102,7 @@ Complete the graph explicitly: for each remaining degree deficit at a vertex of 
 The endpoint pairs used along a prescribed length-$t$ nonbacktracking path are more restricted. Their rooted-tree path and endpoint depths satisfy Lemma [2](#lem-buffer) with $q=R$, so the persistence result requires no tree-ball beyond the cop-placement radius. This does not assert that the radius-$R$ tree-ball hypothesis is necessary. Controlled cyclic geometry is not addressed here, and no cyclic extension is proved.
 :::
 
-Whenever $B_q(v_0)$ is a tree-ball, we root $G[B_q(v_0)]$ at $v_0$. Every vertex other than $v_0$ has a unique parent, and every vertex of depth less than $q$ has $d-1$ children.
+Whenever $B_q(v_0)$ is a tree-ball, we root $G[B_q(v_0)]$ at $v_0$. Every vertex other than $v_0$ has a unique parent. If $q\geq1$, the root has $d$ children, while every other vertex of depth less than $q$ has $d-1$ children.
 
 ::: {#def-cone .exhibit .exhibit--definition data-exhibit-type="definition" data-exhibit-name="Definition 4 (Geodesic cone)"}
 **Definition 4** (Geodesic cone). Suppose $B_r(v)$ is a tree-ball and $u\in N(v)$. The *geodesic cone* through $u$ at radius $r$ is $$C_u(v,r):=\{x\in B_r(v)\setminus\{v\}:\text{the path from $x$ to $v$ in $B_r(v)$ has penultimate vertex $u$}\}.$$
@@ -363,6 +368,29 @@ Fix integers $Q\geq r+1\geq2$ and $k\geq1$, suppose $B_Q(v_0)$ is a tree-ball, a
 Fix a graph $G$, integers $R\geq t\geq1$, a set $A$ of admissible roots whose radius-$R$ balls are tree-balls, and a root-independent set $W$ of allowed cop locations. For $v\in A$ and a length-$t$ nonbacktracking path $\sigma$ from $v$, write $T_\sigma^v(R)$ for its rooted tube. Define the global tube hypergraph $$\mathcal H_{R,t}(G,A;W)
 :=\left(W,\{T_\sigma^v(R)\cap W:v\in A,\ \sigma\text{ is a length-$t$ nonbacktracking path from }v\}\right).$$ A root-independent set of cop positions supplies the exhaustive tube certificate simultaneously for every $v\in A$ exactly when it is a transversal of $\mathcal H_{R,t}$. This is the local-to-global gap absent from the conditional sampling theorem; multiplicity at an already selected vertex does not improve coverage.
 
+::: {#rem-admissible-roots .exhibit .exhibit--remark data-exhibit-type="remark" data-exhibit-name="Remark (Admissible roots and domination)"}
+**Remark** (Admissible roots and domination). Put $h=R-t$. Allowing the root to vary over $A$ need not test every terminal directed edge, even when $A$ contains every admissible root. Consequently, hitting these tubes need not imply distance-$h$ domination of $G$. An additional sufficient hypothesis for that implication is that every vertex occurs as a tube terminal: each tube ending at $w$ is contained in $B_h(w)$. Any reformulation indexed by terminal directed edges must account for this admissibility restriction.
+
+Here is a finite counterexample with $R=2$, $t=1$, and $W=V(G)$. Start with a triangle $c_0c_1c_2c_0$. At each $c_i$, attach by one edge a complete binary tree of depth $3$, with vertices $a_{i,s}$ indexed by binary words $s$ of lengths $0,1,2,3$; its root is $a_{i,\varnothing}$. Thus $a_{i,s}$ has distance $1+|s|$ from the triangle. Write $\ell_{i,j}$ for the leaf whose word is the three-digit binary expansion of $j\in\{0,\ldots,7\}$. Add the cycle
+
+$$
+\ell_{0,0},\ell_{1,0},\ell_{2,0},\ell_{0,1},\ell_{1,1},\ell_{2,1},\ldots,
+\ell_{0,7},\ell_{1,7},\ell_{2,7},\ell_{0,0}.
+$$
+
+The resulting graph is simple, connected, and cubic, with $3+3(1+2+4+8)=48$ vertices. Call distance from the triangle the depth.
+
+Its admissible roots are exactly the six depth-$2$ vertices. Balls centered at depths $0$ or $1$ contain the triangle. Each sibling pair of leaves is separated by three edges on the added cycle and, together with its parent, forms a $5$-cycle. Hence every vertex at depth $3$ or $4$ has a cyclic radius-$2$ ball. A radius-$2$ ball centered at depth $2$ contains only one triangle vertex and no added leaf-cycle edge, so it is a tree.
+
+Let $S$ consist of all $42$ vertices at depth at least $2$. For an admissible root $p$ and a neighbor $w$, the tube is
+
+$$
+T_{(p,w)}^p(2)=\{w\}\cup\bigl(N(w)\setminus\{p\}\bigr).
+$$
+
+If $w$ has depth at least $2$, then $w\in S$. Otherwise $w$ has depth $1$, and its other depth-$2$ child belongs to both the tube and $S$. Thus $S$ hits every tube from every admissible root. Nevertheless, none of the triangle vertices lies within distance $h=1$ of $S$.
+:::
+
 ::: question
 **Question 20**. *How do girth, expansion, and nonbacktracking path counts bound the transversal number, fractional transversal number, and codegrees of $\mathcal H_{R,t}$? Can these estimates produce a root-independent placement with controlled cost?*
 :::
@@ -380,4 +408,4 @@ The persistence proof uses only the unique geodesics of synchronized witnesses i
 We analyzed a local certificate indexed by length-$t$ nonbacktracking robber paths starting at a fixed root $v_0$ in radius-$R$ tree-ball geometry. The larger radius $R+t$ is sharp, among possibly infinite $d$-regular graphs, for uniform control of arbitrary endpoint pairs, but the synchronized chase witnesses require only $B_R(v_0)$. The length-$t$ tubes partition the outer ball into $N_t=d(d-1)^{t-1}$ parts, and occupying every tube gives the stated capture, blockage, or two-branch-support alternative along every prescribed path in this class.
 
 At one fixed root the deterministic occupancy cost is $N_t$. Along fixed-degree rooted sequences with $t\to\infty$, the conditional uniform-sampling threshold is $$\left(\frac{1}{1-(d-1)^{-(h_t+1)}}+o(1)\right)N_t\log N_t,
-\qquad h_t=R_t-t.$$ Because the sampling distribution is chosen after the root, it is not a legal standard-game initial placement and gives no cop-number bound. The arbitrary-walk, partial/adaptive, global, augmented-profile, and cyclic directions above are not a
+\qquad h_t=R_t-t.$$ Because the sampling distribution is chosen after the root, it is not a legal standard-game initial placement and gives no cop-number bound. The arbitrary-walk, partial/adaptive, global, augmented-profile, and cyclic directions above are not addressed by the present results.

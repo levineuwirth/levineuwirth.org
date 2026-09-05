@@ -2,6 +2,8 @@
 title: "The Annealed Critical Window for Growing-Radius Domination in Random Regular Graphs"
 date: 2026-07-22
 revised:
+  - date: "2026-09-05"
+    note: "Completed the relative overlap estimate, corrected the root-message bound and endpoint domains, and separated the domination consequence from restricted-root tube coverage."
   - date: "2026-07-24"
     note: "Superseded by a proof of the full bounded critical window and its universal scaling function; retitled and restructured to match the new preprint."
 abstract: >
@@ -16,7 +18,7 @@ abstract: >
   reverse-transfer error analysis and an explicit capped-free profile whose
   only entropy loss is the cost of one terminal nonemptiness event,
   sharpening the earlier annealed lower bound into a two-sided window
-  theorem. The result again strengthens to internally two-path domination, a
+  theorem. The lower bound also applies to internally two-path domination, a
   graph-general parameter motivated by exhaustive static tube coverage in
   pursuit-evasion games. Quenched matching and the direct two-branch leading
   constant remain open.
@@ -52,6 +54,7 @@ further-reading:
   - HabibullaQin
   - RockafellarWets
 history:
+  - date: "2026-09-05"
   - date: "2026-07-27"
   - date: "2026-07-24"
   - date: "2026-07-22"
@@ -110,7 +113,7 @@ $$
 
 This is an annealed lower transition, not a quenched matching theorem. Proving the existence of dominating sets at the same coordinate remains separate.
 
-The comparison scale is also relevant to pursuit-evasion: Meyniel's conjecture predicts that $O(\sqrt n)$ cops suffice in every connected $n$-vertex graph [@LuPeng; @ScottSudakov], and it is known for several random-graph models, including random regular graphs [@PralatWormald; @PralatWormaldRegular]. Our conclusion is not a cop-number lower bound. It says that one particular static exhaustive coverage mechanism can require a logarithmic factor more than the Meyniel scale.
+The comparison scale is also relevant to pursuit-evasion: Meyniel's conjecture predicts that $O(\sqrt n)$ cops suffice in every connected $n$-vertex graph [@LuPeng; @ScottSudakov], and it is known for several random-graph models, including random regular graphs [@PralatWormald; @PralatWormaldRegular]. Our conclusion is not a cop-number lower bound. It says that the all-directed-cone certificate defined in [Section 2.1](/essays/near-critical-growing-radius-domination.html#connection-with-static-tube-coverage) can require a logarithmic factor more than the Meyniel scale.
 
 ## Why the first moment is difficult
 
@@ -132,7 +135,7 @@ The closest message-passing antecedents are statistical-mechanical. Zhao, Habibu
 
 Cutler and Radcliffe used Shearer entropy to obtain universal extremal bounds for domination polynomials of regular graphs [@CutlerRadcliffe]. Such universal bounds cannot by themselves detect the random-covering penalty: structured regular graphs may admit efficient covering codes. In the binomial random graph, Glebov, Liebenau, and Szabó proved two-point concentration at the first-moment threshold in a sufficiently dense regime [@GlebovLiebenauSzabo]. That result motivates, but does not supply, the corresponding quenched statement for random regular graphs.
 
-The pursuit application comes from branch-based local coverage. Aigner and Fromme introduced the multiple-cop game in its modern graph-theoretic form [@AignerFromme]; Prałat and Wormald later combined random placement with deterministic pursuit in random graphs [@PralatWormald; @PralatWormaldRegular]. The local tube certificate in [the branch-tube persistence theorem](/essays/branch-based-local-capture-in-tree-balls/index.html#thm-persistence) of [@NeuwirthBranchCapture] motivates a root-independent two-witness covering problem. [Section 2.1](#connection-with-static-tube-coverage) states the exact graph-general parameter used here and carefully limits the resulting obstruction.
+The pursuit application comes from branch-based local coverage. Aigner and Fromme introduced the multiple-cop game in its modern graph-theoretic form [@AignerFromme]; Prałat and Wormald later combined random placement with deterministic pursuit in random graphs [@PralatWormald; @PralatWormaldRegular]. The local tube certificate in [the branch-tube persistence theorem](/essays/branch-based-local-capture-in-tree-balls/index.html#thm-persistence) of [@NeuwirthBranchCapture] motivates a root-independent two-witness covering problem. [Section 2.1](/essays/near-critical-growing-radius-domination.html#connection-with-static-tube-coverage) states the exact graph-general parameter used here and carefully limits the resulting obstruction.
 
 ## Proof architecture and contributions
 
@@ -214,9 +217,13 @@ $$
 
 ## Connection with static tube coverage
 
-In the tree-ball setting of [@NeuwirthBranchCapture], a length-$t$ tube with residual depth $h=R-t$ depends, after the root is allowed to vary, only on its terminal directed edge. The resulting forward cone excludes one branch at its head. A root-independent set meets every such directed cone exactly when, at every unselected vertex, at least two distinct branches contain a selected vertex within distance $h$; in a tree-ball these are precisely the two internally disjoint paths of [Definition 1](#def-two-path). Thus internally two-path domination is a graph-general strengthening of the global exhaustive tube certificate.
+For a directed edge $wv$ in a simple graph, let $C_h(w\to v)$ consist of $v$ and the endpoints of simple paths of length at most $h$ starting at $v$ whose first edge is not $vw$. Call $S$ an *all-directed-cone certificate* if it meets $C_h(w\to v)$ for every directed edge, with isolated vertices also required to belong to $S$. This condition implies distance-$h$ domination directly. An internally two-path $(h,2)$-dominating set supplies this certificate: at an unselected vertex, at least one of its two witness paths avoids any prescribed first edge.
 
-Combining the displayed inequality above with the main theorem shows that any such exhaustive static certificate has size $\Omega(\sqrt n\log n)$ at the comparison scale $B_h\asymp\sqrt n$. Meyniel's conjecture concerns the existence of a fully adaptive winning strategy with $O(\sqrt n)$ cops, so there is no contradiction: the lower bound applies only to this static exhaustive mechanism. Partial coverage, adaptive reassignment, and epoch-based pursuit remain outside the argument.
+If $v$ has positive degree and $B_h(v)$ is a tree-ball, meeting every cone headed at an unselected $v$ is equivalent to having witnesses in two distinct branches, and their paths intersect only at $v$. In cyclic graphs, paths starting through different neighbors can merge, so the cone condition need not give internally disjoint paths.
+
+For an admissible root and a length-$t$ path in the tree-ball setting of [@NeuwirthBranchCapture], with $t\ge1$ and $h=R-t$, the rooted tube is the cone associated with its terminal directed edge. However, varying over an admissible root set $A$ need not produce every directed edge. The tube hypergraph $\mathcal H_{R,t}(G,A;W)$, with allowed positions $W$, therefore imposes only its indexed cone conditions. A transversal of that restricted family need not dominate $G$; the family can even be empty when $A$ is empty. The domination theorem gives no lower bound for its transversal number without an additional hypothesis ensuring domination, such as realization of every directed edge by an admissible rooted path.
+
+Combining the displayed inequality above and the direct cone-to-domination implication with the main theorem shows that internally two-path domination and all-directed-cone certificates require $\Omega(\sqrt n\log n)$ vertices at the comparison scale $B_h\asymp\sqrt n$. These are the static coverage conditions to which the lower bound applies. Partial coverage, adaptive reassignment, epoch-based pursuit, and unrestricted conclusions about the original restricted-root tube family remain outside the argument.
 
 The pairing model consists of $n$ labeled buckets of $d$ half-edges paired uniformly at random; conditioning the resulting multigraph on simplicity gives the uniformly random simple $d$-regular graph $G_{n,d}$, for $dn$ even. Let $Z_{n,d,h}(m)$ count distance-$h$ dominating $m$-sets in the pairing model.
 
@@ -895,7 +902,7 @@ $$
 \rho_i=\frac{B_i}{A_i},\qquad u_i=\frac{A_{i+1}}{A_i},\qquad v_i=\rho_i+u_i.
 $$
 
-At the terminal level, $u_h=0$, so $\rho_h=v_h=:s\in(0,1)$. Let $\mathcal D=\{(\rho,v):0<\rho\le v\le1\}$.
+At the terminal level, $u_h=0$, so $\rho_h=v_h=:s\in(0,1)$. Let $\mathcal D=\{(\rho,v):0<\rho<1,\ \rho\le v\le1\}$.
 
 ::: {#prop-reverse-map .exhibit .exhibit--proposition data-exhibit-type="proposition" data-exhibit-name="Proposition 22 (Exact reverse map)"}
 **Proposition 22** (Exact reverse map). *Given a next-level state $(\rho',v')\in\mathcal D$, define*
@@ -1119,7 +1126,7 @@ $$
 
 The corrected formulas are used throughout this paper. Calculations made directly from $Z_v$ and $Z_e$ are unaffected, provided the power differences are evaluated stably as discussed in [Section 17](#sec-numerics).
 
-For later diagnostics, the same telescope gives a cancellation-free identity for the entropy defect. Put
+For later diagnostics, suppose $h\ge2$, so that $A_2>0$. The same telescope gives a cancellation-free identity for the entropy defect. Put
 
 $$
 u=u_1=\frac{A_2}{A_1},\qquad c_0=\frac{d-2}2,
@@ -1132,7 +1139,7 @@ E_{\mathrm{root}}:=\log\kappa-b\log u,\qquad N_e:=\log Z_e-(D+1)\log u.
 $$
 
 ::: {#prop-defect-identity .exhibit .exhibit--proposition data-exhibit-type="proposition" data-exhibit-name="Proposition 31 (Exact entropy-defect identity)"}
-**Proposition 31** (Exact entropy-defect identity). *Every positive stationary solution of selected density $\alpha$ satisfies*
+**Proposition 31** (Exact entropy-defect identity). *For $h\ge2$, every positive stationary solution of selected density $\alpha$ satisfies*
 
 $$
 \boxed{
@@ -1144,6 +1151,14 @@ $$
 ::: proof
 *Proof.* [Proposition 30](#prop-telescoping) gives $\phi=\log\kappa-c_0\log Z_e$. Since $c_0(D+1)=b$, this is $\phi=E_{\mathrm{root}}-c_0N_e$. Now use $\Psi=\phi-\alpha\log z$ and expand $H(\alpha)=-\alpha\log\alpha-(1-\alpha)\log(1-\alpha)$. □
 :::
+
+For $h=1$, the terminal convention gives $u_1=0$, so the separate quantities $E_{\mathrm{root}}$ and $N_e$ are not defined. The finite form
+
+$$
+H(\alpha)-\Psi_{d,h}(\alpha)=-(1-\alpha)\log(1-\alpha)-\log\kappa+c_0\log Z_e+\alpha\log\frac z\alpha
+$$
+
+follows directly from $\phi=\log\kappa-c_0\log Z_e$ and holds for every $h\ge1$.
 
 ---
 
@@ -1208,7 +1223,7 @@ $$
 R=(1-\delta)\frac{1-w}w,\qquad M=\left(1-w+\frac w{1-\delta}\right)^b=\left(1+\frac{w\delta}{1-\delta}\right)^b.
 $$
 
-For $\delta\le1/2$, the binomial expansion with a uniform remainder gives $M=1+bw\delta+O_d(\delta^2)$. Furthermore,
+For $\delta\le1/2$, the binomial expansion with a uniform remainder gives $M=1+bw\delta+O_d(w\delta^2)$. Furthermore,
 
 $$
 w(R+M)=(1-\delta)(1-w)+wM=1+O_d(\delta).
@@ -1321,7 +1336,57 @@ $$
 \max_i|E_i|=O(e^{-Dt/4}),\qquad \max_i\left|\log\frac{q_i}{\bar q_i}\right|=O(h e^{-Dt/4}).
 $$
 
-For large $h$ these estimates prevent the first failure, proving the displayed shadow estimates and the stated formula for $q_m$. Furthermore, $1-e^{-t/b^H}=t b^{-H}\left(1+O(t b^{-H})\right)$, which gives the formula for $\rho_m$. Finally,
+For large $h$ these estimates prevent the first failure, proving the displayed shadow estimates and the stated formula for $q_m$.
+
+To obtain relative control of $\rho_m$, first bound the sum of the transverse errors. Put
+
+$$
+r_0=\left\lceil\log_b\frac{4t}{b-1}\right\rceil.
+$$
+
+For all sufficiently large $h$, uniformly in the terminal window, $0<r_0<H$. Convexity and
+
+$$
+f(0)=-t,\qquad f(r_0)=-Dt+O_d(\log t)\le-t
+$$
+
+bound the sum of $e^{f(r)}$ for $0\le r\le r_0$ by $O_d((\log t)e^{-t})$. For $r\ge r_0$,
+
+$$
+f'(r)=\log b\left(1-\frac{2t}{b-1}b^{-r}\right)\ge\frac12\log b,
+$$
+
+so the remaining sum is bounded by a geometric series ending at $e^{f(H)}$. Since $D/4<1$, the estimate for $q_i/\bar q_i$ therefore gives
+
+$$
+\sum_{i=m}^h q_i=O_d\left((\log t)e^{-t}+e^{-Dt/4}\right)=O_d(e^{-Dt/4}).
+$$
+
+Now set $\Lambda_i=-\log(1-\rho_i)$. At one reverse step write $\delta=q_{i+1}$,
+
+$$
+w=(1-\rho_{i+1})^{1/b},\qquad e=1-w,\qquad M=\left(1+\frac{w\delta}{1-\delta}\right)^b.
+$$
+
+The exact reverse map gives
+
+$$
+\frac{\Lambda_{i+1}}b-\Lambda_i=\log\frac{M}{(1-\delta)e+wM}=\log\left(1+\frac{e(M-1+\delta)}{(1-\delta)e+wM}\right).
+$$
+
+Here $M-1=O_d(\delta)$, the denominator is at least $1-\delta$, and $e\le-\log w=\Lambda_{i+1}/b$. Consequently
+
+$$
+0\le\frac{\Lambda_{i+1}}b-\Lambda_i\le C_d\frac{\Lambda_{i+1}}b\,\delta,\qquad \Lambda_i=\frac{\Lambda_{i+1}}b\left(1+O_d(q_{i+1})\right).
+$$
+
+Multiplying these relative estimates and using $\Lambda_h=t$ and the transverse-sum bound yields
+
+$$
+\Lambda_m=t b^{-H}\left(1+O_d(e^{-Dt/4})\right).
+$$
+
+Since $\Lambda_m\to0$, the identity $\rho_m=1-e^{-\Lambda_m}=\Lambda_m(1+O(\Lambda_m))$ proves the formula for $\rho_m$. Finally,
 
 $$
 \log\frac{\rho_m}{q_m}=\log t-2H\log b+Dt+o(h)=-\frac12Dt+o(h).
@@ -1537,7 +1602,7 @@ $$
 B_0=\widetilde a\,u_1^{D+1}\left(1+O(q_m+m\rho_m)\right),\qquad \kappa=u_1^b\left(1+O(\rho_m)\right).
 $$
 
-Since $z=B_0\kappa/(1+B_0)^b$, $x=-\log u_1$, and $B_0=B_h^{-1+o(1)}$, it follows that
+Since $0<u_1\le1$ and $\widetilde a=B_h^{-1+o(1)}$, the preceding reconstruction gives $0<B_0\le B_h^{-1+o(1)}$. Using $z=B_0\kappa/(1+B_0)^b$ and $x=-\log u_1$, it follows that
 
 $$
 -\log z=\log\frac1{\widetilde a}+Kx+O(q_m+m\rho_m+B_0)=\log\frac1{\widetilde a}+Kx+B_h^{-c_t/4+o(1)},\qquad K=b+D+1=bD.
