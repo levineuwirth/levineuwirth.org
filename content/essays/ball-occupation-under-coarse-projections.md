@@ -4,7 +4,7 @@ subtitle: "Degree Reduction, Square-Root Hard Families, and Toroidal Barriers"
 date: 2026-07-27
 revised:
   - date: "2026-09-05"
-    note: "Corrected the cloud-product estimate and expansion loss, completed the core and metric proofs, and clarified upper-bound tightness and traversal-time claims."
+    note: "Corrected the cloud-product estimate and expansion loss, completed the core and metric proofs, and clarified upper-bound tightness and traversal-time claims. The subsequent literature revision sharpens connected-cloud expansion and qualifies the HMGHM transfer exponent."
 abstract: >
   We isolate an abstract strategy-transfer principle for Cops and Robber: a
   coarse graph projection with bounded fibers and bounded distance distortion
@@ -35,7 +35,7 @@ peer-status: unreviewed
 result-shape: mixed
 history:
   - date: "2026-09-05"
-    note: "Corrected the cloud-product estimate and expansion loss, completed the core and metric proofs, and clarified upper-bound tightness and traversal-time claims."
+    note: "Corrected the cloud-product estimate and expansion loss, completed the core and metric proofs, and clarified upper-bound tightness and traversal-time claims. The subsequent literature revision sharpens connected-cloud expansion and qualifies the HMGHM transfer exponent."
   - date: "2026-07-27"
 
 ---
@@ -69,7 +69,7 @@ For a connected graph $J$, write $$h(J)=\min_{\varnothing\ne A\subseteq V(J),\ |
 \sum_{j=t+1}^{n}\eta(j).$$ Apply the induction hypothesis to $C$ and the restricted sequence $\eta(1),\ldots,\eta(t)$. It supplies a fixed connected induced subgraph $K\subseteq C$, of order $m$, with $h(K)\ge\eta(m)$ and $c(C)\le c(K)+\sum_{j=m+1}^{t}\eta(j)$. Combining the two estimates proves the claim. Since $C$ is induced in $J$, so is $K$. ◻
 :::
 
-Taking $\eta(j)=j^{-a}$ shows that a polynomial cop-number saving on subcubic graphs with $h(K)\ge |K|^{-a}$ would imply a weak form of Meyniel for arbitrary graphs after the bounded-degree transfer of Hosseini–Mohar–Gonzalez Hermosillo de la Maza [@HMG]. Bradshaw–Hosseini–Mohar–Stacho already treat constant expansion restricted to sublinear set scales [@BradshawHosseiniMoharStacho]; the unresolved axis in this reduction is expansion that itself shrinks polynomially.
+Taking $\eta(j)=j^{-a}$ shows that a polynomial cop-number saving on subcubic graphs with $h(K)\ge |K|^{-a}$ would imply a weak form of Meyniel for arbitrary graphs after the bounded-degree transfer of Hosseini–Mohar–Gonzalez Hermosillo de la Maza [@HMG, arXiv v2, Corollary 8]. Bradshaw–Hosseini–Mohar–Stacho already treat constant expansion restricted to sublinear set scales [@BradshawHosseiniMoharStacho]; the unresolved axis in this reduction is expansion that itself shrinks polynomially.
 
 # Coarse occupation projections
 
@@ -186,29 +186,61 @@ U_k(r)=3^k(r+2)-2.$$ The diameter recurrence $D_j\le3D_{j-1}+4$, $D_0=0$, gives 
 
 The feature that matters is not the number of rounds but the normalized additive error: after division by $3^k$, it remains two quotient layers. By [Theorem 3](#thm-abstract-transfer), any other graph projection with the same three properties inherits the same occupation-certificate transfer.
 
-# Expansion retention under port-cloud replacement
+# Expansion retention under connected-cloud replacement
 
-::: {#prop-port-exp .exhibit .exhibit--proposition data-exhibit-type="proposition" data-exhibit-name="Proposition 7 (Expansion under connected port replacement)"}
-**Proposition 7** (Expansion under connected port replacement). *Let $H$ be obtained from a base graph $G$ by replacing every vertex by a connected cloud of order at most $L_0$, with distinct external ports for the incident base edges. If $\iota(G)$ is the edge-isoperimetric constant of $G$, then $$\boxed{
-\iota(H)
-\ge
-\frac{1}{2L_0}
-\min\left\{1,\frac{\iota(G)}{L_0}\right\}.
-}$$*
+For a nontrivial graph $J$, write
+$$
+ \iota(J)=\min_{\varnothing\ne A\subseteq V(J),\ |A|\le |J|/2}
+ \frac{e_J(A,V(J)\setminus A)}{|A|}.
+$$
+
+::: {#prop-port-exp .exhibit .exhibit--proposition data-exhibit-type="proposition" data-exhibit-name="Proposition 7 (Expansion under connected-cloud replacement)"}
+**Proposition 7** (Expansion under connected-cloud replacement).
+Let $G$ be a connected nontrivial graph of maximum degree $D$, and put
+$\alpha=\iota(G)$.  Replace each vertex by a connected nonempty cloud of
+order at most $P$, retaining exactly one inter-cloud edge for each base edge
+and no other inter-cloud edges.  The resulting graph $H$ satisfies
+$$
+ \boxed{
+ \iota(H)
+ \ge
+ \frac{\alpha}{P(D+\alpha)}
+ \ge \frac{\alpha}{2DP}.
+ }
+$$
+No distinct-port or equal-cloud-size assumption is needed.  If $H$ is
+subcubic, then $h(H)\ge\alpha/[3P(D+\alpha)]$.
 :::
 
 ::: proof
-*Proof.* Let $S\subseteq V(H)$ with $0<|S|\le|H|/2$. In each cloud, classify the majority side and let $\mathcal M$ be the total number of minority vertices. Since every partially cut cloud is connected and has at most $L_0$ vertices, its internal cut contributes at least one edge, so the total internal contribution is at least $\mathcal M/L_0$.
-
-Let $U$ be the set of base vertices whose clouds have majority in $S$, and put $E=e_G(U,V(G)\setminus U)$. A base cut edge can fail to cross the lifted cut only if one of its two ports is a minority vertex. Distinct base edges use distinct ports, so at most $\mathcal M$ of the $E$ external cut edges fail. Hence $$e_H(S,V(H)\setminus S)
-\ge
-\frac{\mathcal M}{L_0}+\max\{0,E-\mathcal M\}
-\ge
-\frac{E+\mathcal M}{2L_0}.$$ Apply the same majority accounting to $S$ or its complement, according as $|U|\le|G|/2$ or not, to obtain $$\min\{|U|,|V(G)\setminus U|\}
-\ge
-\frac{|S|-\mathcal M}{L_0}.$$ Thus $$E\ge\frac{\iota(G)}{L_0}(|S|-\mathcal M),$$ and consequently $$E+\mathcal M
-\ge
-\min\left\{1,\frac{\iota(G)}{L_0}\right\}|S|.$$ Combining the inequalities proves the proposition. ◻
+*Proof.*
+Fix $S\subseteq V(H)$ with $0<s=|S|\le|H|/2$.  Partition the base vertices
+into $U$, whose clouds lie wholly in $S$; $W$, whose clouds lie wholly
+outside $S$; and $T$, whose clouds meet both sides.  Put $q=|T|$.
+Since both sides of the cut contain at least $s$ vertices and every cloud
+has order at most $P$,
+$$
+ |U|\ge s/P-q,\qquad |W|\ge s/P-q.
+$$
+In particular, $\min\{|U|,|G|-|U|\}\ge s/P-q$.  Apply base expansion to
+the smaller side of the cut from $U$; if that side is empty, the resulting
+inequality is trivial.  At most $Dq$ of its edges end in
+$T$, so
+$$
+ e_G(U,W)\ge\alpha s/P-(D+\alpha)q.
+$$
+Every partially cut cloud contributes at least one internal cut edge by
+connectivity.  These $q$ edges are distinct from the retained edges
+corresponding to $E_G(U,W)$, all of which cross the lifted cut.  Thus, with
+$A=\alpha s/P$ and $B=D+\alpha\ge1$,
+$$
+ e_H(S,V(H)\setminus S)\ge q+\max\{0,A-Bq\}\ge A/B.
+$$
+For the last inequality, $q\ge A/B$ suffices by itself; otherwise
+$q+A-Bq=A-(B-1)q\ge A/B$.  Divide by $s$, and use $\alpha\le D$.
+If $H$ is subcubic, each exterior boundary vertex accounts for at most
+three cut edges, giving the asserted vertex-expansion bound.
+◻
 :::
 
 The following estimate derives the cloud product directly from the one-round HMGHM gadget, retaining the factors introduced at every step.
@@ -231,30 +263,87 @@ Put $q=D/2$, $t_i=q^{2^{-i}}$, and $r=\lceil\log_2(\log_2 q)\rceil$. The identit
 
 For sharpness, let $a_j=2^{2^j+1}$, so $a_0=4$, and start from any connected $a_j$-regular graph. At degree $a_i$ the gadget has $m=\sqrt{2a_i}=a_{i-1}$ equal classes, each of size $m/2$. Both its ports, after attaching external edges, and its internal vertices have degree $m$. Thus the next graph is $a_{i-1}$-regular and every cloud has order $2a_i-a_{i-1}/2$. After the final degree-four round, every ancestry fiber therefore has order $$7\prod_{i=1}^j(2a_i-a_{i-1}/2)
 =7a_j^2 4^{j-2}\prod_{i=1}^j\left(1-\frac1{2a_{i-1}}\right)
-=\Theta\bigl(a_j^2(\log a_j)^2\bigr).$$ The last product converges to a positive constant. In particular, the smaller logarithmic exponent stated in the iteration estimate of HMGHM [@HMG, Section 3] does not bound the cloud product of this tower. ◻
+=\Theta\bigl(a_j^2(\log a_j)^2\bigr).$$ The last product converges to a positive constant. In particular, the smaller logarithmic exponent stated in the iteration estimate of HMGHM [@HMG, arXiv v2, Section 3] does not bound the cloud product of this tower. This comparison concerns the inspected preprint; the full published proof was not available for comparison. ◻
 :::
 
-Iterating [Proposition 7](#prop-port-exp) with the [cloud-product bound](#lem-cloud-product) gives the following.
+Apply [Proposition 7](#prop-port-exp) once to the final ancestry clouds,
+using the [cloud-product bound](#lem-cloud-product) for their maximum order.
 
 ::: {#cor-exp-retention .exhibit .exhibit--corollary data-exhibit-type="corollary" data-exhibit-name="Corollary 8 (Expansion retained by HMGHM reduction)"}
-**Corollary 8** (Expansion retained by HMGHM reduction). *Let $H$ be the final subcubic graph obtained from a connected graph $G$ of maximum degree $D\ge4$. Then $$\boxed{
-h(H)
-\ge
-\frac{\iota(G)}{C D^4(\log D)^5}.
-}$$ In particular, if $D=|G|^{o(1)}$ and $\iota(G)=|G|^{-o(1)}$, then $|H|=|G|^{1+o(1)}$ and $h(H)=|H|^{-o(1)}$.*
+**Corollary 8** (Expansion retained by HMGHM reduction).
+Let $H$ be the final subcubic graph obtained from a connected graph $G$ of
+maximum degree $D\ge4$.  Then
+$$
+ \boxed{
+ h(H)
+ \ge
+ \frac{\iota(G)}{C D^3(\log D)^2}.
+ }
+$$
+In particular, if $D=|G|^{o(1)}$ and $\iota(G)=|G|^{-o(1)}$, then
+$|H|=|G|^{1+o(1)}$ and $h(H)=|H|^{-o(1)}$.
 :::
 
 ::: proof
-*Proof.* At every round $\iota(G_i)\le D_i\le L_i$, so [Proposition 7](#prop-port-exp) gives $$\iota(G_{i+1})\ge\frac{\iota(G_i)}{2L_i^2}.$$ Thus $$\iota(H)
-\ge
-\frac{\iota(G)}{2^k(\prod_iL_i)^2}
-\ge
-\frac{\iota(G)}{C D^4(\log D)^5}.$$ Since $H$ has maximum degree at most three, its vertex expansion is at least one third of its edge expansion. The order statement follows from the same cloud-product bound. ◻
+*Proof.*
+Every final ancestry cloud is connected: inductively, each vertex of a
+connected earlier cloud is replaced by a connected cloud, and every earlier
+internal edge is retained between its two replacement clouds.  Likewise,
+each original base edge remains the unique edge between its two final
+ancestry clouds, and no new inter-ancestry edges appear.  Thus the proposition
+applies with $P\le\prod_iL_i\le CD^2(\log D)^2$, giving
+$$
+ h(H)
+ \ge
+ \frac{\iota(G)}{3P(D+\iota(G))}
+ \ge
+ \frac{\iota(G)}{C D^3(\log D)^2}.
+$$
+The order statement follows from $|G|\le|H|\le P|G|$ and the same
+cloud-product bound.
+◻
 :::
 
 ::: {#rem-replacement-products .exhibit .exhibit--remark data-exhibit-type="remark" data-exhibit-name="Remark 9 (Relation to replacement products)"}
-*Remark 9* (Relation to replacement products). The regular replacement-product literature proves stronger spectral conclusions under much stronger hypotheses on the clouds; see, for example, Reingold–Vadhan–Wigderson [@ReingoldVadhanWigderson]. [Proposition 7](#prop-port-exp) allows arbitrary connected, nonuniform clouds and consequently gives only a crude isoperimetric estimate. No novelty claim is made here beyond this precise form without a fuller graph-substitution review.
+*Remark 9* (Relation to replacement products).
+The regular replacement-product literature proves stronger spectral
+conclusions under much stronger hypotheses on the clouds; see, for example,
+Reingold–Vadhan–Wigderson [@ReingoldVadhanWigderson].  [Proposition 7](#prop-port-exp) allows arbitrary
+connected, nonuniform clouds, including coincident external ports.  It gives
+an elementary isoperimetric estimate; no priority claim is made for this
+inequality.
 :::
+
+## Quantitative scope of the general degree reduction
+
+The qualitative transfer cited in the [core reduction](#prop-adaptive-core) holds, but its exponent requires
+care.  The discrepancy below already follows from HMGHM's own arXiv v2
+Corollary 4 order bound: the logarithmic correction does not affect the
+polynomial exponent balance.  Suppose connected subcubic graphs
+of order $m$ satisfy $c\le m^{1-\varepsilon+o(1)}$, for fixed
+$0<\varepsilon\le1/2$.  For a connected graph $G$ of order $n$, follow the threshold
+argument in [@HMG, arXiv v2, Section 5]: place a stationary cop at a vertex of
+residual degree at least $D$ and remove its closed neighborhood, repeating
+until the residual maximum degree is below $D$.  There are $O(n/D)$ guards.
+A robber entering a removed neighborhood is captured on the next cop move;
+otherwise it remains in one residual component.  With the guards retained,
+the other cops can move to a winning initial placement in that component.
+Its subcubic reduction has order at most $CnD^2(\log D)^2$ and cop number
+at least that of the component.  Therefore
+$$
+ c(G)\le O(n/D)
+       +\bigl(CnD^2(\log D)^2\bigr)^{1-\varepsilon+o(1)}.
+$$
+Writing $D=n^a$ and balancing
+$1-a=(1-\varepsilon)(1+2a)$ gives $a=\varepsilon/(3-2\varepsilon)$, hence
+$$
+ c(G)\le n^{1-\varepsilon/(3-2\varepsilon)+o(1)}.
+$$
+For $0<\varepsilon<1/2$, this is weaker than the exponent $1-\varepsilon/2$ printed in
+[@HMG, arXiv v2, Corollary 8]; both give $3/4$ at $\varepsilon=1/2$.
+This identifies what the displayed threshold proof establishes, not a
+counterexample to the stronger implication or a claim about the inaccessible
+published proof.  Every fixed polynomial saving still transfers.
 
 # A square-root-exponent family with a polylogarithmic upper bound
 
@@ -286,10 +375,20 @@ c(H)
 }$$ The upper bound is $\sqrt M$ times a polylogarithmic factor. The lower exponent tends to $1/2$ only at a triple-logarithmic rate.*
 :::
 
-The base edge expansion is $\Omega(d)$ with high probability. Since $d=\operatorname{polylog}N$, [Corollary 8](#cor-exp-retention) gives $$h(H)\ge (\log M)^{-O(1)}=M^{-o(1)}.$$ This is exactly the degree regime in which the retention factor is informative; for polynomial initial degree the crude $D^4$ loss can be vacuous.
+The base edge expansion is $\Omega(d)$ with high probability, and its
+maximum degree is at most $2d$.  [Corollary 8](#cor-exp-retention) gives
+$$
+ h(H)=\Omega\!\left(d^{-2}(\log d)^{-2}\right),
+ \qquad h(H)\ge(\log M)^{-8-o(1)}=M^{-o(1)},
+$$
+where $d=(\log N)^4$ and $M=N(\log N)^{O(1)}$.  More generally, a base
+with $\iota(G)=\Omega(D)$ retains
+$h(H)=\Omega(D^{-2}(\log D)^{-2})$.  At polynomial initial degree this
+estimate supplies only polynomially small expansion, rather than the
+subpolynomial loss obtained here.
 
 ::: {#cor-weakexpander .exhibit .exhibit--corollary data-exhibit-type="corollary" data-exhibit-name="Corollary 11 (Square-root weak-expander family)"}
-**Corollary 11** (Square-root weak-expander family). *There are connected subcubic graphs satisfying $$h(H)\ge M^{-o(1)}
+**Corollary 11** (Square-root weak-expander family). *There are connected subcubic graphs satisfying $$h(H)\ge (\log M)^{-8-o(1)}
 \qquad\text{and}\qquad
 c(H)=M^{1/2+o(1)}.$$ More precisely, they obey the two-sided bounds of [Theorem 10](#thm-hardfamily).*
 :::
@@ -454,6 +553,13 @@ The author is grateful to Anthony Clow, Peter Bradshaw, Bojan Mohar, and Florian
 
 # Audit and reproducibility
 
-The September 5, 2026 revision replaces the cloud-product estimate by a direct proof of $O(D^2(\log D)^2)$, changes the resulting expansion denominator to $CD^4(\log D)^5$, and completes the core and metric proofs. It also distinguishes the upper bound from two-sided polylogarithmic tightness and removes an unsupported traversal-time necessity claim.
+The September 5, 2026 audit revision gave a direct cloud-product proof of
+$O(D^2(\log D)^2)$ and completed the core and metric proofs.  It also
+distinguished the upper bound from two-sided polylogarithmic tightness and
+removed an unsupported traversal-time necessity claim.  The subsequent
+literature revision applies the connected-cloud cut estimate once to the
+final ancestry fibers, improving the expansion denominator from
+$CD^4(\log D)^5$ to $CD^3(\log D)^2$.  It also records the quantitative
+scope of the threshold proof in the inspected HMGHM preprint.
 
 The metric inequalities were independently tested on HMGHM towers rebuilt from the published gadget description, including structured base graphs not used in the original audit. The Hall inequalities and timing margins were checked numerically, and exact small replacement games were solved by retrograde analysis. The toroidal barrier audit computes exact ball profiles of $C_L^{\square k}$ by convolving cyclic distance distributions, verifies the $(5k)^k$ doubling bound for $k=2,3,4,5$, constructs $Q_L$, checks cubicity, connectivity, and the displayed rotation automorphism, and evaluates the counting lower bound at every radius. No theorem depends on the computations.

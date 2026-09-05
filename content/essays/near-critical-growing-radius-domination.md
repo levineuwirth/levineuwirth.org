@@ -3,7 +3,7 @@ title: "The Annealed Critical Window for Growing-Radius Domination in Random Reg
 date: 2026-07-22
 revised:
   - date: "2026-09-05"
-    note: "Completed the relative overlap estimate, corrected the root-message bound and endpoint domains, and separated the domination consequence from restricted-root tube coverage."
+    note: "Completed the relative overlap estimate, corrected the root-message bound and endpoint domains, and separated the domination consequence from restricted-root tube coverage. Corrected the Duckworth–Mans attribution and clarified the earlier radius-two label representation."
   - date: "2026-07-24"
     note: "Superseded by a proof of the full bounded critical window and its universal scaling function; retitled and restructured to match the new preprint."
 abstract: >
@@ -55,6 +55,7 @@ further-reading:
   - RockafellarWets
 history:
   - date: "2026-09-05"
+    note: "Audit corrections followed by the Duckworth–Mans attribution correction and radius-two literature comparison."
   - date: "2026-07-27"
   - date: "2026-07-24"
   - date: "2026-07-22"
@@ -129,9 +130,9 @@ The key device is to label every vertex by its *exact* distance to the candidate
 
 ## Related work
 
-The configuration or pairing model and its transfer to uniformly random simple regular graphs are standard; see Wormald's survey [@Wormald] and Janson's simplicity theorem [@Janson]. Fixed-radius domination in random regular graphs has been studied algorithmically: Duckworth analyzed randomized greedy algorithms for distance-$k$ dominating sets [@Duckworth], while Duckworth and Wormald treated independent domination [@DuckworthWormald]. The broader covering viewpoint is classical in coding theory [@CohenHonkalaLitsynLobstein].
+The configuration or pairing model and its transfer to uniformly random simple regular graphs are standard; see Wormald's survey [@Wormald] and Janson's simplicity theorem [@Janson]. Fixed-radius domination in random regular graphs has been studied algorithmically: Duckworth and Mans analyzed randomized greedy algorithms for distance-$k$ dominating sets [@Duckworth], while Duckworth and Wormald treated independent domination [@DuckworthWormald]. The broader covering viewpoint is classical in coding theory [@CohenHonkalaLitsynLobstein].
 
-The closest message-passing antecedents are statistical-mechanical. Zhao, Habibulla, and Zhou developed a cavity-method and belief-propagation treatment of minimum dominating sets [@ZhaoHabibullaZhou]; Habibulla and Qin studied a distance-two version with distance-labeled messages [@HabibullaQin]. Those works are replica-symmetric and fixed-radius. The transfer equations below are closely related in spirit; the distinctions here are the exact graph-level type count, the proof of global optimization, and the growing-radius asymptotics.
+The closest message-passing antecedents are statistical-mechanical.  Zhao, Habibulla, and Zhou developed a cavity-method and belief-propagation treatment of minimum dominating sets [@ZhaoHabibullaZhou].  Habibulla and Qin's radius-two representation already uses labels $0,1,2$, forbids adjacent labels differing by two, and requires a descending witness at each positive label [@HabibullaQin, arXiv v5, Section II, equation (1)].  Thus the local distance-label representation has a fixed-radius antecedent.  Their replica-symmetric entropy-zero benchmarks and simulations do not establish typical existence at the annealed crossing studied here.  The contributions of the present argument are the exact graph-level type count, proved global optimization, and uniform growing-radius analysis.  Here “radius two” means distance at most two, not two internally disjoint paths.
 
 Cutler and Radcliffe used Shearer entropy to obtain universal extremal bounds for domination polynomials of regular graphs [@CutlerRadcliffe]. Such universal bounds cannot by themselves detect the random-covering penalty: structured regular graphs may admit efficient covering codes. In the binomial random graph, Glebov, Liebenau, and Szabó proved two-point concentration at the first-moment threshold in a sufficiently dense regime [@GlebovLiebenauSzabo]. That result motivates, but does not supply, the corresponding quenched statement for random regular graphs.
 
