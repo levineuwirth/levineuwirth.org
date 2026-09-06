@@ -1,0 +1,5 @@
+version: 1
+description: Website-facing one-page résumé (legacy content profile).
+layout: one-page-resume
+output: resume.pdf
+legacy_visibility: resume

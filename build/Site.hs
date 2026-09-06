@@ -1,19 +1,23 @@
 {-# LANGUAGE GHC2021 #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Site (rules) where
+module Site (rules, siteConfiguration) where
 
-import Control.Monad (forM, forM_, when)
-import Data.Char     (isSpace, toUpper)
-import Data.List     (groupBy, isPrefixOf, sort, sortBy, stripPrefix)
+import Control.Monad (forM, forM_, void, when)
+import Control.Monad.Except (catchError)
+import Data.Char     (isSpace, toLower, toUpper)
+import Data.List     (groupBy, isPrefixOf, isSuffixOf, sort, sortBy, stripPrefix)
 import Data.Map.Strict (Map)
 import Data.Maybe    (catMaybes, fromMaybe, listToMaybe)
 import Data.Ord      (Down (..), comparing)
 import Data.Set      (Set)
 import qualified Data.Set as Set
 import qualified Data.Text as T
+import Data.Time.Clock (getCurrentTime)
+import Data.Time.Format (defaultTimeLocale, formatTime)
 import System.Directory (listDirectory)
 import System.Environment (lookupEnv)
-import System.FilePath (takeDirectory, takeFileName, takeExtension, replaceExtension, (</>))
+import System.FilePath (splitDirectories, takeDirectory, takeFileName, takeExtension,
+                        replaceExtension, (</>))
 import Text.Read     (readMaybe)
 import qualified Data.Aeson as Aeson
 import qualified Data.ByteString.Lazy.Char8 as LBS
@@ -32,13 +36,78 @@ import Now          (nowCtx)
 import Vita         (vitaCtx, projectsCtx)
 import Contexts   (siteCtx, essayCtx, postCtx, pageCtx, poetryCtx, fictionCtx, compositionCtx,
                    contentKindField, declaresScore, recentFirstByDisplay,
-                   tagLinksFieldExcludingTopSegment, isProvedConfidence)
+                   tagLinksFieldExcludingTopSegment, isProvedConfidence,
+                   canonicalUrlPath, feedMetaFields, identifierDisplayUTC)
+import qualified Filters.SourceRefs as SR
 import qualified Patterns as P
 import Photography (photographyRules)
 import Tags       (buildAllTags, applyTagRules, sidecarIdentifier,
                    portalIntroField, portalTooltipField)
 import Pagination (blogPaginateRules)
 import Stats      (statsRules)
+
+-- ---------------------------------------------------------------------------
+-- Publication boundary
+-- ---------------------------------------------------------------------------
+
+-- | Hakyll provider configuration.
+--
+--   @.gitignore@ and this function protect two different things and
+--   neither substitutes for the other: @.gitignore@ keeps a file out of
+--   *commits*; 'ignoreFile' keeps it out of the *deployment*. A file Git
+--   ignores is still sitting in the provider directory, and the broad
+--   rules below (@static\/**@, the co-located essay-asset rule, the
+--   per-page JS rule) would otherwise turn it into an identifier, route
+--   it, and copy it into @_site\/@ — from where @make deploy@ rsyncs it
+--   to the public document root. A probe confirmed exactly that for a
+--   @.key@ file and a @.local.md@ note, both correctly Git-ignored.
+--
+--   Ignoring at the provider boundary is stronger than excluding at each
+--   rule: an ignored path never becomes an identifier at all, so no
+--   present or future rule, listing, feed, search index, or @\/source\/@
+--   copy can reach it.
+--
+--   The patterns mirror the credential / private-note / editor-junk block
+--   of @.gitignore@; the two lists are meant to agree, so extend both.
+--   Hakyll's own defaults (dotfiles, @#…#@ autosaves, @…~@ backups,
+--   @.swp@) are preserved by delegating to 'defaultConfiguration' first
+--   rather than replacing the function.
+siteConfiguration :: Configuration
+siteConfiguration = defaultConfiguration
+    { ignoreFile = \path ->
+        ignoreFile defaultConfiguration path || neverPublish path
+    }
+
+-- | Paths that must never become Hakyll identifiers. See
+--   'siteConfiguration'.
+neverPublish :: FilePath -> Bool
+neverPublish path =
+       "__pycache__" `elem` splitDirectories path
+    || any (`isSuffixOf` name) suffixes
+    || any (`isPrefixOf` name) prefixes
+    || name `elem` exactNames
+  where
+    name = takeFileName path
+
+    suffixes =
+        -- Private working notes and unfinished drafts.
+        [ ".local.md", ".draft.md"
+        -- Key material and credential bundles.
+        , ".key", ".pem", ".p12", ".pfx", ".env"
+        -- Editor and interpreter junk.
+        , "~", ".swp", ".swo", ".pyc", ".pyo"
+        -- Interrupted or in-flight writes.
+        , ".tmp", ".part"
+        ]
+
+    prefixes =
+        -- id_rsa, id_rsa.pub, id_ed25519, credentials.json, .env.local, …
+        [ "id_rsa", "id_dsa", "id_ecdsa", "id_ed25519", "credentials", ".env." ]
+
+    -- Dotfiles are already covered by Hakyll's default predicate; naming
+    -- them keeps the intent legible if that default ever changes.
+    exactNames =
+        [ ".env", ".DS_Store", ".netrc", ".npmrc", ".pypirc" ]
 
 -- | Home-page portal grid order. Canonical ordering authority for every
 -- rendering of the portals (currently: the home page; future
@@ -103,6 +172,28 @@ musicFeedConfig = FeedConfiguration
     , feedAuthorEmail = "levi@levineuwirth.org"
     , feedRoot        = "https://levineuwirth.org"
     }
+
+-- | Item context shared by both Atom feeds.
+--
+--   Three timestamps, three meanings (audit F11):
+--
+--     * @published@ — the creation date. Never moves.
+--     * @updated@   — the most recent /substantive/ revision, from the
+--                     @revised:@ frontmatter the cards already read
+--                     ('itemDisplayUTC'), falling back to the creation
+--                     date for a piece that has not been revised.
+--     * the build time — kept out of both. A rebuild is not a revision,
+--       and stamping one here would push every entry to the top of every
+--       subscriber's reader on every deploy.
+--
+--   Before this, @updated@ was @dateField@ — the creation date — so the
+--   branch-capture essay advertised its July original as its September
+--   revision and no subscriber could see that it had changed.
+feedCtx :: Context String
+feedCtx =
+    feedMetaFields
+    <> bodyField "description"
+    <> defaultContext
 
 -- | Context for the home page. Extends 'pageCtx' with a @portals@
 -- listField iterating 'homePortals' in order. Each item exposes
@@ -200,6 +291,16 @@ rules = do
         route   $ stripPrefixRoute "static/"
         compile copyFileCompiler
 
+    -- Static-image dimension sidecars (@static\/images\/foo.jpg.dims.yaml@).
+    --
+    -- Excluded from the copy rule above (they are compile-time inputs, not
+    -- deliverables), which left them claimed by no rule at all and so
+    -- outside Hakyll's universe — where a pattern dependency naming them
+    -- could never fire, because the modified set is intersected with the
+    -- claimed identifiers. Matched here without a route for exactly the
+    -- reason the essay sidecars are: to make them trackable. Audit B11.
+    match "static/**/*.dims.yaml" $ compile getResourceLBS
+
     -- Templates
     match "templates/**" $ compile templateBodyCompiler
 
@@ -218,6 +319,18 @@ rules = do
     -- Anything not matched here will silently 404 on hover and the
     -- popup will simply not appear, which is the right failure mode
     -- if the heuristic ever wraps a path we did not mean to expose.
+    --
+    -- @data/@ is named file-by-file rather than by glob. The former
+    -- @data/*.json@ swept in whatever happened to be sitting in that
+    -- directory — build state (@archive-state.json@), the search index
+    -- metadata, and any private JSON a future tool drops there — and
+    -- published it under @/source/@. 'publicDataJson' is the explicit
+    -- allowlist; 'Filters.SourceRefs.publicDataJson' is the same list, so
+    -- the link-emitting heuristic and the serving rule cannot drift.
+    --
+    -- @checklist.md@ is deliberately absent: .gitignore calls it a local
+    -- working/planning document, and it was nonetheless being served in
+    -- full at /source/checklist.md.
     -- ---------------------------------------------------------------------------
     let sourcePreviewable =
                  "build/**.hs"
@@ -227,7 +340,7 @@ rules = do
             .||. "tools/**.sh"
             .||. "tools/**.py"
             .||. "nginx/**.conf"
-            .||. "data/*.json"
+            .||. fromList (map (fromFilePath . ("data/" ++)) SR.publicDataJson)
             .||. "data/*.yaml"
             .||. "data/*.md"
             .||. "data/*.bib"
@@ -238,7 +351,6 @@ rules = do
             .||. "pyproject.toml"
             .||. "uv.lock"
             .||. "LICENSE"
-            .||. "checklist.md"
             .||. "WRITING.md"
             .||. "HOMEPAGE.md"
             .||. "PHOTOGRAPHY.md"
@@ -262,6 +374,21 @@ rules = do
     -- Similar links — produced by tools/embed.py; absent on first build or
     -- when .venv is not set up.  Compiled as a raw string for similarLinksField.
     match "data/similar-links.json" $ compile getResourceBody
+
+    -- Bibliography inputs — the @.bib@ databases and the CSL style.
+    --
+    -- Matched (not routed) so that every consumer can 'load' them and get
+    -- real dependency tracking. Everything that renders bibliography HTML
+    -- reads these through citeproc inside 'unsafeCompiler', which Hakyll
+    -- cannot see; before this rule the CSL file was claimed by no rule at
+    -- all and the @.bib@ files only in their @"source-preview"@ version,
+    -- so neither could ever be a dependency. (See the note above the
+    -- @*.dims.yaml@ rule: an identifier no rule claims never enters
+    -- Hakyll's universe, and a dependency on it can never fire.)
+    --
+    -- Consumers: the essay pipeline (Compilers.trackBibliographyInputs)
+    -- and the synthetic /bibliography/ index and keyword pages below.
+    match ("data/*.bib" .||. "data/*.csl") $ compile getResourceString
 
     -- Commonplace YAML — compiled as a raw string so it can be loaded
     -- with dependency tracking by the commonplace page compiler.
@@ -298,11 +425,21 @@ rules = do
     -- ---------------------------------------------------------------------------
     -- Standalone pages (me/, colophon.md, …)
     -- ---------------------------------------------------------------------------
+    -- Co-located score fragments are inlined by Filters.Score inside
+    -- 'unsafeCompiler' — Hakyll sees the page depending on index.md and
+    -- nothing else, so re-engraving a score left the page serving the old
+    -- SVG (audit B11; the essay figure dependency above is the model). The
+    -- SVGs are already claimed by the copy rules further down, so naming
+    -- them in a pattern dependency is all that is needed here.
+    scoreDep <- makePatternDependency $
+                      "content/me/scores/*.svg"
+                 .||. "content/memento-mori/scores/*.svg"
+
     -- me/index.md — compiled as a full essay (TOC, metadata block, sidenotes).
     -- Lives in its own directory so co-located SVG score fragments resolve
     -- correctly: the Score filter reads paths relative to the source file's
     -- directory (content/me/), not the content root.
-    match "content/me/index.md" $ do
+    rulesExtraDependencies [scoreDep] $ match "content/me/index.md" $ do
         route   $ constRoute "me.html"
         compile $ essayCompiler
             >>= loadAndApplyTemplate "templates/essay.html"   essayCtx
@@ -316,7 +453,7 @@ rules = do
 
     -- memento-mori/index.md — lives in its own directory so co-located SVG
     -- score fragments resolve correctly (same pattern as me/index.md).
-    match "content/memento-mori/index.md" $ do
+    rulesExtraDependencies [scoreDep] $ match "content/memento-mori/index.md" $ do
         route   $ constRoute "memento-mori.html"
         compile $ essayCompiler
             >>= loadAndApplyTemplate "templates/essay.html"
@@ -431,7 +568,42 @@ rules = do
     --          In dev mode, drafts under content/drafts/essays/ route to
     --          drafts/essays/foo.html (flat) or drafts/essays/slug/index.html (dir).
     -- ---------------------------------------------------------------------------
-    match allEssays $ do
+    -- Figures are executed at compile time by Filters.Viz, but nothing in
+    -- Hakyll's graph connects an essay to the scripts and data those figures
+    -- read: the page depends on index.md alone. Editing a benchmark CSV
+    -- therefore republished the *data file* (it is copied by the asset rule
+    -- below) while leaving the chart drawn from it untouched — a page whose
+    -- figure contradicts the numbers sitting next to it, with nothing said
+    -- on stdout. tools/build-freshness.sh does not cover this either: it
+    -- hashes build/**/*.hs, not content assets or tools/.
+    --
+    -- tools/viz_theme.py is in the pattern for the same reason. Every figure
+    -- script imports it, so a change to the shared theme has to invalidate
+    -- every page that draws one.
+    --
+    -- This is deliberately coarse: one dependency for all essays, so any
+    -- figure edit rebuilds every essay rather than only its own. At the
+    -- current corpus that is a few seconds and it cannot be wrong. Making it
+    -- per-essay is worth doing when figure count makes it hurt, and wants the
+    -- content-addressed cache alongside it.
+    -- The same hole, one filter over: Filters.Images reads *.dims.yaml
+    -- sidecars at compile time to attach width/height. Verified before the
+    -- fix — editing a sidecar from width: 1176 to width: 999 and rebuilding
+    -- left the page byte-identical, still serving the old dimensions. Milder
+    -- than the figure case (a wrong layout hint, not a wrong claim) but the
+    -- same silence, so it belongs in the same dependency.
+    figureDep <- makePatternDependency $
+                      "content/essays/**/figures/**"
+                 .||. "content/drafts/essays/**/figures/**"
+                 .||. "content/essays/**/*.dims.yaml"
+                 .||. "content/drafts/essays/**/*.dims.yaml"
+                 -- Essays embed site-wide images from /images/; their
+                 -- dimension sidecars live under static/ and are read by
+                 -- the same filter (B11).
+                 .||. "static/**/*.dims.yaml"
+                 .||. "tools/viz_theme.py"
+
+    rulesExtraDependencies [figureDep] $ match allEssays $ do
         route $ customRoute $ \ident ->
             let fp           = toFilePath ident
                 fname        = takeFileName fp
@@ -455,6 +627,26 @@ rules = do
             >>= loadAndApplyTemplate "templates/essay.html"   essayCtx
             >>= loadAndApplyTemplate "templates/default.html" essayCtx
             >>= relativizeUrls
+
+    -- Dimension sidecars: tracked, but not shipped.
+    --
+    -- These are consumed by Filters/Images.hs at compile time, so the asset
+    -- rule below deliberately excludes them from _site — which left them
+    -- matched by no rule at all, and therefore outside Hakyll's universe.
+    -- A makePatternDependency naming them was consequently inert. Hakyll
+    -- computes its modified set as
+    --   Set.filter (resourceModified provider) (Map.keysSet universe)
+    -- (Core/Runtime.hs), and the universe is the identifiers some rule
+    -- claims — so an unclaimed file can never enter it, and a dependency
+    -- pointing at one can never fire. tools/viz_theme.py works in that same
+    -- dependency only because "tools/**.py" is claimed by the source-preview
+    -- rule above.
+    --
+    -- Compiling with no route registers them as tracked inputs and writes
+    -- nothing.
+    match "content/essays/**/*.dims.yaml" $ compile getResourceLBS
+    when isDev $
+        match "content/drafts/essays/**/*.dims.yaml" $ compile getResourceLBS
 
     -- Static assets co-located with directory-based essays (figures, data, PDFs, …).
     -- Build-time dimension sidecars are excluded; they're consumed by
@@ -510,13 +702,18 @@ rules = do
             >>= loadAndApplyTemplate "templates/default.html"  poetryCtx
             >>= relativizeUrls
 
-    -- Collection index pages (e.g. content/poetry/shakespeare-sonnets/index.md)
-    match "content/poetry/*/index.md" $ do
+    -- Collection index pages (e.g. content/poetry/shakespeare-sonnets/index.md).
+    -- See 'collectionCtx' and 'isPublishedCollection' for the rendering
+    -- contract and the scaffold gate (audit C05).
+    matchMetadata "content/poetry/*/index.md" (isPublishedCollection isDev) $ do
         route   $ stripPrefixRoute "content/"
                   `composeRoutes` setExtension "html"
-        compile $ pageCompiler
-            >>= loadAndApplyTemplate "templates/default.html"  pageCtx
-            >>= relativizeUrls
+        compile $ do
+            ctx <- collectionCtx P.poetryPattern poetryCtx pageCtx
+            pageCompiler
+                >>= loadAndApplyTemplate "templates/collection.html" ctx
+                >>= loadAndApplyTemplate "templates/default.html"    ctx
+                >>= relativizeUrls
 
     -- ---------------------------------------------------------------------------
     -- Fiction
@@ -532,12 +729,15 @@ rules = do
 
     -- Fiction collection index pages
     -- (content/fiction/<collection>/index.md → fiction/<collection>/index.html).
-    match "content/fiction/*/index.md" $ do
+    matchMetadata "content/fiction/*/index.md" (isPublishedCollection isDev) $ do
         route   $ stripPrefixRoute "content/"
                   `composeRoutes` setExtension "html"
-        compile $ pageCompiler
-            >>= loadAndApplyTemplate "templates/default.html" pageCtx
-            >>= relativizeUrls
+        compile $ do
+            ctx <- collectionCtx P.fictionPattern fictionCtx pageCtx
+            pageCompiler
+                >>= loadAndApplyTemplate "templates/collection.html" ctx
+                >>= loadAndApplyTemplate "templates/default.html"    ctx
+                >>= relativizeUrls
 
     -- ---------------------------------------------------------------------------
     -- Music — catalog index
@@ -567,7 +767,14 @@ rules = do
         compile copyFileCompiler
 
     -- Landing page — full essay pipeline.
-    match "content/music/*/index.md" $ do
+    --
+    -- Same unsafeCompiler blind spot as the me/ and memento-mori score
+    -- fragments (B11): Filters.Score reads content/music/<slug>/scores/*.svg
+    -- relative to the source file. The SVG copy rule above claims them, so
+    -- the dependency can fire.
+    musicScoreDep <- makePatternDependency "content/music/**/*.svg"
+
+    rulesExtraDependencies [musicScoreDep] $ match "content/music/*/index.md" $ do
         route   $ stripPrefixRoute "content/"
                   `composeRoutes` setExtension "html"
         compile $ compositionCompiler
@@ -628,6 +835,13 @@ rules = do
                     listField "essays" essayCtx (return essays)
                     <> constField "title"  "Essays"
                     <> constField "portal" "true"
+                    -- C01: an explicit description, ahead of siteCtx's
+                    -- fallback. Left to the fallback, a list page's
+                    -- description is the first *item's* opening
+                    -- paragraph, which describes one essay and claims
+                    -- to describe the index.
+                    <> constField "description"
+                        "Every essay published here, newest first."
                     <> siteCtx
             makeItem ""
                 >>= loadAndApplyTemplate "templates/essay-index.html" ctx
@@ -649,6 +863,8 @@ rules = do
                     listField "essays" poetryCtx (return poems)
                     <> constField "title"  "Poetry"
                     <> constField "portal" "true"
+                    <> constField "description"
+                        "Every poem published here, newest first."
                     <> siteCtx
             makeItem ""
                 >>= loadAndApplyTemplate "templates/essay-index.html" ctx
@@ -668,6 +884,8 @@ rules = do
                     listField "essays" fictionCtx (return stories)
                     <> constField "title"  "Fiction"
                     <> constField "portal" "true"
+                    <> constField "description"
+                        "Every piece of fiction published here, newest first."
                     <> siteCtx
             makeItem ""
                 >>= loadAndApplyTemplate "templates/essay-index.html" ctx
@@ -692,6 +910,8 @@ rules = do
                 ctx = listField "recent-items" itemCtx (return items)
                    <> constField "title" "New"
                    <> constField "list-page" "true"
+                   <> constField "description"
+                        "Everything published or revised here, newest first."
                    <> siteCtx
             makeItem ""
                 >>= loadAndApplyTemplate "templates/new.html"     ctx
@@ -847,6 +1067,9 @@ rules = do
             let ctx = mconcat sections
                    <> libraryIntroFld
                    <> constField "title"   "Library"
+                   <> constField "description"
+                        ("Everything on this site, arranged by shelf: essays, "
+                         ++ "fiction, poetry, music, photography, and research.")
                    <> constField "library" "true"
                    <> constField "portal"  "true"
                    <> siteCtx
@@ -910,9 +1133,28 @@ rules = do
     -- /bibliography/index.html — every entry across every .bib file.
     -- Sort: ascending by first-author surname, year-descending within
     -- author (scholarly convention).
+    -- Register data/*.bib + data/*.csl as tracked inputs of a synthetic
+    -- bibliography page.
+    --
+    -- 'bibFilePaths' and 'bibExtrasAll' above are read at rule-generation
+    -- time through 'preprocess', and the entry HTML is rendered by
+    -- citeproc inside 'unsafeCompiler'. Both are invisible to Hakyll, so
+    -- an edit to a .bib title updated the essays that cite it and left
+    -- /bibliography/ serving its cached copy. 'loadAll' both registers a
+    -- pattern dependency (a new or deleted .bib file changes the match
+    -- set) and depends on each matched identifier (an edited .bib file is
+    -- out of date), which is what forces the recompile. The loaded bodies
+    -- are deliberately unused — 'renderBibliographyHtml' re-reads the
+    -- files itself, because citeproc wants paths, not contents.
+    let trackBibInputs :: Compiler ()
+        trackBibInputs = void
+            (loadAll (("data/*.bib" .||. "data/*.csl") .&&. hasNoVersion)
+                :: Compiler [Item String])
+
     create ["bibliography/index.html"] $ do
         route idRoute
         compile $ do
+            trackBibInputs
             let sortedKeys = bibliographyIndexOrder bibExtrasAll
                 grouped    = groupByLetter bibExtrasAll sortedKeys
                 present    = map fst grouped
@@ -921,8 +1163,24 @@ rules = do
                     body <- renderBibliographyHtml bibFilePaths bibExtrasAll keys
                     return (renderLetterHeader letter <> body)
                 return (renderBibliographyAlphabet present <> T.concat parts)
+            -- C07: entry math is rendered to MathML at build time by
+            -- 'Citations.renderEntries', so this page needs no runtime
+            -- typesetter. The guard is a safety net: if the MathML writer
+            -- ever declines a construct it falls back to a raw
+            -- `class="math …"` span holding LaTeX source, and a page with
+            -- one of those does need KaTeX after all. Nothing currently in
+            -- the corpus trips it.
+            let needsKatex =
+                    any (`T.isInfixOf` html)
+                        ["class=\"math inline\"", "class=\"math display\""]
+                mathFld | needsKatex = constField "math" "true"
+                        | otherwise  = mempty
             let ctx = constField "title"          "Bibliography"
                    <> constField "bibliography-index" "true"
+                   <> constField "description"
+                        ("Every work cited across this site, in one list, "
+                         ++ "alphabetical by author.")
+                   <> mathFld
                    <> constField "bibliography-entries" (T.unpack html)
                    <> constField "library" "true"  -- reuse flag to load library.css + item-card.css
                    <> constField "portal"  "true"
@@ -937,6 +1195,7 @@ rules = do
         create [fromFilePath ("bibliography/" ++ kw ++ "/index.html")] $ do
             route idRoute
             compile $ do
+                trackBibInputs
                 -- Writings section
                 let wIds = fromMaybe [] (Map.lookup kw writingKwMap)
                 writingItems <- case wIds of
@@ -953,10 +1212,17 @@ rules = do
                 let refKeys = keywordReferencesOrder bibExtrasAll kw
                 refsHtml <- unsafeCompiler $
                     renderBibliographyHtml bibFilePaths bibExtrasAll refKeys
+                -- Same MathML-fallback guard as the bibliography index.
+                let needsKatex =
+                        any (`T.isInfixOf` refsHtml)
+                            ["class=\"math inline\"", "class=\"math display\""]
+                    mathFld | needsKatex = constField "math" "true"
+                            | otherwise  = mempty
                 let referencesCtx
                         | null refKeys = mempty
                         | otherwise =
                             constField "references" (T.unpack refsHtml)
+                            <> mathFld
 
                 -- Sidecar (tooltip + optional prose intro)
                 let sidecarId = bibliographyMetaIdentifier kw
@@ -1032,11 +1298,6 @@ rules = do
                                 .&&. hasNoVersion
                                 )
                                 "content"
-            let feedCtx =
-                    dateField "updated"   "%Y-%m-%dT%H:%M:%SZ"
-                    <> dateField "published" "%Y-%m-%dT%H:%M:%SZ"
-                    <> bodyField "description"
-                    <> defaultContext
             renderAtom feedConfig feedCtx posts
 
     -- ---------------------------------------------------------------------------
@@ -1049,12 +1310,8 @@ rules = do
                         =<< loadAllSnapshots
                                 (P.musicPattern .&&. hasNoVersion)
                                 "content"
-            let feedCtx =
-                    dateField "updated"   "%Y-%m-%dT%H:%M:%SZ"
-                    <> dateField "published" "%Y-%m-%dT%H:%M:%SZ"
-                    <> bodyField "description"
-                    <> defaultContext
             renderAtom musicFeedConfig feedCtx compositions
+                >>= repairEmptyFeedUpdated (null compositions)
 
     -- ---------------------------------------------------------------------------
     -- robots.txt — minimal, just points crawlers at the sitemap
@@ -1069,42 +1326,337 @@ rules = do
             -- by robots.txt can still appear in results when linked. The
             -- raw PDFs cannot carry meta — they need an `X-Robots-Tag`
             -- HTTP header from the deploy webserver (see nginx/archive.conf).
+            --
+            -- /proxy/ *is* disallowed, and for the opposite reason. Those
+            -- locations (nginx/popup-proxy.conf) fetch and re-serve
+            -- third-party pages — arXiv, archive.org, PubMed — under this
+            -- origin so the hover popups can read them same-origin. They
+            -- are a reading affordance, not this site's content: indexing
+            -- them would put someone else's pages in the index under
+            -- levineuwirth.org URLs. Unlike the archive wrappers there is
+            -- no HTML of ours to carry a noindex meta, so robots.txt is
+            -- the only control available at build time.
             [ "User-agent: *"
             , "Allow: /"
+            , "Disallow: /proxy/"
             , ""
             , "Sitemap: https://levineuwirth.org/sitemap.xml"
             ]
 
     -- ---------------------------------------------------------------------------
+    -- 404.html — custom not-found page.
+    --
+    -- nginx/vhost.conf.example declares `error_page 404 /404.html` and
+    -- serves it with the 404 status; nothing generated the file, so the
+    -- deployment fell back to nginx's stock response with no navigation
+    -- and no way back into the site. Rendered through the ordinary page
+    -- shell so the reader keeps the nav, search, and footer, and marked
+    -- noindex so the error page itself never enters an index.
+    -- ---------------------------------------------------------------------------
+    create ["404.html"] $ do
+        route idRoute
+        compile $ do
+            let ctx = constField "title"   "Page not found"
+                   <> constField "noindex" "true"
+                   <> constField "description"
+                        "No page exists at this address."
+                   -- Keeps the body out of the keyword index; see the
+                   -- comment in templates/page.html.
+                   <> constField "search-exclude" "true"
+                   <> pageCtx
+            -- Deliberately NOT relativized. Every other page is rewritten
+            -- to root-relative-from-here URLs, which is correct because
+            -- each is served from its own path. The 404 body is served
+            -- for *any* missing path, so `./css/base.css` would resolve
+            -- against whatever directory the reader mistyped. Absolute
+            -- URLs are the only form that works from every depth.
+            makeItem ""
+                >>= loadAndApplyTemplate "templates/404.html"     ctx
+                >>= loadAndApplyTemplate "templates/default.html" ctx
+
+    -- ---------------------------------------------------------------------------
     -- sitemap.xml — every dated content page (essays, blog, poetry, fiction,
-    -- music). Standalone pages (about, colophon, etc.) are intentionally
-    -- omitted: they're reachable via the main nav, lack `date:` frontmatter,
-    -- and would force a fallback lastmod that misrepresents staleness.
+    -- music) plus the photography section and the standalone pages.
+    --
+    -- The previous version listed only the 22 dated writing pages, on the
+    -- reasoning that a page without `date:` would force an invented
+    -- `lastmod`. That trade was the wrong way round: `lastmod` is optional
+    -- per the sitemaps protocol, so a page with no known revision date can
+    -- simply be listed without one — whereas leaving 400-odd photography
+    -- URLs and every standalone page out of the sitemap entirely is a real
+    -- omission on a media-heavy site.
+    --
+    -- Deliberately excluded, and why:
+    --   * drafts                — unpublished (they are also dev-only)
+    --   * /source/              — raw source copies, not readable pages
+    --   * /archive/             — wrappers already carry `noindex`
+    --   * feeds, search, JSON   — not HTML documents a reader lands on
+    --   * tag / author / keyword indexes — list variants of pages that are
+    --     already here under their own canonical URLs
+    --   * content/library.md    — an intro fragment with no route of its
+    --     own (it is snapshot-loaded into /library.html)
     -- ---------------------------------------------------------------------------
     create ["sitemap.xml"] $ do
         route idRoute
         compile $ do
-            entries <- recentFirst
-                        =<< loadAllSnapshots
-                                (   (    allEssays
-                                    .||. P.blogPattern
-                                    .||. P.fictionPattern
-                                    .||. P.poetryPattern
-                                    .||. P.musicPattern
-                                    )
-                                .&&. hasNoVersion
-                                )
-                                "content"
+            -- Dated writing. P.essayPattern, not `allEssays`: drafts stay
+            -- out of the sitemap even in a dev build.
+            datedIds <- getMatches $
+                (    P.essayPattern
+                .||. P.blogPattern
+                .||. P.fictionPattern
+                .||. P.poetryPattern
+                .||. P.musicPattern
+                ) .&&. hasNoVersion
+
+            -- Every photographic entry: flat frames, series landings, and
+            -- the sibling frames inside a series.
+            photoIds <- getMatches (P.allPhotoEntries .&&. hasNoVersion)
+
+            -- Generated photography indexes: /photography/by-year/,
+            -- /photography/by-year/<year>/, /photography/map/,
+            -- /photography/contact-sheet/. These are `create`d, so their
+            -- identifier is their route; map.json and feed.xml are dropped
+            -- by the .html filter.
+            photoIndexIds <- filter (isHtmlIdentifier . toFilePath)
+                                <$> getMatches ("photography/**" .&&. hasNoVersion)
+
+            -- CV routing pages (/cv/<slug>/).
+            cvIds <- getMatches ("content/cv/*.md" .&&. hasNoVersion)
+
+            let standaloneIds = map fromFilePath
+                    -- Authored standalone pages.
+                    [ "content/about.md"            -- /about.html (vita)
+                    , "content/work.md"
+                    , "content/links.md"
+                    , "content/gpg.md"
+                    , "content/colophon.md"
+                    , "content/current.md"
+                    , "content/commonplace.md"
+                    , "content/me/index.md"
+                    , "content/memento-mori/index.md"
+                    -- Section landings.
+                    , "content/photography/index.md"
+                    , "content/music/index.md"
+                    -- Generated landings and indexes.
+                    , "essays/index.html"
+                    , "poetry/index.html"
+                    , "fiction/index.html"
+                    , "library.html"
+                    , "new.html"
+                    , "bibliography/index.html"
+                    ]
+
+                corpus = datedIds ++ photoIds ++ photoIndexIds
+                      ++ cvIds ++ standaloneIds
+
+            entries <- sitemapEntries corpus
+
             let siteRoot = "https://levineuwirth.org"
                 sitemapItemCtx =
                     constField "root" siteRoot
-                    <> dateField "lastmod" "%Y-%m-%d"
-                    <> defaultContext
+                    <> field "url" (return . fst . itemBody)
+                    <> field "lastmod"
+                        (maybe (noResult "no known revision date") return
+                            . snd . itemBody)
                 sitemapCtx =
                     constField "root" siteRoot
                     <> listField "entries" sitemapItemCtx (return entries)
             makeItem ("" :: String)
                 >>= loadAndApplyTemplate "templates/sitemap.xml" sitemapCtx
+
+-- ---------------------------------------------------------------------------
+-- Compile-time filesystem reads and their dependency coverage (audit B11)
+-- ---------------------------------------------------------------------------
+--
+-- Several filters read the filesystem from inside 'unsafeCompiler', which
+-- is invisible to Hakyll's dependency graph: the compiled page depends on
+-- its Markdown source and on nothing those filters touched. The inventory
+-- below is the full list, so that the next filter added here has somewhere
+-- to declare itself rather than quietly joining the untracked set.
+--
+-- Covered by an explicit dependency:
+--
+--   * "Filters.Viz" figure scripts and their data, plus @tools/viz_theme.py@
+--     — 'figureDep', over every essay. Coarse on purpose: one dependency
+--     for all essays.
+--   * @*.dims.yaml@ sidecars read by "Filters.Images" — 'figureDep' for
+--     essays and @static/@; a sibling dependency in "Photography" for the
+--     photography corpus. Both needed a matched-but-unrouted rule first:
+--     Hakyll intersects its modified set with the identifiers some rule
+--     claims, so a dependency on an unclaimed file can never fire.
+--   * Score fragments read by "Filters.Score" — 'scoreDep' (me/,
+--     memento-mori/) and 'musicScoreDep' (music compositions). Essay score
+--     fragments live under @content/essays/**/figures/**@ or beside the
+--     essay and are carried by 'figureDep'.
+--   * @.bib@ databases and the CSL style read by citeproc —
+--     'Compilers.trackBibliographyInputs' per page, and 'trackBibInputs'
+--     for the synthetic bibliography pages.
+--   * @data/*.yaml@, @yaml-source/data/*.yml@, @data/build-stamp.txt@ —
+--     matched (unrouted) and 'load'ed by their consumers.
+--
+-- Deliberately not covered, and why:
+--
+--   * "Filters.SourceRefs" probes @doesFileExist@ for every repository
+--     path mentioned in prose, to decide whether to emit a @/source/@
+--     hover link. The interesting change is a file appearing or
+--     disappearing, which changes the /match set/ of the source-preview
+--     rule and is therefore a rule-generation input, not a compiler input.
+--     A pattern dependency over the whole source-previewable corpus would
+--     rebuild every page on any edit to any @.hs@, @.js@, or @.css@ file —
+--     an entire-site rebuild on every commit, to keep one hover link
+--     honest. The seven-day full-build fallback bounds the staleness.
+--   * "ArchiveIndex" reads @archive/manifest.yaml@ and
+--     @data/archive-state.json@ once per process and caches the result in
+--     a CAF, so a watch session does not see archive state change until it
+--     is restarted. Left as is deliberately (it is what keeps the archive
+--     filter from re-reading the manifest on every link of every page);
+--     the workaround is to restart @make watch@ after an archive edit.
+--   * Blog, poetry, and fiction entries can in principle carry figures and
+--     score fragments; none currently do, and neither section has a
+--     figures/ directory. Add them to 'figureDep' if that changes.
+--   * @tools/embed.py@ output (@data/similar-links.json@) is matched and
+--     loaded, but is written *after* Hakyll runs (audit B01) — a build
+--     order problem, not a dependency-tracking one.
+
+-- ---------------------------------------------------------------------------
+-- Collections (poetry / fiction landing pages)
+-- ---------------------------------------------------------------------------
+
+-- | Context for a collection landing page: the ordinary page fields plus
+--   the collection's own children.
+--
+--   @childPattern@ is the section's entry pattern (which already excludes
+--   @index.md@); it is intersected with a glob for /this/ collection's
+--   directory, so a landing page lists its siblings and nothing else.
+--   Entries are ordered by display date, newest first — the same ordering
+--   the library and @\/new.html@ use, so a revised poem does not sort
+--   under its original date on one surface and its revision date on
+--   another.
+--
+--   @has-collection-entries@ gates the template's empty state. An empty
+--   'listField' renders as nothing at all rather than as "no items", which
+--   is how the reader ended up with a landing page that promised child
+--   links and showed none.
+collectionCtx :: Pattern            -- ^ the section's entry pattern
+              -> Context String     -- ^ context for a child entry
+              -> Context String     -- ^ context for the landing page itself
+              -> Compiler (Context String)
+collectionCtx childPattern childCtx baseCtx = do
+    ident <- getUnderlying
+    let dir = takeDirectory (toFilePath ident)
+    children <- recentFirstByDisplay
+                    =<< loadAll (childPattern
+                                  .&&. fromGlob (dir ++ "/*.md")
+                                  .&&. hasNoVersion)
+    let entriesFld
+            | null children = mempty
+            | otherwise =
+                  listField "collection-entries" childCtx (return children)
+                  <> constField "has-collection-entries" "true"
+    return (entriesFld <> constField "collection" "true" <> baseCtx)
+
+-- | Is a collection landing page fit to publish?
+--
+--   @draft: true@ marks a collection index that is still authoring
+--   scaffolding — placeholder prose telling the author what to write.
+--   Audit C05 found exactly that live at @\/poetry\/selected-verse\/@.
+--   Such a page gets no route in a production build, which also keeps it
+--   out of every listing, the sitemap, the feeds, and the search index,
+--   because all of those are built from routed identifiers. @SITE_ENV=dev@
+--   builds it as usual so the author can see the scaffold while working.
+--
+--   Deliberately a separate key from @status:@, which is the epistemic
+--   peer-review state read by "Marks", and from @content\/drafts\/@, which
+--   is a directory of unfinished essays.
+isPublishedCollection :: Bool -> Metadata -> Bool
+isPublishedCollection dev meta = dev || not isDraft
+  where
+    isDraft = case lookupString "draft" meta of
+        Just v  -> map toLower (filter (not . isSpace) v) `elem` ["true", "yes", "1"]
+        Nothing -> False
+
+-- ---------------------------------------------------------------------------
+-- Sitemap
+-- ---------------------------------------------------------------------------
+
+-- | Turn a list of identifiers into @(url, maybe lastmod)@ sitemap rows.
+--
+--   Identifiers with no route are dropped (an unrouted sidecar is not a
+--   page), duplicates are collapsed, and the site root is dropped because
+--   @templates\/sitemap.xml@ emits it unconditionally. Rows come back in
+--   URL order, which keeps the generated file stable across builds.
+sitemapEntries :: [Identifier] -> Compiler [Item (String, Maybe String)]
+sitemapEntries idents = do
+    rows <- mapM sitemapEntry idents
+    let unique = Map.toAscList (Map.fromList
+                    [ (u, d) | Just (u, d) <- rows, u /= "/" ])
+    return [ Item (fromFilePath u) (u, d) | (u, d) <- unique ]
+
+-- | One sitemap row, or 'Nothing' when the identifier has no route.
+sitemapEntry :: Identifier -> Compiler (Maybe (String, Maybe String))
+sitemapEntry ident = do
+    mRoute <- getRoute ident
+    case mRoute of
+        Nothing -> return Nothing
+        Just r  -> do
+            -- `lastmod` is optional: a page with no `date:` is listed
+            -- without one rather than dropped or given an invented date.
+            -- getItemUTC throws for a created identifier that carries no
+            -- metadata at all, which is the same "unknown" answer.
+            --
+            -- F11: the date is the *revision-aware* one, so a page that
+            -- has been substantively revised advertises the revision
+            -- rather than repeating its creation date to crawlers.
+            -- 'identifierDisplayUTC' falls back to the creation date when
+            -- there is no `revised:` entry.
+            mDay <- fmap Just (formatTime defaultTimeLocale "%Y-%m-%d"
+                                <$> identifierDisplayUTC ident)
+                        `catchError` const (return Nothing)
+            return (Just (canonicalUrlPath r, mDay))
+
+-- | True for routes that name an HTML document. Used to keep @map.json@
+--   and @feed.xml@ out of the photography-index sweep.
+isHtmlIdentifier :: FilePath -> Bool
+isHtmlIdentifier = isSuffixOf ".html"
+
+-- ---------------------------------------------------------------------------
+-- Feed repair
+-- ---------------------------------------------------------------------------
+
+-- | Give an empty Atom feed a valid @\<updated\>@ element.
+--
+--   Hakyll's 'renderAtom' derives the feed-level @updated@ from the first
+--   item and falls back to the literal string @Unknown@ when the item
+--   list is empty (@Hakyll.Web.Feed.renderFeed@). @Unknown@ is not an RFC
+--   3339 timestamp, so the feed is invalid — and the music feed is
+--   advertised unconditionally from @templates\/partials\/head.html@,
+--   which means a reader's aggregator sees the broken document rather
+--   than nothing at all. The catalog being empty is a legitimate state
+--   (it is a young section), so the feed is kept and given the build
+--   time: honest, well-formed, and it stops changing the moment the first
+--   composition lands and a real entry date takes over.
+--
+--   No-op when the feed has entries, so a populated feed is never
+--   restamped on every build.
+repairEmptyFeedUpdated :: Bool -> Item String -> Compiler (Item String)
+repairEmptyFeedUpdated False item = return item
+repairEmptyFeedUpdated True  item = do
+    stamp <- unsafeCompiler $
+        formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ" <$> getCurrentTime
+    return $ fmap (replaceFirst placeholder ("<updated>" ++ stamp ++ "</updated>")) item
+  where
+    placeholder = "<updated>Unknown</updated>"
+
+-- | Replace the first occurrence of a literal substring. Returns the
+--   input unchanged when the needle is absent.
+replaceFirst :: String -> String -> String -> String
+replaceFirst needle replacement = go
+  where
+    go [] = []
+    go s@(c:cs) = case stripPrefix needle s of
+        Just rest -> replacement ++ rest
+        Nothing   -> c : go cs
 
 -- ---------------------------------------------------------------------------
 -- Epistemic metadata extraction

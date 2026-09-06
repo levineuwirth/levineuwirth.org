@@ -1,13 +1,17 @@
 \documentclass[11pt]{article}
 
 \input{templates/shared/preamble.tex}
+\usepackage{needspace}
+
+\renewcommand{\normalsize}{\fontsize{10.5}{12.4}\selectfont}
+\normalsize
 
 \geometry{
   letterpaper,
-  top=0.9in,
-  bottom=0.9in,
-  left=1.0in,
-  right=1.0in
+  top=0.78in,
+  bottom=0.78in,
+  left=0.9in,
+  right=0.9in
 }
 
 \input{templates/shared/commands.tex}
@@ -37,6 +41,7 @@
 \section*{Education}
 
 ((* for edu in education if edu.cv_visible *))
+\Needspace{5\baselineskip}
 \entryheader{(((edu.institution)))}{}{(((edu.start)))((* if edu.end *)) -- (((edu.end)))((* endif *))}{(((edu.location)))}
 \textit{(((edu.degree)))}((* if edu.gpa *)). GPA (((edu.gpa))).((* else *)).((* endif *))
 ((* if edu.notes_cv *))
@@ -49,6 +54,7 @@
 \section*{Research Experience}
 
 ((* for exp in experience if exp.cv_visible and exp.cv_section == 'research' *))
+\Needspace{7\baselineskip}
 \entryheader{(((exp.organization)))}{(((exp.role or '')))}{(((exp.start)))((* if exp.end *)) -- (((exp.end)))((* endif *))}{(((exp.location or '')))}
 ((* if exp.cv_preamble *))
 (((exp.cv_preamble)))
@@ -113,6 +119,7 @@
 \section*{Research Affiliations}
 
 ((* for aff in affiliations if aff.cv_visible *))
+\Needspace{6\baselineskip}
 \entryheader{(((aff.name))) --- (((aff.full_title)))}{(((aff.role)))}{(((aff.start)))((* if aff.end *)) -- (((aff.end)))((* endif *))}{}
 {\small (((aff.description)))}
 \par\vspace{0.4em}
@@ -122,6 +129,7 @@
 \section*{Systems and Engineering Projects}
 
 ((* for proj in projects if proj.cv_visible *))
+\Needspace{5\baselineskip}
 \noindent
 \textbf{(((proj.name)))} {\small\color{metagray}\textit{(((proj.start)))((* if proj.end *)) -- (((proj.end)))((* endif *))}}. (((proj.description)))
 \par\vspace{0.4em}
@@ -131,6 +139,7 @@
 \section*{Industry Experience}
 
 ((* for exp in experience if exp.cv_visible and exp.cv_section != 'research' and not exp.contract_work *))
+\Needspace{5\baselineskip}
 \entryheader{(((exp.organization)))}{(((exp.role or '')))}{(((exp.start)))((* if exp.end *)) -- (((exp.end)))((* endif *))}{(((exp.location or '')))}
 ((* if exp.scope *))
 (((exp.scope)))

@@ -166,6 +166,44 @@
     min-width: 0;
 }
 
+/* ============================================================
+   TAG CHIPS
+   Hierarchical tags ("nonfiction/philosophy",
+   "research/machine-learning") are long, and several of them ride in a
+   card column narrower than one chip. Without a flex container they
+   formed a single unbreakable inline run and overflowed the Library at
+   both 375 and 320 CSS pixels.
+
+   The 24px min-height and the gap are WCAG 2.2 SC 2.5.8 (target size,
+   minimum): a bare `.meta-tag` measured 22.4 x 30 with no spacing
+   between adjacent chips.
+   ============================================================ */
+
+.item-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.15rem 0.1rem;
+    min-width: 0;
+    margin-top: 0.35rem;
+}
+
+.item-card-tags .meta-tag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0 0.25rem;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+/* The inline "·" joiner assumes the chips share a text run; inside the
+   flex row it would sit at the head of a wrapped line. The gap above
+   does the separating now. */
+.item-card-tags .meta-tag + .meta-tag::before {
+    content: none;
+}
+
 .item-card-header {
     display: flex;
     align-items: baseline;
@@ -186,6 +224,26 @@
     text-underline-offset: 0.15em;
 }
 
+/* Date gutter. The dateline wraps the date and the revision marker so
+   .item-card-header's space-between still resolves to two columns
+   (title | dates) rather than three. Cards emitted without a wrapper
+   (Now.hs, Vita.hs) are unaffected — every rule here is additive. */
+.item-card-dateline {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.3rem;
+    flex-shrink: 0;
+}
+
+/* Separator between date and marker — same role as .see-also-dash. */
+.item-card-dateline-sep {
+    color: var(--text-faint);
+    font-size: 0.72rem;
+    user-select: none;
+}
+
 .item-card-date {
     font-family: var(--font-sans);
     font-size: 0.72rem;
@@ -195,12 +253,52 @@
     font-variant-numeric: tabular-nums;
 }
 
+/* Revision marker. The gutter says only that the item was revised; both
+   dates and the note ride in a hover/focus popup (popups.js binds this
+   class in bindTargets), which keeps the gutter short enough that long
+   titles stop wrapping to three lines. Small caps put it in the same
+   register as .item-card-kind; the dotted underline is the only
+   affordance saying it holds more. */
+.item-card-revised {
+    font-family: var(--font-sans);
+    font-size: 0.68rem;
+    font-variant: all-small-caps;
+    letter-spacing: 0.07em;
+    color: var(--text-faint);
+    white-space: nowrap;
+    cursor: help;
+    text-decoration: underline dotted;
+    text-decoration-color: var(--border-muted);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.3em;
+    transition: color var(--transition-fast), text-decoration-color var(--transition-fast);
+}
+
+.item-card-revised:hover,
+.item-card-revised:focus-visible {
+    color: var(--text-muted);
+    text-decoration-color: var(--text-muted);
+}
+
+/* The original date rides inside the marker rather than in a data
+   attribute so the popup reads it out of the DOM (no escaping question)
+   and touch devices can simply reveal it. Hidden wherever the popup
+   can carry it. */
+.item-card-revised-from {
+    display: none;
+}
+
 .item-card-abstract {
     font-family: var(--font-sans);
     font-size: var(--text-size-small);
     color: var(--text-muted);
     margin: 0.3rem 0 0;
     line-height: 1.55;
+    /* Abstracts carry bare hostnames and long identifiers
+       ("levineuwirth.github.io/icd_embeddings"). In a card column that
+       is ~200px wide at 375px those are wider than the column and used
+       to push /current.html to a 452px document. */
+    overflow-wrap: anywhere;
     /* Clamp to two lines */
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -216,15 +314,58 @@
     overflow: visible;
 }
 
-/* Revision note — italicized line under the abstract carrying the
-   most-recent 'revised:' entry's note. Muted color, smaller than
-   body, matches the card's secondary-text register. */
+/* Revision note — the most-recent 'revised:' entry's prose. On pointer
+   devices it is deferred to the marker's popup, but the paragraph stays
+   in the DOM rather than being dropped: visually hidden, not removed, so
+   assistive tech still meets it in its natural place after the abstract.
+   It is the only place this prose exists on the site, so it is never
+   thrown away — only relocated. */
 .item-card-revision-note {
     font-family: var(--font-sans);
     font-size: 0.78rem;
     color: var(--text-faint);
-    margin: 0.2rem 0 0;
     line-height: 1.4;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* Metadata, not prose: cancel the 1.5em first-line indent this <p> would
+   otherwise inherit from `#markdownBody p + p`. Scoped to #markdownBody
+   because that rule carries an ID and would otherwise outrank a bare class. */
+#markdownBody .item-card-revision-note {
+    text-indent: 0;
+}
+
+/* Touch-primary devices get no popups at all — popups.js's init()
+   returns early on exactly this condition, since a hover popup costs a
+   tap. So the note has nowhere else to go: render it inline, with the
+   original date revealed on the marker beside it. Keep this condition
+   in sync with that guard. */
+@media (hover: none) and (pointer: coarse) {
+    .item-card-revision-note {
+        position: static;
+        width: auto;
+        height: auto;
+        margin: 0.2rem 0 0;
+        overflow: visible;
+        clip-path: none;
+        white-space: normal;
+    }
+
+    .item-card-revised {
+        cursor: default;
+        text-decoration: none;
+    }
+
+    .item-card-revised-from {
+        display: inline;
+    }
 }
 
 /* ============================================================
@@ -259,5 +400,17 @@
 
     .item-card-date {
         font-size: 0.68rem;
+    }
+
+    /* The header stacks here, so the dateline is wider than its content and
+       flex-end would right-align the date away from everything else. And a
+       dateline that wraps leaves the separator dangling at the end of the
+       first line — drop it rather than let it hang. */
+    .item-card-dateline {
+        justify-content: flex-start;
+    }
+
+    .item-card-dateline-sep {
+        display: none;
     }
 }

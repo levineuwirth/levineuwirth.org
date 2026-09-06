@@ -91,9 +91,10 @@
         return exhibit.dataset.exhibitCaption || '';
     }
 
-    /* Make an exhibit wrapper keyboard-operable: role=button, tabindex,
-       and Enter/Space sharing the click path. closeOverlay()'s focus
-       return relies on the wrapper being focusable. */
+    /* Make a plain wrapper <div> keyboard-operable: role=button, tabindex,
+       and Enter/Space sharing the click path. Only ever applied to
+       elements with no semantics of their own — see addExpandButton for
+       anything that is already a <figure>. */
     function bindActivation(el, activate) {
         el.setAttribute('role', 'button');
         el.setAttribute('tabindex', '0');
@@ -104,6 +105,35 @@
                 activate();
             }
         });
+    }
+
+    /* A07: a <figure> may not carry role="button" (axe: aria-allowed-role),
+       and overwriting it would throw away the figure/figcaption pairing
+       that gives the score its caption. Give the figure a real <button>
+       instead — it is the same expand glyph that was already there, now an
+       actual control with an accessible name — and leave the figure's own
+       semantics alone. Pointer users keep the whole figure as a click
+       target; keyboard users get one focus stop, the button, and that is
+       the element focus returns to when the overlay closes. */
+    function addExpandButton(figEl, label, activate) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'exhibit-expand exhibit-expand-btn';
+        btn.setAttribute('aria-label', label);
+        btn.textContent = '\u2922';
+        btn.addEventListener('click', function (e) {
+            // The figure carries its own click handler; without this the
+            // overlay would open twice.
+            e.stopPropagation();
+            activate();
+        });
+        figEl.appendChild(btn);
+
+        figEl.addEventListener('click', function (e) {
+            if (e.target === btn || btn.contains(e.target)) return;
+            activate();
+        });
+        return btn;
     }
 
     function discoverFocusableMath(markdownBody) {
@@ -136,7 +166,10 @@
             };
             focusables.push(entry);
 
-            /* Click or Enter/Space anywhere on the wrapper opens the overlay */
+            /* Click or Enter/Space anywhere on the wrapper opens the overlay.
+               The wrapper is a <div> created here, so role="button" replaces
+               no existing semantics. */
+            entry.focusEl = wrapper;
             bindActivation(wrapper, function () {
                 openOverlay(focusables.indexOf(entry));
             });
@@ -153,13 +186,6 @@
             var name        = figEl.dataset.exhibitName || '';
             var groupName   = name || getGroupName(figEl, markdownBody);
 
-            /* Expand glyph — decorative affordance, same as math focusables */
-            var glyph = document.createElement('span');
-            glyph.className = 'exhibit-expand';
-            glyph.setAttribute('aria-hidden', 'true');
-            glyph.textContent = '⤢';
-            figEl.appendChild(glyph);
-
             var entry = {
                 type:      'score',
                 wrapperEl: figEl,
@@ -169,9 +195,21 @@
             };
             focusables.push(entry);
 
-            bindActivation(figEl, function () {
-                openOverlay(focusables.indexOf(entry));
-            });
+            /* Name the button from the exhibit's own name or its section
+               heading, never from the caption: the caption is a sentence,
+               it is already associated with the figure through
+               <figcaption>, and repeating it here produced a control
+               announced as a paragraph. */
+            var label = groupName
+                ? 'Open ' + groupName + ' in the gallery'
+                : 'Open this score in the gallery';
+            entry.focusEl = addExpandButton(
+                figEl,
+                label,
+                function () {
+                    openOverlay(focusables.indexOf(entry));
+                }
+            );
         });
     }
 
@@ -286,7 +324,10 @@
     }
 
     function closeOverlay() {
-        var returnTo = currentIdx >= 0 ? focusables[currentIdx].wrapperEl : null;
+        /* A07: focus returns to the element that opened the overlay — the
+           figure's expand button for scores, the wrapper for math. */
+        var current  = currentIdx >= 0 ? focusables[currentIdx] : null;
+        var returnTo = current ? (current.focusEl || current.wrapperEl) : null;
         overlay.setAttribute('hidden', '');
         currentIdx = -1;
         if (returnTo) returnTo.focus();

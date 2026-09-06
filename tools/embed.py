@@ -27,6 +27,12 @@ HTML extraction pass runs. There is deliberately no mtime-based skip:
 stamp-build-time.py rewrites every page's footer after this script runs,
 so "are outputs newer than the HTML" is always false and a check based
 on it can never fire.
+
+Cost of a fully-warm run: each page is read and parsed exactly once
+(shared by the page and paragraph extractors, via lxml when available),
+and torch / sentence-transformers are imported lazily only when a cache
+miss actually requires embedding — so a no-change build pays a few
+seconds of extraction, not a model-library import.
 """
 
 import hashlib
@@ -40,7 +46,10 @@ from pathlib import Path
 import faiss
 import numpy as np
 from bs4 import BeautifulSoup
-from sentence_transformers import SentenceTransformer
+
+# torch + sentence-transformers cost seconds of import time alone, so
+# they are imported lazily inside the cache-miss branches below. A
+# fully-warm run (no misses) never pays it.
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -108,7 +117,12 @@ EXCLUDE_URLS = {"/search/", "/build/", "/404.html", "/feed.xml",
 # mirror — source files, not content; left in, they pollute every page's
 # "Related" set and semantic search (e.g. a template file surfacing as a
 # neighbour, titled with its unrendered "$title$" placeholder).
-EXCLUDE_PREFIXES = ("/source/",)
+# /drafts/ exists in _site only when a SITE_ENV=dev build (make dev /
+# make watch) has written into the shared output dir. `make build` purges
+# it before embedding, but a watch session running in parallel with a
+# direct embed.py invocation can still race drafts into _site — draft
+# text must never reach the public search index or Related sections.
+EXCLUDE_PREFIXES = ("/source/", "/drafts/")
 
 # Pages whose <body data-portal> are portal/landing pages — they aggregate
 # excerpts from many entries and would otherwise dominate every page's
@@ -117,6 +131,16 @@ EXCLUDE_PREFIXES = ("/source/",)
 # is true, so adding `constField "portal" "true"` to a Hakyll rule (or
 # `portal: true` to a content file's frontmatter) is enough to exclude it.
 PORTAL_BODY_ATTR = "data-portal"
+
+# lxml parses ~2x faster than html.parser and produces byte-identical
+# extracted text on this corpus (verified across every page: identical
+# page texts and paragraph lists, hence identical content hashes — the
+# embed caches survive the switch). Fall back gracefully when absent.
+try:
+    import lxml  # noqa: F401
+    HTML_PARSER = "lxml"
+except ImportError:
+    HTML_PARSER = "html.parser"
 
 
 def atomic_write_bytes(path: Path, data: bytes) -> None:
@@ -223,6 +247,10 @@ STRIP_SELECTORS = [
     # verbatim at the document end — indexing it would double every
     # footnote in search results and skew page similarity.
     "section.footnotes",
+    # Inline-SVG metadata (matplotlib emits creator boilerplate and,
+    # historically, a per-run <dc:date> timestamp). None of it is page
+    # content, and the timestamp made every recompile a cache miss.
+    "svg metadata",
 ]
 
 # ---------------------------------------------------------------------------
@@ -252,64 +280,60 @@ def _title(soup: BeautifulSoup, url: str) -> str:
     return re.split(r"\s+[—–-]\s+", raw)[0].strip()
 
 # ---------------------------------------------------------------------------
-# Page-level extraction  (for similar-links)
+# Extraction — pages (similar-links) + paragraphs (semantic search)
 # ---------------------------------------------------------------------------
 
-def extract_page(html_path: Path) -> dict | None:
-    raw  = html_path.read_text(encoding="utf-8", errors="replace")
-    soup = BeautifulSoup(raw, "html.parser")
-    url  = _url_from_path(html_path)
+def extract_document(html_path: Path) -> tuple[dict | None, list[dict]]:
+    """Read and parse a page ONCE; return (page, paragraphs).
 
+    Replaces the former extract_page / extract_paragraphs pair, which
+    each re-read and re-parsed the same file. page is None (and
+    paragraphs empty) for excluded / portal / non-content pages — the
+    paragraph pass only ever ran when the page pass succeeded, and that
+    behaviour is preserved here.
+    """
+    url = _url_from_path(html_path)
     if url in EXCLUDE_URLS or url.startswith(EXCLUDE_PREFIXES):
-        return None
+        return None, []
+
+    raw  = html_path.read_text(encoding="utf-8", errors="replace")
+    soup = BeautifulSoup(raw, HTML_PARSER)
+
     body_tag = soup.body
     if body_tag is not None and body_tag.has_attr(PORTAL_BODY_ATTR):
-        return None
+        return None, []
     body = soup.select_one("#markdownBody")
     if body is None:
-        return None
+        return None, []
 
     title = _title(soup, url)
     _clean_soup(soup)
 
     text = re.sub(r"\s+", " ", body.get_text(" ", strip=True)).strip()
     if len(text) < 100:
-        return None
+        return None, []
 
-    return {"url": url, "title": title, "text": text}
+    page = {"url": url, "title": title, "text": text}
 
-# ---------------------------------------------------------------------------
-# Paragraph-level extraction  (for semantic search)
-# ---------------------------------------------------------------------------
-
-def extract_paragraphs(html_path: Path, url: str, title: str) -> list[dict]:
-    raw  = html_path.read_text(encoding="utf-8", errors="replace")
-    soup = BeautifulSoup(raw, "html.parser")
-    body = soup.select_one("#markdownBody")
-    if body is None:
-        return []
-
-    _clean_soup(soup)
-
-    paras    = []
-    heading  = title  # track current section heading
+    paras   = []
+    heading = title  # track current section heading
 
     for el in body.find_all(["h1", "h2", "h3", "h4", "p", "li", "blockquote"]):
         if el.name in ("h1", "h2", "h3", "h4"):
             heading = el.get_text(" ", strip=True)
             continue
-        text = re.sub(r"\s+", " ", el.get_text(" ", strip=True)).strip()
-        if len(text) < MIN_PARA_CHARS:
+        ptext = re.sub(r"\s+", " ", el.get_text(" ", strip=True)).strip()
+        if len(ptext) < MIN_PARA_CHARS:
             continue
         paras.append({
             "url":     url,
             "title":   title,
             "heading": heading,
-            "excerpt": text[:200] + ("…" if len(text) > 200 else ""),
-            "text":    text[:MAX_PARA_CHARS],
+            "excerpt": ptext[:200] + ("…" if len(ptext) > 200 else ""),
+            "text":    ptext[:MAX_PARA_CHARS],
         })
 
-    return paras
+    return page, paras
 
 # ---------------------------------------------------------------------------
 # Main
@@ -326,11 +350,11 @@ def main() -> int:
     paragraphs = []
 
     for html in sorted(SITE_DIR.rglob("*.html")):
-        page = extract_page(html)
+        page, paras = extract_document(html)
         if page is None:
             continue
         pages.append(page)
-        paragraphs.extend(extract_paragraphs(html, page["url"], page["title"]))
+        paragraphs.extend(paras)
 
     if not pages:
         print("embed.py: no indexable pages found", file=sys.stderr)
@@ -348,6 +372,8 @@ def main() -> int:
 
     if miss_idxs:
         print(f"embed.py: loading {PAGE_MODEL_NAME}@{PAGE_MODEL_REVISION[:8]}…")
+        # Lazy: pulls in torch; only paid when something must be embedded.
+        from sentence_transformers import SentenceTransformer
         page_model = SentenceTransformer(
             PAGE_MODEL_NAME, revision=PAGE_MODEL_REVISION, trust_remote_code=True,
             # code_revision pins the auto_map modeling repo; it must reach
@@ -412,6 +438,8 @@ def main() -> int:
 
     if para_miss:
         print(f"embed.py: loading {PARA_MODEL_NAME}@{PARA_MODEL_REVISION[:8]}…")
+        # Lazy: pulls in torch; only paid when something must be embedded.
+        from sentence_transformers import SentenceTransformer
         para_model = SentenceTransformer(PARA_MODEL_NAME,
                                          revision=PARA_MODEL_REVISION)
         new_para_vecs = para_model.encode(

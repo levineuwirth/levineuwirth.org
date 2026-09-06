@@ -11,8 +11,42 @@
  *        data-section="section-id"></div>
  *
  * This script finds those divs, fetches the target page, extracts the
- * requested content, rewrites cross-page fragment hrefs, injects the
- * content inline, and retriggers layout-dependent JS (sidenotes, collapse).
+ * requested content, rebases its URLs and identifiers onto the source
+ * document, injects the content inline, and runs the shared enhancement
+ * entry point over it.
+ *
+ * URL and identifier scope (F07)
+ * ------------------------------
+ * Transcluded content came from another document, so every URL in it is
+ * relative to *that* document and every id in it already exists once on
+ * the web. Before injection:
+ *   · every URL-bearing attribute (href, src, srcset, poster, data-src,
+ *     data-srcset, cite, action, formaction, object[data], SVG
+ *     xlink:href, …) is resolved against the source document's URL;
+ *   · every id in the fragment is namespaced with a per-transclusion
+ *     prefix, and every local reference to those ids — fragment links,
+ *     label[for], aria-*, headers, list, form, SVG url(#…) — is rewritten
+ *     to match;
+ *   · a fragment link whose target is *not* inside the extracted fragment
+ *     still points at the source page (srcUrl#fragment), as before.
+ *
+ * Enhancement contract (F07, smaller finding 7)
+ * ---------------------------------------------
+ * `window.lnEnhance(container[, {force: true, source: url}])` is the one
+ * idempotent entry point for content inserted into the page after load.
+ * It calls the known reinitialisers (sidenotes, popups, collapse,
+ * gallery) and then dispatches a bubbling `ln:content-added` CustomEvent
+ * on the container, with `detail = {container, source}`. Any subsystem
+ * that needs to see injected content — KaTeX rendering, code-copy
+ * buttons, annotations, lightbox — should listen for that event rather
+ * than growing its own ad hoc hook:
+ *
+ *     document.addEventListener('ln:content-added', function (e) {
+ *         myInit(e.detail.container);
+ *     });
+ *
+ * Calling lnEnhance twice on the same container is a no-op unless
+ * `force` is passed, so listeners may assume one call per insertion.
  */
 
 (function () {
@@ -69,18 +103,176 @@
         return nodes.length ? nodes : null;
     }
 
-    /* Rewrite href="#fragment" → href="srcUrl#fragment" so in-page anchor
-     * links from the source page remain valid when embedded elsewhere. */
-    function rewriteFragmentHrefs(nodes, srcUrl) {
+    /* ------------------------------------------------------------------
+       URL rebasing
+    ------------------------------------------------------------------ */
+
+    /* Absolute URL, protocol-relative URL, or a non-http scheme
+     * (mailto:, data:, tel:, javascript:) — leave untouched. */
+    var HAS_SCHEME = /^(?:[a-z][a-z0-9+.\-]*:|\/\/)/i;
+
+    /* Plain single-URL attributes, by attribute name. */
+    var URL_ATTRS = ['href', 'src', 'poster', 'data-src', 'data-href',
+                     'data-original', 'cite', 'action', 'formaction',
+                     'longdesc', 'xlink:href'];
+    /* Comma-separated candidate lists. */
+    var SRCSET_ATTRS = ['srcset', 'data-srcset', 'imagesrcset'];
+    /* <object data="…"> only — `data` on anything else is a stray. */
+    var DATA_ATTR_TAGS = { OBJECT: true };
+
+    function absolutise(value, base) {
+        if (!value) return value;
+        var v = value.trim();
+        if (!v || v.charAt(0) === '#') return value;   /* fragments handled separately */
+        if (HAS_SCHEME.test(v)) return value;
+        try {
+            var u = new URL(v, base);
+            return (u.origin === window.location.origin)
+                ? (u.pathname + u.search + u.hash)
+                : u.href;
+        } catch (e) {
+            return value;
+        }
+    }
+
+    function absolutiseSrcset(value, base) {
+        /* data: URIs contain commas; do not attempt to split those. */
+        if (!value || value.indexOf('data:') !== -1) return value;
+        var parts = value.split(',');
+        var out   = [];
+        for (var i = 0; i < parts.length; i++) {
+            var s = parts[i].trim();
+            if (!s) continue;
+            var bits = s.split(/\s+/);
+            bits[0] = absolutise(bits[0], base);
+            out.push(bits.join(' '));
+        }
+        return out.join(', ');
+    }
+
+    /* Every element in the fragment, roots included. */
+    function eachElement(nodes, fn) {
         nodes.forEach(function (node) {
-            node.querySelectorAll('a[href^="#"]').forEach(function (a) {
-                a.setAttribute('href', srcUrl + a.getAttribute('href'));
+            if (node.nodeType !== 1) return;
+            fn(node);
+            node.querySelectorAll('*').forEach(fn);
+        });
+    }
+
+    function rebaseUrls(nodes, base) {
+        eachElement(nodes, function (el) {
+            URL_ATTRS.forEach(function (name) {
+                if (!el.hasAttribute(name)) return;
+                var v = el.getAttribute(name);
+                var next = absolutise(v, base);
+                if (next !== v) el.setAttribute(name, next);
+            });
+            SRCSET_ATTRS.forEach(function (name) {
+                if (!el.hasAttribute(name)) return;
+                var v = el.getAttribute(name);
+                var next = absolutiseSrcset(v, base);
+                if (next !== v) el.setAttribute(name, next);
+            });
+            if (DATA_ATTR_TAGS[el.tagName] && el.hasAttribute('data')) {
+                el.setAttribute('data', absolutise(el.getAttribute('data'), base));
+            }
+        });
+    }
+
+    /* ------------------------------------------------------------------
+       Identifier scoping
+    ------------------------------------------------------------------ */
+
+    var instanceCounter = 0;
+
+    /* Attributes whose value is one or more id references. */
+    var IDREF_ATTRS = ['for', 'form', 'list', 'headers', 'aria-labelledby',
+                       'aria-describedby', 'aria-controls', 'aria-owns',
+                       'aria-activedescendant', 'aria-details',
+                       'aria-errormessage', 'aria-flowto'];
+    /* Attributes that may hold a local url(#id) functional reference. */
+    var FUNCIRI_ATTRS = ['fill', 'stroke', 'filter', 'clip-path', 'mask',
+                         'marker-start', 'marker-mid', 'marker-end', 'style'];
+
+    /* Rename every id in the fragment; return oldId → newId. */
+    function namespaceIds(nodes, prefix) {
+        var map = {};
+        eachElement(nodes, function (el) {
+            var id = el.getAttribute('id');
+            if (!id) return;
+            var next = prefix + id;
+            map[id] = next;
+            el.setAttribute('id', next);
+        });
+        return map;
+    }
+
+    /* Rewrite local references: fragment links to renamed targets point at
+     * the copy in this page; fragment links to anything else keep pointing
+     * at the source document. */
+    function rewriteReferences(nodes, map, srcUrl) {
+        eachElement(nodes, function (el) {
+            ['href', 'xlink:href'].forEach(function (name) {
+                if (!el.hasAttribute(name)) return;
+                var v = el.getAttribute(name);
+                if (!v || v.charAt(0) !== '#') return;
+                var target = v.slice(1);
+                el.setAttribute(name, map.hasOwnProperty(target)
+                    ? '#' + map[target]
+                    : srcUrl + v);
+            });
+
+            IDREF_ATTRS.forEach(function (name) {
+                if (!el.hasAttribute(name)) return;
+                var tokens = el.getAttribute(name).split(/\s+/).filter(Boolean);
+                if (!tokens.length) return;
+                var changed = false;
+                var next = tokens.map(function (t) {
+                    if (!map.hasOwnProperty(t)) return t;
+                    changed = true;
+                    return map[t];
+                });
+                if (changed) el.setAttribute(name, next.join(' '));
+            });
+
+            FUNCIRI_ATTRS.forEach(function (name) {
+                if (!el.hasAttribute(name)) return;
+                var v = el.getAttribute(name);
+                if (v.indexOf('url(') === -1) return;
+                var next = v.replace(/url\(\s*(['"]?)#([^)'"\s]+)\1\s*\)/g,
+                    function (whole, quote, id) {
+                        return map.hasOwnProperty(id)
+                            ? 'url(' + quote + '#' + map[id] + quote + ')'
+                            : whole;
+                    });
+                if (next !== v) el.setAttribute(name, next);
             });
         });
     }
 
-    /* After injection, retrigger layout-dependent subsystems. */
-    function reinitFragment(container) {
+    /* One pass over an extracted fragment: rebase URLs, scope ids, fix
+     * every reference to them. Order matters — ids must be renamed before
+     * references to them are resolved. */
+    function scopeFragment(nodes, srcUrl) {
+        var base = srcUrl;
+        try { base = new URL(srcUrl, document.baseURI).href; } catch (e) {}
+        rebaseUrls(nodes, base);
+        var map = namespaceIds(nodes, 'tx' + (++instanceCounter) + '-');
+        rewriteReferences(nodes, map, srcUrl);
+    }
+
+    /* ------------------------------------------------------------------
+       Shared enhancement entry point
+    ------------------------------------------------------------------ */
+
+    var CONTENT_EVENT = 'ln:content-added';
+
+    function enhance(container, opts) {
+        if (!container || container.nodeType !== 1) return;
+        opts = opts || {};
+        if (container.dataset.lnEnhanced === '1' && !opts.force) return;
+        container.dataset.lnEnhanced = '1';
+
         /* sidenotes.js — wire newly injected sidenote refs/spans and
            reposition the column. Falls back to a manual resize event
            for older builds that haven't been redeployed yet. */
@@ -106,7 +298,46 @@
         if (typeof window.reinitGallery === 'function') {
             window.reinitGallery(container);
         }
+
+        /* Everything else (math, code-copy, annotations, lightbox) joins
+           in by listening for this event. */
+        container.dispatchEvent(new CustomEvent(CONTENT_EVENT, {
+            bubbles: true,
+            detail: { container: container, source: opts.source || null }
+        }));
     }
+
+    window.lnEnhance = enhance;
+
+    /* ------------------------------------------------------------------
+       Failure states
+    ------------------------------------------------------------------ */
+
+    /* A failed transclusion used to leave an empty element, so the reader
+     * got a silent hole (F06). Say what happened and link to the source. */
+    function showError(el, message, src, section) {
+        el.classList.remove('transclude--loading');
+        el.classList.add('transclude--error');
+        el.textContent = '';
+
+        var p = document.createElement('p');
+        p.className = 'transclude-error-note';
+        p.appendChild(document.createTextNode(message + ' '));
+
+        if (src) {
+            var a = document.createElement('a');
+            a.className = 'transclude-error-link';
+            a.href = src + (section ? '#' + section : '');
+            a.textContent = 'Read it on its own page';
+            p.appendChild(a);
+            p.appendChild(document.createTextNode('.'));
+        }
+        el.appendChild(p);
+    }
+
+    /* ------------------------------------------------------------------
+       Loading
+    ------------------------------------------------------------------ */
 
     /* Nested transclusion limits: ancestors carries the chain of srcs
      * currently being expanded (cycle guard — a self-transcluding page
@@ -122,9 +353,8 @@
         if (!src) return;
 
         if (depth >= MAX_DEPTH || ancestors.indexOf(src) !== -1) {
-            el.classList.add('transclude--error');
-            el.textContent = '[transclusion omitted (cycle or depth limit): '
-                + src + (section ? '#' + section : '') + ']';
+            showError(el, 'This section is not expanded here (it would repeat, '
+                + 'or nest too deeply).', src, section);
             return;
         }
 
@@ -138,13 +368,12 @@
                     : extractBody(doc);
 
                 if (!nodes) {
-                    el.classList.replace('transclude--loading', 'transclude--error');
-                    el.textContent = '[transclusion not found: '
-                        + src + (section ? '#' + section : '') + ']';
+                    showError(el, 'That section could not be found on the source page.',
+                        src, section);
                     return;
                 }
 
-                rewriteFragmentHrefs(nodes, src);
+                scopeFragment(nodes, src);
 
                 var wrapper = document.createElement('div');
                 wrapper.className = 'transclude--content';
@@ -161,10 +390,10 @@
                     loadTransclusion(nested, depth + 1, chain);
                 });
 
-                reinitFragment(el);
+                enhance(el, { source: src });
             })
             .catch(function (err) {
-                el.classList.replace('transclude--loading', 'transclude--error');
+                showError(el, 'This passage could not be loaded.', src, section);
                 console.warn('transclude: failed to load', src, err);
             });
     }

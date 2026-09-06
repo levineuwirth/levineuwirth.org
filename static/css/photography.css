@@ -246,6 +246,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-wrap: wrap;
     gap: 0.5rem;
     margin: 0 0 1.75rem;
 }
@@ -257,7 +258,10 @@
     justify-content: center;
 }
 
-.photography-mode-toggle .mode-btn {
+/* A06 moved the slideshow launch out of the mode group (it is an action,
+   not a view), so the button styling is scoped to .photography-controls
+   rather than to the nav that now holds only the view links. */
+.photography-controls .mode-btn {
     padding: 0.3rem 0.75rem;
     background: none;
     border: 1px solid var(--border);
@@ -275,25 +279,26 @@
         border-color var(--transition-fast);
 }
 
-.photography-mode-toggle .mode-btn:hover {
+.photography-controls .mode-btn:hover {
     color: var(--text);
     border-color: var(--text-muted);
     text-decoration: none;
 }
 
-.photography-mode-toggle .mode-btn.is-active {
+.photography-controls .mode-btn.is-active,
+.photography-controls .mode-btn[aria-current] {
     color: var(--text);
     border-color: var(--text-muted);
     font-weight: 600;
 }
 
-.photography-mode-toggle .mode-btn:focus-visible {
+.photography-controls .mode-btn:focus-visible {
     outline: 2px solid var(--text-muted);
     outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .photography-mode-toggle .mode-btn { transition: none; }
+    .photography-controls .mode-btn { transition: none; }
 }
 
 /* ---------------------------------------------------------------------------

@@ -9,7 +9,24 @@
 
    The bucket thresholds below mirror `relativeTime` in build/Now.hs
    exactly — keep the two in sync. The server-rendered text remains the
-   no-JS fallback and is only replaced once we've recomputed. */
+   no-JS fallback and is only replaced once we've recomputed.
+
+   Bucket table (days = whole calendar days elapsed):
+
+     d <   0            ""                       future / clock skew
+     d ==  0            "today"
+     d ==  1            "yesterday"
+     d <   7            "<d> days ago"           2–6
+     d <  30            "<floor(d/7)> weeks"     7–29  → 1–4 weeks
+     d < 365            "<floor(d/30)> months"   30–364 → 1–11 months,
+                                                 clamped at 11 so the last
+                                                 few days before a year do
+                                                 not read "12 months ago"
+     otherwise          "<floor(d/365)> years"
+
+   The week bucket runs to day 29 (not day 27) so that a month is only
+   ever named once one can actually be expressed: the old boundary at 28
+   produced "0 months ago" for 28- and 29-day-old stamps. */
 (function () {
     'use strict';
 
@@ -20,9 +37,9 @@
         if (days < 7)   return days + ' days ago';
 
         var n, unit;
-        if (days < 28)       { n = Math.floor(days / 7);   unit = 'week';  }
-        else if (days < 365) { n = Math.floor(days / 30);  unit = 'month'; }
-        else                 { n = Math.floor(days / 365); unit = 'year';  }
+        if (days < 30)       { n = Math.floor(days / 7);                unit = 'week';  }
+        else if (days < 365) { n = Math.min(11, Math.floor(days / 30)); unit = 'month'; }
+        else                 { n = Math.floor(days / 365);              unit = 'year';  }
         return n === 1 ? ('1 ' + unit + ' ago')
                        : (n + ' ' + unit + 's ago');
     }

@@ -3,8 +3,20 @@
 #
 # The /photography/map/ page (build/Photography.hs photographyMapRules)
 # loads Leaflet from /leaflet/ to render a map of geo-tagged photos.
-# This vendoring keeps the page CDN-independent: the assets ship with
-# the site, no third-party request at view time.
+#
+# Scope of this vendoring: the *library* — JS, CSS, and marker sprites —
+# is served from this origin, so no third party sees a request for it and
+# no CDN outage can break the page's scripting. The *map itself* is not
+# offline. Tiles still come from Carto:
+#
+#   static/js/photography-map.js:
+#     https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png
+#
+# so a visitor loading /photography/map/ makes third-party requests to
+# basemaps.cartocdn.com for every tile, and the map renders empty if that
+# host is unreachable or blocked. Vendoring the library removes one
+# dependency, not the dependency. Serving tiles from this origin would
+# mean self-hosting a tile set — deliberately out of scope.
 #
 # Run once before deploying. The vendored copy is gitignored
 # (~150 KB total); re-running is safe — files that already exist AND

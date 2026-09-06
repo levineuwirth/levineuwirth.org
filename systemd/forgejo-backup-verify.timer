@@ -1,0 +1,18 @@
+# Weekly trigger for forgejo-backup-verify.service. See that unit's header
+# for the reasoning and forgejo-backup.service for the install commands.
+
+[Unit]
+Description=Weekly Forgejo backup verification
+
+[Timer]
+# Sunday 04:30 UTC: an hour after the nightly backup's window, so it always
+# verifies a fresh archive rather than racing the run that produced it.
+OnCalendar=Sun *-*-* 04:30
+RandomizedDelaySec=20min
+# Same reasoning as the backup timer: the VPS is not always up, and a
+# verification that silently skips a week is a verification that was not
+# running when the archive it would have caught went bad.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

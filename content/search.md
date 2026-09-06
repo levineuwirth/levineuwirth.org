@@ -1,6 +1,12 @@
 ---
 title: Search
 search: true
+description: >-
+  Search this site by keyword or by meaning. Both indexes are built at
+  compile time and queried in your browser.
+# Pure-navigation page: keep the search interface itself out of the
+# keyword index (templates/page.html reads this).
+search-exclude: true
 history:
   - date: "2026-06-19"
   - date: "2026-04-12"
@@ -10,10 +16,29 @@ history:
 
 ---
 
-<div class="search-tabs" role="tablist">
-  <button class="search-tab is-active" data-tab="keyword" role="tab" aria-selected="true">Keyword</button>
-  <button class="search-tab" data-tab="semantic" role="tab" aria-selected="false">Semantic</button>
+<!-- Tab buttons must stay unindented: Pandoc parses indented lines inside a
+     raw <div> as Markdown and wraps them in a <p>, which would break the
+     tablist → tab ownership the ARIA tabs pattern requires. -->
+<div class="search-tabs" role="tablist" aria-label="Search mode">
+<button type="button" id="search-tab-keyword" class="search-tab is-active" data-tab="keyword" role="tab" aria-selected="true" aria-controls="search" tabindex="0">Keyword</button>
+<button type="button" id="search-tab-semantic" class="search-tab" data-tab="semantic" role="tab" aria-selected="false" aria-controls="search-panel-semantic" tabindex="-1">Semantic</button>
 </div>
+
+<noscript>
+<p class="search-noscript"><strong>Search needs JavaScript.</strong> Both the
+keyword index and the semantic index are built and queried in your browser, so
+neither tab above will respond with scripting turned off. Browse directly
+instead: <a href="/library.html">Library</a> (everything, filterable),
+<a href="/new.html">New</a> (most recent first),
+<a href="/current.html">Current</a>, <a href="/me.html">Me</a>,
+<a href="/work.html">Work</a>, <a href="/links.html">Links</a>, or the portals —
+<a href="/ai/">AI</a>, <a href="/fiction/">Fiction</a>,
+<a href="/miscellany/">Miscellany</a>, <a href="/music/">Music</a>,
+<a href="/nonfiction/">Nonfiction</a>, <a href="/photography/">Photography</a>,
+<a href="/poetry/">Poetry</a>, <a href="/research/">Research</a>,
+<a href="/tech/">Tech</a>. The filter controls below are also inert without
+scripting.</p>
+</noscript>
 
 <div class="search-filter-controls">
 <button class="library-filter-toggle" aria-expanded="false" aria-controls="search-filters">
@@ -125,17 +150,17 @@ Filters<span class="filter-toggle-badge"></span>
 <button class="filter-btn filter-archive-status-btn" data-value="error">error</button>
 </div>
 </div>
+<p class="filter-note">Pages that carry no epistemic metadata — the vita, indexes, utility pages — are never removed by the status, confidence, importance, evidence, trust, scope, novelty, practicality, or stability filters. Those filters narrow the classified material only; the archive and link-status filters apply to every result.</p>
 <div class="filter-row filter-row-actions">
 <button class="filter-clear-btn">Clear all</button>
 </div>
 </div>
 
-<div id="search" class="search-panel is-active" data-panel="keyword"></div>
+<div id="search" class="search-panel is-active" data-panel="keyword" role="tabpanel" aria-labelledby="search-tab-keyword"></div>
 <p id="search-timing" aria-live="polite"></p>
 
-<div class="search-panel" data-panel="semantic">
-  <input id="semantic-query" class="semantic-query-input" type="search"
-         placeholder="Describe what you're looking for…" autocomplete="off" spellcheck="false">
-  <p id="semantic-status" class="semantic-status" aria-live="polite"></p>
-  <div id="semantic-results"></div>
+<div id="search-panel-semantic" class="search-panel" data-panel="semantic" role="tabpanel" aria-labelledby="search-tab-semantic" hidden>
+<input id="semantic-query" class="semantic-query-input" type="search" placeholder="Describe what you're looking for…" aria-label="Semantic search query" autocomplete="off" spellcheck="false">
+<p id="semantic-status" class="semantic-status" aria-live="polite"></p>
+<div id="semantic-results"></div>
 </div>

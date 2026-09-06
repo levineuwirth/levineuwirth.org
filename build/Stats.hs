@@ -38,7 +38,7 @@ import           Text.Blaze.Html.Renderer.String (renderHtml)
 import qualified Text.Blaze.Internal         as BI
 import Hakyll
 import Archive                    (archiveBuildStats)
-import Contexts                   (siteCtx, authorLinksField)
+import Contexts                   (siteCtx, authorLinksField, canonicalUrlPath)
 import Marks                      (hasMonogram, monogramSvgFieldFor,
                                    hasMonogramFieldFor)
 import qualified Patterns         as P
@@ -74,9 +74,12 @@ loadPI item = do
     meta   <- getMetadata (itemIdentifier item)
     mRoute <- getRoute (itemIdentifier item)
     wc     <- loadWC item
+    -- 'canonicalUrlPath', not "/" ++ route: a directory-routed page's
+    -- route is <slug>/index.html and every link the site writes to it
+    -- says <slug>/ (audit C03).
     return $ fmap (\r -> PageInfo
         { piTitle = fromMaybe "(untitled)" (lookupString "title" meta)
-        , piUrl   = "/" ++ r
+        , piUrl   = canonicalUrlPath r
         , piWC    = wc
         }) mRoute
 
@@ -569,9 +572,16 @@ getGitStats = do
 -- HTML rendering: build page sections
 -- ---------------------------------------------------------------------------
 
+-- | Corpus totals by content type.
+--
+--   The section anchor is @corpus@, not @content@: @templates/essay.html@
+--   wraps every page (this one included) in @<div id="content">@, so a
+--   section heading with that id produced two @id="content"@ elements on
+--   /build/. The heading is the one that can move — the layout container
+--   is shared by every page and is the skip-link/CSS target.
 renderContent :: [TypeRow] -> H.Html
 renderContent rows =
-    section "content" "Content" $
+    section "corpus" "Content" $
     table ["Type", "Count", "Words", "Reading time"]
           (map row rows)
           (Just [ "Total"
@@ -780,7 +790,7 @@ pageTOC = H.ol $ mapM_ item sections
                    H.! customAttr "data-target" id_
                  $ txt title
     sections =
-        [ ("content",      "Content")
+        [ ("corpus",       "Content")
         , ("pages",        "Pages")
         , ("distribution", "Word-length distribution")
         , ("tags",         "Tags")
@@ -857,7 +867,7 @@ statsRules tags = do
                     mRoute <- getRoute (itemIdentifier item)
                     let d = fromMaybe "" (lookupString "date" meta)
                         t = fromMaybe "(untitled)" (lookupString "title" meta)
-                        u = maybe "#" (\r -> "/" ++ r) mRoute
+                        u = maybe "#" canonicalUrlPath mRoute
                     return (d, t, u)
             essayDates <- mapM getDateMeta essays
             postDates  <- mapM getDateMeta posts
@@ -997,6 +1007,14 @@ statsRules tags = do
                              <> constField "abstract"     "Per-build corpus statistics, tag distribution, \
                                                           \link analysis, epistemic coverage, output metrics, \
                                                           \repository overview, and build timing."
+                             -- C01: `abstract` here is a constField, not
+                             -- frontmatter, so Contexts.descriptionField
+                             -- cannot see it and would fall through to a
+                             -- body excerpt — which on this page is a
+                             -- table cell.
+                             <> constField "description"  "Per-build corpus statistics, tag distribution, \
+                                                          \link analysis, epistemic coverage, output metrics, \
+                                                          \repository overview, and build timing."
                              <> constField "build"        "true"
                              <> monogramSvgFieldFor "content/build.mark.svg"
                              <> hasMonogramFieldFor "content/build.mark.svg"
@@ -1074,6 +1092,8 @@ statsRules tags = do
                              <> constField "reading-time" (show rt)
                              <> constField "title"        "Writing Statistics"
                              <> constField "abstract"     "Writing activity, corpus breakdown, \
+                                                          \and tag distribution — computed at build time."
+                             <> constField "description"  "Writing activity, corpus breakdown, \
                                                           \and tag distribution — computed at build time."
                              <> constField "build"        "true"
                              <> monogramSvgFieldFor "content/stats.mark.svg"

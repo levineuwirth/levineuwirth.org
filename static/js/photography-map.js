@@ -95,9 +95,15 @@
         if (count === 1) return tooltipHtml(group.pins[0]);
 
         var strip = group.pins.slice(0, 4).map(function (p) {
+            /* P01: `thumb` is the .w480 rung where the build found one
+               (see buildPin in build/Photography.hs), so the strip's 46px
+               squares no longer pull the 2400px delivery source. The
+               intrinsic size is declared so a slow thumbnail does not
+               reflow the tooltip it is inside. */
             return p.thumb
                 ? '<img class="photography-map-strip-img" src="'
-                  + escapeHtml(p.thumb) + '" alt="" loading="lazy">'
+                  + escapeHtml(p.thumb) + '" alt="" loading="lazy"'
+                  + ' decoding="async" width="46" height="46" sizes="46px">'
                 : '';
         }).join('');
 
@@ -120,8 +126,14 @@
     }
 
     function tooltipHtml(pin) {
+        /* The tooltip image is 14rem wide (280px) and 8rem tall, cropped
+           with object-fit; the .w480 rung the build hands us covers that
+           at 2x. Width/height are the CSS box, not the file's intrinsic
+           size — object-fit makes them the same claim to the layout. */
         var thumb = pin.thumb
-            ? '<img class="photography-map-tooltip-img" src="' + escapeHtml(pin.thumb) + '" alt="" loading="lazy">'
+            ? '<img class="photography-map-tooltip-img" src="' + escapeHtml(pin.thumb)
+              + '" alt="" loading="lazy" decoding="async"'
+              + ' width="280" height="160" sizes="280px">'
             : '';
         var date = pin.captured
             ? '<div class="photography-map-tooltip-date">' + escapeHtml(pin.captured) + '</div>'

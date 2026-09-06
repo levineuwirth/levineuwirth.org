@@ -19,12 +19,21 @@ projects:
   # ---------------------------------------------------------------------
   # Systems & Infrastructure
   # ---------------------------------------------------------------------
-  - name: Post-Quantum Cryptography on x86 AVX2
+  - id: pqc-avx2
+    name: Post-Quantum Cryptography on x86 AVX2
     group: Systems & Infrastructure
     essay: /essays/where-does-simd-help-post-quantum-cryptography/
     start: March 2025
     end: Present
     description: "Micro-architectural study of SIMD contributions to ML-KEM / Kyber on Intel AVX2, conducted on Brown's OSCAR HPC cluster. Hand-written AVX2 assembly achieves 35--56$\\times$ speedup over compiler-optimized C for core NTT arithmetic; 5.4--7.1$\\times$ end-to-end KEM speedup. Full statistical analysis (Mann-Whitney U, Cliff's $\\delta$, bootstrapped CIs). Technical report and reproducible artifact public."
+    presentation_sets:
+      software-engineering-systems:
+        label: Post-Quantum Cryptography / SIMD
+        description: >-
+          Profiled and optimized ML-KEM / Kyber on x86-64 AVX2; hand-written
+          assembly achieved 35--56× speedups for core NTT arithmetic and
+          5.4--7.1× end-to-end speedups over optimized C compiler output, with
+          reproducible benchmarks and statistical analysis.
     links:
       - label: Report
         href: /essays/where-does-simd-help-post-quantum-cryptography/
@@ -35,15 +44,36 @@ projects:
     resume_order: 1
     web_visible: true
 
-  - name: LeVCS
+  - id: levcs
+    name: LeVCS
     group: Systems & Infrastructure
-    essay: /essays/levcs/
+    essay: /essays/levcs.html
     start: April 2026
     end: Present
     description: "Distributed version control system in Rust ($\\sim$10 crates, 194 passing tests at v0.1.0). BLAKE3 content addressing, signed Ed25519 authority chains for protocol-level identity and push authorization, federation as the normal operating mode with three storage modes (full / release / metadata), and a cascading per-file merge engine (textual $\\rightarrow$ format-aware $\\rightarrow$ tree-sitter $\\rightarrow$ wasm plugin) that resolves git's common false conflicts. Substrate complete; workflow surface (PR/review, issues, web UI) deferred."
+    presentation_sets:
+      ai-infra-assurance:
+        description: >-
+          Built a federated version-control system in Rust (roughly 10 crates,
+          194 tests) with BLAKE3 content addressing, signed Ed25519 authority
+          chains, three storage modes, and a cascading format/tree-sitter/wasm
+          merge engine.
+      trusted-compute-verification:
+        description: >-
+          Built a federated version-control system in Rust (roughly 10 crates,
+          194 tests) around BLAKE3 content-addressed artifacts and signed Ed25519
+          authority chains for protocol identity and push authorization, with
+          federation as the normal operating mode and three storage modes.
+      agent-platform-systems:
+        description: >-
+          Built a distributed version-control system in Rust with first-class
+          federation, content-addressed state, signed authorization, and three
+          storage modes. Its durable transaction layer uses an append-only
+          journal, group commit, committed snapshots, idempotent retry handling,
+          and crash recovery.
     links:
       - label: Writeup
-        href: /essays/levcs/
+        href: /essays/levcs.html
       - label: Artifact
         href: https://git.levineuwirth.org/neuwirth/levcs
       - label: Instance
@@ -52,12 +82,20 @@ projects:
     resume_visible: false
     web_visible: true
 
-  - name: Weenix
+  - id: weenix
+    name: Weenix
     group: Systems & Infrastructure
     essay: /essays/weenix/
     start: January 2025
     end: August 2025
     description: "Full Unix-like kernel in 10{,}000 lines of C: virtual memory, VFS, system calls, threading, device drivers and interrupt handlers, and file systems with custom linker support for running userspace x86-64 ELF binaries. Originally Brown CS 169 (Operating Systems with Lab), extended afterward with pipes and userspace preemption."
+    presentation_sets:
+      software-engineering-systems:
+        description: >-
+          Built and extended a 10{,}000-line Unix-like kernel in C: virtual
+          memory, VFS and file systems, system calls, threads, devices and
+          interrupts, userspace x86-64 ELF support, pipes, and userspace
+          preemption.
     links:
       - label: Writeup
         href: /essays/weenix/
@@ -66,12 +104,19 @@ projects:
     resume_order: 2
     web_visible: true
 
-  - name: Networking Stack from Scratch
+  - id: networking-stack
+    name: Networking Stack from Scratch
     group: Systems & Infrastructure
     essay: /essays/networking-stack/
     start: October 2024
     end: July 2025
     description: "TCP/IP, RIP, UDP, and DNS implementations in Go, supporting file transmission of up to 1~GB across networks of up to 8 virtual machines. Extended with a fully RFC-compliant SSH implementation (2{,}000+ additional lines) supporting sustained sessions of arbitrary length."
+    presentation_sets:
+      software-engineering-systems:
+        description: >-
+          Implemented TCP/IP, RIP, UDP, and DNS in Go for networks of up to
+          eight virtual machines and 1 GB transfers; added a 2{,}000+-line,
+          RFC-compliant SSH implementation supporting sustained sessions.
     links:
       - label: Writeup
         href: /essays/networking-stack/
@@ -85,11 +130,12 @@ projects:
   # they are infrastructure I use rather than academic output, and the
   # résumé is a full page already.
   # ---------------------------------------------------------------------
-  - name: Pmacs
+  - id: pmacs
+    name: Pmacs
     group: Personal
     start: "2025"
     end: Present
-    description: "Parallel Emacs: a Rust-cored, Lua-scripted editor in the Emacs tradition, at v1.1.0 with prebuilt binaries. The hot path (rope, buffers, views, async runtime, process supervision) is Rust; commands, keymaps, hooks, and packages are an embedded Lua VM. Partitioned into a long-lived instance and thin frontends over a typed protocol: a \\texttt{crossterm} TUI attachable over SSH with \\texttt{mosh}-style reconnect, and a GPU frontend (wgpu / winit / glyphon) that renders from a semantic projection of editor state and edits optimistically against a local CRDT replica. Buffers are optionally CRDT-backed, so both frontends can edit the same buffer concurrently."
+    description: "Parallel Emacs: a Rust-cored, Lua-scripted editor in the Emacs tradition, at v1.1.0 with prebuilt binaries. The hot path (rope, buffers, views, async runtime, process supervision) is Rust; commands, keymaps, hooks, and packages are an embedded Lua VM. Partitioned into a long-lived instance and thin frontends over a typed protocol: a \\texttt{crossterm} TUI attachable over SSH with \\texttt{mosh}-style reconnect, and a GPU frontend (wgpu / winit / glyphon) that renders from a semantic projection of editor state and edits optimistically against a local CRDT replica. Buffers are optionally CRDT-backed, so both frontends can edit the same buffer concurrently. 4{,}476 tests across 120 suites."
     links:
       - label: Source
         href: https://github.com/levineuwirth/pmacs
@@ -97,16 +143,26 @@ projects:
     resume_visible: false
     web_visible: true
 
-  - name: Levshell
+  - id: levshell
+    name: Levshell
     group: Personal
     start: "2026"
     end: Present
-    description: "Wayland-targeted productivity and research shell, in daily use as my main environment. Five Rust crates over a sway/i3-ipc substrate: a capture-and-restore planner for desktop state, an event-logged store with UUIDv7 ids, a daemon whose every action is a persisted job under a global lock with rollback capsules taken before any mutating restore, and a control CLI. Currently growing from a single machine to a fabric of machines that work as one, with project resume as the hero verb."
+    description: "Wayland-targeted productivity and research shell, in daily use as my main environment. Six Rust crates over a sway/i3-ipc substrate: a capture-and-restore planner for desktop state, an event-logged store with UUIDv7 ids, a daemon whose every action is a persisted job under a global lock with rollback capsules taken before any mutating restore, a control CLI, and a live window over daemon state. Recent work adds a reading-library surface whose paper records fill from OpenAlex. Project resume is the hero verb."
+    presentation_sets:
+      agent-platform-systems:
+        description: >-
+          Built a six-crate Rust runtime for desktop state, in daily use as my
+          main environment: an event-logged store, a daemon whose every action
+          is a persisted job under a global lock, rollback capsules before
+          mutating restores, a control CLI, and a live window over daemon
+          state.
     cv_visible: false
     resume_visible: false
     web_visible: true
 
-  - name: Epiphany
+  - id: epiphany
+    name: Epiphany
     group: Personal
     start: "2026"
     end: Present
@@ -118,10 +174,21 @@ projects:
     resume_visible: false
     web_visible: true
 
+  - id: levo
+    name: Levo
+    group: Personal
+    start: "2026"
+    end: Present
+    description: "Python-successor language designed adversarially, every claim falsified before it was believed: unannotated code statically inferred by algebraic subtyping, cooperative tasks with no GIL and suspension only at marked points, multiple inheritance with no MRO, and errors as values or supervised task outcomes. Specification, reference machine, language server, and debugger exist and \\texttt{.levo} files run, held by 1{,}061 tests across 182 suites — differential testing of every surface construct against hand-written kernel elaborations, schedule-permutation campaigns, and adversarial canaries the suite must catch. With no I/O and no standard library it remains a conformance machine rather than a runtime."
+    cv_visible: false
+    resume_visible: false
+    web_visible: true
+
   # ---------------------------------------------------------------------
   # Machine Learning & Deployed
   # ---------------------------------------------------------------------
-  - name: ICD-10-CM outcome calculator
+  - id: icd-embeddings-calculator
+    name: ICD-10-CM outcome calculator
     group: Machine Learning & Deployed
     essay: /essays/beyond-comorbidity-indices/
     start: "2025"
@@ -138,11 +205,12 @@ projects:
     resume_visible: false
     web_visible: true
 
-  - name: NeuroPose
+  - id: neuropose
+    name: NeuroPose
     group: Machine Learning & Deployed
     essay: /essays/neuropose/
     start: "2023"
-    end: Present
+    end: "2026"
     description: "3D pose-estimation and kinematic-analysis system for neurological-recovery research in Liqi Shu's laboratory at Brown Neurology. Python/TensorFlow inference pipeline, MATLAB statistical post-processing, Rust backend with HTML/JS frontends. 20{,}000+ lines across four externally-funded sub-projects since 2023."
     links:
       - label: Writeup
@@ -152,3 +220,31 @@ projects:
     cv_visible: false # appears via the Shu Lab bullet on CV
     resume_visible: false
     web_visible: true
+
+  # ---------------------------------------------------------------------
+  # Formal Verification & Assurance
+  # ---------------------------------------------------------------------
+  - id: proof-broker
+    name: Proof Broker
+    group: Formal Verification & Assurance
+    start: "2026"
+    end: Present
+    description: "Routes proof goals from Lean 4 and Rocq through a shared intermediate representation to untrusted SMT solvers, automated theorem provers, and LLM provers, grades and checks the returned certificate, then reconstructs or replays it as a proof term the home kernel verifies. The R4 release closes 19 of 19 targeted obligations in an unmodified downstream Lean development, inside the sanctioned axiom ceiling, with generated evidence."
+    presentation_sets:
+      agent-platform-systems:
+        description: >-
+          Built a tool-execution boundary that routes Lean 4 and Rocq goals to
+          untrusted SMT, automated, and LLM provers, grades and checks the
+          returned certificates, and admits proofs only through the home
+          system's small trusted kernel; 19 of 19 targeted obligations close
+          in an unmodified downstream development.
+    links:
+      - label: Writeup
+        href: /essays/proof-broker/
+      - label: Source
+        href: https://github.com/levineuwirth/proof-broker
+      - label: Demo
+        href: https://github.com/levineuwirth/proof-broker-demo
+    cv_visible: false
+    resume_visible: false
+    web_visible: false # current-work page owns the public presentation

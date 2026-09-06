@@ -1,0 +1,104 @@
+version: 1
+extends: software-engineering-systems
+abstract: false
+description: Reusable one-page résumé for agent platforms, execution and evaluation infrastructure, reliable AI systems, and distributed agent runtimes.
+output: Levi-Neuwirth-Resume-Agent-Platform-Systems.pdf
+document_title: Software Engineer — Agent Platforms \& Systems
+summary: >-
+  Software engineer building and evaluating agentic systems across
+  frontier-model evaluation, distributed execution, and deployed ML
+  infrastructure. Builds reliable tools and runtimes in Python, Rust, C/C++,
+  and Go.
+
+header:
+  links:
+    - github
+
+sections:
+  - id: experience
+    label: Experience
+    entries:
+      - experience:mars-v
+      - experience:frontier-ai-contracting
+      - experience:shu-lab-undergrad
+
+  - id: selected-projects
+    label: Selected Systems Projects
+    entries:
+      - projects:levcs
+      - projects:levshell
+      - projects:proof-broker
+
+  - id: education
+    label: Education
+    entries:
+      - education:brown-scb-math-cs
+
+  - id: technical-skills
+    label: Technical Skills
+    entries:
+      - skills:programming
+      - skills:ai-evaluation
+      - skills:systems-performance
+      - skills:ml-ai
+      - skills:tools
+      - skills:verification
+
+presentation_sets:
+  experience:
+    mars-v: agent-platform-systems
+    frontier-ai-contracting: agent-platform-systems
+    shu-lab-undergrad: agent-platform-systems
+  projects:
+    levcs: agent-platform-systems
+    levshell: agent-platform-systems
+    proof-broker: agent-platform-systems
+    weenix: null
+    networking-stack: null
+    pqc-avx2: null
+
+overrides:
+  skills:
+    programming:
+      label: Languages
+      items:
+        - Python
+        - Rust
+        - C
+        - C++
+        - Go
+    ai-evaluation:
+      label: Agent systems and evaluation
+      items:
+        - Frontier-model evaluation
+        - Evaluation-environment design
+        - Agent scaffolds
+        - Evaluator calibration
+        - Red-teaming
+    systems-performance:
+      label: Systems and infrastructure
+      items:
+        - Distributed systems
+        - Benchmarking and systems measurement
+        - Accelerator calibration and workload profiling
+        - Performance and proving-cost modeling
+    ml-ai:
+      label: ML
+      items:
+        - PyTorch
+        - TensorFlow
+        - NumPy
+    tools:
+      label: Tools and platforms
+      items:
+        - Linux (Arch, Debian, Gentoo)
+        - Git
+        - Docker
+        - SLURM
+        - perf
+    verification:
+      label: Verification
+      items:
+        - Lean 4
+        - Rocq
+        - Vampire

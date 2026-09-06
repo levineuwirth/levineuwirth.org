@@ -1,5 +1,8 @@
 ---
 title: GPG Key
+description: >-
+  Public key, key ID, fingerprint, and verification steps for
+  ln@levineuwirth.org.
 history:
   - date: "2026-03-25"
   - date: "2026-03-17"

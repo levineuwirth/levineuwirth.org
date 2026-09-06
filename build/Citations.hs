@@ -32,6 +32,7 @@ module Citations
     , renderBibliographyHtml
     ) where
 
+import           Control.Monad.State.Strict (State, gets, modify', runState)
 import           Data.List           (intercalate, intersperse, nub, partition, sortBy)
 import           Data.Map.Strict     (Map)
 import qualified Data.Map.Strict     as Map
@@ -190,10 +191,14 @@ transformAndExtract :: Map String BibExtra -> [Text] -> Pandoc -> (Pandoc, Text,
 transformAndExtract extras frKeys doc@(Pandoc meta _) =
     let citeOrder = collectCiteOrder doc     -- keys, first-appearance order
         keyNums   = Map.fromList (zip citeOrder [1 :: Int ..])
-        -- Replace Cite nodes with numbered superscript markers
-        doc'      = walk (transformInline keyNums) doc
+        -- Replace Cite nodes with numbered superscript markers. The walk
+        -- is stateful because each *occurrence* needs its own id (see
+        -- 'MarkerState'); it also records where each key was first cited
+        -- so the bibliography can link back to that occurrence.
+        (doc', st) = runState (walkM (transformInline keyNums) doc) emptyMarkerState
+        backMap    = msFirstOccurrence st
         -- Pull bibliography div out of body and render to HTML
-        (bodyBlocks, citedHtml, furtherHtml) = extractBibliography extras citeOrder frKeys
+        (bodyBlocks, citedHtml, furtherHtml) = extractBibliography extras backMap citeOrder frKeys
                                                  (pandocBlocks doc')
     in (Pandoc meta bodyBlocks, citedHtml, furtherHtml)
   where
@@ -210,26 +215,66 @@ collectCiteOrder (Pandoc _ blocks) = nub (query extractKeys blocks)
     extractKeys (Cite citations _) = map citationId citations
     extractKeys _                  = []
 
+-- | State threaded through the marker-rewriting walk.
+--
+--   @msOccurrences@ counts how many markers have already been emitted
+--   for a given leading citation number, so the /n/th repeat of a
+--   reference can be given its own id. @msFirstOccurrence@ records, for
+--   every key in every cluster, the id of the marker where that key was
+--   first cited — the target the bibliography's return link points at.
+data MarkerState = MarkerState
+    { msOccurrences     :: !(Map Int Int)
+    , msFirstOccurrence :: !(Map Text Text)
+    }
+
+emptyMarkerState :: MarkerState
+emptyMarkerState = MarkerState Map.empty Map.empty
+
 -- | Replace a Cite node with a numbered superscript marker.
-transformInline :: Map Text Int -> Inline -> Inline
-transformInline keyNums (Cite citations _) =
+--
+--   Every occurrence gets a unique @id@: the first citation of
+--   reference /n/ keeps the stable @cite-back-\<n\>@ anchor, and each
+--   repeat gets @cite-back-\<n\>-\<k\>@ (k from 2). Reference ids
+--   (@ref-\<key\>@, emitted by citeproc on the bibliography entries) are
+--   untouched — the two id spaces are disjoint because a first-occurrence
+--   id never contains a hyphen after the number.
+transformInline :: Map Text Int -> Inline -> State MarkerState Inline
+transformInline keyNums (Cite citations _) = do
     let keys = map citationId citations
         nums = mapMaybe (`Map.lookup` keyNums) keys
-    in case (keys, nums) of
+    case (keys, nums) of
         -- Both lists are guaranteed non-empty by the @null nums@ check
         -- below, but pattern-match to keep this total instead of
         -- relying on @head@.
-        (firstKey : _, firstNum : _) ->
-            RawInline "html" (markerHtml keys firstKey firstNum nums)
+        (firstKey : _, firstNum : _) -> do
+            seen <- gets (fromMaybe 0 . Map.lookup firstNum . msOccurrences)
+            let occ      = seen + 1
+                markerId = backAnchorId firstNum occ
+            modify' $ \st -> st
+                { msOccurrences = Map.insert firstNum occ (msOccurrences st)
+                  -- insertWith keeps the value already there, so the
+                  -- earliest occurrence wins for every key in the cluster.
+                , msFirstOccurrence =
+                    foldr (\k m -> Map.insertWith (\_ old -> old) k markerId m)
+                          (msFirstOccurrence st) keys
+                }
+            return $ RawInline "html" (markerHtml keys markerId firstKey nums)
         _ ->
-            Str ""
-transformInline _ x = x
+            return (Str "")
+transformInline _ x = return x
 
-markerHtml :: [Text] -> Text -> Int -> [Int] -> Text
-markerHtml keys firstKey firstNum nums =
+-- | Id for the /occ/th marker of reference number /n/.
+backAnchorId :: Int -> Int -> Text
+backAnchorId n occ
+    | occ <= 1  = base
+    | otherwise = base <> "-" <> T.pack (show occ)
+  where base = "cite-back-" <> T.pack (show n)
+
+markerHtml :: [Text] -> Text -> Text -> [Int] -> Text
+markerHtml keys markerId firstKey nums =
     let label   = "[" <> T.intercalate "," (map tshow nums) <> "]"
         allIds  = T.intercalate " " (map ("ref-" <>) keys)
-    in "<sup class=\"cite-marker\" id=\"cite-back-" <> tshow firstNum <> "\">"
+    in "<sup class=\"cite-marker\" id=\"" <> markerId <> "\">"
     <> "<a href=\"#ref-" <> firstKey <> "\" class=\"cite-link\""
     <> " data-cite-keys=\"" <> allIds <> "\">"
     <> label <> "</a></sup>"
@@ -242,13 +287,13 @@ markerHtml keys firstKey firstNum nums =
 
 -- | Separate the @refs@ div from body blocks and render it to HTML.
 --   Returns @(bodyBlocks, citedHtml, furtherHtml)@.
-extractBibliography :: Map String BibExtra -> [Text] -> [Text] -> [Block]
+extractBibliography :: Map String BibExtra -> Map Text Text -> [Text] -> [Text] -> [Block]
                     -> ([Block], Text, Text)
-extractBibliography extras citeOrder frKeys blocks =
+extractBibliography extras backMap citeOrder frKeys blocks =
     let (bodyBlocks, refDivs) = partition (not . isRefsDiv) blocks
         (citedHtml, furtherHtml) = case refDivs of
             []    -> ("", "")
-            (d:_) -> renderBibDiv extras citeOrder frKeys d
+            (d:_) -> renderBibDiv extras backMap citeOrder frKeys d
     in (bodyBlocks, citedHtml, furtherHtml)
   where
     isRefsDiv (Div ("refs", _, _) _) = True
@@ -262,20 +307,20 @@ extractBibliography extras citeOrder frKeys blocks =
 --   @.pdf-link[data-pdf-src]@ when the .bib @file:@ field is set (so
 --   popups.js's PDF hover preview fires), and a trailing
 --   @\<div class="bib-keywords"\>@ appended when @keywords:@ is set.
-renderBibDiv :: Map String BibExtra -> [Text] -> [Text] -> Block -> (Text, Text)
-renderBibDiv extras citeOrder _frKeys (Div _ children) =
+renderBibDiv :: Map String BibExtra -> Map Text Text -> [Text] -> [Text] -> Block -> (Text, Text)
+renderBibDiv extras backMap citeOrder _frKeys (Div _ children) =
     let enhanced = map (annotateArchive . enhanceEntry extras) children
         keyIndex = Map.fromList (zip citeOrder [0 :: Int ..])
         (citedEntries, furtherEntries) =
             partition (isCited keyIndex) enhanced
         sorted   = sortBy (comparing (entryOrder keyIndex)) citedEntries
-        numbered = zipWith addNumber [1..] sorted
+        numbered = zipWith (addNumber backMap) [1..] sorted
         citedHtml  = renderEntries "csl-bib-body cite-refs" numbered
         furtherHtml
             | null furtherEntries = ""
             | otherwise           = renderEntries "csl-bib-body further-reading-refs" furtherEntries
     in (citedHtml, furtherHtml)
-renderBibDiv _ _ _ _ = ("", "")
+renderBibDiv _ _ _ _ _ = ("", "")
 
 
 -- ---------------------------------------------------------------------------
@@ -370,24 +415,75 @@ entryOrder keyIndex (Div (rid, _, _) _) =
     fromMaybe maxBound $ Map.lookup (stripRefPrefix rid) keyIndex
 entryOrder _ _ = maxBound
 
--- | Prepend [N] marker to a bibliography entry block.
-addNumber :: Int -> Block -> Block
-addNumber n (Div attrs@(divId, _, _) content) =
+-- | Prepend the @[N]@ marker to a bibliography entry block.
+--
+--   The marker is the entry's /return link/: it points at the first
+--   occurrence of that reference in the body (recorded during the marker
+--   walk), so a reader who has jumped down to the bibliography can get
+--   back to where the citation was made. Entries with no recorded
+--   occurrence — further-reading-only keys, or an entry citeproc emitted
+--   that the body never cites — keep the previous self-link, which is
+--   inert but valid.
+addNumber :: Map Text Text -> Int -> Block -> Block
+addNumber backMap n (Div attrs@(divId, _, _) content) =
     Div attrs
         ( Plain [ RawInline "html"
-                    ("<a class=\"ref-num\" href=\"#" <> divId <> "\">[" <> T.pack (show n) <> "]</a>") ]
+                    ("<a class=\"ref-num\" href=\"#" <> target <> "\">[" <> T.pack (show n) <> "]</a>") ]
           : content )
-addNumber _ b = b
+  where
+    target = fromMaybe divId (Map.lookup (stripRefPrefix divId) backMap)
+addNumber _ _ b = b
 
 -- | Strip the @ref-@ prefix that citeproc adds to div IDs.
 stripRefPrefix :: Text -> Text
 stripRefPrefix t = fromMaybe t (T.stripPrefix "ref-" t)
 
 -- | Render a list of blocks as an HTML string (used for bibliography sections).
+--
+--   The container carries @role="list"@. Pandoc's HTML writer stamps
+--   @role="listitem"@ on every @.csl-entry@ Div, and an element with that
+--   role must have a list-role parent (WAI-ARIA @aria-required-parent@;
+--   axe flags the orphaned form). Pandoc emits the pairing itself when it
+--   writes a whole @refs@ Div, but we extract the entries and re-wrap
+--   them here, so the container role has to be re-established — for the
+--   cited-references body, the further-reading body, and the synthetic
+--   @\/bibliography\/@ pages alike, all three of which come through this
+--   one function.
+--   Math in an entry title (@$k$@-dominating set, @$d$@-regular graph)
+--   is rendered here, at build time, as MathML (audit C07).
+--
+--   The default writer method emits @\<span class="math inline"\>@ holding
+--   the LaTeX source, which is a promise that a client-side renderer will
+--   arrive. On an essay it does: @essayCtx@ sets @math: true@ and KaTeX
+--   loads. @\/bibliography\/@ is generated from @siteCtx@ and sets no such
+--   flag, so its entries carried unrendered notation with nothing coming
+--   to render it. MathML needs no runtime at all, which is the right
+--   answer for a reference list: correct without JavaScript, and it does
+--   not pull a 300 KB typesetter onto a page whose only mathematics is one
+--   italic letter.
+--
+--   'unclaimMathSpans' is a guard rather than a fix: Pandoc's MathML
+--   writer emits a bare @\<math\>@ element with no wrapper, so on the
+--   current corpus it matches nothing. It exists because
+--   @katex-bootstrap.js@ renders every @.math@ element's /text content/,
+--   and on an essay page (which does load KaTeX) a wrapper left behind by
+--   some future writer change would be typeset a second time, from the
+--   MathML's own text.
 renderEntries :: Text -> [Block] -> Text
 renderEntries cls entries =
     case runPure (writeHtml5String wOpts (Pandoc nullMeta entries)) of
         Left  _    -> ""
-        Right html -> "<div class=\"" <> cls <> "\">\n" <> html <> "</div>\n"
+        Right html -> "<div class=\"" <> cls <> "\" role=\"list\">\n"
+                        <> unclaimMathSpans html <> "</div>\n"
   where
-    wOpts = def { writerWrapText = WrapNone }
+    wOpts = def { writerWrapText       = WrapNone
+                , writerHTMLMathMethod = MathML
+                }
+
+-- | Rename Pandoc's @math@ wrapper class on already-rendered MathML so the
+--   client-side KaTeX bootstrap does not treat it as unrendered source.
+--   The @inline@ / @display@ half is kept for anyone styling it.
+unclaimMathSpans :: Text -> Text
+unclaimMathSpans =
+      T.replace "class=\"math inline\""  "class=\"math-rendered inline\""
+    . T.replace "class=\"math display\"" "class=\"math-rendered display\""

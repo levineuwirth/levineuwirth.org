@@ -20,10 +20,16 @@
 --   show @[[…]]@ literally. Indented code blocks and code spans that
 --   cross a line break are NOT recognised; a wikilink inside those is
 --   still rewritten.
-module Filters.Wikilinks (preprocess, mapOutsideFences) where
+module Filters.Wikilinks
+    ( preprocess
+    , mapOutsideFences
+      -- * Route-shape awareness (shared with 'Filters.Transclusion')
+    , directoryRouteSlugs
+    , slugUrlPath
+    ) where
 
 import           Data.Char    (isAlphaNum, toLower, isSpace)
-import           Data.List    (intercalate)
+import           Data.List    (intercalate, isSuffixOf)
 import qualified Utils        as U
 
 -- | Scan the raw Markdown source for @[[…]]@ wikilinks and replace them
@@ -146,8 +152,55 @@ stripFenceIndent l =
 toMarkdownLink :: String -> String
 toMarkdownLink inner =
     let (title, display) = splitOnPipe inner
-        url              = "/" ++ slugify title ++ ".html"
+        url              = "/" ++ slugUrlPath (slugify title)
     in "[" ++ escMdLinkText display ++ "](" ++ url ++ ")"
+
+-- ---------------------------------------------------------------------------
+-- Route shape
+-- ---------------------------------------------------------------------------
+
+-- | Top-level slugs whose Hakyll route is a directory index
+--   (@\<slug\>\/index.html@, served as @\/\<slug\>\/@) rather than the
+--   flat @\<slug\>.html@ every other standalone page uses.
+--
+--   Both source-level preprocessors resolve a bare slug to a URL
+--   without access to Hakyll's route table — the substitution happens
+--   on the raw Markdown string, long before any route exists — so the
+--   handful of generated pages that route to a directory have to be
+--   named here. Keep this in sync with the @create [\"\<slug\>\/index.html\"]@
+--   rules in @build\/Stats.hs@; a slug missing from this list produces a
+--   link to a page that does not exist (the @\/build.html@ 404 that
+--   motivated it).
+--
+--   Authors can also bypass the table entirely by writing the directory
+--   form explicitly — @{{build\/}}@ — which 'Filters.Transclusion' maps
+--   to itself.
+directoryRouteSlugs :: [String]
+directoryRouteSlugs = ["build", "stats"]
+
+-- | Root-relative path (no leading slash) for a bare slug: the
+--   directory form for 'directoryRouteSlugs', @\<slug\>.html@ otherwise.
+--
+--   A slug that already spells out a directory index —
+--   @essays\/deep-dive\/index.html@, which is the shape of the Hakyll
+--   route for every @content\/essays\/\<slug\>\/index.md@ — collapses to
+--   the directory form (audit C03). Serving the same page under two
+--   spellings splits every URL-keyed thing the site keeps: the canonical
+--   link, the sitemap, the backlink join, and the per-page localStorage
+--   keys in @annotations.js@ and @collapse.js@. Only one of them can be
+--   the address, and everywhere else on the site it is @\/essays\/x\/@.
+slugUrlPath :: String -> String
+slugUrlPath slug
+    | Just dir <- stripDirIndex slug  = dir ++ "/"
+    | slug `elem` directoryRouteSlugs = slug ++ "/"
+    | otherwise                       = slug ++ ".html"
+  where
+    -- "a/b/index.html" → Just "a/b"; "index.html" → Just ""; else Nothing.
+    stripDirIndex s
+        | suffix `isSuffixOf` s = Just (take (length s - length suffix) s)
+        | s == "index.html"     = Just ""
+        | otherwise             = Nothing
+      where suffix = "/index.html" :: String
 
 -- | Escape the minimum set of characters that would prematurely terminate
 --   a Markdown link's display-text segment: backslash (escape char), @[@,

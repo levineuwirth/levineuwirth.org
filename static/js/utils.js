@@ -44,5 +44,38 @@
         }
     };
 
+    /* The page's identity for anything stored per-URL (audit C03).
+
+       A directory-routed page — every content/<section>/<slug>/index.md —
+       is served under two paths: /essays/x/ and /essays/x/index.html.
+       The site's own links, canonical tag, sitemap and feed all say the
+       first; nginx serves the second to anyone who types it, and a
+       from-disk preview only has the second. Scripts that key on
+       location.pathname therefore had two identities for one page, and a
+       reader who collapsed a section or highlighted a sentence under one
+       spelling found neither under the other.
+
+       `current` is the canonical spelling and the one to write. `legacy`
+       is the index.html spelling — null for a flat .html page, where
+       there is only ever one — and consumers should read it as a
+       fallback so state saved before this fix is still found.
+
+       Deliberately not migrated on read: rewriting storage on page load
+       is a side effect for a problem that costs one extra lookup. */
+    lnUtils.pagePaths = function (pathname) {
+        var path  = typeof pathname === 'string' ? pathname : location.pathname;
+        var INDEX = 'index.html';
+        /* The separator is part of the test: /essays/reindex.html is a
+           flat page whose name happens to end in those ten characters. */
+        var isDirIndex = path.slice(-(INDEX.length + 1)) === '/' + INDEX;
+        var current = isDirIndex ? path.slice(0, -INDEX.length) : path;
+        return {
+            current: current,
+            legacy:  current.charAt(current.length - 1) === '/'
+                ? current + INDEX
+                : null
+        };
+    };
+
     global.lnUtils = lnUtils;
 })(window);

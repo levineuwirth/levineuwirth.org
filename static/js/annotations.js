@@ -29,9 +29,22 @@
         catch (e) {}
     }
 
+    /* C03: an annotation is keyed by the page's URL, and a directory-routed
+       page has two spellings of it — /essays/x/ and /essays/x/index.html.
+       New annotations are written under the canonical one; both are read,
+       so highlights made before this fix are still found. */
+    function pagePaths() {
+        return window.lnUtils && window.lnUtils.pagePaths
+            ? window.lnUtils.pagePaths()
+            : { current: location.pathname, legacy: null };
+    }
+
     function forPage() {
-        var path = location.pathname;
-        return loadAll().filter(function (a) { return a.url === path; });
+        var paths = pagePaths();
+        return loadAll().filter(function (a) {
+            return a.url === paths.current
+                || (paths.legacy !== null && a.url === paths.legacy);
+        });
     }
 
     function uid() {
@@ -134,8 +147,16 @@
         return true;
     }
 
+    /* Re-anchor every stored annotation for this page that is not already
+       on screen. Idempotent, so it is safe to call again after content is
+       injected: an annotation whose <mark> already exists is skipped, and
+       one whose text only just arrived (inside a transclusion) is anchored
+       now. Smaller finding 7. */
     function applyAll() {
-        forPage().forEach(function (ann) { applyAnnotation(ann); });
+        forPage().forEach(function (ann) {
+            if (document.querySelector('mark[data-ann-id="' + ann.id + '"]')) return;
+            applyAnnotation(ann);
+        });
     }
 
     /* ------------------------------------------------------------------
@@ -261,7 +282,7 @@
         add: function (text, color, note) {
             var ann = {
                 id:      uid(),
-                url:     location.pathname,
+                url:     pagePaths().current,
                 text:    text,
                 color:   color || 'amber',
                 note:    note  || '',
@@ -287,6 +308,14 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         initTooltip();
+        applyAll();
+    });
+
+    /* Content injected after load can contain the text a stored annotation
+       was anchored to. applyAll() skips annotations already on the page,
+       so this only ever adds. */
+    document.addEventListener('ln:content-added', function () {
+        if (!tooltip) initTooltip();
         applyAll();
     });
 }());

@@ -1,0 +1,138 @@
+version: 1
+extends: application-cv
+abstract: false
+description: Reusable CV for frontier-model evaluation, control, monitoring, red-team, and technical-assurance roles.
+output: Levi-Neuwirth-CV-Frontier-Evals-Control.pdf
+document_title: Research Engineer — Frontier AI Evaluation \& Assurance
+summary: >-
+  Research engineer investigating whether claims about frontier AI systems
+  hold under adversarial or uncertain conditions. Direct experience designing
+  and running frontier-model evaluations, calibrating evaluators, debugging
+  agent scaffolds, and analyzing capability, safety, reasoning, and red-team
+  failures. Current work combines empirical investigation with cryptographic
+  verification, formal methods, and systems research engineering.
+
+sections:
+  - id: selected-experience
+    label: Selected Experience
+    entries:
+      - experience:mars-v
+      - experience:frontier-ai-contracting
+      - experience:shu-lab-undergrad
+
+  - id: assurance-research-engineering
+    label: Selected Assurance \& Research Engineering Work
+    entries:
+      - projects:proof-broker
+      - projects:levcs
+
+  - id: selected-systems
+    label: Selected Systems Work
+    page_break_before: true
+    entries:
+      - projects:weenix
+      - projects:networking-stack
+      - projects:pqc-avx2
+
+  - id: education
+    label: Education
+    entries:
+      - education:dtu-msc-cse
+      - education:brown-scb-math-cs
+
+  - id: selected-research
+    label: Selected Research / Talks
+    entries:
+      - presentations:mars-v-verified-inference
+      - publications:growing-radius-domination
+
+  - id: technical-skills
+    label: Technical Skills
+    entries:
+      - skills:ai-evaluation
+      - skills:programming
+      - skills:verification
+      - skills:systems-performance
+      - skills:ml-ai
+      - skills:tools
+
+presentation_sets:
+  experience:
+    mars-v: frontier-evals-control
+    frontier-ai-contracting: frontier-evals-control
+
+overrides:
+  experience:
+    shu-lab-undergrad:
+      preamble: null
+      bullets:
+        - >-
+          Built and owned ML research systems over multiple years: co-led Deep
+          Sets outcome models trained on more than 113 million hospitalizations
+          and deployed their public calculator; technical lead for NeuroPose's
+          Python/TensorFlow inference and Rust-backed analysis platform across
+          four externally funded sub-projects.
+
+  projects:
+    proof-broker:
+      description: >-
+        Routes Lean 4 and Rocq proof goals to untrusted SMT, automated, and LLM
+        provers, then checks certificates and lifts proof terms into the home
+        system's small trusted kernel; the Vampire path closes a goal end to
+        end without adding axioms.
+    levcs:
+      description: >-
+        Built a federated version-control system in Rust (roughly 10 crates,
+        194 tests) with BLAKE3 content addressing, signed Ed25519 authority
+        chains, three storage modes, and a cascading
+        format/tree-sitter/wasm merge engine.
+    weenix:
+      description: >-
+        Built and extended a 10{,}000-line Unix-like kernel in C: virtual
+        memory, VFS and file systems, system calls, threading, device and
+        interrupt handling, userspace x86-64 ELF support, pipes, and userspace
+        preemption.
+    networking-stack:
+      description: >-
+        Implemented TCP/IP, RIP, UDP, and DNS in Go for networks of up to eight
+        virtual machines and 1 GB transfers; added a 2{,}000+-line,
+        RFC-compliant SSH implementation supporting sustained sessions.
+    pqc-avx2:
+      label: Post-Quantum Cryptography / SIMD
+      description: >-
+        Profiled ML-KEM / Kyber on Brown's OSCAR cluster; hand-written x86-64
+        AVX2 achieved 35--56× speedup for core NTT arithmetic and 5.4--7.1×
+        end-to-end KEM speedup over compiler-optimized C, with a reproducible
+        artifact and statistical analysis.
+
+  skills:
+    programming:
+      items:
+        - Python
+        - Rust
+        - C
+        - C++
+        - Go
+    verification:
+      items:
+        - Zero-knowledge proofs
+        - Lean 4
+        - Rocq
+        - Vampire
+    systems-performance:
+      label: Systems and research engineering
+      items:
+        - Benchmarking and systems measurement
+        - Distributed systems
+    ml-ai:
+      items:
+        - PyTorch
+        - TensorFlow
+        - NumPy
+    tools:
+      label: Platforms and tooling
+      items:
+        - Git
+        - Linux (Arch, Debian, Gentoo)
+        - SLURM
+        - Docker

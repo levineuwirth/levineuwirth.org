@@ -1,0 +1,123 @@
+version: 1
+extends: software-engineering-systems
+abstract: false
+description: Reusable one-page résumé for technical-generalist, special-projects, research-program incubation, and high-ownership research-engineering roles in AI safety and adjacent technical organizations.
+output: Levi-Neuwirth-Resume-Technical-Generalist-AI-Safety.pdf
+document_title: Technical Generalist — AI Safety \& Systems
+summary: >-
+  Brown Mathematics and Computer Science graduate working across frontier-model
+  evaluation, verifiable AI infrastructure, and deployed ML. Builds projects
+  from open-ended technical questions through modeling, implementation,
+  empirical validation, and deployment.
+
+header:
+  links:
+    - github
+    - linkedin
+
+sections:
+  - id: experience
+    label: Experience
+    entries:
+      - experience:mars-v
+      - experience:frontier-ai-contracting
+      - experience:shu-lab-undergrad
+
+  - id: selected-projects
+    label: Selected Projects
+    entries:
+      - projects:pmacs
+      - projects:levcs
+      - projects:proof-broker
+
+  - id: education
+    label: Education
+    entries:
+      - education:brown-scb-math-cs
+
+  - id: technical-skills
+    label: Technical Skills
+    entries:
+      - skills:programming
+      - skills:ai-evaluation
+      - skills:systems-performance
+      - skills:ml-ai
+      - skills:tools
+      - skills:verification
+
+presentation_sets:
+  experience:
+    mars-v: agent-platform-systems
+    frontier-ai-contracting: frontier-evals-control
+    shu-lab-undergrad: agent-platform-systems
+  projects:
+    levcs: null
+    weenix: null
+    networking-stack: null
+    pqc-avx2: null
+
+overrides:
+  projects:
+    pmacs:
+      description: >-
+        Built and released a Rust-cored, Lua-scripted editor at v1.1.0 with
+        prebuilt binaries. Separated a long-lived async/process runtime from TUI
+        and GPU frontends over a typed protocol; optional CRDT-backed buffers
+        support concurrent editing.
+    levcs:
+      description: >-
+        Built a federated version-control system in Rust (roughly 10 crates,
+        194 tests) with signed Ed25519 authority chains, three storage modes, a
+        crash-recoverable transaction journal, and a cascading
+        textual/structural/wasm merge engine.
+    proof-broker:
+      description: >-
+        Built a broker routing Lean 4 and Rocq goals to untrusted SMT,
+        automated, and LLM provers, then checking certificates in the home
+        system's small trusted kernel; the Vampire path closes a goal end to end
+        without adding axioms.
+
+  skills:
+    programming:
+      label: Languages
+      items:
+        - Python
+        - Rust
+        - C
+        - C++
+        - Go
+    ai-evaluation:
+      label: AI evaluation
+      items:
+        - Frontier-model evaluation
+        - Evaluation-environment design
+        - Agent scaffolds
+        - Evaluator calibration
+        - Red-teaming
+    systems-performance:
+      label: Systems and performance
+      items:
+        - Distributed systems
+        - Benchmarking and systems measurement
+        - Accelerator calibration and workload profiling
+        - Performance and proving-cost modeling
+    ml-ai:
+      label: ML
+      items:
+        - PyTorch
+        - TensorFlow
+        - NumPy
+    tools:
+      label: Tools and platforms
+      items:
+        - Linux (Arch, Debian, Gentoo)
+        - Git
+        - Docker
+        - SLURM
+        - perf
+    verification:
+      label: Verification
+      items:
+        - Lean 4
+        - Rocq
+        - Vampire

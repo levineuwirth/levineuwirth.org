@@ -1,0 +1,133 @@
+version: 1
+extends: application-cv
+abstract: false
+description: Reusable CV for AI infrastructure, verification, accelerator-systems, and technical-assurance roles.
+output: Levi-Neuwirth-CV-AI-Infra-Assurance.pdf
+document_title: Research Engineer — AI Assurance \& Infrastructure
+summary: >-
+  Research engineer working on technical AI assurance across cryptography,
+  systems, and model evaluation. Currently building and validating workload
+  profilers, execution DAGs, accelerator calibration tooling, proving-cost
+  models, and partition analyses for zero-knowledge verification of
+  frontier-model inference. Background spans frontier-model evaluation and
+  red-teaming, formal verification, low-level and distributed systems,
+  cryptographic performance, and deployed ML research systems.
+
+sections:
+  - id: selected-experience
+    label: Selected Experience
+    entries:
+      - experience:mars-v
+      - experience:frontier-ai-contracting
+      - experience:shu-lab-undergrad
+
+  - id: assurance-performance
+    label: Selected Assurance \& Performance Work
+    entries:
+      - projects:proof-broker
+      - projects:pqc-avx2
+
+  - id: systems-infrastructure
+    label: Systems \& Infrastructure
+    page_break_before: true
+    entries:
+      - projects:levcs
+      - projects:weenix
+      - projects:networking-stack
+
+  - id: education
+    label: Education
+    entries:
+      - education:dtu-msc-cse
+      - education:brown-scb-math-cs
+
+  - id: selected-research
+    label: Selected Research / Talks
+    entries:
+      - presentations:mars-v-verified-inference
+      - publications:pqc-avx2-report
+      - publications:branch-tube-persistence
+
+  - id: technical-skills
+    label: Technical Skills
+    entries:
+      - skills:systems-performance
+      - skills:programming
+      - skills:verification
+      - skills:ml-ai
+      - skills:tools
+
+presentation_sets:
+  experience:
+    mars-v: ai-infra-assurance
+    frontier-ai-contracting: ai-infra-assurance
+  projects:
+    levcs: ai-infra-assurance
+
+overrides:
+  experience:
+    shu-lab-undergrad:
+      preamble: null
+      bullets:
+        - >-
+          Built ML research systems at meaningful scale: co-led Deep Sets
+          outcome models trained on 113M+ hospitalizations and deployed their
+          public calculator; technical lead for NeuroPose's Python/TensorFlow
+          inference and Rust-backed analysis platform across four externally
+          funded sub-projects.
+
+  projects:
+    proof-broker:
+      description: >-
+        Routes Lean 4 and Rocq proof goals to untrusted SMT, automated, and LLM
+        provers, then checks certificates and lifts proof terms into the home
+        system's small trusted kernel; the Vampire path closes a goal end to end
+        without adding axioms.
+    pqc-avx2:
+      label: Post-Quantum Cryptography / SIMD
+      description: >-
+        Profiled ML-KEM / Kyber on Brown's OSCAR cluster; hand-written x86-64
+        AVX2 achieves 35--56× speedup for core NTT arithmetic and 5.4--7.1×
+        end-to-end KEM speedup over compiler-optimized C, with a reproducible
+        artifact and statistical analysis.
+    weenix:
+      description: >-
+        Built and extended a 10{,}000-line Unix-like kernel in C: virtual
+        memory, VFS and file systems, system calls, threading, device and
+        interrupt handling, userspace x86-64 ELF support, pipes, and userspace
+        preemption.
+    networking-stack:
+      description: >-
+        Implemented TCP/IP, RIP, UDP, and DNS in Go for networks of up to eight
+        virtual machines and 1 GB transfers; added a 2{,}000+-line,
+        RFC-compliant SSH implementation supporting sustained sessions.
+
+  skills:
+    programming:
+      items:
+        - Python
+        - Rust
+        - C
+        - C++
+        - Go
+        - "Assembly (x86-64, inline SIMD)"
+    ml-ai:
+      items:
+        - PyTorch
+        - TensorFlow
+        - NumPy
+    tools:
+      label: Platforms and tooling
+      items:
+        - Git
+        - Linux (Arch, Debian, Gentoo)
+        - SLURM
+        - perf
+        - Docker
+    verification:
+      items:
+        - Zero-knowledge proofs
+        - ML-KEM / Kyber
+        - Lean 4
+        - Rocq
+        - Vampire

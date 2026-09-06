@@ -11,11 +11,15 @@
         <ol class="photography-contact-sheet">
             $for(photos)$
             <li class="contact-frame">
-                <a class="contact-frame-link" href="$url$">
+                <a class="contact-frame-link" href="$canonical-url$">
                     $if(photo-url)$
-                    <picture>$if(photo-webp-url)$<source srcset="$photo-webp-url$" type="image/webp">$endif$<img class="contact-frame-img" src="$photo-url$" alt="$title$" loading="lazy" decoding="async"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$></picture>
+                    <!-- P01: a contact frame is 210px at three across and
+                         reflows to two and then one below 830px / 585px.
+                         sizes="auto" on a lazy image tracks that exactly,
+                         and degrades to 100vw where it is unsupported. -->
+                    <picture>$if(photo-webp-srcset)$<source srcset="$photo-webp-srcset$" type="image/webp" sizes="auto">$endif$<img class="contact-frame-img" src="$photo-url$"$if(photo-srcset)$ srcset="$photo-srcset$" sizes="auto"$endif$ alt="$if(alt)$$alt$$else$$title$$endif$" loading="lazy" decoding="async"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$></picture>
                     $else$$if(photo)$
-                    <img class="contact-frame-img" src="$photo$" alt="$title$" loading="lazy" decoding="async"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$>
+                    <img class="contact-frame-img" src="$photo$" alt="$if(alt)$$alt$$else$$title$$endif$" loading="lazy" decoding="async"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$>
                     $endif$$endif$
                     <span class="contact-frame-label">$title$</span>
                 </a>

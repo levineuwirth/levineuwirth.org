@@ -1,0 +1,32 @@
+# Weekly restoration test of the newest Forgejo backup. See
+# forgejo-backup.service for the install commands.
+#
+# Why a second unit rather than a step inside the nightly backup: a backup
+# that fails must fail loudly, and a *verification* that fails is a
+# different fact about a different file — the archive that was already
+# accepted last night. Keeping them apart means `systemctl status` names
+# which of the two broke, and a verification that starts taking minutes
+# never delays or destabilises the nightly run.
+#
+# `--verify` extracts $DEST/LATEST to a temporary directory, checks its
+# sha256, and runs PRAGMA integrity_check on the hot-*.db snapshot inside —
+# the same file forgejo/UPGRADE.md copies over gitea.db during a restore.
+# It reads only; it never touches the live instance.
+#
+# This is not a full restore rehearsal. Standing the archive up as a running
+# Forgejo is a manual step, documented in forgejo/UPGRADE.md § 2, and worth
+# doing before an upgrade rather than every week.
+
+[Unit]
+Description=Forgejo backup verification (extract + integrity_check the newest archive)
+Documentation=https://git.levineuwirth.org/neuwirth/levineuwirth.org
+After=docker.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/default/forgejo-backup
+ExecStart=/usr/local/bin/forgejo-backup.sh --verify
+Nice=15
+IOSchedulingClass=idle
+# Extraction needs room for a second copy of the data directory.
+PrivateTmp=false

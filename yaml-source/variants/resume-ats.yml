@@ -1,0 +1,12 @@
+version: 1
+description: ATS-oriented résumé (legacy content profile).
+layout: ats-resume
+output: resume_ats.pdf
+legacy_visibility: resume
+summary: >-
+  Research engineer working on technical AI assurance across cryptography,
+  systems, and model evaluation. MARS V fellow developing zero-knowledge
+  verification of LLM inference with the Cambridge AI Safety Hub and Future of
+  Life Institute. Experience includes frontier-model evaluation and red-teaming,
+  clinical machine-learning systems, post-quantum cryptographic performance
+  engineering, and low-level systems and networking.

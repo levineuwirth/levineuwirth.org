@@ -1,16 +1,21 @@
 # Education entries, most recent first.
 education:
-  - institution: Technical University of Denmark (DTU)
+  - id: dtu-msc-cse
+    institution: Technical University of Denmark (DTU)
     location: Kongens Lyngby, Denmark
     degree: MSc in Computer Science and Engineering
     start: September 2026
     end: expected 2028
-    notes_cv: "Intended path toward PhD upon completion."
+    notes_cv: null
     notes_resume: null
-    cv_visible: true
+    # Retained as canonical history, but omitted from the public academic CV
+    # and Vita because the degree is no longer expected to be completed.
+    cv_visible: false
+    web_visible: false
     resume_visible: true
 
-  - institution: Brown University
+  - id: brown-scb-math-cs
+    institution: Brown University
     location: Providence, RI
     degree: "Sc.B., Mathematics and Computer Science"
     start: August 2022
@@ -22,7 +27,8 @@ education:
     cv_visible: true
     resume_visible: true
 
-  - institution: DIS Copenhagen / Københavns Universitet
+  - id: dis-copenhagen-2024
+    institution: DIS Copenhagen / Københavns Universitet
     location: Copenhagen, Denmark
     degree: Semester abroad
     start: Fall 2024

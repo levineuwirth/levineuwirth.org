@@ -23,13 +23,14 @@
    (Nav styles live in components.css)
    ============================================================ */
 
-/* Site-nav header only — exclude the essay-frontmatter <header> that
-   essay/reading/blog templates emit as a body-level sibling so its
-   monogram and figure columns can span full viewport width. Without
-   the :not() guard, the essay header inherits the sticky / nav-bg /
-   border-bottom chrome meant only for the top navigation, painting
-   the wrong color band over the page and pinning the frontmatter to
-   the viewport top. */
+/* Site-nav header only.
+   The essay/reading/series frontmatter is now a <div class="essay-frontmatter">
+   (A05: as a body-level <header> it mapped to a second banner landmark
+   alongside the site header). The :not() guard is kept as a belt for any
+   template that still emits it as a <header> — without it that element
+   would inherit the sticky / nav-bg / border-bottom chrome meant only for
+   the top navigation, painting the wrong colour band over the page and
+   pinning the frontmatter to the viewport top. */
 body > header:not(.essay-frontmatter) {
     width: 100%;
     border-bottom: 1px solid var(--border);

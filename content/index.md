@@ -1,6 +1,9 @@
 ---
 title: Levi Neuwirth
 home: true
+description: >-
+  The working library of Levi Neuwirth: research papers and living essays,
+  compositions and scores, poetry and prose, revised in public.
 history:
   - date: "2026-08-26"
   - date: "2026-08-07"
@@ -29,9 +32,9 @@ This website is *not* an academic homepage, nor a blog, nor a portfolio — thou
 :::
 
 <div class="hp-pro-row">
-<a href="/cv.pdf">CV</a><span class="hp-sep" aria-hidden="true">·</span><a href="mailto:ln@levineuwirth.org">Email</a><span class="hp-sep" aria-hidden="true">·</span><a href="https://git.levineuwirth.org/neuwirth">Forgejo</a><span class="hp-sep" aria-hidden="true">·</span><a href="https://github.com/levineuwirth">GitHub</a><span class="hp-sep" aria-hidden="true">·</span><a href="/gpg.html">GPG</a><span class="hp-sep" aria-hidden="true">·</span><a href="https://orcid.org/0009-0002-0162-3587">ORCID</a><span class="hp-sep" aria-hidden="true">·</span><a href="/about.html">Vita</a>
+<span class="hp-item"><a href="/cv.pdf">CV</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="mailto:ln@levineuwirth.org">Email</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="https://git.levineuwirth.org/neuwirth">Forgejo</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="https://github.com/levineuwirth">GitHub</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="/gpg.html">GPG</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="https://orcid.org/0009-0002-0162-3587">ORCID</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="/about.html">Vita</a></span>
 </div>
 
 <div class="hp-curiosity-row">
-<a href="/bibliography/">Bibliography</a><span class="hp-sep" aria-hidden="true">·</span><a href="/build/">Build</a><span class="hp-sep" aria-hidden="true">·</span><a href="/colophon.html">Colophon</a><span class="hp-sep" aria-hidden="true">·</span><a href="/commonplace.html">Commonplace</a><span class="hp-sep" aria-hidden="true">·</span><a href="/memento-mori.html">Memento Mori</a><span class="hp-sep" aria-hidden="true">·</span><a href="#" data-random>Random</a><span class="hp-sep" aria-hidden="true">·</span><a href="/stats/">Statistics</a>
+<span class="hp-item"><a href="/bibliography/">Bibliography</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="/build/">Build</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="/colophon.html">Colophon</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="/commonplace.html">Commonplace</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="/memento-mori.html">Memento Mori</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="#" data-random>Random</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="/stats/">Statistics</a></span>
 </div>

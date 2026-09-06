@@ -40,7 +40,8 @@ import qualified Data.Scientific        as Sci
 import           Hakyll
 import           Compilers              (pageCompiler, photographyCompiler)
 import           Contexts               (photographyCtx, pageCtx, siteCtx,
-                                         recentFirstByDisplay)
+                                         recentFirstByDisplay, feedMetaFields,
+                                         photoVariantName)
 import qualified Patterns               as P
 
 -- ---------------------------------------------------------------------------
@@ -76,9 +77,26 @@ photographyRules = do
             ]
 
     photographyAssetRules
-    photographyEntryRules seriesSlugs
-    photographySeriesPhotoRules
-    photographyLandingRules
+
+    -- Dimension sidecars are read by Filters.Images inside 'unsafeCompiler'
+    -- (via 'photographyCompiler' → 'Filters.applyAll'), which Hakyll cannot
+    -- see. Audit B11: editing a sidecar left the page byte-identical,
+    -- serving the previous width/height. The essay rule solved this by
+    -- claiming the sidecars with a no-route rule — a dependency on an
+    -- unclaimed file can never fire, because Hakyll's modified set is
+    -- intersected with the identifiers some rule claims — and then naming
+    -- them in a pattern dependency. Same two steps here.
+    match (   "content/photography/*.dims.yaml"
+         .||. "content/photography/*/*.dims.yaml") $ compile getResourceLBS
+
+    dimsDep <- makePatternDependency
+                    (   "content/photography/*.dims.yaml"
+                   .||. "content/photography/*/*.dims.yaml")
+
+    rulesExtraDependencies [dimsDep] $ do
+        photographyEntryRules seriesSlugs
+        photographySeriesPhotoRules
+        photographyLandingRules
     photographyMapDataRule
     photographyMapPageRule
     photographyFeedRule
@@ -497,7 +515,7 @@ buildPin item = do
     mRoute <- getRoute ident
     case (parseGeo meta, lookupString "geo-precision" meta, mRoute) of
         (Just (lat, lon), prec, Just r)
-          | maybe True (`elem` ["exact", "km", "city"]) prec ->
+          | maybe True (`elem` ["exact", "km", "city"]) prec -> do
             let prec'   = fromMaybe "city" prec
                 rLat    = roundCoord prec' lat
                 rLon    = roundCoord prec' lon
@@ -516,11 +534,11 @@ buildPin item = do
                 -- Trim trailing "index.html" so the click-through URL
                 -- is the canonical directory form (no implicit redirect).
                 url     = "/" ++ stripIndexHtml r
-                thumb   = case photo of
-                    Just p | not (null p) ->
-                        if isFlat then "/photography/" ++ p
-                                  else "/photography/" ++ slug ++ "/" ++ p
-                    _ -> ""
+                -- Co-located assets live beside the entry's Markdown and
+                -- route to the directory the entry's own URL is under.
+                assetDir = takeDirectory fp
+                assetUrl = if isFlat then "/photography"
+                                     else "/photography/" ++ slug
                 captured = lookupString "captured" meta
                 -- Location and series let the map aggregate: photographs
                 -- rounded to the same city-level coordinate are one place,
@@ -528,7 +546,22 @@ buildPin item = do
                 -- to send a click than an arbitrary one of them.
                 place    = lookupString "location" meta
                 series   = lookupString "series" meta
-            in  return $ Just $ Aeson.object $
+            -- P01: the map's two image slots are a 280px tooltip and a
+            -- 46px group-strip square, and this used to hand both the full
+            -- 2400px delivery source — a click on a ten-photograph cluster
+            -- pulled ~8 MB to draw ten thumbnails. Prefer the 480px rung,
+            -- checked on disk because the ladder is only as complete as
+            -- the last tools/generate-thumbnails.py run, and fall back to
+            -- the source so a map pin never loses its picture.
+            thumb <- case photo of
+                Just p | not (null p) -> do
+                    let variant = photoVariantName p 480
+                    hasVariant <- unsafeCompiler $
+                        doesFileExist (assetDir </> variant)
+                    return $ assetUrl ++ "/"
+                             ++ (if hasVariant then variant else p)
+                _ -> return ""
+            return $ Just $ Aeson.object $
                     [ "slug"     .= slug
                     , "title"    .= title
                     , "url"      .= url
@@ -575,6 +608,8 @@ photographyMapPageRule =
         route idRoute
         compile $ do
             let ctx = constField "title"           "Map · Photography"
+                   <> constField "description"
+                        "Geotagged photographs plotted on a map."
                    <> constField "photography"     "true"
                    <> constField "photography-map" "true"
                    <> constField "portal"          "true"
@@ -640,9 +675,12 @@ photographyFeedRule =
                   =<< loadAllSnapshots
                           (P.allPhotoEntries .&&. hasNoVersion)
                           "content"
+            -- 'feedMetaFields' carries the revision-aware `updated`, the
+            -- creation-date `published`, and the directory-form entry URL
+            -- (audits F11 and C03) — shared with the site feed so the two
+            -- cannot disagree.
             let feedCtx =
-                    dateField "updated"   "%Y-%m-%dT%H:%M:%SZ"
-                    <> dateField "published" "%Y-%m-%dT%H:%M:%SZ"
+                    feedMetaFields
                     <> photographyFeedDescription
                     <> bodyField "description"
                     <> defaultContext
@@ -707,6 +745,8 @@ photographyByYearIndexRule yearMap years =
                 ctx =
                     listField "years" yrCtx (return yearItems)
                     <> constField "title"       "Photography by year"
+                    <> constField "description"
+                        "Photographs grouped by the year they were made."
                     <> constField "photography" "true"
                     <> siteCtx
             makeItem ""
@@ -726,6 +766,8 @@ photographyByYearPageRule yr idents =
             let ctx =
                     listField "photos" photographyCtx (return photos)
                     <> constField "title"       ("Photography · " ++ yr)
+                    <> constField "description"
+                        ("Photographs made in " ++ yr ++ ".")
                     <> constField "year"        yr
                     <> constField "photography" "true"
                     <> constField "list-page"   "true"
@@ -764,6 +806,8 @@ photographyContactSheetRule =
             let ctx =
                     listField "photos" photographyCtx (return photos)
                     <> constField "title"       "Contact sheet · Photography"
+                    <> constField "description"
+                        "Every photograph on the site as one contact sheet."
                     <> constField "photography" "true"
                     <> constField "portal"      "true"
                     <> siteCtx

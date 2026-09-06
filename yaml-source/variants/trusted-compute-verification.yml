@@ -1,0 +1,84 @@
+version: 1
+extends: ai-infra-assurance
+description: Reusable CV for trusted execution, verifiable computation, high-assurance systems, and hardware/software-boundary verification roles.
+output: Levi-Neuwirth-CV-Trusted-Compute-Verification.pdf
+document_title: Systems \& Research Engineer — Verification \& Trusted AI Infrastructure
+summary: >-
+  Systems and research engineer working on trustworthy AI execution across
+  cryptography, formal verification, and systems. Current work develops
+  zero-knowledge mechanisms and independently inspectable workload evidence for
+  frontier-model inference, validated against an archived full-scale proof and
+  live NVIDIA B200 hardware. Background includes trusted checking of untrusted
+  provers, implementation-level cryptography, signed-authority distributed
+  systems, low-level OS and networking work, and frontier-model evaluation.
+
+sections:
+  - id: selected-experience
+    label: Selected Experience
+    entries:
+      - experience:mars-v
+      - experience:frontier-ai-contracting
+
+  - id: trusted-assurance-systems
+    label: Selected Verification \& Trusted Systems Work
+    entries:
+      - projects:proof-broker
+      - projects:levcs
+      - projects:pqc-avx2
+
+  - id: systems-depth
+    label: Low-Level Systems Depth
+    page_break_before: true
+    entries:
+      - projects:weenix
+      - projects:networking-stack
+
+  - id: sustained-ml-engineering
+    label: Sustained ML Engineering
+    entries:
+      - experience:shu-lab-undergrad
+
+  - id: education
+    label: Education
+    entries:
+      - education:dtu-msc-cse
+      - education:brown-scb-math-cs
+
+  - id: selected-research
+    label: Selected Research / Talks
+    entries:
+      - presentations:mars-v-verified-inference
+      - publications:pqc-avx2-report
+
+  - id: technical-skills
+    label: Technical Skills
+    entries:
+      - skills:verification
+      - skills:programming
+      - skills:systems-performance
+      - skills:ai-evaluation
+      - skills:ml-ai
+      - skills:tools
+
+presentation_sets:
+  experience:
+    mars-v: trusted-compute-verification
+    frontier-ai-contracting: inference-systems-performance
+  projects:
+    levcs: trusted-compute-verification
+
+overrides:
+  skills:
+    systems-performance:
+      label: Execution and systems evidence
+      items:
+        - Accelerator calibration and workload profiling
+        - Performance and proving-cost modeling
+        - Benchmarking and systems measurement
+        - Distributed systems
+    ai-evaluation:
+      label: AI assurance and evaluation
+      items:
+        - Frontier-model evaluation
+        - Evaluation-environment design
+        - Evaluator calibration

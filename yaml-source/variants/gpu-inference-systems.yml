@@ -1,0 +1,114 @@
+version: 1
+extends: inference-systems-performance
+description: Reusable one-page résumé for GPU inference systems, ML-systems performance, serving infrastructure, and runtime-adjacent engineering roles.
+layout: ats-resume
+output: Levi-Neuwirth-Resume-GPU-Inference-Systems.pdf
+document_title: Software Engineer — Inference Systems \& Performance
+summary: >-
+  Software engineer building ML and distributed systems in Python, Rust,
+  C/C++, and Go. Current work profiles and models GPU proving workloads around
+  frontier-model inference: execution dependencies, time, memory,
+  communication, and live NVIDIA B200 validation. Background spans deployed ML
+  systems, operating systems, networking, and low-level performance engineering.
+
+header:
+  links:
+    - github
+    - linkedin
+
+sections:
+  - id: experience
+    label: Experience
+    entries:
+      - experience:mars-v
+      - experience:shu-lab-undergrad
+      - experience:frontier-ai-contracting
+
+  - id: selected-systems-projects
+    label: Selected Systems Projects
+    entries:
+      - projects:pqc-avx2
+      - projects:weenix
+      - projects:networking-stack
+      - projects:proof-broker
+
+  - id: education
+    label: Education
+    entries:
+      - education:brown-scb-math-cs
+
+  - id: technical-skills
+    label: Technical Skills
+    entries:
+      - skills:programming
+      - skills:systems-performance
+      - skills:ml-ai
+      - skills:tools
+      - skills:ai-evaluation
+      - skills:verification
+
+presentation_sets:
+  experience:
+    mars-v: gpu-inference-systems
+  projects:
+    levcs: null
+
+overrides:
+  experience:
+    frontier-ai-contracting:
+      bullets:
+        - >-
+          Build frontier-model evaluation environments and scoring systems,
+          execute models, debug agent scaffolds, and calibrate evaluators to
+          distinguish model failures from failures in tooling, tasks, or
+          scoring; client identities and results are confidential.
+
+  skills:
+    programming:
+      label: Languages
+      items:
+        - Python
+        - Rust
+        - C
+        - C++
+        - Go
+        - "Assembly (x86-64, inline SIMD)"
+    systems-performance:
+      label: ML systems and performance
+      items:
+        - Accelerator calibration and workload profiling
+        - Performance and proving-cost modeling
+        - Benchmarking and systems measurement
+        - Distributed systems
+    ml-ai:
+      label: ML
+      items:
+        - PyTorch
+        - TensorFlow
+        - NumPy
+    tools:
+      label: Systems and tooling
+      items:
+        - Linux (Arch, Debian, Gentoo)
+        - Git
+        - Docker
+        - SLURM
+        - perf
+    ai-evaluation:
+      label: Model systems
+      items:
+        - Frontier-model evaluation
+        - Evaluation-environment design
+        - Agent scaffolds
+    verification:
+      label: Additional
+      items:
+        - Zero-knowledge proofs
+        - ML-KEM / Kyber
+
+  projects:
+    proof-broker:
+      description: >-
+        Built a broker routing Lean 4 and Rocq goals to SMT, automated, and LLM
+        provers, then checking certificates in the home system's trusted kernel;
+        the Vampire path closes a goal end to end without adding axioms.

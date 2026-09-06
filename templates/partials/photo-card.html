@@ -1,9 +1,15 @@
+<!-- A11: an authored `alt:` field wins over the title.
+     P01: one <img> serves all three grid modes (261px 3-up, 396px 2-up,
+     800px 1-up), so no static `sizes` list can be right for more than one
+     of them. sizes="auto" on a lazy image is exactly the rendered width;
+     where it is not supported the attribute is invalid and the browser
+     falls back to 100vw, which over-fetches but never blurs. -->
 <li class="photo-card"$if(orientation)$ data-orientation="$orientation$"$endif$>
-    <a class="photo-card-link" href="$url$">
+    <a class="photo-card-link" href="$canonical-url$">
         $if(photo-url)$
-        <picture>$if(photo-webp-url)$<source srcset="$photo-webp-url$" type="image/webp">$endif$<img class="photo-card-img" src="$photo-url$" alt="$title$" loading="lazy" decoding="async"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$></picture>
+        <picture>$if(photo-webp-srcset)$<source srcset="$photo-webp-srcset$" type="image/webp" sizes="auto">$endif$<img class="photo-card-img" src="$photo-url$"$if(photo-srcset)$ srcset="$photo-srcset$" sizes="auto"$endif$ alt="$if(alt)$$alt$$else$$title$$endif$" loading="lazy" decoding="async"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$></picture>
         $else$$if(photo)$
-        <img class="photo-card-img" src="$photo$" alt="$title$" loading="lazy" decoding="async"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$>
+        <img class="photo-card-img" src="$photo$" alt="$if(alt)$$alt$$else$$title$$endif$" loading="lazy" decoding="async"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$>
         $endif$$endif$
         <div class="photo-card-meta">
             <span class="photo-card-title">$title$</span>

@@ -3,6 +3,9 @@ title: Memento Mori
 date: 2026-03-17
 abstract: The power of vanitas through vanity, herein serving to emanate motivation and tranquility.
 tags: [miscellany]
+description: >-
+  A life measured out in weeks, a countdown, and the question of who a
+  website is for.
 js: scripts/memento-mori.js
 history:
   - date: "2026-04-22"

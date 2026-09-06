@@ -1,5 +1,6 @@
 affiliations:
-  - name: "NSF Award \\#2148451"
+  - id: nsf-2148451
+    name: "NSF Award \\#2148451"
     full_title: "A Learning Ecosystem for Teaching High School Students Machine Learning Concepts and Data Science Skills in Healthcare and Medicine"
     role: "Undergraduate mentor / research affiliate"
     start: October 2023

@@ -223,6 +223,23 @@ echo "import-photo: extracting palette sidecar..."
 ( cd "$REPO_ROOT" && .venv/bin/python tools/extract-palette.py "$TARGET" ) || true
 
 # ---------------------------------------------------------------------------
+# Step 4b: responsive delivery variants (P01)
+#
+# The .w480 / .w960 / .w1440 siblings the card grids, contact sheet and map
+# tooltips actually load. `make build` regenerates whatever is missing, so
+# this is only a convenience — it means the frame you just imported renders
+# at the right weight in `make dev` without a full build first.
+#
+# The generator is named this ONE file rather than the whole section, and
+# is non-fatal: a failure here costs an author a heavier preview, never an
+# import.
+# ---------------------------------------------------------------------------
+
+echo "import-photo: generating responsive variants..."
+( cd "$REPO_ROOT" && .venv/bin/python tools/generate-thumbnails.py "$TARGET" ) \
+    || echo "import-photo: variant generation failed (make build will retry)" >&2
+
+# ---------------------------------------------------------------------------
 # Step 5: scaffold index.md
 # ---------------------------------------------------------------------------
 

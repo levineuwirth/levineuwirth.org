@@ -22,6 +22,7 @@ import qualified Filters.EmbedPdf      as EmbedPdf
 import qualified Filters.Code       as Code
 import qualified Filters.Images     as Images
 import qualified Filters.Aftermatter as Aftermatter
+import qualified Filters.FigureRefs as FigureRefs
 
 -- | Apply all AST-level filters in pipeline order.
 --   Run on the Pandoc document after reading, before writing.
@@ -32,11 +33,16 @@ import qualified Filters.Aftermatter as Aftermatter
 --   every downstream filter stays pure. @srcDir@ is the directory of the
 --   source Markdown file, passed through to Images for relative-path
 --   resolution of co-located assets.
-applyAll :: FilePath -> Pandoc -> IO Pandoc
-applyAll srcDir doc = do
+--   @numberFigures@ opts the page in to 'Filters.FigureRefs' (frontmatter
+--   @figure-numbering: true@, read by "Compilers"). It runs last, and
+--   outermost: it rewrites the @\<figure\>@ HTML that Images and Viz emit,
+--   so both must have produced their markup before it looks for any.
+applyAll :: Bool -> FilePath -> Pandoc -> IO Pandoc
+applyAll numberFigures srcDir doc = do
     imagesDone     <- Images.apply     srcDir doc
     sourceRefsDone <- SourceRefs.apply imagesDone
     pure
+        . (if numberFigures then FigureRefs.apply else id)
         . Aftermatter.apply
         . Sidenotes.apply
         . Typography.apply

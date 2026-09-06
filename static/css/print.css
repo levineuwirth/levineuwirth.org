@@ -36,9 +36,9 @@
        Hide chrome.
 
        Site nav is `body > header` (templates/partials/nav.html); the
-       essay frontmatter is `.page-shell > header.essay-frontmatter`
-       (essay/blog-post/reading templates) and MUST stay visible — its
-       <h1> is the page title.
+       essay frontmatter is `.page-shell > .essay-frontmatter`
+       (essay/blog-post/reading templates — a <div> since A05) and MUST
+       stay visible: its <h1> is the page title.
 
        The mark slots (monogram + epistemic figure) and frontmatter
        divider are decorative; suppressing them lets the title block
@@ -337,4 +337,38 @@
     .meta-footer-section {
         margin-bottom: 0.8em;
     }
+
+    /* ----------------------------------------------------------------
+       Item cards. On screen the revision note is visually hidden and
+       its content rides in a hover popup; paper has no hover, so put
+       the note and the original date back inline.
+    ---------------------------------------------------------------- */
+    .item-card-revision-note {
+        position: static;
+        width: auto;
+        height: auto;
+        margin: 0.2rem 0 0;
+        overflow: visible;
+        clip-path: none;
+        white-space: normal;
+    }
+
+    .item-card-revised {
+        text-decoration: none;
+    }
+
+    .item-card-revised-from {
+        display: inline;
+    }
+}
+
+/* Figures pan on screen (see viz.css); on paper there is nothing to pan,
+   so let the whole figure through at whatever the page width allows rather
+   than clipping it at the scroll container's edge. */
+.viz-scroll {
+    overflow-x: visible;
+}
+
+.viz-scroll svg {
+    min-width: 0;
 }

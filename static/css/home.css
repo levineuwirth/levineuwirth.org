@@ -15,6 +15,32 @@
     font-family: var(--font-sans);
     font-size: var(--text-size-small);
     margin-top: 0.75rem;
+    /* Row items are separated by bare middots with no surrounding
+       whitespace, so the run offers the line-breaker no break
+       opportunity: on a 320–375px viewport the whole strip became one
+       ~474px unbreakable word and pushed the document past the
+       viewport. The wrapping is done by flex below, not by the text
+       engine. */
+    gap: 0 0.1rem;
+    min-width: 0;
+}
+
+/* Pandoc wraps the raw-HTML row body in a <p>, which then became the
+   single flex item and carried the row's whole min-content width.
+   `display: contents` dissolves that box so the individual items
+   below are the flex items and each wraps on its own. */
+.hp-pro-row > p,
+.hp-curiosity-row > p {
+    display: contents;
+}
+
+/* One link plus its trailing separator, so a wrap never strands a
+   middot at the start of a line. Falls back gracefully for rows still
+   emitted as bare <a>/<span> children. */
+.hp-item {
+    display: inline-flex;
+    align-items: baseline;
+    white-space: nowrap;
 }
 
 /* First row: extra top margin since the hr is gone — breathing
@@ -103,4 +129,6 @@
     font-size: var(--text-size-small);
     color: var(--text-faint);
     line-height: 1.4;
+    min-width: 0;
+    overflow-wrap: break-word;
 }

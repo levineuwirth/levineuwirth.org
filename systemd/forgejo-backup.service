@@ -4,12 +4,20 @@
 #   scp tools/forgejo-backup.sh root@<vps>:/usr/local/bin/forgejo-backup.sh
 #   ssh root@<vps> chmod 755 /usr/local/bin/forgejo-backup.sh
 #   scp systemd/forgejo-backup.{service,timer} root@<vps>:/etc/systemd/system/
+#   scp systemd/forgejo-backup-verify.{service,timer} root@<vps>:/etc/systemd/system/
 #   ssh root@<vps> systemctl daemon-reload
 #   ssh root@<vps> systemctl enable --now forgejo-backup.timer
+#   ssh root@<vps> systemctl enable --now forgejo-backup-verify.timer
 #
-# The script aborts non-zero on a failed integrity check or an unreadable
-# archive, so a bad run shows up as a failed unit rather than as a corrupt
-# file that quietly displaces a good one.
+# The off-host copy is configured in /etc/default/forgejo-backup, from
+# systemd/forgejo-backup.env.example. That file is optional — the leading
+# `-` on EnvironmentFile means an absent file is not an error — so this unit
+# keeps working unchanged while it does not exist, taking a local-only
+# backup and saying so in the log.
+#
+# The script aborts non-zero on a failed integrity check, an unreadable
+# archive, or a failed off-host copy, so a bad run shows up as a failed unit
+# rather than as a corrupt file that quietly displaces a good one.
 
 [Unit]
 Description=Forgejo backup (consistent SQLite snapshot + data tarball)
@@ -21,6 +29,10 @@ Requires=docker.service
 
 [Service]
 Type=oneshot
+EnvironmentFile=-/etc/default/forgejo-backup
 ExecStart=/usr/local/bin/forgejo-backup.sh
 Nice=15
 IOSchedulingClass=idle
+# The read-back verification of an off-host copy transfers the archive a
+# second time; on a slow link that is minutes, not seconds.
+TimeoutStartSec=45min

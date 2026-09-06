@@ -160,14 +160,18 @@
     text-indent: 0;
 }
 
+/* The section now follows the evidence rather than introducing it, so it reads
+   synthesis-first and lands on the question. Emphasis moves with that: the
+   opening paragraph ties the four entries together in the body voice, and the
+   closing question carries the italic. */
 #markdownBody .work-thesis p:first-child {
-    font-style: italic;
-    color: var(--text);
+    color: var(--text-muted);
 }
 
 #markdownBody .work-thesis p:last-child {
     margin-bottom: 0;
-    color: var(--text-muted);
+    font-style: italic;
+    color: var(--text);
 }
 
 /* ============================================================
@@ -219,6 +223,34 @@
 #markdownBody .work-entry p {
     margin: 0 0 0.6rem;
     text-indent: 0;
+}
+
+/* A title links to its canonical write-up where one exists — the entry-links row
+   sits below the limitation block, so a reader who bounces early never reaches
+   it, and the heading is the one element everyone reads. Styled to stay a
+   heading first: typography.css underlines links site-wide, which at 1.14rem
+   serif reads as a mistake, so the underline is deferred to hover and the color
+   never changes. Entries without a write-up keep a plain heading, which is why
+   this reads as a system rather than one link that got away. */
+#markdownBody .work-entry h3 a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color var(--transition-fast);
+}
+
+#markdownBody .work-entry h3 a:hover,
+#markdownBody .work-entry h3 a:focus-visible {
+    border-bottom-color: var(--link-underline);
+}
+
+/* The build's link decorator appends a 0.75em icon to every classified link,
+   which is right in prose — it tells a reader where a link goes before they
+   follow it. In a title it is noise: the icon scales with the heading, so it
+   lands near 0.85rem, and no other heading on this page carries one. The
+   destination is already implied by the title itself. */
+#markdownBody .work-entry h3 a[data-link-icon-type="svg"]::after {
+    content: none;
 }
 
 /* Affiliation / status line under the entry title. */

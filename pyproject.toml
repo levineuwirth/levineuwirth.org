@@ -28,6 +28,7 @@ dependencies = [
     # remote modeling code (nomic-bert-2048, loaded by embed.py's page
     # pass under trust_remote_code with a pinned code_revision).
     "einops>=0.8.2,<1",
+    "lxml>=5,<7",
 ]
 
 [[tool.uv.index]]

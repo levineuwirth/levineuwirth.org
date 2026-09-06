@@ -215,9 +215,106 @@ Masonry default + clean grid alternate gives the considered/organic tone of essa
 
 - **Originals (RAW, full-resolution exports)**: outside the repo. Levi's local archive (external drive, NAS, or backup service). Not Levi's responsibility to define for this plan; only the *contract* matters: originals never enter source control.
 - **Web-optimized JPEGs**: committed to the repo at `content/photography/{slug}/photo.jpg` (or alongside `.md` for flat singles). Long edge ≤ 2400px, quality 85, sRGB, EXIF stripped before commit.
-- **WebP companions**: generated at build time by the existing `tools/convert-images.sh`; gitignored (already covered by the existing `content/**/*.webp` rule on line 105 of `.gitignore`).
+- **Responsive variants (`{name}.w480.jpg`, `.w960.`, `.w1440.`)**: generated at build time by `tools/generate-thumbnails.py`; gitignored (covered by the same `content/photography/**/*.jpg|jpeg|png` rules as the delivery file). See *Responsive delivery variants* below.
+- **WebP companions**: generated at build time by the existing `tools/convert-images.sh`; gitignored (already covered by the existing `content/**/*.webp` rule on line 105 of `.gitignore`). Companions are made for the variants too — `photo.w480.webp` and so on — because the thumbnail stage runs first.
 - **EXIF sidecar (`{photo}.exif.yaml`)**: generated at build time; gitignored.
 - **Palette sidecar (`{photo}.palette.yaml`)**: generated at build time; gitignored.
+
+Consequence worth stating twice, because it is the same one the delivery
+JPEGs already carry: **a fresh clone has neither the delivery images nor
+their variants.** Both are derived from originals that live outside the
+repository (see the first bullet). `make build` on a clean checkout
+produces a site with missing photographs, and `tools/check-site.py` says
+so. This is an acknowledged, deliberate limitation — the alternative was a
+git history growing by tens of megabytes per trip. The pixels reach the
+public site through `make deploy`'s rsync of `_site/`, not through Git.
+
+### Responsive delivery variants
+
+The delivery JPEG is 2400px on the long edge because the detail page and
+the lightbox want it. Every *other* photography surface wanted something
+between 195 and 240 CSS pixels wide and was being handed the same file: a
+card grid or contact sheet cost 32–40 MB to paint (audit finding P01).
+
+`tools/generate-thumbnails.py` writes a ladder of siblings beside each
+delivery image so the templates can offer the browser a choice.
+
+**Naming contract** — the Hakyll context and the templates depend on it,
+so it is fixed:
+
+```
+content/photography/<series>/<name>.<ext>
+  ->  <name>.w480.<ext>
+      <name>.w960.<ext>
+      <name>.w1440.<ext>
+```
+
+* Same directory, same extension, same colour profile (sRGB; an embedded
+  ICC profile is copied across, EXIF is not).
+* A width is emitted only when the source is **strictly wider** than it.
+  A 1200px source yields `w480` and `w960` and never `w1440` — upscaling
+  buys nothing and would lie to the browser about what it got. The Haskell
+  side must therefore test each candidate for existence on disk, exactly as
+  `photoWebpUrlField` already does for the `.webp` companion, rather than
+  assuming all three are present.
+* A variant is never itself a source. Anything matching
+  `\.w(480|960|1440)\.(jpe?g|png)$` is skipped by the generator's walk and
+  by `extract-dimensions.py` / `extract-exif.py` / `extract-palette.py`,
+  so reruns cannot produce `photo.w960.w480.jpg` and the extractors do not
+  write ~3400 sidecars nobody reads. (Dimensions for a variant are
+  derivable from the source and the `w` descriptor; the `width` / `height`
+  attributes always describe the `src`, which is the source.)
+* JPEG: quality 82, progressive, `optimize`, 4:2:0. PNG: `optimize`,
+  alpha preserved.
+* Deterministic: a variant that exists and is not older than its source is
+  skipped, so a rerun rewrites nothing. Writes go to a `.tmp.<pid>` name
+  and are renamed into place, so an interrupted run cannot leave a
+  truncated file that is newer than its source and therefore skipped
+  forever — the exact trap `convert-images.sh` documents for `.webp`.
+
+**Cost on the current corpus**: 374 sources (2400×1800, 2400×1600 and
+1800×2400; 278.6 MB, 763 KB average) yield 1122 variants and 160.2 MB —
+w480 at 35 KB average, w960 at 129 KB, w1440 at 274 KB. A card that used
+to pull 763 KB pulls 35 KB.
+
+**Slot widths the ladder was sized against** (measured, not guessed;
+`--body-max-width: 800px` and `--text-size: 20px`, so `1rem = 20px`):
+
+| Surface | Slot at the default text size |
+| --- | --- |
+| Photo card, grid mode (the default) | 261 px, 3-up in the 800 px measure |
+| Photo card, masonry mode | 396 px, 2-up |
+| Photo card, chronological mode | 800 px, 1-up |
+| Contact-sheet frame | 210 px, 3-up |
+| Series lead (left mark slot) | 156–266 px; 426 px stacked below 900 px |
+| Detail hero (`.photo-figure img`) | up to 800 px; `100vw - 60px` below 860 px |
+| Map tooltip | 280 px; 46 px per thumbnail in a group strip |
+| Slideshow / lightbox | viewport-filling — keeps the 2400 px source |
+
+The Display panel's text-size control (20 / 23 / 26 px) scales every
+`rem`-based track: at 26 px the grid slot becomes 395 px and the contact
+frame 319 px. `sizes` is a hint, not a promise, but it is a reason to
+prefer `sizes="auto"` on the lazily-loaded surfaces, where the browser
+measures the real slot instead of trusting a static estimate.
+
+**Running it**:
+
+```
+make thumbnails                              # fill in what is missing
+make thumbnails THUMBNAIL_FLAGS=--dry-run    # report, write nothing
+make thumbnails THUMBNAIL_FLAGS=--force      # rewrite every variant
+make thumbnails THUMBNAIL_FLAGS=--prune      # drop variants whose source
+                                             # is gone, or that the source
+                                             # is no longer wider than
+tools/generate-thumbnails.py content/photography/germany-082026/x.jpg
+                                             # one named file (what
+                                             # import-photo.sh calls)
+```
+
+Without Pillow the script prints an install hint and exits 0 — the same
+contract `convert-images.sh` keeps for a missing `cwebp`. The site stays
+correct, just heavier; `tools/check-site.py` is what makes a genuinely
+missing `srcset` target fatal.
 
 ### Defense-in-depth gitignore additions
 
@@ -250,24 +347,35 @@ content/photography/**/*.psd
 2. Strips all EXIF from the delivered JPEG with `exiftool -all=`.
 3. Writes the EXIF sidecar to `{slug}/photo.exif.yaml` (so the metadata is preserved for display, but not embedded in the file shipped to viewers).
 4. Computes the 5-color palette and writes `{slug}/photo.palette.yaml`.
-5. Drops a frontmatter stub at `{slug}/index.md` ready for editing.
+5. Generates the responsive variants for that one file, so the frame renders at the right weight in `make dev` without a full build first. Non-fatal: `make build` regenerates whatever is missing.
+6. Drops a frontmatter stub at `{slug}/index.md` ready for editing.
 
 Until that script exists, Phase 1 + 2 work with manually prepared JPEGs.
 
 ### Build-pipeline integration
 
-New steps slot into the Makefile alongside the existing `convert-images` and `pdf-thumbs` targets, all gated on tool availability (silent skip if missing, matching the `embed.py` pattern):
+New steps slot into the Makefile alongside the existing `convert-images` and `pdf-thumbs` targets, all gated on tool availability (silent skip if missing, matching the `embed.py` pattern).
+
+The order in `make build` is load-bearing, not incidental:
 
 ```
 make build:
   ...
+  → make thumbnails           (tools/generate-thumbnails.py; gated on .venv)
+  → tools/convert-images.sh   (existing)
+  → make pdf-thumbs           (existing)
   → tools/extract-exif.py     (gated on `exiftool` or `Pillow`)
   → tools/extract-palette.py  (gated on Python + colorthief)
-  → tools/build-map-data.py   (always runs; no external deps)
-  → tools/convert-images.sh   (existing)
-  → hakyll-build              (existing)
+  → tools/extract-dimensions.py
+  → hakyll-build              (existing; build-map-data is a Hakyll rule)
   ...
 ```
+
+`thumbnails` runs **before** `convert-images` so every `.w480` / `.w960` /
+`.w1440` file gets a `.webp` companion of its own, and **before** the three
+extractors, which skip variants outright. Putting it after `convert-images`
+would ship a `srcset` of JPEGs with a WebP `<source>` covering only the
+full-size original — the worst of both.
 
 ---
 

@@ -1,0 +1,90 @@
+version: 1
+extends: ats-application
+abstract: false
+description: Reusable one-page résumé for software, systems, infrastructure, platform, and ML-systems engineering roles.
+output: Levi-Neuwirth-Resume-Software-Engineering-Systems.pdf
+document_title: Software Engineer — Systems \& Infrastructure
+summary: >-
+  Software engineer building systems in Rust, Python, C/C++, and Go across
+  distributed software, ML infrastructure, operating systems, networking, and
+  performance-critical code.
+
+sections:
+  - id: experience
+    label: Experience
+    entries:
+      - experience:mars-v
+      - experience:frontier-ai-contracting
+      - experience:shu-lab-undergrad
+
+  - id: selected-projects
+    label: Selected Engineering Projects
+    entries:
+      - projects:levcs
+      - projects:weenix
+      - projects:networking-stack
+      - projects:pqc-avx2
+
+  - id: education
+    label: Education
+    entries:
+      - education:brown-scb-math-cs
+
+  - id: technical-skills
+    label: Technical Skills
+    entries:
+      - skills:programming
+      - skills:systems-performance
+      - skills:ml-ai
+      - skills:tools
+      - skills:verification
+
+presentation_sets:
+  experience:
+    mars-v: software-engineering-systems
+    frontier-ai-contracting: software-engineering-systems
+    shu-lab-undergrad: software-engineering-systems
+  projects:
+    levcs: ai-infra-assurance
+    weenix: software-engineering-systems
+    networking-stack: software-engineering-systems
+    pqc-avx2: software-engineering-systems
+
+overrides:
+  skills:
+    programming:
+      label: Languages
+      items:
+        - Python
+        - Rust
+        - C
+        - C++
+        - Go
+        - "Assembly (x86-64, inline SIMD)"
+    systems-performance:
+      label: Systems and infrastructure
+      items:
+        - Distributed systems
+        - Benchmarking and systems measurement
+        - Accelerator calibration and workload profiling
+        - Performance and proving-cost modeling
+    ml-ai:
+      label: ML and data
+      items:
+        - PyTorch
+        - TensorFlow
+        - NumPy
+        - Pandas
+    tools:
+      label: Tools and platforms
+      items:
+        - Linux (Arch, Debian, Gentoo)
+        - Git
+        - Docker
+        - SLURM
+        - perf
+    verification:
+      label: Additional
+      items:
+        - Zero-knowledge proofs
+        - ML-KEM / Kyber

@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -51,6 +52,14 @@ CONTENT_DIR = REPO_ROOT / "content" / "photography"
 TOOL = "extract-exif"
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png"}
+
+# Responsive delivery variants written by tools/generate-thumbnails.py
+# (photo.w480.jpg / photo.w960.jpg / photo.w1440.jpg). They are pixel
+# reductions of a source that already has its own sidecar, and nothing
+# reads a sidecar for a srcset candidate — so extracting for them would
+# add ~1100 files of churn here for no consumer. Keep the pattern in step
+# with VARIANT_RE in tools/generate-thumbnails.py.
+VARIANT_RE = re.compile(r"\.w(480|960|1440)\.(jpe?g|png)$", re.IGNORECASE)
 
 # ---------------------------------------------------------------------------
 # Field normalisation
@@ -522,6 +531,7 @@ def main() -> int:
         if i.suffix.lower() in IMAGE_EXTS
         and not i.name.startswith(".")
         and not i.name.endswith(".tmp")
+        and not VARIANT_RE.search(i.name)
     ]
     if using_exiftool:
         prefetch_exiftool([i for i in candidates if _is_stale(i, _sidecar_path(i))])

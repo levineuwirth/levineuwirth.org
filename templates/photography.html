@@ -25,11 +25,22 @@
                 $endif$
             </header>
 
+            <!-- A11: an authored `alt:` field wins over the title. Place
+                 names repeat across frames and rarely describe what a
+                 reader who cannot see the photograph needs to know.
+                 P04: this is the page's primary photograph and its LCP
+                 candidate — it is discovered eagerly and at high fetch
+                 priority. Every other photograph on the site stays lazy.
+                 P01: and because it is eager, `sizes` has to be written
+                 out: sizes="auto" is defined only for a lazy image, and
+                 the preload scanner needs a width before layout anyway.
+                 The slot is the 800px body column, less the 30px gutters
+                 once the viewport is narrower than the column plus them. -->
             <figure class="photo-figure">
                 $if(photo-url)$
-                <picture>$if(photo-webp-url)$<source srcset="$photo-webp-url$" type="image/webp">$endif$<img src="$photo-url$" alt="$title$" loading="lazy" decoding="async" data-lightbox="true"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$$if(camera)$ data-photo-camera="$camera$"$endif$$if(lens)$ data-photo-lens="$lens$"$endif$$if(film)$ data-photo-film="$film$"$endif$$if(exposure)$ data-photo-exposure="$exposure$"$endif$$if(captured-display)$ data-photo-captured="$captured-display$"$endif$$if(location)$ data-photo-location="$location$"$endif$></picture>
+                <picture>$if(photo-webp-srcset)$<source srcset="$photo-webp-srcset$" type="image/webp" sizes="(min-width: 860px) 800px, calc(100vw - 60px)">$endif$<img src="$photo-url$"$if(photo-srcset)$ srcset="$photo-srcset$" sizes="(min-width: 860px) 800px, calc(100vw - 60px)"$endif$ alt="$if(alt)$$alt$$else$$title$$endif$" loading="eager" fetchpriority="high" decoding="async" data-lightbox="true"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$$if(camera)$ data-photo-camera="$camera$"$endif$$if(lens)$ data-photo-lens="$lens$"$endif$$if(film)$ data-photo-film="$film$"$endif$$if(exposure)$ data-photo-exposure="$exposure$"$endif$$if(captured-display)$ data-photo-captured="$captured-display$"$endif$$if(location)$ data-photo-location="$location$"$endif$></picture>
                 $else$$if(photo)$
-                <img src="$photo$" alt="$title$" loading="lazy" decoding="async" data-lightbox="true"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$$if(camera)$ data-photo-camera="$camera$"$endif$$if(lens)$ data-photo-lens="$lens$"$endif$$if(film)$ data-photo-film="$film$"$endif$$if(exposure)$ data-photo-exposure="$exposure$"$endif$$if(captured-display)$ data-photo-captured="$captured-display$"$endif$$if(location)$ data-photo-location="$location$"$endif$>
+                <img src="$photo$" alt="$if(alt)$$alt$$else$$title$$endif$" loading="eager" fetchpriority="high" decoding="async" data-lightbox="true"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$$if(camera)$ data-photo-camera="$camera$"$endif$$if(lens)$ data-photo-lens="$lens$"$endif$$if(film)$ data-photo-film="$film$"$endif$$if(exposure)$ data-photo-exposure="$exposure$"$endif$$if(captured-display)$ data-photo-captured="$captured-display$"$endif$$if(location)$ data-photo-location="$location$"$endif$>
                 $endif$$endif$
                 $if(abstract)$<figcaption class="photo-caption">$abstract$</figcaption>$endif$
             </figure>

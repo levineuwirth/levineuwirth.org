@@ -91,13 +91,20 @@
     --bg-offset:       #f2f0eb;
     --text:            #1a1a1a;
     --text-muted:      #555555;
-    --text-faint:      #888888;
+    /* --text-faint was #888888: 3.34:1 on --bg and 3.11:1 on --bg-offset,
+       below the 4.5:1 that WCAG 2.2 SC 1.4.3 asks of this small,
+       normal-weight text (card metadata, portal descriptions, the Portals
+       button, footer). #6e6a64 is the same warm neutral one step down the
+       ramp — 5.07:1 on --bg, 4.72:1 on --bg-offset, 4.85:1 on the
+       #f5f3ee photo card. The quiet register is carried by size, weight
+       and letterspacing in the components, not by unreadable ink. */
+    --text-faint:      #6e6a64;
     --border:          #cccccc;
     --border-muted:    #aaaaaa;
 
     /* Link colors */
     --link:            #1a1a1a;
-    --link-underline:  #888888;
+    --link-underline:  #6e6a64;
     --link-hover:      #1a1a1a;
     --link-hover-underline: #1a1a1a;
     --link-visited:    #444444;
@@ -207,12 +214,16 @@
     --bg-offset:       #4a3324;
     --text:            #ead0a0;   /* warm microfoam — golden cream */
     --text-muted:      #d0b888;
-    --text-faint:      #b09575;
+    /* --text-faint was #b09575: 3.66:1 on --bg, 3.90:1 on --bg-nav.
+       #c6ac88 keeps the warm-tan hue and lands at 4.78:1 / 5.09:1 /
+       5.39:1 across --bg, --bg-nav and --bg-offset. It sits one clear
+       step below --text-muted, so the hierarchy survives. */
+    --text-faint:      #c6ac88;
     --border:          #7a5d44;
     --border-muted:    #6a4f38;
 
     --link:            #ead0a0;
-    --link-underline:  #b09575;
+    --link-underline:  #c6ac88;
     --link-hover:      #f5e6c0;
     --link-hover-underline: #f5e6c0;
     --link-visited:    #d0b888;
@@ -326,7 +337,8 @@ textarea:focus-visible {
     outline-offset: 2px;
 }
 
-img, video, svg {
+img, video, svg,
+embed, object, iframe {
     max-width: 100%;
     height: auto;
 }
@@ -335,4 +347,45 @@ hr {
     border: none;
     border-top: 1px solid var(--border);
     margin: 3.3rem 0; /* Two strict line-heights */
+}
+
+/* ============================================================
+   VISUALLY HIDDEN
+   Present for assistive technology and for the document outline,
+   absent from the visual design. Zero-size with clip-path rather
+   than display:none or visibility:hidden, both of which remove the
+   content from the accessibility tree as well. Contributes no
+   layout, so it can sit inside a mask-image affordance (the
+   content divider's New link) without disturbing it.
+   ============================================================ */
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ============================================================
+   HIDDEN ATTRIBUTE
+   The UA stylesheet's `[hidden] { display: none }` carries no
+   specificity weight against a component rule such as
+   `.item-card { display: flex }`, so list-pagination.js could set
+   `el.hidden = true` on a card and leave it fully rendered and in
+   the accessibility tree. Restate the rule with !important so the
+   attribute means what it says everywhere.
+
+   Nothing on this site relies on a [hidden] element still being
+   displayed: every existing `[hidden]` selector (gallery overlay
+   and caption, library filter panel, memento-mori tooltip and
+   backdrop) already declares `display: none` itself.
+   ============================================================ */
+
+[hidden] {
+    display: none !important;
 }

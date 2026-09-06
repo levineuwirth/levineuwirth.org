@@ -53,6 +53,7 @@ import           Compilers                  (readerOpts, writerOpts)
 import           Filters                    (preprocessSource)
 import qualified Patterns                   as P
 import           ArchiveIndex               (archiveSlugFor)
+import           Utils                      (canonicalUrlPath)
 
 -- ---------------------------------------------------------------------------
 -- Link-with-context entry (intermediate, saved by the "links" pass)
@@ -382,7 +383,12 @@ toSourcePairs item = do
     let ident0   = setVersion Nothing (itemIdentifier item)
     mRoute       <- getRoute ident0
     meta         <- getMetadata ident0
-    let srcUrl   = maybe "" (\r -> "/" ++ r) mRoute
+    -- The href a reader clicks, so it is the canonical directory form —
+    -- not the raw route, which for a directory-routed essay ends in
+    -- index.html and would be the site's only surviving link to the
+    -- second spelling of a page (audit C03). This is the display URL
+    -- only; the join key is 'normaliseUrl', which strips both spellings.
+    let srcUrl   = maybe "" canonicalUrlPath mRoute
     let title    = fromMaybe "(untitled)" (lookupString "title" meta)
     let abstract = fromMaybe "" (lookupString "abstract" meta)
     case mRoute of

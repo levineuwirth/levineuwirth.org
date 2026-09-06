@@ -1,5 +1,8 @@
 ---
 title: Current
+description: >-
+  A working index of what I am building, writing, and thinking through
+  right now, rebuilt whenever an entry moves.
 history:
   - date: "2026-08-30"
   - date: "2026-04-26"

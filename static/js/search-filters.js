@@ -2,8 +2,8 @@
  *
  * Loads /data/epistemic-meta.json (a map of URL → epistemic fields) and
  * /data/archive-meta.json (a map of /archive/ page URL → link-rot status)
- * and hides search results whose source page doesn't match the active
- * filters.  Works for both Pagefind keyword results and semantic results.
+ * and restricts search results to pages matching the active filters.
+ * Works for both Pagefind keyword results and semantic results.
  *
  * Naming: the epistemic `status` filter (draft / working model / …) and
  * the archive link status (live / moved / rotted / error) are distinct
@@ -12,6 +12,33 @@
  *
  * Reuses the same CSS classes and filter-panel markup as library.html
  * so the two pages look and behave identically.
+ *
+ * Where filtering happens (F04)
+ * -----------------------------
+ * Semantic: filtering is pushed *into* the ranker via
+ * window.lnSemanticSearch.setResultFilter, so it runs over the whole
+ * scored list before the top-8 cut. Excluding a high-ranked passage now
+ * promotes the next passing one instead of leaving a hole. (If an older
+ * cached semantic-search.js is in play and the hook is absent, this file
+ * falls back to the previous hide-after-render behaviour.)
+ *
+ * Keyword: Pagefind ranks, counts, and paginates inside its own bundle
+ * and its index carries no epistemic fields, so hits can only be removed
+ * after render. Two corrections keep that honest: the result count and
+ * the empty state are recomputed from the filtered set rather than
+ * repeating Pagefind's unfiltered total, and further result pages are
+ * loaded automatically until enough passing results are on screen (or the
+ * result set is exhausted). Moving the epistemic fields into the Pagefind
+ * index as real filters would be the structural fix and would let
+ * Pagefind's own filter API do this before ranking.
+ *
+ * Policy for unclassified pages
+ * -----------------------------
+ * passes(null) === true: a page with no epistemic frontmatter (the vita,
+ * indexes, utility pages) is never removed by the epistemic filters —
+ * those narrow the classified material only. The archive/link-status
+ * filters do apply to every result. This is stated to the reader in the
+ * filter panel (content/search.md, .filter-note).
  */
 (function () {
     'use strict';
@@ -178,25 +205,165 @@
 
     /* ---- Apply filters to rendered results ---- */
 
+    /* Does one result URL survive the active filters? */
+    function accepts(url) {
+        return passesArchive(url) && passes(url ? epistemicMeta[url] : null);
+    }
+
+    /* ---- Pagefind ---- */
+
+    /* Enough visible hits to make a first page worth reading. Mirrors
+       Pagefind UI's default pageSize, so an unfiltered search and a
+       filtered one show a comparable amount before "Load more". */
+    var PF_TARGET_VISIBLE = 5;
+    /* Hard stop so a filter that excludes nearly everything cannot walk
+       the entire index one page at a time. */
+    var PF_MAX_AUTOLOAD   = 10;
+
+    var pfAutoloads   = 0;
+    var pfLastCount   = -1;
+    var pfTerm        = null;
+    var pfOriginalMsg = null;   /* last message Pagefind itself wrote */
+    var pfWrittenMsg  = null;   /* last message we wrote over it */
+
+    function pfInput()   { return document.querySelector('#search .pagefind-ui__search-input'); }
+    function pfMessage() { return document.querySelector('#search .pagefind-ui__message'); }
+    function pfMoreBtn() {
+        var b = document.querySelector('#search .pagefind-ui__button');
+        return (b && !b.disabled) ? b : null;
+    }
+
+    /* Pagefind's English message is "[COUNT] results for [TERM]" or
+       "No results for [TERM]"; a leading integer is the count, its
+       absence means zero. Returns null when no Pagefind-authored message
+       has been seen yet. */
+    function pfTotal() {
+        if (pfOriginalMsg === null) return null;
+        var m = /^\s*(\d[\d,]*)\b/.exec(pfOriginalMsg);
+        return m ? parseInt(m[1].replace(/,/g, ''), 10) : 0;
+    }
+
+    function pfWriteMessage(el, text) {
+        if (!el) return;
+        /* The mutation observer below watches this subtree; writing the
+           same string again would re-trigger it forever. */
+        if (el.textContent === text) return;
+        el.textContent = text;
+        pfWrittenMsg = text;
+    }
+
+    function pfRestoreMessage(el) {
+        if (!el || pfOriginalMsg === null) return;
+        if (el.textContent !== pfWrittenMsg) return;   /* Pagefind owns it again */
+        pfWriteMessage(el, pfOriginalMsg);
+        pfWrittenMsg = null;
+    }
+
+    /* Load further result pages until enough passing results are visible.
+       Each click is gated on the previous one having actually added
+       results, so a stalled or exhausted list stops the loop. */
+    function pfLoadMore(visible, total) {
+        var btn = pfMoreBtn();
+        if (!btn) return;
+        if (total !== null && visible >= Math.min(PF_TARGET_VISIBLE, total)) return;
+        if (visible >= PF_TARGET_VISIBLE) return;
+        if (pfAutoloads >= PF_MAX_AUTOLOAD) return;
+
+        var count = document.querySelectorAll('#search .pagefind-ui__result').length;
+        if (count === pfLastCount) return;   /* last click produced nothing new */
+        pfLastCount = count;
+        pfAutoloads++;
+        btn.click();
+    }
+
     function applyToPagefind() {
+        var msgEl   = pfMessage();
+        var results = document.querySelectorAll('#search .pagefind-ui__result');
+
+        /* A new query resets the autoload budget and the remembered
+           message. */
+        var input = pfInput();
+        var term  = input ? input.value.trim() : '';
+        if (term !== pfTerm) {
+            pfTerm        = term;
+            pfAutoloads   = 0;
+            pfLastCount   = -1;
+            pfOriginalMsg = null;
+            pfWrittenMsg  = null;
+        }
+
+        /* Capture Pagefind's own text before overwriting it; anything we
+           did not write ourselves is authored by Pagefind. */
+        if (msgEl && msgEl.textContent !== pfWrittenMsg) {
+            pfOriginalMsg = msgEl.textContent;
+        }
+
         if (!epistemicMeta || !hasActiveFilters()) {
-            /* Remove any previous filtering */
-            document.querySelectorAll('.pagefind-ui__result.search-filtered').forEach(function (el) {
-                el.classList.remove('search-filtered');
-            });
+            results.forEach(function (el) { el.classList.remove('search-filtered'); });
+            pfRestoreMessage(msgEl);
             return;
         }
-        document.querySelectorAll('.pagefind-ui__result').forEach(function (el) {
+
+        var visible = 0;
+        results.forEach(function (el) {
             var link = el.querySelector('.pagefind-ui__result-link');
             if (!link) return;
-            var url = normUrl(link.getAttribute('href'));
-            var meta = url ? epistemicMeta[url] : null;
-            el.classList.toggle('search-filtered',
-                !(passesArchive(url) && passes(meta)));
+            var ok = accepts(normUrl(link.getAttribute('href')));
+            el.classList.toggle('search-filtered', !ok);
+            if (ok) visible++;
+        });
+
+        var total = pfTotal();
+        pfSummarise(msgEl, visible, total, term);
+        pfLoadMore(visible, total);
+    }
+
+    /* Counts and empty state describe the filtered set, not Pagefind's
+       unfiltered total. */
+    function pfSummarise(msgEl, visible, total, term) {
+        if (!msgEl || total === null || total === 0) return;  /* nothing filtered yet */
+        var about = term ? ' for “' + term + '”' : '';
+        var more  = !!pfMoreBtn();
+        var text;
+        if (visible === 0) {
+            text = more
+                ? 'Looking for results' + about + ' that match the active filters…'
+                : 'No results' + about + ' match the active filters (' + total
+                  + ' before filtering).';
+        } else if (more) {
+            text = visible + ' matching result' + (visible === 1 ? '' : 's')
+                 + about + ' so far — ' + total + ' found before filtering.';
+        } else {
+            text = visible + ' of ' + total + ' result' + (total === 1 ? '' : 's')
+                 + about + ' match the active filters.';
+        }
+        pfWriteMessage(msgEl, text);
+    }
+
+    /* ---- Semantic ---- */
+
+    function semanticHook() {
+        var api = window.lnSemanticSearch;
+        return (api && typeof api.setResultFilter === 'function') ? api : null;
+    }
+
+    /* Push the predicate into the ranker so it applies before top-K. */
+    function applyToSemantic() {
+        var api = semanticHook();
+        if (!api) { applyToSemanticFallback(); return; }
+        if (!epistemicMeta || !hasActiveFilters()) {
+            api.setResultFilter(null);
+            return;
+        }
+        api.setResultFilter(function (entry) {
+            return accepts(normUrl(entry && entry.url));
         });
     }
 
-    function applyToSemantic() {
+    /* Pre-hook behaviour, kept only for a stale cached semantic-search.js:
+       hide already-rendered results. Ranking is not corrected in this
+       path — it cannot be from out here. */
+    function applyToSemanticFallback() {
         if (!epistemicMeta || !hasActiveFilters()) {
             document.querySelectorAll('.semantic-result.search-filtered').forEach(function (el) {
                 el.classList.remove('search-filtered');
@@ -206,10 +373,8 @@
         document.querySelectorAll('.semantic-result').forEach(function (el) {
             var link = el.querySelector('.semantic-result-title');
             if (!link) return;
-            var url = normUrl(link.getAttribute('href'));
-            var meta = url ? epistemicMeta[url] : null;
             el.classList.toggle('search-filtered',
-                !(passesArchive(url) && passes(meta)));
+                !accepts(normUrl(link.getAttribute('href'))));
         });
     }
 
@@ -381,23 +546,25 @@
             });
         }
 
-        /* Observe Pagefind result changes to re-apply filters.
-           Pagefind dynamically rebuilds the results container. */
+        /* Observe Pagefind result changes to re-apply filters, recompute
+           the count, and pull further pages. Pagefind dynamically rebuilds
+           the results container, and applyToPagefind is written to be
+           idempotent (it rewrites the message only when the text actually
+           changes) so it cannot drive this observer in a loop. */
         var searchEl = document.getElementById('search');
         if (searchEl) {
             new MutationObserver(function () {
-                if (hasActiveFilters() && epistemicMeta) {
-                    applyToPagefind();
-                }
+                if (epistemicMeta) applyToPagefind();
             }).observe(searchEl, { childList: true, subtree: true });
         }
 
-        /* Observe semantic results container */
+        /* Semantic results are filtered inside the ranker now, so this
+           observer only matters for the no-hook fallback path. */
         var semanticEl = document.getElementById('semantic-results');
-        if (semanticEl) {
+        if (semanticEl && !semanticHook()) {
             new MutationObserver(function () {
                 if (hasActiveFilters() && epistemicMeta) {
-                    applyToSemantic();
+                    applyToSemanticFallback();
                 }
             }).observe(semanticEl, { childList: true, subtree: true });
         }

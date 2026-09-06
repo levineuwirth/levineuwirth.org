@@ -20,11 +20,14 @@ import           Text.Pandoc.Options        (ReaderOptions (..), WriterOptions (
                                              HTMLMathMethod (..))
 import           Text.Pandoc.Extensions     (enableExtension, Extension (..))
 import qualified Data.Text                  as T
+import           Control.Monad              (forM_, void)
+import           Data.Char                  (toLower)
 import           Data.Maybe                 (fromMaybe)
 import           System.FilePath            (takeDirectory)
 import           Utils                      (wordCount, readingTime, escapeHtml)
 import           Filters                    (applyAll, preprocessSource)
 import qualified Citations
+import qualified Filters.Headings           as Headings
 import qualified Filters.Score              as Score
 import qualified Filters.Viz               as Viz
 
@@ -53,6 +56,18 @@ writerOpts = defaultHakyllWriterOptions
 -- ---------------------------------------------------------------------------
 -- Inline stringification (local, avoids depending on Text.Pandoc.Shared)
 -- ---------------------------------------------------------------------------
+
+-- | Frontmatter booleans arrive as strings; accept the spellings YAML
+--   users reach for and treat anything else as unset.
+parseBool :: String -> Maybe Bool
+parseBool v = case map toLower v of
+    "true"  -> Just True
+    "yes"   -> Just True
+    "1"     -> Just True
+    "false" -> Just False
+    "no"    -> Just False
+    "0"     -> Just False
+    _       -> Nothing
 
 stringify :: [Inline] -> T.Text
 stringify = T.concat . map inlineToText
@@ -124,6 +139,30 @@ buildTOC doc = renderTOC (buildTree (collectHeadings doc))
 -- Compilers
 -- ---------------------------------------------------------------------------
 
+-- | Register the bibliography inputs a citeproc run reads as tracked
+--   Hakyll dependencies: the page's own @.bib@ file and every CSL style
+--   under @data\/@.
+--
+--   Both are read through 'unsafeCompiler' (and, for the CSL, from a path
+--   hard-coded in "Citations"), so nothing else puts them in the
+--   dependency graph. Only files some rule actually claims can be
+--   'load'ed — an identifier outside Hakyll's universe is a hard error,
+--   and can never be out of date either — hence the 'getMatches' guard
+--   and the matching no-route rules in "Site".
+--
+--   Scope note: the dependency is registered whether or not the page ends
+--   up citing anything, because that is only known after citeproc has
+--   run. The cost is recompiling non-citing pages when a @.bib@ changes;
+--   the alternative is a page whose bibliography silently rots.
+trackBibliographyInputs :: Identifier -> Compiler ()
+trackBibliographyInputs bibIdent = do
+    track (fromList [bibIdent])
+    track ("data/*.csl" .&&. hasNoVersion)
+  where
+    track pat = do
+        ids <- getMatches pat
+        forM_ ids $ \i -> void (load i :: Compiler (Item String))
+
 -- | Shared compiler pipeline parameterised on reader options.
 --   Saves toc/word-count/reading-time/bibliography snapshots.
 essayCompilerWith :: ReaderOptions -> Compiler (Item String)
@@ -136,7 +175,16 @@ essayCompilerWith rOpts = do
     let body' = itemSetBody (preprocessSource src) body
 
     -- Parse to Pandoc AST.
-    pandocItem <- readPandocWith rOpts body'
+    --
+    -- Heading levels are normalised immediately after parsing, before
+    -- anything reads or emits a heading: the imported research essays use
+    -- h1 for their body sections (the page title is an h1 from the
+    -- template), which left the document with a dozen top-level headings
+    -- and their major sections out of the TOC entirely, since
+    -- 'collectHeadings' collects h2/h3. 'Filters.Headings.normalizeLevels'
+    -- is the identity for every document that already starts at h2.
+    rawPandoc  <- readPandocWith rOpts body'
+    let pandocItem = fmap Headings.normalizeLevels rawPandoc
 
     -- Get further-reading keys from Hakyll metadata (YAML frontmatter is stripped
     -- before being passed to readPandocWith, so we read it from Hakyll instead).
@@ -144,6 +192,17 @@ essayCompilerWith rOpts = do
     meta  <- getMetadata ident
     let frKeys = map T.pack $ fromMaybe [] (lookupStringList "further-reading" meta)
     let bibPath = T.pack $ fromMaybe "data/bibliography.bib" (lookupString "bibliography" meta)
+
+    -- Bibliography inputs are read by citeproc inside 'unsafeCompiler',
+    -- which is invisible to Hakyll's dependency graph: without an explicit
+    -- 'load' an edit to a .bib entry (or to the CSL style) leaves every
+    -- already-compiled page serving its cached bibliography. Loading the
+    -- entry's own .bib and the CSL registers both as tracked inputs.
+    -- Guarded by 'getMatches' because 'load' on an identifier no rule
+    -- claims is a hard error, and 'bibliography:' is author-supplied.
+    -- The synthetic /bibliography/ pages do the same over every .bib file
+    -- (see build/Site.hs).
+    trackBibliographyInputs (fromFilePath (T.unpack bibPath))
 
     -- Run citeproc, transform citation spans → superscripts, extract bibliography.
     (pandocWithCites, bibHtml, furtherHtml) <- unsafeCompiler $
@@ -161,7 +220,13 @@ essayCompilerWith rOpts = do
     -- Apply remaining AST-level filters (sidenotes, smallcaps, links, etc.).
     -- applyAll touches the filesystem via Images.apply (webp existence
     -- check), so it runs through unsafeCompiler.
-    pandocFiltered <- unsafeCompiler $ applyAll srcDir pandocWithViz
+    -- Opt-in figure numbering. Off unless the page asks for it: three
+    -- essays already number by hand in three different conventions, and
+    -- numbering them automatically would double up.
+    let numberFigures =
+            fromMaybe False (lookupString "figure-numbering" meta >>= parseBool)
+
+    pandocFiltered <- unsafeCompiler $ applyAll numberFigures srcDir pandocWithViz
     let pandocItem'    = itemSetBody pandocFiltered pandocItem
 
     -- Build TOC from the filtered AST.
@@ -217,7 +282,7 @@ photographyCompiler = do
     filePath   <- getResourceFilePath
     let srcDir  = takeDirectory filePath
     pandocItem <- readPandocWith readerOpts body'
-    pandocFiltered <- unsafeCompiler $ applyAll srcDir (itemBody pandocItem)
+    pandocFiltered <- unsafeCompiler $ applyAll False srcDir (itemBody pandocItem)
     let pandocItem' = itemSetBody pandocFiltered pandocItem
     return (writePandocWith writerOpts pandocItem')
 
@@ -237,7 +302,7 @@ sidecarCompiler = do
     filePath   <- getResourceFilePath
     let srcDir  = takeDirectory filePath
     pandocItem <- readPandocWith readerOpts body'
-    pandocFiltered <- unsafeCompiler $ applyAll srcDir (itemBody pandocItem)
+    pandocFiltered <- unsafeCompiler $ applyAll False srcDir (itemBody pandocItem)
     let pandocItem' = itemSetBody pandocFiltered pandocItem
     let htmlItem    = writePandocWith writerOpts pandocItem'
     _ <- saveSnapshot "body" htmlItem
@@ -252,7 +317,7 @@ pageCompiler = do
     filePath   <- getResourceFilePath
     let srcDir  = takeDirectory filePath
     pandocItem <- readPandocWith readerOpts body'
-    pandocFiltered <- unsafeCompiler $ applyAll srcDir (itemBody pandocItem)
+    pandocFiltered <- unsafeCompiler $ applyAll False srcDir (itemBody pandocItem)
     let pandocItem' = itemSetBody pandocFiltered pandocItem
     let htmlItem    = writePandocWith writerOpts pandocItem'
     _ <- saveSnapshot "word-count"   (itemSetBody (show (wordCount src))   htmlItem)

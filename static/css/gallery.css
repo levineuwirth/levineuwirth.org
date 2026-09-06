@@ -390,6 +390,30 @@
     opacity: 1;
 }
 
+/* A07: on score figures the glyph is a real <button> (a <figure> may not
+   take role="button"), so it needs pointer events of its own and must
+   shed the UA button chrome. It is revealed on hover like the decorative
+   glyph was, and unconditionally whenever it holds focus — otherwise the
+   only keyboard control on the figure would be invisible. */
+.exhibit-expand-btn {
+    pointer-events: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font: inherit;
+    color: var(--text-faint);
+}
+
+.exhibit-expand-btn:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--text);
+    outline-offset: 2px;
+}
+
+.exhibit-expand-btn:hover {
+    color: var(--text);
+}
+
 .score-caption {
     font-family: var(--font-sans);
     font-size: 0.82rem;

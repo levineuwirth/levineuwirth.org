@@ -352,11 +352,13 @@ clientPaginatedRule tag pat sidecarSet saCtx baseCtx = do
     route idRoute
     compile $ do
         scCtx <- sidecarContext sidecarSet tag
+        tdCtx <- tagDescriptionField sidecarSet tag
         items <- recentFirstByDisplay =<< loadAll (pat .&&. hasNoVersion)
         let ctx = listField "items" (tagItemCtx tag) (return items)
                <> constField "tag"       tag
                <> constField "title"     tag
                <> constField "list-page" "true"
+               <> tdCtx
                <> saCtx
                <> scCtx
                <> baseCtx
@@ -364,6 +366,31 @@ clientPaginatedRule tag pat sidecarSet saCtx baseCtx = do
             >>= loadAndApplyTemplate "templates/tag-index.html"  ctx
             >>= loadAndApplyTemplate "templates/default.html"    ctx
             >>= relativizeUrls
+
+-- | @$description$@ for a tag index, from the tag's own sidecar tooltip
+--   when it has one.
+--
+--   Composed /before/ @baseCtx@ so it wins over 'Contexts.descriptionField'.
+--   That fallback excerpts the page's first body paragraph, which on a
+--   list page is the first /item's/ abstract — a description of one essay,
+--   presented as a description of the index. Audit C01 asks for a clear
+--   fallback policy for list pages; this is it, and the @tooltip:@ in
+--   @content\/tag-meta\/\<tag\>.md@ (the same string the home-page portal
+--   grid shows on hover) is the author's own one-line gloss of the tag.
+tagDescriptionField :: Set Identifier -> String -> Compiler (Context String)
+tagDescriptionField sidecarSet tag = do
+    mTip <- if sidecarId `Set.member` sidecarSet
+                then do
+                    meta <- getMetadata sidecarId
+                    return (lookupString "tooltip" meta >>= nonEmpty)
+                else return Nothing
+    return $ constField "description" $ case mTip of
+        Just tip -> filed ++ " \8212 " ++ tip ++ "."
+        Nothing  -> filed ++ "."
+  where
+    sidecarId  = sidecarIdentifier tag
+    filed      = "Everything on this site filed under \8220" ++ tag ++ "\8221"
+    nonEmpty x = if all isSpace x then Nothing else Just x
 
 -- | Display date of an identifier: the most-recent @revised:@ entry's
 --   date when present and parseable, else the creation date. Mirrors
@@ -410,12 +437,14 @@ serverPaginatedRule tag pat sidecarSet saCtx baseCtx = do
         route idRoute
         compile $ do
             scCtx <- sidecarContext sidecarSet tag
+            tdCtx <- tagDescriptionField sidecarSet tag
             items <- recentFirstByDisplay =<< loadAll (pat' .&&. hasNoVersion)
             let ctx = listField "items" (tagItemCtx tag) (return items)
                    <> paginateContext paginate pageNum
                    <> constField "tag"       tag
                    <> constField "title"     tag
                    <> constField "list-page" "true"
+                   <> tdCtx
                    <> saCtx
                    <> scCtx
                    <> baseCtx

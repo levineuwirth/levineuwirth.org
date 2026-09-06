@@ -9,27 +9,11 @@
     $cp-chrono-html$
 </main>
 $partial("templates/partials/page-footer.html")$
-<script>
-(function () {
-    'use strict';
-    var themed = document.getElementById('cp-themed');
-    var chrono = document.getElementById('cp-chrono');
-    var btns   = document.querySelectorAll('.cp-toggle-btn');
-
-    function show(id) {
-        themed.hidden = (id !== 'cp-themed');
-        chrono.hidden = (id !== 'cp-chrono');
-        btns.forEach(function (b) {
-            b.classList.toggle('is-active', b.dataset.target === id);
-        });
-        localStorage.setItem('cp-view', id);
-    }
-
-    btns.forEach(function (btn) {
-        btn.addEventListener('click', function () { show(btn.dataset.target); });
-    });
-
-    var saved = localStorage.getItem('cp-view');
-    if (saved === 'cp-chrono') show('cp-chrono');
-}());
-</script>
+<!-- The view toggle's behaviour lives in /js/commonplace.js, loaded from
+     templates/default.html behind the same commonplace flag that gates
+     /css/commonplace.css in head.html. It used to be an inline script
+     here — the one page that would have violated the script-src in
+     nginx/security-headers.conf, which is why that policy is still
+     report-only. Externalising it is the prerequisite for enforcing it.
+     NB: template syntax is interpolated inside HTML comments too, so no
+     dollar signs in this note. -->

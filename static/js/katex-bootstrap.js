@@ -10,15 +10,31 @@
    <script> tag in templates/default.html, which blocked any future
    strict CSP. Externalized here so the entire site can run with
    `script-src 'self'` plus a single CDN allowance.
+
+   Dynamic content (smaller finding 7): rendering used to happen once, on
+   DOMContentLoaded, so math inside a transcluded passage stayed as raw
+   LaTeX. It now takes a root and listens for `ln:content-added`. Each
+   element is marked once rendered, because re-rendering a finished block
+   would typeset KaTeX's own output as if it were source.
 */
 (function () {
     'use strict';
 
-    function renderAll() {
+    function renderIn(root) {
         if (typeof katex === 'undefined') return;
-        var nodes = Array.from(document.getElementsByClassName('math'));
+        var scope = root && root.querySelectorAll ? root : document;
+
+        var nodes = Array.from(scope.querySelectorAll('.math'));
+        /* querySelectorAll only looks *below* the root; a transcluded
+           fragment can itself be the math element. */
+        if (scope.nodeType === 1 && scope.classList
+            && scope.classList.contains('math')) {
+            nodes.unshift(scope);
+        }
+
         nodes.forEach(function (el) {
             if (el.tagName !== 'SPAN' && el.tagName !== 'DIV') return;
+            if (el.dataset.katexRendered === '1') return;
             var src = el.textContent;
             try {
                 katex.render(src, el, {
@@ -26,15 +42,24 @@
                     output:       'htmlAndMathml',
                     throwOnError: false
                 });
+                el.dataset.katexRendered = '1';
             } catch (_) {
                 /* leave the original source visible if KaTeX rejects it */
             }
         });
     }
 
+    window.renderMath = renderIn;
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', renderAll);
+        document.addEventListener('DOMContentLoaded', function () {
+            renderIn(document);
+        });
     } else {
-        renderAll();
+        renderIn(document);
     }
+
+    document.addEventListener('ln:content-added', function (e) {
+        renderIn(e.detail && e.detail.container);
+    });
 })();

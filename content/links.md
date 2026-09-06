@@ -1,6 +1,9 @@
 ---
 title: Links
 links: true
+description: >-
+  A directory of where else I exist on the internet, sorted into academic,
+  artistic, code, professional, and miscellaneous shelves.
 history:
   - date: "2026-05-03"
   - date: "2026-05-02"

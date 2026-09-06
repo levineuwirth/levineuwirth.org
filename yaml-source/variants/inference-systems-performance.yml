@@ -1,0 +1,71 @@
+version: 1
+extends: ai-infra-assurance
+description: Reusable CV for ML inference systems, accelerator performance, workload modeling, and cross-layer correctness roles.
+output: Levi-Neuwirth-CV-Inference-Systems-Performance.pdf
+document_title: Systems \& Research Engineer — AI Infrastructure \& Performance
+summary: >-
+  Systems and research engineer working across ML execution, accelerator
+  performance, and correctness. Current work builds and validates workload
+  profilers, execution DAGs, calibrated performance and proving-cost models,
+  and partition analyses for verifiable frontier-model inference, including
+  live NVIDIA B200 validation. Background includes low-level cryptographic
+  optimization, distributed systems, frontier-model evaluation, and formal
+  verification.
+
+sections:
+  - id: selected-experience
+    label: Selected Experience
+    entries:
+      - experience:mars-v
+      - experience:frontier-ai-contracting
+      - experience:shu-lab-undergrad
+
+  - id: performance-systems
+    label: Selected Performance \& Systems Work
+    entries:
+      - projects:pqc-avx2
+      - projects:levcs
+
+  - id: systems-correctness
+    label: Systems \& Correctness
+    page_break_before: true
+    entries:
+      - projects:weenix
+      - projects:networking-stack
+      - projects:proof-broker
+
+  - id: education
+    label: Education
+    entries:
+      - education:dtu-msc-cse
+      - education:brown-scb-math-cs
+
+  - id: selected-research
+    label: Selected Research / Talks
+    entries:
+      - presentations:mars-v-verified-inference
+      - publications:pqc-avx2-report
+
+  - id: technical-skills
+    label: Technical Skills
+    entries:
+      - skills:systems-performance
+      - skills:programming
+      - skills:ai-evaluation
+      - skills:verification
+      - skills:ml-ai
+      - skills:tools
+
+presentation_sets:
+  experience:
+    mars-v: inference-systems-performance
+    frontier-ai-contracting: inference-systems-performance
+
+overrides:
+  skills:
+    ai-evaluation:
+      label: ML correctness and evaluation
+      items:
+        - Frontier-model evaluation
+        - Evaluation-environment design
+        - Evaluator calibration

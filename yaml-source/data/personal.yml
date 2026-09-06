@@ -7,23 +7,27 @@ website_url: https://levineuwirth.org
 
 # Links shown in header, in order. Set 'resume_visible' / 'cv_visible' to control appearance.
 links:
-  - label: ORCID
+  - id: orcid
+    label: ORCID
     href: https://orcid.org/0009-0002-0162-3587
     display: "0009-0002-0162-3587"
     cv_visible: true
     resume_visible: false
-  - label: Forgejo
+  - id: forgejo
+    label: Forgejo
     href: https://git.levineuwirth.org/neuwirth
     display: git.levineuwirth.org/neuwirth
     cv_visible: true
     resume_visible: true
-  - label: GitHub
+  - id: github
+    label: GitHub
     href: https://github.com/levineuwirth
     display: github.com/levineuwirth
     cv_visible: true
     resume_visible: true
-  - label: LinkedIn
-    href: https://linkedin.com/in/levineuwirth
-    display: linkedin.com/in/levineuwirth
+  - id: linkedin
+    label: LinkedIn
+    href: https://www.linkedin.com/in/levi-neuwirth
+    display: linkedin.com/in/levi-neuwirth
     cv_visible: false
     resume_visible: true

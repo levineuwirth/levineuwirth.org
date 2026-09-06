@@ -429,6 +429,9 @@ archiveIndexRule entries =
                       <> constField "title"   "Archive"
                       <> constField "archive" "true"
                       <> constField "noindex" "true"
+                      <> constField "description"
+                            ("Local preservation snapshots of works cited "
+                             ++ "here, kept against link rot.")
                       <> (if null entries then mempty
                                           else constField "has-entries" "true")
                       <> siteCtx
@@ -447,6 +450,11 @@ archiveEntryCtx ae = mconcat
     [ constField "title"            (pvTitle pv)
     , constField "archive"          "true"
     , constField "noindex"          "true"
+    -- C01: without this the page falls through to a body excerpt, which
+    -- on an archive wrapper is the banner label ("Archived copy").
+    , constField "description"
+        ("Local preservation snapshot of " ++ meUrl me
+         ++ ", taken " ++ pvArchived pv ++ ".")
     , constField "original-url"     (meUrl me)
     , constField "archived"         (pvArchived pv)
     , constField "archive-type"     (pvType pv)

@@ -5,6 +5,9 @@ status: "Durable"
 confidence: 93
 tags: [meta]
 abstract: On the design, tools, and philosophy of this site — and by extension, its author.
+description: >-
+  Why this site is built the way it is: a personal website as a position
+  rather than a publication, and the design decisions that follow from it.
 history:
   - date: "2026-09-03"
   - date: "2026-08-31"

@@ -33,7 +33,7 @@ import Control.Exception        (catch, IOException)
 import Data.Aeson               (Value (..))
 import qualified Data.Aeson.KeyMap  as KM
 import qualified Data.Vector        as V
-import Data.List                (sortBy)
+import Data.List                (sortBy, nub)
 import Data.Maybe               (catMaybes, fromMaybe, listToMaybe)
 import Data.Ord                 (comparing, Down (..))
 import Data.Time.Calendar       (Day, diffDays)
@@ -83,6 +83,31 @@ gitDates fp = do
                 "" -> return ()
                 _  -> hPutStrLn stderr $ "[Stability] " ++ fp ++ ": " ++ err
             return $ filter (not . null) (lines out)
+
+-- | Commit dates for @fp@, newest-first, with a frontmatter fallback.
+--
+-- The repository history was restarted, which left every file looking
+-- like a single commit dated the day of the squash. Read literally that
+-- makes a four-year-old essay \"volatile\" — the label tracks the age of
+-- the /repository/ rather than the age of the /writing/, which is not
+-- what any reader means by it.
+--
+-- So the two sources are unioned rather than chosen between: real commit
+-- dates AND the dates in the page's own @history:@ frontmatter, deduped
+-- and newest-first. A count-based \"prefer git when it has more\" rule does
+-- not work here, because @make build@ auto-commits @content\/@ on every
+-- build — git quickly reports several commits, all dated today, which is
+-- exactly the misleading signal the fallback exists to correct. Files with
+-- no @history:@ frontmatter are unaffected. Those are authored facts
+-- about the document, they survive any future rewrite, and they feed
+-- all three consumers ('resolveStability', @$last-reviewed$@, and the
+-- version-history block) from one place. Git still wins whenever it has
+-- real history to report, so nothing changes for normally-tracked files.
+effectiveDates :: FilePath -> Metadata -> IO [String]
+effectiveDates fp meta =
+    (\gd -> sortBy (comparing Down) (nub (gd ++ fmDates))) <$> gitDates fp
+  where
+    fmDates = map vhDateIso (parseFmHistory meta)
 
 -- | Parse an ISO "YYYY-MM-DD" string to a 'Day'.
 parseIso :: String -> Maybe Day
@@ -153,7 +178,7 @@ resolveStability item = do
             then return $ fromMaybe "volatile" (lookupString "stability" meta)
             else do
                 today <- utctDay <$> getCurrentTime
-                stabilityFromDates today <$> gitDates srcPath
+                stabilityFromDates today <$> effectiveDates srcPath meta
 
 -- | Context field @$stability$@.
 -- Always resolves to a label; prefers frontmatter when the file is pinned.
@@ -173,7 +198,7 @@ lastReviewedField = field "last-reviewed" $ \item -> do
             -- Frontmatter convention is ISO; format it like the git
             -- branch so pinned pages don't render a raw "2026-05-01".
             then return $ fmtIso <$> lookupString "last-reviewed" meta
-            else fmap fmtIso . listToMaybe <$> gitDates srcPath
+            else fmap fmtIso . listToMaybe <$> effectiveDates srcPath meta
     case mDate of
         Nothing -> fail "no last-reviewed"
         Just d  -> return d
@@ -223,8 +248,8 @@ parseFmHistory meta =
     getString _          = Nothing
 
 -- | Get git log for a file as version history entries (date-only, no message).
-gitLogHistory :: FilePath -> IO [VHEntry]
-gitLogHistory fp = map (\d -> VHEntry (fmtIso d) d Nothing) <$> gitDates fp
+gitLogHistory :: FilePath -> Metadata -> IO [VHEntry]
+gitLogHistory fp meta = map (\d -> VHEntry (fmtIso d) d Nothing) <$> effectiveDates fp meta
 
 -- | Maximum entries shown by default in the version-history footer block.
 -- The remainder is revealed via a <details>/<summary> expand affordance,
@@ -248,7 +273,7 @@ loadVersionHistory item = do
         fmEntries   = newestFirst (parseFmHistory meta)
     if not (null fmEntries)
         then return fmEntries
-        else unsafeCompiler (newestFirst <$> gitLogHistory srcPath)
+        else unsafeCompiler (newestFirst <$> gitLogHistory srcPath meta)
 
 -- | Wrap a list of 'VHEntry' as Hakyll Items with unique paths so the
 -- list field works correctly inside @$for$@.

@@ -16,11 +16,32 @@ module Utils
     , trim
     , authorSlugify
     , authorNameOf
+    , canonicalUrlPath
     ) where
 
 import           Data.Char (isAlphaNum, isSpace, toLower)
-import           Data.List (dropWhileEnd)
+import           Data.List (dropWhileEnd, isSuffixOf)
 import qualified Data.Text as T
+
+-- | Public URL for a Hakyll route, in the directory form the site's own
+--   navigation, sitemap, and generated semantic metadata use:
+--   @essays\/foo\/index.html@ is the route, @\/essays\/foo\/@ the URL.
+--   Deliberate @.html@ routes (@\/about.html@, @\/new.html@) keep their
+--   extension — this normalizes one spelling of the same page, it does not
+--   restyle the site's URL scheme.
+--
+--   Lives here rather than in "Contexts" so that "Backlinks" — which
+--   "Contexts" imports, and which writes the href of every backlink
+--   source — can reach it without an import cycle.
+canonicalUrlPath :: FilePath -> String
+canonicalUrlPath r
+    | "index.html" `isSuffixOf` withSlash =
+        take (length withSlash - length ("index.html" :: String)) withSlash
+    | otherwise = withSlash
+  where
+    withSlash = case r of
+        ('/' : _) -> r
+        _         -> '/' : r
 
 -- | Count the number of words in a string (split on whitespace).
 wordCount :: String -> Int

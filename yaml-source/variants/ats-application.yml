@@ -1,0 +1,9 @@
+version: 1
+extends: application-cv
+abstract: true
+description: Reusable base for compact section-driven ATS résumés.
+layout: ats-resume
+header:
+  links:
+    - github
+    - linkedin

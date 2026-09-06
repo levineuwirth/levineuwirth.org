@@ -52,6 +52,10 @@
     };
 
     document.addEventListener('DOMContentLoaded', function () {
+        /* Only the view links live in .photography-mode-toggle now — the
+           slideshow launch was moved out of the group (A06), which also
+           keeps it out of this list, where it never belonged: it has no
+           layout mode and must not be marked current. */
         var toggleButtons = document.querySelectorAll('.photography-mode-toggle .mode-btn');
         var grid = document.querySelector('.photography-grid');
 
@@ -87,10 +91,21 @@
         function applyMode(mode) {
             if (!grid) return;
             grid.setAttribute('data-photography-mode', mode);
+            /* A06: the controls are a labelled navigation group, not a
+               tablist and not a set of toggle buttons, so the selected
+               view is stated with aria-current rather than aria-pressed
+               (which role="tab" did not permit in the first place). The
+               .is-active class is kept because the CSS still keys off it;
+               aria-current is what assistive technology reads. */
             toggleButtons.forEach(function (btn) {
                 var match = btn.dataset.mode === mode;
                 btn.classList.toggle('is-active', match);
-                btn.setAttribute('aria-pressed', match ? 'true' : 'false');
+                btn.removeAttribute('aria-pressed');
+                if (match) {
+                    btn.setAttribute('aria-current', 'true');
+                } else {
+                    btn.removeAttribute('aria-current');
+                }
             });
             if (mode === 'masonry') {
                 // Measure after the browser has applied the new column

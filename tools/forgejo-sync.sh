@@ -34,6 +34,12 @@
 # The token is required even for the survey: it lists your private repos,
 # and a tokenless listing would report them as missing and propose creating
 # duplicates.
+#
+# Token scope after a Forgejo upgrade: 15.0 tightened access-token scoping,
+# and repository creation now requires `write:user` (or `write:organization`)
+# alongside `write:repository`. If --create-missing starts returning HTTP 403
+# against a post-15.0 instance, that is why — regenerate the token with both
+# scopes. See forgejo/UPGRADE.md § 7.5.
 
 set -uo pipefail
 

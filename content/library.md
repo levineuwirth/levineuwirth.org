@@ -1,6 +1,9 @@
 ---
 title: Library
 library: true
+description: >-
+  Everything on this site, arranged by shelf: essays, fiction, poetry,
+  music, photography, research, and the rest.
 history:
   - date: "2026-04-26"
   - date: "2026-04-20"

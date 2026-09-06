@@ -30,6 +30,14 @@
 #
 # The database is SQLite at forgejo-data/gitea/gitea.db. Backups are
 # systemd/forgejo-backup.{service,timer} driving tools/forgejo-backup.sh.
+#
+#   VERSION — the pin below is 1.21.11-0, which left support in 2024. It
+#   reads that way because this file mirrors what is actually deployed, and
+#   editing the tag here without applying it would misdescribe the live
+#   instance. forgejo/UPGRADE.md is the tested runbook to 15.0.7 (LTS,
+#   supported to 2027-07-15): the hop sequence, the compose changes that
+#   come with it, and the rollback. Change this line as part of executing
+#   that, not before.
 
 services:
   forgejo:

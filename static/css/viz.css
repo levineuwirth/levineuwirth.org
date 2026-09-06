@@ -9,30 +9,57 @@
     break-inside: avoid;
 }
 
-.viz-figure svg {
+/* Wide figures pan instead of shrinking.
+   Matplotlib bakes label text at a fixed size in user units, so scaling a
+   figure to fit a narrow column scales its text down with it — fig_decomp
+   is 855 units wide and its 10-unit tick labels rendered near 4px on a
+   375px phone. --viz-natural-width (set per figure by Filters.Viz) is the
+   viewBox width in px, i.e. one user unit per pixel, which puts those
+   labels back at 10px. Below that width the wrapper scrolls; above it the
+   figure fills the column as before, so only genuinely oversized figures
+   ever show a scrollbar. */
+.viz-scroll {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+}
+
+.viz-scroll svg {
     width: 100%;
+    min-width: var(--viz-natural-width, 0);
     height: auto;
     display: block;
 }
 
-/* Force labels and text glyphs to use currentColor instead of default/hardcoded black */
-.viz-figure svg g[id^="text_"] path,
-.viz-figure svg g[id^="text_"] use {
-    fill: currentColor !important;
+/* The wrapper is focusable so the region is scrollable by keyboard, not
+   only by touch or trackpad (WCAG 2.1.1). That costs a tab stop on figures
+   narrow enough never to scroll, which is the cheaper of the two failures. */
+.viz-scroll:focus-visible {
+    outline: 2px solid var(--text);
+    outline-offset: 2px;
 }
 
-/* Ensure axis lines and ticks also follow currentColor */
-.viz-figure svg g[id^="axes_"] path,
-.viz-figure svg g[id^="xtick_"] line,
-.viz-figure svg g[id^="ytick_"] line,
-.viz-figure svg g[id^="xtick_"] use,
-.viz-figure svg g[id^="ytick_"] use {
-    stroke: currentColor !important;
-}
 
-/* Catch explicit styles on axes paths */
-.viz-figure svg g[id^="patch_"] path[style*="stroke: #000000"] {
-    stroke: currentColor !important;
+/* Theme default-coloured text.
+   Matplotlib writes no fill at all for ordinary text — it leans on SVG's
+   initial `fill: black` — so there is nothing for Filters.Viz.processColors
+   to rewrite and the colour has to come from CSS. An inherited value is
+   enough: `fill` inherits, and the glyph <use> elements pick it up from the
+   text group.
+
+   Inheriting rather than forcing is the point. These rules used to carry
+   !important, which also overrode fills a script had chosen deliberately:
+   cliffs_delta_heatmap.py labels its dark cells white, and !important
+   repainted those labels currentColor — near-black on near-black, i.e.
+   invisible, in light mode (the default). An explicit fill is an inline
+   style, which outranks an inherited value, so those labels now survive.
+
+   Strokes need no rule here: matplotlib always writes them explicitly
+   (`stroke: #000000`), so processColors rewrites them at build time. An
+   inherited fallback could not help anyway — an inline style would beat it —
+   and an !important one would trample deliberate stroke colours the same way
+   it trampled the fills. tests/test_viz.py asserts nothing black survives. */
+.viz-figure svg g[id^="text_"] {
+    fill: currentColor;
 }
 
 /* ============================================================
@@ -63,6 +90,16 @@
 /* ============================================================
    Captions (shared)
    ============================================================ */
+
+/* Figure N. label, injected by Filters.FigureRefs on opted-in pages.
+   Lives here rather than in images.css because both figure producers
+   share it; images.css styles generic <figure> and does not know about
+   numbering. */
+.figure-number {
+    font-style: normal;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+}
 
 .viz-caption {
     font-size: var(--text-size-small);

@@ -3,8 +3,16 @@
 
 Walks ``content/**/*.md``, resolves each piece's monogram candidate
 path, checks whether ``mark.svg`` exists and whether ``status:`` is
-set, and emits a table plus corpus-wide coverage percentages. Output
-is pure ASCII so it pipes / scrolls cleanly.
+set, validates the epistemic-figure fields against the vocabularies
+in ``build/Marks.hs``, and emits a table plus corpus-wide coverage
+percentages. Output is pure ASCII so it pipes / scrolls cleanly.
+
+The field validation exists because the generator degrades silently:
+``Marks.validate`` maps any off-vocabulary value to ``Nothing``, which
+is indistinguishable from an absent field, and an absent axis turns
+the figure's closed polygon into an open polyline. A one-word typo
+(``scope: moderate``, borrowed from the novelty / practicality scales)
+therefore opens the figure with no warning anywhere in the build.
 
 Run as::
 
@@ -46,6 +54,67 @@ PRIMARY_SECTIONS = ("essays", "blog", "poetry", "fiction", "music")
 SKIPPED_DIRS = ("photography", "drafts", "tag-meta")
 
 
+# Epistemic-figure field vocabularies. These MUST mirror the validators
+# in build/Marks.hs (``scopeValues`` and friends) — the generator
+# silently drops any value not on these lists, so a drift here means the
+# audit stops catching exactly the class of bug it was added for.
+ENUM_FIELDS: dict[str, tuple[str, ...]] = {
+    "scope": ("personal", "local", "average", "broad", "civilizational"),
+    "novelty": ("conventional", "moderate", "idiosyncratic", "innovative"),
+    "practicality": ("abstract", "low", "moderate", "high", "exceptional"),
+    "result-shape": ("positive", "negative", "mixed", "comparative",
+                     "descriptive"),
+    "peer-status": ("unreviewed", "under-review", "peer-reviewed",
+                    "published", "retracted"),
+}
+
+# Numeric axes, as (low, high) inclusive bounds. Same silent-drop
+# hazard: build/Marks.hs reads these with ``readMaybe``, so a
+# non-integer vanishes, and an out-of-range value puts the vertex
+# outside the roundel instead.
+INT_FIELDS: dict[str, tuple[int, int]] = {
+    "confidence": (0, 100),
+    "importance": (1, 5),
+    "evidence": (1, 5),
+}
+
+# ``confidence`` alone accepts a non-numeric escape hatch: a formal
+# proof opts out of a credence rather than claiming 100 (MARKS.md 4.3).
+CONFIDENCE_WORDS = ("proved", "proven")
+
+
+def field_problems(fm: dict) -> list[str]:
+    """Report epistemic fields whose values the generator would drop.
+
+    One human-readable string per bad field. An absent field is not a
+    problem here -- MARKS.md 3.3 makes partial figures legal -- only a
+    field that is *present and unusable*."""
+    problems: list[str] = []
+
+    for name, allowed in ENUM_FIELDS.items():
+        if name not in fm or fm[name] is None:
+            continue
+        value = str(fm[name]).strip().lower()
+        if value and value not in allowed:
+            problems.append(f"{name}: {fm[name]!s} (want {'|'.join(allowed)})")
+
+    for name, (low, high) in INT_FIELDS.items():
+        if name not in fm or fm[name] is None:
+            continue
+        raw = str(fm[name]).strip()
+        if name == "confidence" and raw.lower() in CONFIDENCE_WORDS:
+            continue
+        try:
+            value = int(raw)
+        except ValueError:
+            problems.append(f"{name}: {raw} (want an integer {low}-{high})")
+            continue
+        if not low <= value <= high:
+            problems.append(f"{name}: {raw} (want {low}-{high})")
+
+    return problems
+
+
 @dataclass
 class AuditRow:
     """One row of audit output for a single source file."""
@@ -54,6 +123,7 @@ class AuditRow:
     section: str
     has_monogram: bool
     has_status: bool
+    problems: list[str]
 
     @property
     def suggestion(self) -> str:
@@ -62,6 +132,8 @@ class AuditRow:
             actions.append("add mark.svg")
         if not self.has_status:
             actions.append("set status:")
+        if self.problems:
+            actions.append(f"fix {len(self.problems)} field value(s)")
         return ", ".join(actions)
 
 
@@ -126,6 +198,7 @@ def collect() -> list[AuditRow]:
                 section=section_of(md_path),
                 has_monogram=monogram_path(md_path).is_file(),
                 has_status="status" in fm and bool(str(fm["status"]).strip()),
+                problems=field_problems(fm),
             )
         )
 
@@ -153,7 +226,9 @@ def render_table(rows: list[AuditRow]) -> None:
     path_w = max(len(str(r.path)) for r in rows)
     path_w = min(path_w, 60)  # cap so suggestions stay on the same line
 
-    header = f"{'PATH':<{path_w}}  {'MONO':<5} {'EPIS':<5}  SUGGESTION"
+    header = (
+        f"{'PATH':<{path_w}}  {'MONO':<5} {'EPIS':<5} {'FLDS':<5}  SUGGESTION"
+    )
     print(header)
     print("-" * len(header))
 
@@ -169,9 +244,29 @@ def render_table(rows: list[AuditRow]) -> None:
         print(
             f"{path_str:<{path_w}}  "
             f"{fmt_check(r.has_monogram):<5} "
-            f"{fmt_check(r.has_status):<5}  "
+            f"{fmt_check(r.has_status):<5} "
+            f"{fmt_check(not r.problems):<5}  "
             f"{r.suggestion}"
         )
+
+
+def render_problems(rows: list[AuditRow]) -> None:
+    """List every unusable field value, with its file and the vocabulary.
+
+    Separate from the table because the table can only afford a
+    yes / no column, and the value itself is the whole point: the
+    generator gives no other signal that it threw the value away."""
+    flagged = [r for r in rows if r.problems]
+    if not flagged:
+        return
+
+    print()
+    print("# Field values the figure generator would discard")
+    print("-" * 60)
+    for r in flagged:
+        print(str(r.path))
+        for problem in r.problems:
+            print(f"    {problem}")
 
 
 def render_summary(rows: list[AuditRow]) -> None:
@@ -189,10 +284,12 @@ def render_summary(rows: list[AuditRow]) -> None:
             return
         m = sum(1 for r in group if r.has_monogram)
         e = sum(1 for r in group if r.has_status)
+        f = sum(1 for r in group if not r.problems)
         print(
             f"{label:<14} {n:>3} pieces  "
             f"monogram {m:>3}/{n:<3} ({m * 100 // n:>3}%)  "
-            f"epistemic {e:>3}/{n:<3} ({e * 100 // n:>3}%)"
+            f"epistemic {e:>3}/{n:<3} ({e * 100 // n:>3}%)  "
+            f"fields {f:>3}/{n:<3} ({f * 100 // n:>3}%)"
         )
 
     rendered: set[str] = set()
@@ -217,6 +314,7 @@ def main() -> int:
 
     rows = collect()
     render_table(rows)
+    render_problems(rows)
     render_summary(rows)
     return 0
 

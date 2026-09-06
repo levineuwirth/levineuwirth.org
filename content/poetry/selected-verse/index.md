@@ -1,6 +1,13 @@
 ---
 title: "Selected Verse"
 date: 2026-05-08
+# Authoring scaffold, not a published collection: the body below is
+# instructions to the author, and it was live at /poetry/selected-verse/.
+# `draft: true` keeps a collection landing page out of production routes,
+# listings, the sitemap, the feeds, and the search index; `SITE_ENV=dev`
+# (make dev / make watch) still builds it. Delete this line once the
+# collection has real prose and at least one poem.
+draft: true
 abstract: >
   A placeholder poetry collection — replace this landing page with the
   collection's actual title, abstract, and any prefatory note. Add

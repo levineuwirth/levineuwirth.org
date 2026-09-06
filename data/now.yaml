@@ -23,7 +23,12 @@
 #                priority is for "this is the headline regardless of where
 #                its status puts it" (or vice versa).
 #
-# Sort within each section: priority desc → status rank asc → updated desc.
+# Sort within each section: priority desc → staleness bucket asc →
+# status rank asc → updated desc. The staleness bucket is computed at
+# build time from `updated` (0: within 14 days, 1: within 60, 2: older)
+# and outranks the status ladder, so a fresh `building` item sits above
+# a stale `in-review` one. An entry can therefore change position with
+# no edit here, as it ages out of a bucket.
 # Section order: first-appearance in this file. Rearrange to taste.
 #
 # `shipped:` are recently-completed items. Each carries:
@@ -31,30 +36,38 @@
 # Sorted newest-first at render time. Curate by hand — items don't
 # auto-prune. Move things off the list when they stop earning the slot.
 
-last-updated: 2026-08-20
+last-updated: 2026-09-05
 
 entries:
   - title: "MARS V: Zero-Knowledge Proofs for LLM Verification"
     section: research
     status: building
-    updated: 2026-08-20
+    updated: 2026-09-05
+    priority: 2
+    link: /essays/verified-inference/
+    note: "Zero-knowledge proofs for cryptographic verification of claims about LLM training, inference, and deployment, as a MARS V fellow with the Cambridge AI Safety Hub, mentored by James Petrie (FLI). The profiler, calibration suite, and corrected traffic model are merged upstream; current work is the multi-GPU prover — a stage-aware weight-split model, a verifier-transparent weight split of the enrolled block, and streamed worker openings — on both the mathematics and the engineering. The linked case study is an informal account of the work so far; the technical write-up is expected Q4 2026, for review and publication."
+
+  - title: "Proof Broker"
+    section: research
+    status: building
+    updated: 2026-09-05
     priority: 1
-    link: https://caish.org/mars
-    note: "Zero-knowledge proofs for cryptographic verification of claims about LLM training, inference, and deployment, as a MARS V fellow mentored by James Petrie (FLI). Now porting from single-chip to multi-GPU, across both the mathematics and the engineering. Write-up expected October 2026."
+    link: /essays/proof-broker/
+    note: "Routing proof goals out of Lean 4 and Rocq to untrusted external provers — SMT solvers, ATPs, LLMs — grading and checking what returns, and closing the goal with a proof term the home kernel verifies for itself. R4 shipped 5 September 2026 — 19 of 19 targeted obligations close in an unmodified VerInf Lean file — and R5 consolidated the specification into v1.1 with an R-series roadmap. Next is finite-field certificates for VerInf's uniqueness queries, stronger certificate reconstruction, and Rocq parity."
 
   - title: "Branch-Tube Persistence and Static Coverage in Tree-Ball Geometry"
     section: research
     status: revising
-    updated: 2026-08-10
+    updated: 2026-09-05
     link: /essays/branch-based-local-capture-in-tree-balls/
-    note: "Mathematics preprint on path-tube persistence, exhaustive static coverage, conditional sampling thresholds, and information loss in d-regular tree-balls."
+    note: "Mathematics preprint on path-tube persistence, exhaustive static coverage, conditional sampling thresholds, and information loss in d-regular tree-balls. Audit corrections landed 5 September 2026: the root-degree statement corrected, admissible-root coverage clarified with a counterexample to residual domination."
 
   - title: "The Annealed Critical Window for Growing-Radius Domination in Random Regular Graphs"
     section: research
     status: revising
-    updated: 2026-08-10
+    updated: 2026-09-05
     link: /essays/near-critical-growing-radius-domination.html
-    note: "Mathematics preprint determining the bounded annealed critical window for growing-radius domination in random regular graphs — its universal scaling function and a scalar coupon-root asymptotic expansion — resolving what an earlier near-critical version left open."
+    note: "Mathematics preprint determining the bounded annealed critical window for growing-radius domination in random regular graphs — its universal scaling function and a scalar coupon-root asymptotic expansion. A bounded literature pass closed 5 September 2026, with the Duckworth–Mans attribution corrected and the relative overlap estimate completed. Adaptive-pursuit transfer and paired distance labels are the open targets."
 
   - title: "Order-Invariant ICD-10-CM Embedding (JAMIA submission)"
     section: research
@@ -68,48 +81,47 @@ entries:
     status: paused
     updated: 2026-08-10
     link: /essays/where-does-simd-help-post-quantum-cryptography/
-    note: "Paused pending a compute move to DTU."
-
-  - title: "NeuroPose clinical-implications manuscript"
-    section: research
-    status: drafting
-    updated: 2026-04-08
-    link: /essays/neuropose/
-    note: "In preparation; target submission 2026–2027."
+    note: "Compute is available at DTU for the duration of my enrollment; paused because it is not a current priority rather than for want of hardware."
 
   - title: "Magic: The Gathering reinforcement learning"
     section: research
     status: building
     updated: 2026-08-10
-    note: "Reinforcement-learning agent under active development; expected late 2026."
+    link: https://github.com/levineuwirth/arcana
+    note: "Reinforcement-learning agent under active development on top of arcana, a Rust rules engine built as the substrate for it; expected late 2026."
 
   - title: "Levshell"
     section: engineering
     status: building
-    updated: 2026-08-10
-    note: "Wayland-targeted productivity and research shell, in daily use as my main environment. Now growing from a single box to a fabric of machines that work as one, with project resume as the hero verb."
+    updated: 2026-09-03
+    note: "Wayland-targeted productivity and research shell, in daily use as my main environment, with project resume as the hero verb. Recent work adds a reading-library surface — paper records filled from OpenAlex, PDFs opened in place — and a live window over the daemon's state."
 
   - title: "Pmacs"
     section: engineering
     status: building
-    updated: 2026-08-10
+    updated: 2026-09-05
     link: https://github.com/levineuwirth/pmacs
-    note: "v1.1.0 shipped, with prebuilt binaries. Rust core and embedded Lua VM, split into a long-lived instance and thin TUI and GPU frontends that attach over a typed protocol and edit CRDT-backed buffers concurrently."
+    note: "v1.1.0 shipped with prebuilt binaries; 4476 tests across 120 suites since. Rust core and embedded Lua VM, split into a long-lived instance and thin TUI and GPU frontends that attach over a typed protocol and edit CRDT-backed buffers concurrently. An audit on 5 September 2026 put it a few dozen small changes short of a daily driver on both frontends."
 
   - title: "Epiphany"
     section: engineering
     status: building
-    updated: 2026-08-10
+    updated: 2026-08-12
     link: https://github.com/levineuwirth/epiphany
     note: "FOSS music-notation platform: a deterministic, CRDT-based score model whose LaTeX specification suite is the source of truth. Spec and editor tracks advancing in parallel."
 
   - title: "Levo"
     section: engineering
     status: building
-    updated: 2026-08-20
-    note: "A Python-successor language designed adversarially: statically inferred without annotations, no GIL, no MRO. Spec and reference machine exist and .levo files run — but it is a conformance machine, not yet a runtime."
+    updated: 2026-09-05
+    note: "A Python-successor language designed adversarially: statically inferred without annotations, no GIL, no MRO. Spec, reference machine, language server, and debugger exist, .levo files run, and 1061 tests across 182 suites hold the line — but with no I/O and no standard library it is still a conformance machine, not a runtime."
 
 shipped:
+  - title: "Proof Broker R4"
+    completed: 2026-09-05
+    link: /essays/proof-broker/
+    note: "First downstream demonstration: 19 of 19 targeted obligations close through the broker in an unmodified VerInf Lean file, with generated evidence and a signed release."
+
   - title: "CHASE 2026 conference presentation"
     completed: 2026-08-03
     link: /essays/beyond-comorbidity-indices/

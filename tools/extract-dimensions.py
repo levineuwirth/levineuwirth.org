@@ -32,6 +32,7 @@ images are logged and the rest of the walk continues.
 from __future__ import annotations
 
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -50,6 +51,17 @@ WALK_ROOTS = [
 ]
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif"}
+
+# Responsive delivery variants written by tools/generate-thumbnails.py:
+# photo.jpg -> photo.w480.jpg / photo.w960.jpg / photo.w1440.jpg.
+#
+# They get no sidecar. The <img> that carries width / height attributes
+# always points at the SOURCE (the variants ride in its srcset, where the
+# browser derives their geometry from the `w` descriptor and the source's
+# aspect ratio), so a variant sidecar would never be read — while costing
+# three extra YAML files per photograph, i.e. ~1100 files of pure churn
+# on this corpus. Keep the pattern in step with VARIANT_RE there.
+VARIANT_RE = re.compile(r"\.w(480|960|1440)\.(jpe?g|png)$", re.IGNORECASE)
 
 
 def _sidecar_path(image: Path) -> Path:
@@ -98,6 +110,11 @@ def _walk_one_root(root: Path, counters: dict[str, int]) -> None:
         # already wouldn't match IMAGE_EXTS, but be explicit).
         if image.name.startswith(".") or image.name.endswith(".tmp"):
             continue
+        # Responsive variants are derived from a source that has its own
+        # sidecar; see VARIANT_RE above.
+        if VARIANT_RE.search(image.name):
+            counters["variants"] += 1
+            continue
 
         sidecar = _sidecar_path(image)
         if not _is_stale(image, sidecar):
@@ -118,7 +135,7 @@ def _walk_one_root(root: Path, counters: dict[str, int]) -> None:
 
 
 def main() -> int:
-    counters = {"written": 0, "skipped": 0, "failed": 0}
+    counters = {"written": 0, "skipped": 0, "failed": 0, "variants": 0}
 
     for root in WALK_ROOTS:
         _walk_one_root(root, counters)
@@ -127,6 +144,7 @@ def main() -> int:
         "extract-dimensions: "
         f"{counters['written']} written, "
         f"{counters['skipped']} skipped, "
+        f"{counters['variants']} responsive variants ignored, "
         f"{counters['failed']} failed",
         file=sys.stderr,
     )

@@ -196,6 +196,25 @@ body[data-dingbat="ai"] #markdownBody hr::after {
     margin: 0;
 }
 
+/* ------------------------------------------------------------
+   NARROW-SCREEN REFLOW (WCAG 2.2 SC 1.4.10)
+   Essay prose carries bare URLs, DOIs and code identifiers that are
+   wider than a 260px column at a 320px viewport, and headings carry
+   long compound terms. `break-word` only splits a word that would not
+   fit on a line of its own, so ordinary text is unaffected — but the
+   document stops growing past the viewport.
+   ------------------------------------------------------------ */
+#markdownBody :is(p, li, dd, dt, blockquote, figcaption,
+                  h1, h2, h3, h4, h5, h6) {
+    overflow-wrap: break-word;
+}
+
+/* Identifiers such as `poly_getnoise_eta{1,2}` have no break
+   opportunity at all, so they need the stronger value. */
+#markdownBody :not(pre) > code {
+    overflow-wrap: anywhere;
+}
+
 #markdownBody p + p,
 #markdownBody .dropcap + p {
     text-indent: 1.5em;
@@ -609,6 +628,25 @@ pre code {
     background-color: var(--bg-offset);
 }
 
+/* Narrow screens: a 4-column results table wants ~364px and the essay
+   column is 260px at a 320px viewport, so the table used to widen the
+   document (and, inside collapse.js's overflow:hidden section body, the
+   overspill was unreachable). `table-layout: fixed` divides the column
+   evenly and the cells wrap, which keeps the table a real table — no
+   display change, so the table/row/cell roles and the numeric alignment
+   both survive. Desktop column sizing is untouched. */
+@media (max-width: 540px) {
+    #markdownBody table {
+        table-layout: fixed;
+    }
+
+    #markdownBody :is(th, td) {
+        padding: 0.35em 0.4em;
+        overflow-wrap: anywhere;
+        hyphens: auto;
+    }
+}
+
 
 /* ============================================================
    ABSTRACT BLOCK
@@ -650,6 +688,7 @@ pre code {
     overflow-x: auto;
     overflow-y: hidden;
 }
+
 
 
 /* ============================================================

@@ -167,11 +167,19 @@
 .now-status--drafting   { color: var(--text); }
 .now-status--building   { color: var(--text); }
 .now-status--early-stage { color: var(--text-muted); border-style: dashed; }
-.now-status--paused     { color: var(--text-faint); border-style: dashed; opacity: 0.75; }
+/* A02: `opacity: 0.75` here (and 0.92 on .now-card--shipped below) was
+   applied to text, which multiplies straight through the contrast
+   calculation: --text-faint at 5.07:1 arrived on the page at 3.07:1.
+   The recession these states want is carried by the dashed border and
+   the faint ink alone — both of which survive a contrast check. */
+.now-status--paused     { color: var(--text-faint); border-style: dashed; }
 .now-status--shipped    { color: var(--text-faint); border-color: var(--text-faint); }
 
 .now-card--shipped {
-    opacity: 0.92;
+    /* See the note on .now-status--paused: text opacity cannot be used to
+       recede a card without taking its contrast down with it. The shipped
+       chip's faint ink and border already read as past-tense. */
+    border-bottom-style: dashed;
 }
 
 /* ============================================================

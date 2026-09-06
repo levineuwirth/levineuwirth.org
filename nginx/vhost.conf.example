@@ -2,14 +2,15 @@
 #
 # The live vhost on the VPS is the source of truth and lives at
 # /etc/nginx/sites-available/levineuwirth.conf. `make deploy` does not
-# touch the vhost — it only rsyncs _site/ to the document root. This
-# file exists so the canonical structure (which snippets to include,
-# in what order) is documented in the repo.
+# touch the vhost — it only rsyncs _site/ to the document root. Nothing
+# in this repo's nginx/ directory is deployed automatically either: the
+# snippets are checked in so the intended configuration is reviewable,
+# and they take effect only when copied to /etc/nginx/snippets and the
+# server is reloaded. See README.md, "Deployment safety".
 #
 # To adopt: copy this file to /etc/nginx/sites-available/levineuwirth.conf
 # on the VPS, fill in the certificate paths, and `nginx -t && systemctl
-# reload nginx`. The three snippets it includes ship from this repo's
-# nginx/ directory and should be installed under /etc/nginx/snippets/.
+# reload nginx`.
 
 # ── http { } scope ──────────────────────────────────────────────────
 # popup-proxy.conf consumes a `proxy_cache_path` defined in http { }.
@@ -23,6 +24,14 @@
 # its companion zone definition in http { } as well:
 #
 #   limit_req_zone $binary_remote_addr zone=pubmed:1m rate=3r/s;
+#
+# csp-report.conf logs CSP violation reports through a custom log
+# format, which must also be defined in http { } — `nginx -t` fails with
+# "unknown log format" otherwise:
+#
+#   log_format csp_report escape=json
+#       '{"time":"$time_iso8601","ua":"$http_user_agent",'
+#       '"referer":"$http_referer","report":"$request_body"}';
 
 # ── HTTPS server ────────────────────────────────────────────────────
 server {
@@ -39,7 +48,19 @@ server {
 
     # Order matters: security-headers first so add_header directives
     # propagate into the locations defined by the other snippets.
+    # security-framing.conf carries the X-Frame-Options / frame-ancestors
+    # pair that used to live inside security-headers.conf; it is separate
+    # so that /pdfjs/ and /archive/, which legitimately frame same-origin
+    # documents, can substitute one coherent policy instead of stacking a
+    # second, conflicting header on top of DENY.
     include snippets/security-headers.conf;
+    include snippets/security-framing.conf;
+
+    # Collector for `report-uri /csp-report`. Optional: if you do not
+    # want the log_format above, drop this include AND the report-uri
+    # from security-headers.conf.
+    include snippets/csp-report.conf;
+
     include snippets/static-assets.conf;
     include snippets/popup-proxy.conf;
     # archive.conf must come *after* security-headers.conf — it declares
@@ -55,8 +76,22 @@ server {
         try_files $uri $uri/index.html $uri.html =404;
     }
 
-    # Custom 404. The build emits _site/404.html.
+    # Custom 404. The build now emits _site/404.html (audit F12), so this
+    # reference finally resolves; `make validate` fails if the file is
+    # missing, which is what keeps it from going stale again.
     error_page 404 /404.html;
+
+    # `internal` keeps /404.html reachable ONLY through the error_page
+    # redirect above. Without it the page is also a perfectly ordinary
+    # document at /404.html served with status 200 — which search engines
+    # index as real content and monitoring reads as "the site is up". The
+    # internal redirect preserves the original 404 status (error_page
+    # without an `=` override does not rewrite it). The page's own links
+    # and stylesheets are root-relative, so it renders correctly no
+    # matter which URL produced the error.
+    location = /404.html {
+        internal;
+    }
 }
 
 # ── HTTP → HTTPS redirect ───────────────────────────────────────────

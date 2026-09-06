@@ -2,8 +2,8 @@ module Main where
 
 import Data.Time.Clock.POSIX (getPOSIXTime)
 import System.Directory      (createDirectoryIfMissing)
-import Hakyll                (hakyll)
-import Site                  (rules)
+import Hakyll                (hakyllWith)
+import Site                  (rules, siteConfiguration)
 
 -- | Stamp the start of this build into @data/build-stamp.txt@ before
 -- Hakyll scans the provider directory. The file therefore always exists
@@ -17,7 +17,12 @@ writeBuildStamp = do
     t <- getPOSIXTime
     writeFile "data/build-stamp.txt" (show t ++ "\n")
 
+-- | 'siteConfiguration' (not 'Hakyll.defaultConfiguration') is the
+-- publication boundary: it extends Hakyll's @ignoreFile@ so that private
+-- notes, key material, and editor/interpreter junk never become
+-- identifiers, and therefore can never be routed into @_site/@. See
+-- build/Site.hs.
 main :: IO ()
 main = do
     writeBuildStamp
-    hakyll rules
+    hakyllWith siteConfiguration rules

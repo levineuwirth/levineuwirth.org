@@ -66,8 +66,10 @@
             $endfor$
         </div>
         $endif$
-        <div class="content-divider" aria-hidden="true">
-            <a href="/new.html" class="content-divider-logo" aria-label="New"></a>
+        <!-- A04: see templates/essay.html — the artwork is CSS, the link
+             is real, so neither is hidden from assistive technology. -->
+        <div class="content-divider">
+            <a href="/new.html" class="content-divider-logo"><span class="visually-hidden">New</span></a>
         </div>
         $body$
     </main>

@@ -426,6 +426,12 @@ origin (i.e. it must be a file you host).
 everything under `static/` to `_site/` unchanged.  Reference them as
 `/papers/filename.pdf`.
 
+**Graph-theory preprints.** Their editable LaTeX sources and demonstration code
+live in `~/Repos/research/meyniel`. Build and explicitly export reviewed assets
+from that checkout using its `docs/PUBLISHING.md`; `static/papers/` holds the
+released copies. Reconcile the corresponding website articles when a theorem
+or interpretation changes. See `paper/README.md` for the migration pointer.
+
 **One-time vendor setup.** PDF.js is not included in the repo.  Install it once:
 
 ```bash
@@ -1168,17 +1174,35 @@ import `viz_theme` from `tools/` and write SVG to stdout:
 ```python
 import sys
 sys.path.insert(0, 'tools')
-from viz_theme import apply_monochrome, save_svg
+from viz_theme import apply_monochrome, save_svg, load_csv
 import matplotlib.pyplot as plt
 
 apply_monochrome()
+rows = load_csv("speedups.csv")          # figures/data/speedups.csv
 fig, ax = plt.subplots()
-ax.plot([1, 2, 3], [1, 4, 9])
-save_svg(fig)
+ax.plot([r["n"] for r in rows], [r["t"] for r in rows])
+save_svg(
+    fig,
+    alt="Line chart of runtime against input size.",
+    desc="Runtime grows linearly to about n=1000 and then flattens.",
+)
 ```
+
+`load_csv` resolves against the script's own directory, so a figure keeps
+working if the essay is renamed or moved. `alt` is the accessible name a
+screen reader announces in place of the chart, and `desc` the longer
+description; omitting `alt` warns during the build, and `make audit-viz`
+reports it.
 
 `apply_monochrome()` sets transparent backgrounds and pure black elements so
 the figure inherits the page's dark/light mode via CSS `currentColor`.
+
+Only *pure* black is rewritten. A colour chosen deliberately — a white label
+on a dark heatmap cell, a mid-grey bar fill — is passed through untouched, so
+pick greys that stay legible against both `#faf8f4` and `#121212`. Text that
+is left at the default colour carries no fill at all in matplotlib's SVG, and
+picks up `currentColor` from `viz.css` by inheritance.
+
 Multi-series charts should use `LINESTYLE_CYCLE` instead of color:
 
 ```python
@@ -1221,6 +1245,122 @@ viz: true
 ```
 
 Pages with only static `.figure` divs do not need `viz: true`.
+
+### Captions
+
+`caption=` is parsed as Markdown on both figure types, with the same reader
+the body uses — code spans, emphasis, links, smart quotes and `$…$` math all
+work:
+
+```markdown
+::: {.figure script="figures/speedup.py" caption="Speedup of `ref` $\to$ `avx2`. Log $y$-axis."}
+:::
+```
+
+Keep it to inline content: a caption is rendered into a `<figcaption>`, so
+block constructs (lists, headings) have nowhere sensible to go.
+
+### Rebuilds
+
+An essay depends on everything under its `figures/` directory, plus
+`tools/viz_theme.py`. Editing a script, a CSV, or the shared theme rebuilds
+the pages that draw from it — you do not need to touch `index.md` or run
+`make clean`.
+
+This is declared in `build/Site.hs` (`figureDep`) because Hakyll cannot see
+it otherwise: figure scripts are executed by a Pandoc filter, so nothing in
+the dependency graph connects a page to the data its charts read. Without
+it, editing a CSV republished the *data file* while leaving the chart drawn
+from it untouched.
+
+### Figure width and small screens
+
+Matplotlib bakes label text at a fixed size in figure units, so a wide figure
+scaled down to a narrow column takes its text down with it. Each figure is
+therefore wrapped in a scroll container carrying its natural width: below that
+width it pans sideways instead of shrinking, keeping a 10pt label at about
+10px. Nothing to do as an author — but two things follow.
+
+`figsize` is a real budget. The body column is 800px, so a figure wider than
+roughly `figsize=(8, …)` will show a horizontal scrollbar even on a desktop.
+That is the honest outcome for a genuinely oversized figure, but prefer
+stacking panels vertically, or splitting into two figures, over a very wide
+row of facets.
+
+Escape backslashes in mathtext labels, or use a raw string:
+
+```python
+ax.set_ylabel(r"Speedup ($\times$)")     # fine
+ax.set_ylabel("Speedup ($\\times$)")     # also fine
+ax.set_ylabel("Speedup ($\times$)")      # WRONG: \t is a tab, renders "imes"
+```
+
+`make test` checks for this — it reads the text runs matplotlib records in the
+SVG and fails on any control character in one.
+
+### Figure numbering and cross-references
+
+Opt in per page:
+
+```yaml
+figure-numbering: true
+```
+
+Every captioned figure on that page — `.figure` and `.visualization` divs
+and captioned Markdown images alike — is then numbered in document order and
+its caption prefixed with `Figure N.` Uncaptioned figures are skipped rather
+than given an invisible number.
+
+Give a figure an anchor and reference it with an **empty link**:
+
+```markdown
+::: {.figure #fig-decomp script="figures/fig_decomp.py" caption="…"}
+:::
+
+![Caption text.](figures/plot.png){#fig-dist}
+
+The decomposition in [](#fig-decomp) shows … and [](#fig-dist) confirms it.
+```
+
+The empty link fills in as `Figure 1`, `Figure 2`, … A link that already has
+text is left alone, so `[the decomposition](#fig-decomp)` still reads as
+written. A reference to a missing anchor renders `Figure ?` rather than
+vanishing, so typos are visible.
+
+Anchors must start with `fig-` or `fig:`. Without an explicit id a figure is
+still numbered and gets a generated `fig-N` anchor.
+
+Note the syntax is `[](#anchor)`, not pandoc-crossref's `[@fig:x]` — citeproc
+runs first on this site and would try to resolve `@fig:x` against the
+bibliography.
+
+**Opting in is deliberate.** `beyond-comorbidity-indices` and
+`specification-dilemma` number by hand today; turning this on for them would
+double-number every figure. Convert a page when you are ready to strip its
+manual labels, not before. Tables are out of scope either way.
+
+### Checking figures
+
+Two complementary commands, because the failures come in two kinds.
+
+`make test` checks the **pipeline contract** — that the black the scripts
+emit is in a form `processColors` can match, that repeated runs are
+byte-identical, that ids do not collide across figures on a page, that
+captions are Markdown and figures carry `role="img"` and a description.
+
+`make audit-viz` checks **what a reader would see**. It renders each figure
+and reports marks with no variation in them (a heatmap drawn from constant
+data is a solid rectangle), text that cannot be read against what sits behind
+it in either theme, labels too small at the body column, and missing `alt`.
+Every visualization bug found in this repo so far was invisible in the source
+and obvious in the render, which is what this is for. It exits 0 by default;
+`make audit-viz STRICT=1` fails instead.
+
+`make viz-provenance` checksums the CSVs behind each figure into
+`figures/data/PROVENANCE.json` so a reader who downloads the data can tell it
+is what the chart was drawn from. Fill in each file's `source` field with the
+run that produced it — the tool seeds a TODO and never overwrites what you
+write. `make viz-provenance-check` verifies the checksums still match.
 
 ---
 

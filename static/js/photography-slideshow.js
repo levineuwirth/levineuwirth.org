@@ -33,7 +33,12 @@
             var dateEl  = card.querySelector('.photo-card-date');
             var link    = card.querySelector('.photo-card-link');
             frames.push({
-                src:   im.currentSrc || im.src,
+                /* P01: `src` deliberately, not `currentSrc`. Card images
+                   now carry a srcset ladder, so currentSrc is whichever
+                   rung the grid slot needed — 480px wide, in a full-screen
+                   slideshow. The `src` attribute stays the full delivery
+                   source, which is also what lightbox.js opens. */
+                src:   im.src,
                 alt:   im.alt || '',
                 title: titleEl ? titleEl.textContent.trim() : '',
                 date:  dateEl ? dateEl.textContent.trim() : '',
@@ -45,9 +50,24 @@
             return;
         }
 
-        // Autoplay is opt-in for anyone who has asked for less motion.
-        var reduceMotion = window.matchMedia
-            && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        /* A09: autoplay is opt-in for anyone who has asked for less
+           motion — and "asked" means EITHER input. This used to consult
+           only the OS media query, so turning on the site's own Reduce
+           Motion setting and opening a slideshow still started the timer
+           and showed "Pause slideshow".
+
+           Evaluated per call rather than cached at load, and watched for
+           changes, so switching the setting mid-visit takes effect at
+           once. Manual Play stays available in every case: this suppresses
+           automatic playback, it does not remove the control. */
+        var motionQuery = window.matchMedia
+            ? window.matchMedia('(prefers-reduced-motion: reduce)')
+            : null;
+
+        function reducedMotion() {
+            if (document.documentElement.hasAttribute('data-reduce-motion')) return true;
+            return !!(motionQuery && motionQuery.matches);
+        }
 
         var index = 0;
         var timer = null;
@@ -171,7 +191,7 @@
             overlay.classList.add('is-open');
             document.body.classList.add('slideshow-open');
             closeBtn.focus();
-            if (!reduceMotion) play();
+            if (!reducedMotion()) play();
         }
 
         function close() {
@@ -238,5 +258,28 @@
         document.addEventListener('visibilitychange', function () {
             if (document.hidden) pause();
         });
+
+        /* Respond to changes in either input while the overlay is open:
+           asking for less motion should stop the frames advancing now, not
+           at the next visit. Turning the preference back off does not
+           auto-start — resuming is the reader's call. */
+        function onMotionPreferenceChange() {
+            if (reducedMotion()) pause();
+        }
+
+        if (motionQuery) {
+            if (motionQuery.addEventListener) {
+                motionQuery.addEventListener('change', onMotionPreferenceChange);
+            } else if (motionQuery.addListener) {
+                motionQuery.addListener(onMotionPreferenceChange);
+            }
+        }
+
+        if (window.MutationObserver) {
+            new MutationObserver(onMotionPreferenceChange).observe(
+                document.documentElement,
+                { attributes: true, attributeFilter: ['data-reduce-motion'] }
+            );
+        }
     });
 }());

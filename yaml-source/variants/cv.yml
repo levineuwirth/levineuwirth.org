@@ -1,0 +1,5 @@
+version: 1
+description: Canonical website curriculum vitae for academic and research audiences.
+layout: academic-cv
+output: cv.pdf
+legacy_visibility: cv

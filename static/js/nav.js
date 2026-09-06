@@ -4,12 +4,32 @@
 (function () {
     const STORAGE_KEY = 'portals-open';
 
+    /* A09: one effective reduced-motion preference — the union of the
+       site's own Reduce Motion setting ([data-reduce-motion] on <html>,
+       stamped by theme.js and toggled by settings.js) and the operating
+       system's prefers-reduced-motion. Read at the moment of use rather
+       than cached, so a change to either input takes effect on the very
+       next interaction with no listener to keep in sync. The same union
+       is expressed in CSS in components.css. */
+    const motionQuery = window.matchMedia
+        ? window.matchMedia('(prefers-reduced-motion: reduce)')
+        : null;
+
+    function reducedMotion() {
+        if (document.documentElement.hasAttribute('data-reduce-motion')) return true;
+        return !!(motionQuery && motionQuery.matches);
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
-        // Return-to-top button
+        // Return-to-top button. Scripted scrolling is motion the CSS
+        // override cannot reach — behavior is decided here instead.
         var totop = document.querySelector('.footer-totop');
         if (totop) {
             totop.addEventListener('click', function () {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                window.scrollTo({
+                    top: 0,
+                    behavior: reducedMotion() ? 'auto' : 'smooth'
+                });
             });
         }
 

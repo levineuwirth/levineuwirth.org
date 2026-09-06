@@ -209,6 +209,21 @@ fixes didn't fully close:
   is inherited from a parent only when the current context declares *no*
   `add_header` directives — without the re-include, /archive/ would lose
   HSTS, CSP, etc.
+
+  **Framing exception (added later).** The framing directives now live in
+  their own snippet, `nginx/security-framing.conf`, which the vhost
+  includes at server level and which `archive.conf` deliberately does
+  *not* re-include. The site-wide `X-Frame-Options: DENY` applied to the
+  snapshots too, so `templates/archive.html`'s same-origin
+  `<iframe class="archive-frame" … sandbox>` was refused by the browser
+  and the wrapper page showed an empty frame. `archive.conf` now emits
+  `X-Frame-Options: SAMEORIGIN` plus an enforcing
+  `Content-Security-Policy: frame-ancestors 'self'` as the whole framing
+  policy for the subtree — one coherent pair, not a second header layered
+  over a conflicting one. Third-party embedding stays blocked, and the
+  containment of the untrusted snapshot is unchanged because that comes
+  from the iframe's own `sandbox` attribute, which the embedding page
+  sets and these response headers do not touch.
 - **Contract doc cleanups.** The Phase-5 paragraph claiming `robots.txt`
   disallows `/archive/` is reworded to acknowledge the pass-2 reversal;
   the Phase-1 checkbox claiming `Archive.hs` does not re-hash is updated

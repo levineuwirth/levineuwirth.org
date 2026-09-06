@@ -100,16 +100,47 @@ statusRanks =
 statusRank :: String -> Int
 statusRank s = fromMaybe 99 (lookup s statusRanks)
 
--- | Three-tier sort key for active entries:
+-- | How long ago an entry last moved, as a coarse bucket. Lower sorts
+--   first: 0 is "this fortnight", 1 "this quarter-ish", 2 "quiet".
+--
+--   Coarse on purpose. The bucket outranks 'statusRank' below, so a
+--   fine-grained measure would flatten the ladder into a date sort and
+--   a one-day difference would reorder the page. Within a bucket the
+--   ladder still says how close to shipping each item is.
+--
+--   A date that fails to parse buckets as quiet, matching
+--   'statusRank''s treatment of an unknown status: bad data sinks
+--   where it is visible rather than floating silently.
+stalenessBucket :: Day -> String -> Int
+stalenessBucket today iso =
+    case parseTimeM True defaultTimeLocale "%Y-%m-%d" iso :: Maybe Day of
+        Nothing -> 2
+        Just d
+            | age <= 14 -> 0
+            | age <= 60 -> 1
+            | otherwise -> 2
+          where
+            -- A future date is not stale; clamp so it buckets as fresh.
+            age = max 0 (diffDays today d)
+
+-- | Four-tier sort key for active entries:
 --     1. priority   — manual override; higher floats up (default 0)
---     2. statusRank — how close to shipping (lower is closer)
---     3. updated    — recency tiebreaker within the same rank
+--     2. staleness  — how recently it moved (lower is more recent)
+--     3. statusRank — how close to shipping (lower is closer)
+--     4. updated    — exact-date tiebreaker within the same bucket
+--
+--   Staleness sits above the ladder because the page's subject is what
+--   is moving, not what is furthest along: an @in-review@ paper that
+--   has not been touched in two months should not outrank work that
+--   advanced this week merely because @in-review@ outranks @building@.
+--
 --   Sectioning is applied to the *unsorted* list so section ordering
 --   continues to follow YAML source order; sorting happens within each
 --   section's filtered slice.
-entrySortKey :: NowEntry -> (Down Int, Int, Down String)
-entrySortKey e =
+entrySortKey :: Day -> NowEntry -> (Down Int, Int, Int, Down String)
+entrySortKey today e =
     ( Down (nePriority e)
+    , stalenessBucket today (neUpdated e)
     , statusRank (neStatus e)
     , Down (neUpdated e)
     )
@@ -191,13 +222,18 @@ renderSection sec es = concat
     , "</section>"
     ]
 
-renderEntries :: [NowEntry] -> String
-renderEntries [] = ""
-renderEntries entries = concatMap renderOne (sectionOrder entries)
+-- | Render every section. Takes the build date because 'entrySortKey'
+--   buckets entries by how long ago they moved — which means this page's
+--   order can change with no edit to now.yaml, as an entry ages out of a
+--   bucket. That is the intent, and it is the one place the rendering is
+--   a function of when the build ran.
+renderEntries :: Day -> [NowEntry] -> String
+renderEntries _ [] = ""
+renderEntries today entries = concatMap renderOne (sectionOrder entries)
   where
     renderOne sec =
         let inSec = filter ((== sec) . neSection) entries
-            sorted = sortBy (comparing entrySortKey) inSec
+            sorted = sortBy (comparing (entrySortKey today)) inSec
         in renderSection sec sorted
 
 renderShippedAll :: [NowShipped] -> String
@@ -232,13 +268,23 @@ relativeTime today iso =
         Nothing -> ""
         Just d  -> bucket (diffDays today d)
   where
+    -- Mirrors static/js/now.js:relative exactly. The two must agree: the
+    -- server renders this string into the page and the script replaces it
+    -- on load, so a disagreement shows up as text that changes under the
+    -- reader for no reason.
+    --
+    -- The week bucket runs to 30, not 28 (smaller finding 2): at 28 days
+    -- the old threshold handed over to `div 30`, which answered "0 months
+    -- ago". The month bucket is capped at 11 for the same reason at the
+    -- other end — day 360 is `div 30` = 12, which would read "12 months
+    -- ago" the day before "1 year ago".
     bucket n
         | n <  0    = ""
         | n == 0    = "today"
         | n == 1    = "yesterday"
         | n <  7    = show n ++ " days ago"
-        | n < 28    = pluralize (n `div` 7)  "week"
-        | n < 365   = pluralize (n `div` 30) "month"
+        | n < 30    = pluralize (n `div` 7) "week"
+        | n < 365   = pluralize (min 11 (n `div` 30)) "month"
         | otherwise = pluralize (n `div` 365) "year"
     pluralize 1 unit = "1 " ++ unit ++ " ago"
     pluralize k unit = show k ++ " " ++ unit ++ "s ago"
@@ -277,6 +323,10 @@ nowCtx =
             then noResult "no relative time"
             else return rel
       )
-    <> field "now-entries-html" (\_ -> renderEntries . nEntries <$> loadNow)
+    <> field "now-entries-html" (\_ -> do
+        doc  <- loadNow
+        nowT <- unsafeCompiler getCurrentTime
+        return (renderEntries (utctDay nowT) (nEntries doc))
+      )
     <> field "now-shipped-html" (\_ -> renderShippedAll . nShipped <$> loadNow)
     <> siteCtx

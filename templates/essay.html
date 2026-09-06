@@ -1,4 +1,7 @@
-<header class="essay-frontmatter">
+<!-- A05: a neutral element, not <header>. As a body-level element a
+     <header> maps to the banner landmark, which duplicated the site
+     banner in templates/partials/nav.html on every essay. -->
+<div class="essay-frontmatter">
     <div class="frontmatter-mark-slot frontmatter-mark-slot--left">$monogramSvg$</div>
     <div class="frontmatter-title">
         <h1 class="page-title">$title$</h1>
@@ -10,7 +13,7 @@
         <a href="#epistemic" aria-label="Jump to epistemic profile">$epistemicSvg$</a>
     </div>
     $endif$
-</header>
+</div>
 <div class="essay-tailmatter">
     $partial("templates/partials/metadata-tail.html")$
     $if(summary)$
@@ -20,8 +23,13 @@
     </div>
     $endif$
 </div>
-<div class="content-divider content-divider--frontmatter" aria-hidden="true">
-    <a href="/new.html" class="content-divider-logo" aria-label="New"></a>
+<!-- A04: the rule and the mark are drawn by CSS (::before/::after and a
+     mask-image on the anchor), so nothing here needs aria-hidden. The
+     anchor is a real destination and stays exposed with an accessible
+     name; hiding it from assistive technology while leaving it in the
+     tab order was the defect. -->
+<div class="content-divider content-divider--frontmatter">
+    <a href="/new.html" class="content-divider-logo"><span class="visually-hidden">New</span></a>
 </div>
 <div id="content">
     <aside id="toc" aria-label="Table of contents" data-pagefind-ignore="all">

@@ -18,7 +18,7 @@ import Data.Maybe           (fromMaybe)
 import Hakyll
 import Pagination           (sortAndGroup)
 import Patterns             (authorIndexable)
-import Contexts             (abstractField, tagLinksField)
+import Contexts             (abstractField, tagLinksField, canonicalUrlField)
 import Utils                (authorSlugify, authorNameOf)
 
 
@@ -95,15 +95,25 @@ applyAuthorRules authors baseCtx = tagsRules authors $ \name pat -> do
                    <> constField "author" name
                    <> constField "title"  name
                    <> constField "portal" "true"
+                   -- C01: ahead of baseCtx's descriptionField, whose
+                   -- body-excerpt fallback would describe the first
+                   -- listed piece rather than this index.
+                   <> constField "description"
+                        ("Writing on this site by " ++ name ++ ".")
                    <> baseCtx
             makeItem ""
                 >>= loadAndApplyTemplate "templates/author-index.html" ctx
                 >>= loadAndApplyTemplate "templates/default.html"      ctx
                 >>= relativizeUrls
   where
+    -- 'canonicalUrlField' rather than defaultContext's @$url$@: a
+    -- directory-routed essay's route is @essays/x/index.html@, and the
+    -- author index is the reader's way in to a page whose canonical
+    -- link, sitemap entry and feed id all say @/essays/x/@ (audit C03).
     itemCtx = dateField "date" "%-d %B %Y"
            <> tagLinksField "item-tags"
            <> abstractField
+           <> canonicalUrlField
            <> defaultContext
 
 

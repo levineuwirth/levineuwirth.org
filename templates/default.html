@@ -30,6 +30,7 @@ $partial("templates/partials/footer.html")$
 $if(home)$<script src="/js/random.js" defer></script>$endif$
 $if(reading)$<script src="/js/reading.js" defer></script>$endif$
 $if(now)$<script src="/js/now.js" defer></script>$endif$
+$if(commonplace)$<script src="/js/commonplace.js" defer></script>$endif$
 $if(photography)$<script src="/js/photography-modes.js" defer></script>$endif$
 $if(photography)$<script src="/js/photography-slideshow.js" defer></script>$endif$
 $if(photography-map)$<script src="/leaflet/leaflet.js" defer></script>$endif$
@@ -37,7 +38,7 @@ $if(photography-map)$<script src="/leaflet/leaflet.markercluster.js" defer></scr
 $if(photography-map)$<script src="/js/photography-map.js" defer></script>$endif$
 $for(page-scripts)$<script src="/$script-src$" defer></script>$endfor$
 $if(math)$
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
 <script defer src="/js/katex-bootstrap.js"></script>
 $endif$
 </body>

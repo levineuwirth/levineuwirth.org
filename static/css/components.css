@@ -282,9 +282,26 @@ nav.site-nav {
 /* ============================================================
    REDUCE MOTION
    Collapses all transitions and animations site-wide.
-   Applied to <html> before first paint by theme.js.
+
+   There is ONE effective preference, and it is the union of two
+   inputs: the site's own Reduce Motion setting (theme.js stamps
+   [data-reduce-motion] on <html> before first paint, settings.js
+   toggles it) and the operating system's prefers-reduced-motion.
+   Previously only the site setting drove this global override while
+   a handful of components answered the media query on their own,
+   so an OS-level request left most of the site animating.
+
+   The same union is computed in JS — see the reducedMotion() helper
+   duplicated in nav.js and photography-slideshow.js — for the
+   behaviours CSS cannot reach (autoplay, scripted scrolling).
+
+   The selector includes the root element itself, not just its
+   descendants: `scroll-behavior: smooth` is declared on <html> in
+   base.css, and `[data-reduce-motion] *` never matches the element
+   carrying the attribute.
    ============================================================ */
 
+[data-reduce-motion],
 [data-reduce-motion] *,
 [data-reduce-motion] *::before,
 [data-reduce-motion] *::after {
@@ -292,6 +309,18 @@ nav.site-nav {
     animation-iteration-count: 1     !important;
     transition-duration:      0.01ms !important;
     scroll-behavior:          auto   !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root,
+    :root *,
+    :root *::before,
+    :root *::after {
+        animation-duration:       0.01ms !important;
+        animation-iteration-count: 1     !important;
+        transition-duration:      0.01ms !important;
+        scroll-behavior:          auto   !important;
+    }
 }
 
 /* Mobile TOC bar — hidden by default; revealed whenever the desktop
@@ -639,6 +668,11 @@ nav.site-nav {
     margin: 0 0 1.65rem 0;
     line-height: 1.1;
     color: var(--text);
+    /* Long compound titles ("Post-Quantum", "Micro-Architectural") are
+       wider than a 260px column at 320 CSS pixels. break-word only
+       splits a word that cannot fit on a line of its own, so ordinary
+       titles are untouched. */
+    overflow-wrap: break-word;
 }
 
 
@@ -681,17 +715,28 @@ nav.site-nav {
 .meta-tags {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     justify-content: center;
-    gap: 0;
+    /* WCAG 2.2 SC 2.5.8: adjacent chips previously touched and were only
+       22.4 x 30. The padding + min-height below take each chip past
+       24 x 24 on its own, which is what the criterion asks for; the gap
+       keeps them from reading as one word. */
+    gap: 0.15rem 0.1rem;
     color: var(--text-faint);
     font-size: 0.72rem;
+    min-width: 0;
 }
 
 .meta-tag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0 0.25rem;
     color: var(--text-faint);
     text-decoration: none;
     font-variant-caps: all-small-caps;
     letter-spacing: 0.06em;
+    overflow-wrap: anywhere;
     transition: color var(--transition-fast);
 }
 
@@ -699,11 +744,29 @@ nav.site-nav {
     color: var(--text-muted);
 }
 
+/* The middot separator moves from a leading ::before to a trailing
+   ::after. As a flex row the chips now wrap, and a leading separator
+   would open a wrapped line with a dangling "·"; a trailing one reads
+   as a continuation, the way a line-ending hyphen does. */
 .meta-tag + .meta-tag::before {
-    content: " · ";
+    content: none;
+}
+
+.meta-tags .meta-tag:not(:last-child)::after,
+.item-card-tags .meta-tag:not(:last-child)::after {
+    content: "·";
     color: var(--text-faint);
+    margin-left: 0.45em;
+    margin-right: -0.2em;
     letter-spacing: 0;
     font-variant-caps: normal;
+}
+
+/* Cancel the first chip's leading padding so the row still aligns with
+   the text block above it. */
+.meta-tags,
+.item-card-tags {
+    margin-left: -0.25rem;
 }
 
 /* Affiliation: institution name below author, in sans to contrast the serif author row */
@@ -1516,9 +1579,79 @@ h3:hover .section-toggle,
 .search-tab:hover       { color: var(--text-muted); }
 .search-tab.is-active   { color: var(--text); border-bottom-color: var(--text); }
 
-/* Search panels (keyword / semantic) — only active panel visible */
+/* Search panels (keyword / semantic) — only active panel visible.
+   The inactive panel now also carries the `hidden` attribute, which the
+   global `[hidden]` rule in base.css enforces; these class rules remain
+   the styling contract. */
 .search-panel           { display: none; }
 .search-panel.is-active { display: block; }
+
+/* ------------------------------------------------------------
+   NO-SCRIPT AND DEGRADED STATES
+   Short explanatory notes rendered beside controls that need
+   JavaScript, and the recovery row a failed semantic load offers.
+   Quiet by default: they are asides, not errors to shout about.
+   ------------------------------------------------------------ */
+
+.search-noscript,
+.filter-note,
+.transclude-error-note,
+.transclude-noscript-note {
+    display: block;
+    font-family: var(--font-sans);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+    margin: 0.5rem 0;
+}
+
+.search-noscript,
+.transclude-error-note,
+.transclude-noscript-note {
+    border-left: 2px solid var(--border);
+    padding-left: 0.75em;
+}
+
+/* Filters.Transclusion writes this inside a <noscript>, so it is the
+   whole of a transcluded passage for a reader without scripting: it
+   carries the link to the passage's own page. Same treatment as the
+   error note — a quiet aside offering somewhere to go. */
+.transclude-noscript-note a {
+    color: var(--text-muted);
+    text-decoration: underline;
+    text-decoration-color: var(--border-muted);
+    text-underline-offset: 0.2em;
+}
+
+.transclude-noscript-note a:hover {
+    color: var(--text);
+    text-decoration-color: var(--text-muted);
+}
+
+.transclude-error-link {
+    color: var(--text-muted);
+    text-decoration: underline;
+    text-decoration-color: var(--border-muted);
+    text-underline-offset: 0.2em;
+}
+
+.transclude-error-link:hover {
+    color: var(--text);
+    text-decoration-color: var(--text-muted);
+}
+
+/* Recovery actions after a failed semantic load. The buttons inside
+   reuse .filter-btn, so only the row needs describing. */
+.semantic-fallback {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0.75rem 0;
+    font-family: var(--font-sans);
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
 
 /* Semantic query input — mirrors Pagefind UI style */
 .semantic-query-input {
@@ -1689,6 +1822,66 @@ h3:hover .section-toggle,
     accent-color: var(--text-muted);
 }
 
+
+/* ============================================================
+   COLLECTION LANDING PAGES
+   templates/collection.html — the index a poetry or fiction
+   collection's index.md renders: an optional standfirst, the
+   scaffold prose, then the collection's own children.
+
+   The list itself is .essay-list, shared with the section
+   indexes, so only the collection-specific parts are described
+   here: the standfirst, the Contents section around the list,
+   and the empty state that stands in for it.
+   ============================================================ */
+
+.collection-abstract {
+    font-family: var(--font-sans);
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+    margin: 0 0 1.5rem;
+    max-width: 34em;
+}
+
+/* A rule above the heading separates the collection's own prose from
+   the machine-generated list below it, which is the one boundary a
+   reader needs on this page. */
+.collection-contents {
+    margin-top: 2.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+}
+
+/* The id selector is deliberate: typography.css sets `#markdownBody h2`
+   to the 1.85rem body heading, and a class-only rule loses to it. This is
+   a label for a generated list, not another section of the author's
+   prose, so it wants the small-caps register the site uses for meta rows
+   rather than the display size. */
+#markdownBody .collection-contents > h2 {
+    font-family: var(--font-sans);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin: 0 0 1rem;
+}
+
+/* Numbered by the <ol>, but the numbers are noise beside titles that
+   already read in order. */
+.collection-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.collection-empty {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--text-faint);
+    margin: 0;
+}
 
 /* ============================================================
    TRANSCLUSION

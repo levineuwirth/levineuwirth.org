@@ -11,6 +11,7 @@ module Contexts
     , declaresScore
     , scorePageList
     , photographyCtx
+    , photoVariantName
     , contentKindField
     , abstractField
     , descriptionField
@@ -22,6 +23,11 @@ module Contexts
     , dateDisplayField
     , revisionDateFields
     , recentFirstByDisplay
+    , canonicalUrlField
+    , feedMetaFields
+    , canonicalUrlPath
+    , itemDisplayUTC
+    , identifierDisplayUTC
     , Revision (..)
     , getRevisions
     , isProvedConfidence
@@ -33,10 +39,11 @@ import qualified Data.Aeson         as Aeson
 import qualified Data.Aeson.Key     as AK
 import qualified Data.Aeson.KeyMap  as KM
 import qualified Data.Vector        as V
-import Data.Char               (isDigit, toLower)
-import Data.List               (intercalate, isPrefixOf, sortBy)
+import Data.Char               (isDigit, isSpace, toLower, toUpper)
+import Data.List               (intercalate, isPrefixOf, isSuffixOf, sortBy,
+                                stripPrefix)
 import Data.Maybe              (fromMaybe, mapMaybe)
-import Data.Ord                (comparing)
+import Data.Ord                (Down (..), comparing)
 import qualified Data.Scientific    as Sci
 import Data.Time.Calendar      (toGregorian)
 import Data.Time.Clock         (UTCTime, getCurrentTime, utctDay)
@@ -50,6 +57,7 @@ import qualified Data.Text.IO  as TIO
 import qualified Data.Yaml     as Y
 import Text.Pandoc             (runPure, readMarkdown, writeHtml5String, writePlain, Pandoc(..), Block(..), Inline(..))
 import Text.Pandoc.Options     (WriterOptions(..), HTMLMathMethod(..))
+import Text.Pandoc.Extensions  (Extension(..), disableExtension)
 import Hakyll       hiding (trim)
 import Backlinks    (backlinksField)
 import Dingbat      (dingbatField)
@@ -60,7 +68,7 @@ import Stability    (stabilityField, lastReviewedField, lastReviewedIsoField,
                      versionHistoryPrimaryField, versionHistoryRestField,
                      versionHistoryRangeField, versionHistoryRangeStartField,
                      versionHistoryRangeEndField, versionHistoryCommitsField)
-import Utils        (authorSlugify, authorNameOf, trim)
+import Utils        (authorSlugify, authorNameOf, trim, canonicalUrlPath)
 
 -- | Returns 'True' when the @confidence:@ frontmatter value is the
 --   "proved" / "proven" sentinel — the §4.3 carve-out for formal proofs
@@ -387,28 +395,260 @@ abstractField = field "abstract" $ \item -> do
 -- Description field
 -- ---------------------------------------------------------------------------
 
--- | Renders the @abstract@ frontmatter key as plain text suitable for use in
---   @<meta name="description">@, @og:description@, and @twitter:description@.
---   Strips Pandoc markup, collapses internal whitespace, truncates to ~200
---   chars, and HTML-escapes attribute-special characters. Returns @noResult@
---   when no @abstract@ is present (so @$if(description)$@ short-circuits).
+-- | Plain-text page summary for @<meta name="description">@,
+--   @og:description@, and @twitter:description@.
+--
+--   Precedence, first hit wins (audit C01 — 453 of 484 pages had no
+--   description at all, because the field resolved from @abstract:@ and
+--   nothing else):
+--
+--     1. @description:@ frontmatter — the explicit override, for when the
+--        unfurl summary should differ from the on-page abstract;
+--     2. @abstract:@ frontmatter, rendered through Pandoc to plain text;
+--     3. for photography pages (anything carrying @photo:@), a factual
+--        sentence composed from @location:@, @captured:@, and @series:@;
+--     4. a plain-text excerpt of the page's own first body paragraph.
+--
+--   Every branch collapses whitespace, truncates on a word boundary, and
+--   HTML-escapes attribute-special characters. 'noResult' only when all
+--   four fail, so @$if(description)$@ still short-circuits on a page with
+--   no prose at all (an empty list index, say) rather than emitting an
+--   empty meta tag.
 descriptionField :: Context String
 descriptionField = field "description" $ \item -> do
     meta <- getMetadata (itemIdentifier item)
-    case lookupString "abstract" meta of
-        Nothing  -> noResult "no abstract"
-        Just src -> do
-            let pandocResult = runPure $ do
-                    doc <- readMarkdown defaultHakyllReaderOptions (T.pack src)
-                    writePlain defaultHakyllWriterOptions doc
-            case pandocResult of
-                Left err  -> fail $ "Pandoc error rendering description: " ++ show err
-                Right txt ->
-                    let collapsed = T.unwords (T.words txt)
-                        capped    = if T.length collapsed > 200
-                                       then T.take 197 collapsed <> T.pack "\x2026"
-                                       else collapsed
-                    in  return (attrEscape (T.unpack capped))
+    case lookupString "description" meta >>= nonEmpty of
+        Just d  -> return (finishDescription (T.pack d))
+        Nothing -> case lookupString "abstract" meta >>= nonEmpty of
+            Just src -> finishDescription <$> plainOfMarkdown src
+            Nothing  -> do
+                mPhoto <- photoDescription meta
+                case mPhoto of
+                    Just d  -> return (finishDescription d)
+                    Nothing -> case firstParagraphText (itemBody item) of
+                        Just p  -> return (finishDescription p)
+                        Nothing -> noResult "no description, abstract, photo metadata, or body prose"
+  where
+    nonEmpty s = if null (trim s) then Nothing else Just s
+
+-- | Render a Markdown fragment to plain text through Pandoc.
+--
+--   @tex_math_dollars@ is disabled on the /writer/ deliberately. With it
+--   on, the plain writer round-trips @$t$@ back out as @$t$@ — correct
+--   Markdown, but a meta description reading
+--   "length-$t$ nonbacktracking robber paths" is raw notation in a search
+--   result. Off, the writer falls back to texmath's plain rendering, which
+--   is what a description wants. @subscript@ / @superscript@ are off for
+--   the same reason — with them on, texmath's @v@ + subscript @0@ is
+--   written back out as @v~0~@; with them off the writer falls through to
+--   @\<sub\>0\<\/sub\>@, and 'unwrapSubSup' takes the tags off to leave
+--   @v0@. Both markers are noise in a one-line summary.
+plainOfMarkdown :: String -> Compiler T.Text
+plainOfMarkdown src =
+    case runPure (readMarkdown defaultHakyllReaderOptions (T.pack src)
+                    >>= writePlain plainOpts) of
+        Left err  -> fail $ "Pandoc error rendering description: " ++ show err
+        Right txt -> return (unwrapSubSup txt)
+  where
+    plainOpts = defaultHakyllWriterOptions
+        { writerExtensions =
+            disableExtension Ext_tex_math_dollars
+            . disableExtension Ext_tex_math_single_backslash
+            . disableExtension Ext_tex_math_double_backslash
+            . disableExtension Ext_subscript
+            . disableExtension Ext_superscript
+            $ writerExtensions defaultHakyllWriterOptions
+        }
+
+-- | Drop the @\<sub\>@ / @\<sup\>@ wrappers the plain writer falls back to
+--   for sub- and superscripts, keeping their content. Targeted at exactly
+--   those four literals so it cannot swallow a @\<@ that is ordinary prose.
+unwrapSubSup :: T.Text -> T.Text
+unwrapSubSup =
+      T.replace "<sub>" "" . T.replace "</sub>" ""
+    . T.replace "<sup>" "" . T.replace "</sup>" ""
+
+-- | Collapse whitespace, cut to ~155 characters on a word boundary, and
+--   escape for an attribute value. 155 is the length search engines and
+--   unfurlers typically show; cutting mid-word is worse than cutting early.
+finishDescription :: T.Text -> String
+finishDescription raw =
+    let collapsed = T.unwords (T.words raw)
+    in  attrEscape (T.unpack (truncateWords 155 collapsed))
+
+-- | Truncate to at most @n@ characters, backing up to the last word
+--   boundary and appending an ellipsis. Text already short enough is
+--   returned unchanged.
+truncateWords :: Int -> T.Text -> T.Text
+truncateWords n t
+    | T.length t <= n = t
+    | otherwise =
+        let cut     = T.take n t
+            trimmed = T.dropWhileEnd (/= ' ') cut
+            body    = if T.length trimmed < n `div` 2 then cut else trimmed
+        in  T.dropWhileEnd (== ' ') (T.dropWhileEnd isTrailingPunct body)
+              <> T.pack "\x2026"
+  where
+    isTrailingPunct c = c `elem` (" ,;:" :: String)
+
+-- | A neutral, factual description for a photograph page, composed from
+--   the frontmatter the photography pipeline already requires. Only fires
+--   for pages carrying @photo:@ — every photography entry has one, and
+--   nothing else does.
+photoDescription :: Metadata -> Compiler (Maybe T.Text)
+photoDescription meta
+    | Nothing <- lookupString "photo" meta = return Nothing
+    | otherwise = do
+        serName <- traverse seriesTitle (lookupString "series" meta >>= nonEmptyT)
+        let loc     = lookupString "location" meta >>= nonEmptyT
+            capt    = lookupString "captured" meta >>= formatCaptured
+            clauses = concat
+                [ [ "made at " <> l | Just l <- [loc]  ]
+                , [ "on " <> c      | Just c <- [capt] ]
+                , [ "from the " <> s <> " series" | Just s <- [serName] ]
+                ]
+        return $ if null clauses
+            then Nothing
+            else Just ("Photograph " <> T.intercalate ", " clauses <> ".")
+  where
+    nonEmptyT s = if null (trim s) then Nothing else Just (T.pack (trim s))
+    formatCaptured s =
+        case parseTimeM True defaultTimeLocale "%Y-%m-%d" (trim s) :: Maybe UTCTime of
+            Just d  -> Just (T.pack (formatTime defaultTimeLocale "%-d %B %Y" d))
+            Nothing -> nonEmptyT s
+
+    -- Prefer the series landing page's own title ("Germany, August 2026")
+    -- over a mechanical de-slugging of the directory name ("Germany
+    -- 082026"). 'getMetadata' on a path no rule claims returns mempty
+    -- rather than failing, so a stale or hand-written `series:` value
+    -- falls back to the slug instead of breaking the build. The read is
+    -- untracked, like every other metadata read: renaming a series
+    -- retitles its own page immediately and its frames' descriptions on
+    -- their next rebuild.
+    seriesTitle slug = do
+        m <- getMetadata (fromFilePath
+                ("content/photography/" ++ T.unpack slug ++ "/index.md"))
+        return $ case lookupString "title" m >>= nonEmptyT of
+            Just t  -> t
+            Nothing -> humanizeSlug slug
+
+-- | @"europa-2024"@ → @"Europa 2024"@. Series directories are slugs; this
+--   is the fallback when a series has no landing page to name it, and is
+--   only ever used for prose inside a meta description.
+humanizeSlug :: T.Text -> T.Text
+humanizeSlug = T.unwords . map capitalise . T.words . T.map dash
+  where
+    dash '-' = ' '
+    dash '_' = ' '
+    dash c   = c
+    capitalise w = case T.uncons w of
+        Just (c, rest) -> T.cons (toUpper c) rest
+        Nothing        -> w
+
+-- | Plain text of the first paragraph of a rendered page body.
+--
+--   The item reaching @templates/default.html@ (where the head partial
+--   asks for @$description$@) carries the page's own rendered HTML, so
+--   the excerpt is taken from the finished document rather than re-parsing
+--   the source — which also means generated pages with no Markdown file of
+--   their own (the library, /new.html, the bibliography index) get one.
+--
+--   Scoped to @#markdownBody@ when present so the excerpt is body prose
+--   rather than a metadata strip, skips math spans (their text content is
+--   LaTeX source), and skips paragraphs that carry no words.
+firstParagraphText :: String -> Maybe T.Text
+firstParagraphText html =
+    let scoped = case breakOnAfter "id=\"markdownBody\"" html of
+                    Just rest -> rest
+                    Nothing   -> html
+    in  firstNonEmpty (dropNonProse scoped)
+  where
+    -- Authoring comments, no-JS fallbacks, and inline script/style are not
+    -- the page's prose. Comments in particular can *contain* markup — the
+    -- search page's opening comment mentions a literal @\<p\>@ — so they
+    -- have to go before anything looks for a paragraph, not after.
+    dropNonProse =
+          dropRegion "<!--"      "-->"
+        . dropRegion "<noscript" "</noscript>"
+        . dropRegion "<script"   "</script>"
+        . dropRegion "<style"    "</style>"
+
+    -- Remove every @open … close@ region. An unterminated region swallows
+    -- the rest of the document, which is the conservative answer: better
+    -- no description than one quoting a half-parsed comment.
+    dropRegion open close s = case breakOnList open s of
+        (_,   "")  -> s
+        (pre, mid) -> pre ++ dropRegion open close (snd (breakOnList close mid))
+
+    firstNonEmpty s = do
+        (para, rest) <- nextParagraph s
+        let txt = T.unwords (T.words (T.pack (htmlToText (dropMath para))))
+        if T.null txt || T.length txt < 8 then firstNonEmpty rest else Just txt
+
+    nextParagraph s = do
+        afterOpen <- breakOnAfter "<p" s
+        -- "<p>" or "<p class=…>", but not "<pre>" or "<param>".
+        -- 'breakOnAfter' already consumes the ">" it matched, so the
+        -- attribute branch must not drop another character.
+        rest <- case afterOpen of
+                    ('>' : r)         -> Just r
+                    c : _ | isSpace c -> breakOnAfter ">" afterOpen
+                    _                 -> Nothing
+        let (body, after) = breakOnList "</p>" rest
+        return (body, after)
+
+    -- Drop <span class="math …">…</span> runs wholesale.
+    dropMath s = case breakOnList "class=\"math" s of
+        (_,  "")   -> s
+        (pre, mid) -> case breakOnList "</span>" mid of
+            (_, "")     -> pre
+            (_, after)  -> pre ++ dropMath (drop (length ("</span>" :: String)) after)
+
+-- | @breakOnAfter needle haystack@ — everything after the first occurrence
+--   of @needle@, or 'Nothing' when it does not occur.
+breakOnAfter :: String -> String -> Maybe String
+breakOnAfter needle = go
+  where
+    go [] = Nothing
+    go s@(_ : cs) = case stripPrefix needle s of
+        Just rest -> Just rest
+        Nothing   -> go cs
+
+-- | Split at the first occurrence of a literal, dropping the literal.
+--   The second component is empty when the literal does not occur.
+breakOnList :: String -> String -> (String, String)
+breakOnList needle = go
+  where
+    go [] = ([], [])
+    go s@(c : cs) = case stripPrefix needle s of
+        Just rest -> ([], rest)
+        Nothing   -> let (a, b) = go cs in (c : a, b)
+
+-- | Remove HTML tags and decode the handful of entities Pandoc emits, so
+--   the result is the reader-visible text. Tag removal is Hakyll's
+--   'stripTags' (which closes up around inline markup rather than
+--   inserting a space, so @\<em\>word\<\/em\>s@ stays one word).
+htmlToText :: String -> String
+htmlToText = decodeEntities . stripTags
+  where
+    decodeEntities [] = []
+    decodeEntities s@('&' : _) =
+        case firstJust [ (repl, ) <$> stripPrefix ent s | (ent, repl) <- entities ] of
+            Just (repl, rest) -> repl ++ decodeEntities rest
+            Nothing           -> '&' : decodeEntities (drop 1 s)
+    decodeEntities (c : cs) = c : decodeEntities cs
+
+    entities =
+        [ ("&amp;", "&"), ("&lt;", "<"), ("&gt;", ">")
+        , ("&quot;", "\""), ("&#39;", "'"), ("&apos;", "'")
+        , ("&nbsp;", " "), ("&hellip;", "\x2026"), ("&mdash;", "\x2014")
+        , ("&ndash;", "\x2013"), ("&rsquo;", "\x2019"), ("&lsquo;", "\x2018")
+        , ("&ldquo;", "\x201C"), ("&rdquo;", "\x201D")
+        ]
+
+    firstJust xs = case [ x | Just x <- xs ] of
+        (x : _) -> Just x
+        []      -> Nothing
 
 -- | HTML-escape characters that would break out of an attribute value.
 attrEscape :: String -> String
@@ -447,6 +687,7 @@ siteCtx :: Context String
 siteCtx =
     constField "site-title" "Levi Neuwirth"
     <> constField "site-url" "https://levineuwirth.org"
+    <> canonicalUrlField
     <> buildTimeField
     <> pageScriptsField
     <> abstractField
@@ -724,14 +965,20 @@ epistemicCtx =
 --   'recentFirstByDisplay', so they always agree on what the item's
 --   display date is.
 itemDisplayUTC :: Item a -> Compiler UTCTime
-itemDisplayUTC item = do
-    meta <- getMetadata (itemIdentifier item)
+itemDisplayUTC = identifierDisplayUTC . itemIdentifier
+
+-- | 'itemDisplayUTC' for a bare 'Identifier'. The sitemap works from
+--   identifiers rather than items (nothing is loaded for a URL row), so
+--   the revision-aware date has to be reachable without an 'Item'.
+identifierDisplayUTC :: Identifier -> Compiler UTCTime
+identifierDisplayUTC ident = do
+    meta <- getMetadata ident
     case getRevisions meta of
         (r:_) -> case parseTimeM True defaultTimeLocale "%Y-%m-%d"
                                   (revisionDateISO r) :: Maybe UTCTime of
             Just utc -> return utc
-            Nothing  -> getItemUTC defaultTimeLocale (itemIdentifier item)
-        [] -> getItemUTC defaultTimeLocale (itemIdentifier item)
+            Nothing  -> getItemUTC defaultTimeLocale ident
+        [] -> getItemUTC defaultTimeLocale ident
 
 -- | @$date-display$@ — the date shown next to an item in list renderings.
 --   Most-recent revision date if the item has a 'revised:' entry, else
@@ -749,7 +996,8 @@ dateDisplayIsoField = field "date-iso" $ \item ->
 
 -- | @$date-original$@ — the item's creation date, present in the
 --   context only when the most-recent revision date differs from it.
---   Consumed by the card partial's "· revised from …" annotation.
+--   Consumed by the card partial's revision marker, which shows it
+--   inline on touch devices and defers it to the hover popup elsewhere.
 --   'noResult' otherwise (so the annotation is simply absent for
 --   never-revised items).
 dateOriginalField :: Context String
@@ -765,8 +1013,9 @@ dateOriginalField = field "date-original" $ \item -> do
                 else return (formatTime defaultTimeLocale "%-d %B %Y" created)
 
 -- | @$revision-note$@ — prose note attached to the most-recent
---   'revised:' entry, if any. Rendered as an italicized line under
---   the abstract on the item card. 'noResult' when there's no
+--   'revised:' entry, if any. Rendered under the abstract on the item
+--   card, where item-card.css hides it visually on pointer devices and
+--   the marker's popup carries it instead. 'noResult' when there's no
 --   revision, or when the most-recent revision has no note.
 revisionNoteField :: Context String
 revisionNoteField = field "revision-note" $ \item -> do
@@ -775,25 +1024,135 @@ revisionNoteField = field "revision-note" $ \item -> do
         (r:_) | Just note <- revisionNote r, not (null (trim note)) -> return note
         _ -> noResult "no revision note"
 
+-- | @$has-revision$@ — present (renders as @"true"@) only when the item
+--   has a revision worth annotating: either its display date differs
+--   from its creation date, or the most-recent revision carries a note.
+--   The card gates its "Revised" marker on this, so a @revised:@ entry
+--   that adds neither a new date nor prose stays invisible rather than
+--   producing a marker whose popup would be empty.
+hasRevisionField :: Context String
+hasRevisionField = field "has-revision" $ \item -> do
+    meta <- getMetadata (itemIdentifier item)
+    case getRevisions meta of
+        [] -> noResult "no revisions"
+        (r:_) -> do
+            created <- getItemUTC defaultTimeLocale (itemIdentifier item)
+            let createdIso = formatTime defaultTimeLocale "%Y-%m-%d" created
+                hasNote    = maybe False (not . null . trim) (revisionNote r)
+            if revisionDateISO r /= createdIso || hasNote
+                then return "true"
+                else noResult "revision adds neither a date nor a note"
+
 -- | Bundle of revision-aware fields consumed by the item-card partial:
---   @$date-display$@, @$date-iso$@, @$date-original$@, @$revision-note$@.
---   Compose once on any surface that renders item cards.
+--   @$date-display$@, @$date-iso$@, @$date-original$@, @$revision-note$@,
+--   @$has-revision$@. Compose once on any surface that renders item cards.
 revisionDateFields :: Context String
 revisionDateFields =
        dateDisplayField
     <> dateDisplayIsoField
     <> dateOriginalField
     <> revisionNoteField
+    <> hasRevisionField
+
+-- | @$date-modified$@ — the date of the item's most recent substantive
+--   revision, formatted "5 September 2026".
+--
+--   Audit F11: this used to be @dateField "date-modified"@, i.e. the
+--   creation date, so the page footer's "Last modified" line repeated
+--   "Created" verbatim and a revised essay claimed never to have changed.
+--   The value comes from 'itemDisplayUTC', the same source the cards, the
+--   feed's @updated@, and the sitemap's @lastmod@ now use, so the four
+--   surfaces cannot disagree.
+--
+--   Deliberately *not* the build time: a rebuild is not a modification.
+dateModifiedField :: Context String
+dateModifiedField = field "date-modified" $ \item ->
+    formatTime defaultTimeLocale "%-d %B %Y" <$> itemDisplayUTC item
+
+-- ---------------------------------------------------------------------------
+-- Canonical URL
+-- ---------------------------------------------------------------------------
+--
+-- 'canonicalUrlPath' itself lives in "Utils": "Backlinks" needs it to
+-- write the href of a backlink source, and "Backlinks" is imported by
+-- this module, so it cannot import back. It is re-exported here because
+-- this is where every other caller already looks for it.
+
+-- | The three fields every Atom feed on the site needs, so the two feed
+--   rules cannot drift apart.
+--
+--   @$updated$@ is the revision-aware date (audit F11): the most recent
+--   @revised:@ entry, or the creation date for a piece never revised. It
+--   is deliberately not the build time — a rebuild is not a revision, and
+--   stamping one here would push every entry back to the top of every
+--   subscriber's reader on every deploy.
+--
+--   @$published$@ is the creation date and never moves.
+--
+--   @$url$@ overrides Hakyll's default so the entry's @\<id\>@ and
+--   @\<link\>@ carry the same directory-form URL as the canonical link,
+--   the sitemap, and the site's own navigation (audit C03), rather than
+--   @\/essays\/foo\/index.html@.
+feedMetaFields :: Context String
+feedMetaFields =
+       field "updated"
+           (fmap (formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ")
+                . itemDisplayUTC)
+    <> dateField "published" "%Y-%m-%dT%H:%M:%SZ"
+    <> field "url" (\item -> do
+           mRoute <- getRoute (itemIdentifier item)
+           case mRoute of
+               Just r  -> return (canonicalUrlPath r)
+               Nothing -> noResult "feed item has no route")
+
+-- | @$canonical-url$@ — 'canonicalUrlPath' of the item's own route.
+--
+--   Audit C03: the head emitted @$url$@ (Hakyll's raw route) into both
+--   @rel=canonical@ and @og:url@, so a page advertised
+--   @\/essays\/foo\/index.html@ as its identity while every link to it,
+--   the sitemap, and the search metadata said @\/essays\/foo\/@.
+--
+--   Always resolves — an unrouted item would otherwise break the head
+--   template for every page that shares it — falling back to @"\/"@.
+canonicalUrlField :: Context String
+canonicalUrlField = field "canonical-url" $ \item ->
+    maybe "/" canonicalUrlPath <$> getRoute (itemIdentifier item)
 
 -- | Sort items most-recent-first by 'itemDisplayUTC' — same ordering
 --   the card shows in its date gutter, so items with recent revisions
 --   move to the top without divorcing the sort key from the visible
 --   date. Callers: the @/new.html@ rule, 'Tags.applyTagRules', and
 --   the library rule.
+--
+--   Within a single day the tie is broken by 'isNewAtDisplay': a piece
+--   published that day sorts above a piece that merely picked the day
+--   up from a @revised:@ entry. A day that carries both should read as
+--   "here is the new thing, and here is what else moved", not as an
+--   arbitrary interleaving. Ties beyond that stay in input order
+--   ('sortBy' is stable).
 recentFirstByDisplay :: [Item a] -> Compiler [Item a]
 recentFirstByDisplay items = do
-    keyed <- mapM (\i -> (,) <$> itemDisplayUTC i <*> pure i) items
-    return $ map snd $ sortBy (flip (comparing fst)) keyed
+    keyed <- mapM key items
+    return $ map snd $ sortBy (comparing fst) keyed
+  where
+    key i = do
+        displayed <- itemDisplayUTC i
+        fresh     <- isNewAtDisplay i
+        -- Day first so "same day" survives any time component on the
+        -- date; the full timestamp only orders across distinct days.
+        return ((Down (utctDay displayed), Down fresh, Down displayed), i)
+
+-- | Is the item at its display date because it was /published/ then,
+--   rather than revised then? True for never-revised pieces, for a
+--   revision dated the same day as publication, and for the fallback
+--   'itemDisplayUTC' takes when a revision's date fails to parse —
+--   in every one of those cases the displayed date /is/ the creation
+--   date, which is exactly what the comparison asks.
+isNewAtDisplay :: Item a -> Compiler Bool
+isNewAtDisplay item = do
+    displayed <- itemDisplayUTC item
+    created   <- getItemUTC defaultTimeLocale (itemIdentifier item)
+    return (utctDay displayed == utctDay created)
 
 -- ---------------------------------------------------------------------------
 -- Revised: frontmatter schema
@@ -869,7 +1228,8 @@ essayCtx =
     <> versionHistoryRangeEndField
     <> versionHistoryCommitsField
     <> dateField "date-created" "%-d %B %Y"
-    <> dateField "date-modified" "%-d %B %Y"
+    -- "Last modified" is the revision date, not the creation date (F11).
+    <> dateModifiedField
     <> revisionDateFields
     <> constField "math" "true"
     <> tagLinksField "essay-tags"
@@ -1421,6 +1781,100 @@ yamlAsString _ = Nothing
 sidecarLookupString :: String -> Aeson.Object -> Maybe String
 sidecarLookupString key obj = yamlAsString =<< KM.lookup (AK.fromString key) obj
 
+-- ---------------------------------------------------------------------------
+-- Responsive delivery variants (audit P01)
+-- ---------------------------------------------------------------------------
+--
+-- Every photography surface used to point one @<img src>@ at the full
+-- 2400px delivery JPEG, whatever size the slot actually was — a 210px
+-- contact-sheet frame cost the same ~800 KB as the detail page's hero.
+-- @tools\/generate-thumbnails.py@ writes a ladder of siblings beside each
+-- source (@\<name\>.w480.jpg@, @.w960@, @.w1440@, emitted only when the
+-- source is strictly wider), and these fields offer that ladder to the
+-- browser through @srcset@.
+--
+-- Every candidate is checked on disk before it is offered. Two reasons
+-- this is load-bearing rather than defensive: a browser does not fall
+-- back from a 404'd @srcset@ candidate the way it falls back from a
+-- missing @<source>@, and @tools\/check-site.py@ fails the build on any
+-- @srcset@ target absent from @_site@. The ladder is also incomplete by
+-- design — a 900px source has no @.w960@ — and @.webp@ companions exist
+-- only where @cwebp@ ran.
+
+-- | The widths @tools\/generate-thumbnails.py@ emits. Keep in sync with
+--   @WIDTHS@ there; adding a rung is a change on both sides.
+photoVariantWidths :: [Int]
+photoVariantWidths = [480, 960, 1440]
+
+-- | Split a filename at its final extension, not crossing a path
+--   separator: @\"a\/foo.jpg\"@ → @(\"a\/foo\", \".jpg\")@, and
+--   @\"foo\"@ → @(\"foo\", \"\")@.
+photoSplitExt :: String -> (String, String)
+photoSplitExt p = case lastDot (length p - 1) of
+    Just i  -> (take i p, drop i p)
+    Nothing -> (p, "")
+  where
+    lastDot i
+        | i < 0         = Nothing
+        | p !! i == '/' = Nothing   -- crossed a path boundary
+        | p !! i == '.' = Just i
+        | otherwise     = lastDot (i - 1)
+
+-- | @foo.jpg@ at rung 960 → @foo.w960.jpg@. Same extension, same
+--   directory: the naming contract in @tools\/generate-thumbnails.py@.
+photoVariantName :: String -> Int -> String
+photoVariantName p w =
+    let (base, ext) = photoSplitExt p in base ++ ".w" ++ show w ++ ext
+
+-- | @foo.jpg@ → @foo.webp@ (and @foo.w960.jpg@ → @foo.w960.webp@).
+photoWebpName :: String -> String
+photoWebpName p = let (base, _) = photoSplitExt p in base ++ ".webp"
+
+-- | Disk directory, URL directory, and filename of an entry's
+--   co-located photograph. 'Nothing' for a flat single (no co-located
+--   asset directory) or an entry with no @photo:@ key — the same test,
+--   for the same reason, as 'photoSidecarPath'.
+photoAssetPaths :: Item a -> Compiler (Maybe (FilePath, String, String))
+photoAssetPaths item = do
+    meta <- getMetadata (itemIdentifier item)
+    let fp      = toFilePath (itemIdentifier item)
+        isFlat  = takeDirectory fp == "content/photography"
+        dirName = takeFileName (takeDirectory fp)
+    case (isFlat, lookupString "photo" meta) of
+        (False, Just photo) | not (null photo) ->
+            return $ Just (takeDirectory fp, "/photography/" ++ dirName, photo)
+        _ -> return Nothing
+
+-- | True pixel width of the delivery source: frontmatter @width:@,
+--   then @{photo}.exif.yaml@, then @{photo}.dims.yaml@. Needed because
+--   the source is itself a @srcset@ candidate and a candidate list that
+--   uses @w@ descriptors must give one to every entry.
+resolvePhotoWidth :: Item a -> Compiler (Maybe Int)
+resolvePhotoWidth item = do
+    meta <- getMetadata (itemIdentifier item)
+    case readMaybe . trim =<< lookupString "width" meta of
+        Just w  -> return (Just w)
+        Nothing -> do
+            exif <- readPhotoSidecar ".exif.yaml" item
+            case readMaybe =<< sidecarLookupString "width" exif of
+                Just w  -> return (Just w)
+                Nothing -> do
+                    dims <- readPhotoSidecar ".dims.yaml" item
+                    return (readMaybe =<< sidecarLookupString "width" dims)
+
+-- | Keep only the candidates whose file is on disk, preserving order.
+photoCandidatesOnDisk :: [(FilePath, String, Int)]
+                      -> Compiler [(FilePath, String, Int)]
+photoCandidatesOnDisk cands = do
+    marked <- unsafeCompiler $
+        mapM (\c@(disk, _, _) -> (,) c <$> doesFileExist disk) cands
+    return [ c | (c, True) <- marked ]
+
+-- | Render a candidate list as a @srcset@ attribute value.
+photoSrcsetString :: [(FilePath, String, Int)] -> String
+photoSrcsetString =
+    intercalate ", " . map (\(_, url, w) -> url ++ " " ++ show w ++ "w")
+
 -- | Generic frontmatter > EXIF-sidecar fallback field.
 --
 --   @key@ is the YAML key — same name on both sides. Frontmatter
@@ -1499,6 +1953,17 @@ canonicalLicenseUrl raw =
 --                         human-readable and ISO forms; @noResult@
 --                         when @captured:@ is absent. Distinct from
 --                         the publication @date:@ shown in card lists.
+--     @$photo-srcset$@  — the responsive ladder for @$photo-url$@:
+--                         every existing @\<name\>.w480\/.w960\/.w1440@
+--                         sibling in ascending width, then the source
+--                         itself at its true pixel width. @noResult@
+--                         when no variant exists or the source width is
+--                         unknown, so the template falls back to a plain
+--                         @src@.
+--     @$photo-webp-srcset$@ — the same ladder in @.webp@, each rung
+--                         independently existence-checked. @noResult@
+--                         when none exist, which is what gates the
+--                         @\<source type="image\/webp"\>@.
 --     @$photography-tags$@ — listField of @{tag-name, tag-url}@.
 --     @$palette-swatches$@ — listField of @{swatch}@ (hex string).
 --                         @noResult@ when the @palette:@ frontmatter
@@ -1511,6 +1976,8 @@ photographyCtx =
     <> slugField
     <> photoUrlField
     <> photoWebpUrlField
+    <> photoSrcsetField
+    <> photoWebpSrcsetField
     -- EXIF-backed fields. Each prefers frontmatter and falls back to
     -- @{photo}.exif.yaml@ produced by @tools/extract-exif.py@. Sidecars
     -- absent on film scans (no EXIF on a film negative) is fine —
@@ -1570,14 +2037,10 @@ photographyCtx =
     -- containing directory's name.
     photoUrlField :: Context String
     photoUrlField = field "photo-url" $ \item -> do
-        meta <- getMetadata (itemIdentifier item)
-        let fp      = toFilePath (itemIdentifier item)
-            isFlat  = takeDirectory fp == "content/photography"
-            dirName = takeFileName (takeDirectory fp)
-        case (isFlat, lookupString "photo" meta) of
-            (False, Just photo) | not (null photo) ->
-                return $ "/photography/" ++ dirName ++ "/" ++ photo
-            _ -> noResult "no co-located photo (flat single, or photo: key absent)"
+        mPaths <- photoAssetPaths item
+        case mPaths of
+            Just (_, urlDir, photo) -> return (urlDir ++ "/" ++ photo)
+            Nothing -> noResult "no co-located photo (flat single, or photo: key absent)"
 
     -- WebP companion URL, mirroring 'photoUrlField'. Returns 'noResult'
     -- when the @.webp@ companion doesn't exist on disk at compile time
@@ -1589,38 +2052,80 @@ photographyCtx =
     -- file-existence check at build time is load-bearing.
     photoWebpUrlField :: Context String
     photoWebpUrlField = field "photo-webp-url" $ \item -> do
-        meta <- getMetadata (itemIdentifier item)
-        let fp      = toFilePath (itemIdentifier item)
-            isFlat  = takeDirectory fp == "content/photography"
-            dirName = takeFileName (takeDirectory fp)
-        case (isFlat, lookupString "photo" meta) of
-            (False, Just photo) | not (null photo) -> do
-                let entryDir    = takeDirectory fp
-                    webpDisk    = entryDir </> photoToWebp photo
-                exists <- unsafeCompiler (doesFileExist webpDisk)
+        mPaths <- photoAssetPaths item
+        case mPaths of
+            Nothing -> noResult "no co-located photo (flat single, or photo: key absent)"
+            Just (dir, urlDir, photo) -> do
+                let webp = photoWebpName photo
+                exists <- unsafeCompiler (doesFileExist (dir </> webp))
                 if exists
-                    then return $ "/photography/" ++ dirName
-                                  ++ "/" ++ photoToWebp photo
+                    then return (urlDir ++ "/" ++ webp)
                     else noResult "no webp companion on disk"
-            _ -> noResult "no co-located photo (flat single, or photo: key absent)"
-      where
-        -- @photo.jpg@ → @photo.webp@; preserves any path components
-        -- the author might have written (rare but harmless).
-        photoToWebp :: String -> String
-        photoToWebp p =
-            let dotIdx = lastDotIndex p
-            in  case dotIdx of
-                    Just i  -> take i p ++ ".webp"
-                    Nothing -> p ++ ".webp"
 
-        lastDotIndex :: String -> Maybe Int
-        lastDotIndex s = go (length s - 1)
-          where
-            go i
-                | i < 0          = Nothing
-                | s !! i == '/'  = Nothing  -- crossed a path boundary
-                | s !! i == '.'  = Just i
-                | otherwise      = go (i - 1)
+    -- Responsive ladder for the original delivery format (audit P01).
+    -- Ascending width, source last at its true pixel width, so a browser
+    -- reading right-to-left finds the smallest candidate that satisfies
+    -- the slot. 'noResult' when there is no rung below the source (a
+    -- small source needs no ladder) or when the source width is unknown
+    -- — a `w` descriptor list may not have an entry without one, and
+    -- guessing the source's width would mislead the selection algorithm
+    -- in exactly the direction that costs bytes.
+    photoSrcsetField :: Context String
+    photoSrcsetField = field "photo-srcset" $ \item -> do
+        mPaths <- photoAssetPaths item
+        mWidth <- resolvePhotoWidth item
+        case (mPaths, mWidth) of
+            (Just (dir, urlDir, photo), Just srcW) -> do
+                let rungs = [ ( dir </> photoVariantName photo w
+                              , urlDir ++ "/" ++ photoVariantName photo w
+                              , w )
+                            | w <- photoVariantWidths, w < srcW ]
+                kept <- photoCandidatesOnDisk rungs
+                if null kept
+                    then noResult "no delivery variants on disk"
+                    else return $ photoSrcsetString $
+                            kept ++ [ ( dir </> photo
+                                      , urlDir ++ "/" ++ photo
+                                      , srcW ) ]
+            (Just _, Nothing) -> noResult "no source width; cannot write w descriptors"
+            _                 -> noResult "no co-located photo"
+
+    -- The same ladder in WebP. Each rung is checked independently: a
+    -- half-finished `tools/convert-images.sh` run leaves some companions
+    -- and not others, and offering one that is not there would 404 with
+    -- no fallback (a <source> that resolves is committed to). 'noResult'
+    -- when nothing exists, which is what suppresses the <source>.
+    --
+    -- With the source width unknown the single base companion is still
+    -- offered, bare and descriptorless — that is exactly the pre-P01
+    -- behaviour, so nothing regresses on an entry with no dimensions.
+    photoWebpSrcsetField :: Context String
+    photoWebpSrcsetField = field "photo-webp-srcset" $ \item -> do
+        mPaths <- photoAssetPaths item
+        mWidth <- resolvePhotoWidth item
+        case mPaths of
+            Nothing -> noResult "no co-located photo"
+            Just (dir, urlDir, photo) -> do
+                let webpOf p = photoWebpName p
+                    baseCand = ( dir </> webpOf photo
+                               , urlDir ++ "/" ++ webpOf photo
+                               , fromMaybe 0 mWidth )
+                case mWidth of
+                    Nothing -> do
+                        kept <- photoCandidatesOnDisk [baseCand]
+                        case kept of
+                            [(_, url, _)] -> return url
+                            _             -> noResult "no webp companion on disk"
+                    Just srcW -> do
+                        let cands = [ ( dir </> webpOf (photoVariantName photo w)
+                                      , urlDir ++ "/" ++ webpOf (photoVariantName photo w)
+                                      , w )
+                                    | w <- photoVariantWidths, w < srcW ]
+                                    ++ [ (dir </> webpOf photo, urlDir ++ "/" ++ webpOf photo, srcW) ]
+                        kept <- photoCandidatesOnDisk cands
+                        if null kept
+                            then noResult "no webp companions on disk"
+                            else return (photoSrcsetString kept)
 
     -- Resolve the @captured:@ ISO date with frontmatter > sidecar
     -- precedence. Centralised so the display and ISO fields stay in

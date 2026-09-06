@@ -23,8 +23,9 @@ a palette extraction error.
 
 from __future__ import annotations
 
-import os
 import io
+import os
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -38,6 +39,14 @@ CONTENT_DIR = REPO_ROOT / "content" / "photography"
 TOOL = "extract-palette"
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png"}
+
+# Responsive delivery variants written by tools/generate-thumbnails.py
+# (photo.w480.jpg / photo.w960.jpg / photo.w1440.jpg). They are pixel
+# reductions of a source that already has its own sidecar, and nothing
+# reads a sidecar for a srcset candidate — so extracting for them would
+# add ~1100 files of churn here for no consumer. Keep the pattern in step
+# with VARIANT_RE in tools/generate-thumbnails.py.
+VARIANT_RE = re.compile(r"\.w(480|960|1440)\.(jpe?g|png)$", re.IGNORECASE)
 
 # Number of swatches in the rendered strip. Five matches the design in
 # PHOTOGRAPHY.md and the existing `photo-palette` CSS, which sets
@@ -152,6 +161,8 @@ def main() -> int:
         if image.suffix.lower() not in IMAGE_EXTS:
             continue
         if image.name.startswith(".") or image.name.endswith(".tmp"):
+            continue
+        if VARIANT_RE.search(image.name):
             continue
 
         sidecar = _sidecar_path(image)

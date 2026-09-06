@@ -38,6 +38,7 @@ import qualified Data.Scientific      as Sci
 import qualified Data.Yaml            as Y
 import           Text.Pandoc.Definition
 import qualified Text.Pandoc          as Pandoc
+import           Text.Pandoc.Options  (HTMLMathMethod (..), WriterOptions (..))
 import           Text.Pandoc.Walk     (walkM)
 import           System.Directory     (doesFileExist)
 import           System.FilePath      (replaceExtension, takeExtension, (</>))
@@ -318,11 +319,20 @@ captionInlines (Caption _ blocks) = concatMap go blocks
 --   still safe figcaption.
 renderInlinesToHtml :: [Inline] -> Text
 renderInlinesToHtml ils =
-    case Pandoc.runPure (Pandoc.writeHtml5String def doc) of
+    case Pandoc.runPure (Pandoc.writeHtml5String captionWriterOpts doc) of
         Right t -> T.strip t
         Left  _ -> stringify ils
   where
     doc = Pandoc mempty [Plain ils]
+
+    -- Matches @Compilers.writerOpts@ (mirrored, not shared: @Compilers@
+    -- imports this module). The default 'HTMLMathMethod' emits @\\(…\\)@
+    -- delimiters around the TeX, but @static\/js\/katex-bootstrap.js@ passes
+    -- each @\<span class="math"\>@'s @textContent@ straight to
+    -- @katex.render@, which wants bare TeX and would try to typeset the
+    -- delimiters. Body math already renders this way; without this a caption
+    -- containing @$…$@ would not.
+    captionWriterOpts = def { writerHTMLMathMethod = KaTeX "" }
 
 attrId :: Text -> Text
 attrId t = if T.null t then "" else " id=\"" <> esc t <> "\""

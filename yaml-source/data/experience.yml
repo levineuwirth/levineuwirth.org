@@ -8,11 +8,12 @@ experience:
   # MARS V heads both documents. On the CV it is routed into "Research
   # Experience" via cv_section and sits first because it appears first among
   # research entries in this file (the CV template preserves file order).
-  - organization: Cambridge AI Safety Hub
+  - id: mars-v
+    organization: Cambridge AI Safety Hub
     role: MARS V Fellow
     location: Cambridge, United Kingdom
     start: July 2026
-    end: October 2026
+    end: Present
     cv_section: research
     cv_order: 1
     resume_order: 1
@@ -21,6 +22,152 @@ experience:
     bullets:
       - "Selected for MARS V, a competitive part-time AI-safety research fellowship, working under James Petrie (Future of Life Institute)."
       - "Research on zero-knowledge proofs for large language models, toward cryptographic verification of claims about model training, inference, and deployment."
+    presentation_sets:
+      ai-infra-assurance:
+        bullets:
+          - >-
+            Develop cryptographic mechanisms for trustworthy claims about LLM
+            inference when the compute operator and its logs cannot be trusted.
+            Built and upstreamed VerInf's dry-run profiler: workload-manifest
+            contract and extraction, per-claim proving-cost model, execution DAG,
+            and partition scorecard for planning multi-accelerator proving.
+          - >-
+            Validated the profiler and cost model in two rounds: retrodiction
+            against an archived full-scale Llama-4 Maverick proof run, then
+            end-to-end calibration and tape extraction on a live NVIDIA B200
+            (Blackwell). Independent manifest producers cross-checked clean; the
+            extracted workload reported 109.274 M witness rows against the
+            archived production record's 109.27 M.
+          - >-
+            Used measurement/model disagreement to identify and correct a faulty
+            cross-shard communication abstraction, revising the estimate from
+            roughly 950 GB to 2.4--2.8 GB per sweep; upstreamed the correction,
+            calibration suite, and machine profile. Current work extends the
+            prover toward verifier-transparent partitioning and 2--8-GPU
+            execution; current scaling estimates are model-based, with end-to-end
+            multi-device timing as the next empirical milestone.
+      frontier-evals-control:
+        bullets:
+          - >-
+            Develop zero-knowledge mechanisms for trustworthy claims about
+            frontier-model execution when the compute operator, its logs, or
+            other evidence-producing components cannot simply be trusted. Built
+            VerInf tooling that makes workload extraction and per-claim proving
+            costs explicit and independently checkable.
+          - >-
+            Built and upstreamed a dry-run profiler, workload-manifest contract,
+            per-claim cost model, execution DAG, and partition scorecard.
+            Validated them against an archived full-scale Llama-4 Maverick proof
+            run and on a live NVIDIA B200; two independent manifest builders
+            cross-checked clean, and the extracted workload reported 109.274 M
+            witness rows against the production record's 109.27 M.
+          - >-
+            Investigated a measurement/model discrepancy that exposed a faulty
+            cross-shard communication abstraction, revising its per-sweep
+            estimate from roughly 950 GB to 2.4--2.8 GB. Upstreamed the
+            correction, calibration suite, and machine profile; current
+            multi-GPU work proceeds from the corrected model, with projected
+            partition plans to be tested through end-to-end multi-device timing.
+      inference-systems-performance:
+        bullets:
+          - >-
+            Built and upstreamed VerInf's dry-run workload profiler:
+            workload-manifest contract and extraction, per-claim proving-cost
+            model, execution DAG, and partition scorecard for modeling compute,
+            communication, and partition costs in multi-accelerator proving.
+          - >-
+            Validated the instrumented model in two rounds: retrodiction against
+            an archived full-scale Llama-4 Maverick proof run, then end-to-end
+            calibration and tape extraction on a live NVIDIA B200 (Blackwell).
+            Two independent manifest producers cross-checked clean; the extracted
+            workload reported 109.274 M witness rows against the archived
+            production record's 109.27 M.
+          - >-
+            Used measurement/model disagreement to identify and correct a faulty
+            cross-shard communication abstraction, revising its per-sweep
+            estimate from roughly 950 GB to 2.4--2.8 GB; upstreamed the corrected
+            model, calibration suite, and machine profile. Current work extends
+            the model and partitioning system toward 2--8-GPU proving; scaling
+            results remain model-based, with end-to-end multi-device timing as
+            the next empirical milestone.
+      trusted-compute-verification:
+        bullets:
+          - >-
+            Work on VerInf's ZK/prover side to establish operator-independent
+            claims about frontier-model inference when the compute operator and
+            its logs cannot be trusted. Built workload-manifest extraction,
+            per-claim proving-cost instrumentation, an execution DAG, and a
+            partition scorecard that make the claimed workload and dependencies
+            explicit while correctness remains with a separate, small verifier.
+          - >-
+            Connected those claims to real execution through retrodiction against
+            an archived full-scale Llama-4 Maverick proof and live NVIDIA B200
+            calibration. Two independent manifest producers cross-checked with
+            zero flags and reported 109.274 M witness rows against the archived
+            record's 109.27 M; measurement also exposed and corrected a faulty
+            cross-shard estimate from roughly 950 GB to 2.4--2.8 GB per sweep.
+          - >-
+            Current review-branch work partitions enrolled-weight computation
+            without changing the proof bytes or verifier: sharded outputs were
+            byte-identical and passed 4/4 acceptance gates on hardware, including
+            the unmodified Rust verifier at two- and three-way cuts. No multi-GPU
+            speedup has been measured; 2--8-GPU timing remains model-based pending
+            end-to-end multi-device runs.
+      gpu-inference-systems:
+        bullets:
+          - >-
+            Built and upstreamed VerInf's dry-run profiler: operation-level
+            workload manifests, a per-claim model of time, memory, bandwidth,
+            and proof size, a claim-dependency DAG with critical-path and width
+            analysis, and a partition scorecard for multi-accelerator proving.
+          - >-
+            Validated predictions against an archived full-scale Llama-4
+            Maverick proof run, then ran end-to-end calibration and exact tape
+            extraction on a live NVIDIA B200 (Blackwell). Independent manifest
+            producers cross-checked with zero flags; 109{,}273{,}513 extracted
+            witness rows matched the production record's 109.27 M.
+          - >-
+            Measurement/model disagreement exposed a faulty cross-shard
+            communication abstraction; corrected its estimate from roughly 950
+            GB to 2.4--2.8 GB per sweep. Implemented review-branch sharding with
+            byte-identical outputs that passed 4/4 hardware gates, including the
+            unmodified Rust verifier at two- and three-way cuts; no multi-GPU
+            timing has been measured.
+      software-engineering-systems:
+        bullets:
+          - >-
+            Built and upstreamed VerInf's dry-run workload profiler,
+            workload-manifest extraction, per-claim proving-cost model,
+            execution DAG, and partition scorecard for a zero-knowledge LLM
+            inference system; validated them against an archived full-scale
+            Llama-4 Maverick proof and live NVIDIA B200 hardware.
+          - >-
+            Investigated measurement/model disagreement and corrected a faulty
+            cross-shard communication abstraction, revising its estimate from
+            roughly 950 GB to 2.4--2.8 GB per sweep. Current review-branch work
+            implements verifier-transparent enrolled-weight sharding whose proof
+            bytes match the single-device path and pass the unmodified Rust
+            verifier; multi-GPU timing remains model-based.
+      agent-platform-systems:
+        bullets:
+          - >-
+            Built and upstreamed execution-analysis tooling for an LLM
+            verification system: operation-level workload manifests, a model of
+            time, memory, communication, and proof size, an execution DAG, and a
+            partition scorecard. Validated it against an archived full-scale
+            Llama-4 Maverick run and live NVIDIA B200 hardware.
+          - >-
+            Used measurement/model disagreement to diagnose a faulty cross-shard
+            communication abstraction, correcting its estimate from roughly 950
+            GB to 2.4--2.8 GB per sweep. Implemented verifier-transparent
+            sharding with byte-identical outputs that passed the unmodified Rust
+            verifier at two- and three-way cuts; multi-GPU timing remains
+            model-based.
+    links:
+      - label: VerInf
+        href: https://github.com/JamesPetrie/VerInf
+      - label: Case study
+        href: https://levineuwirth.org/essays/verified-inference/
 
   # TOGGLED OFF on both documents as of August 2026 — retained, not deleted.
   # The entry is accurate and stays in the file so it can be switched back on
@@ -29,7 +176,8 @@ experience:
   # Held to one line when shown: the grok-code-fast-1 scope is the dated,
   # externally verifiable part, and the metrics bullets are omitted to keep
   # both documents' centre of gravity on research.
-  - organization: xAI
+  - id: xai-grok-code-fast
+    organization: xAI
     location: Remote
     start: May 2025
     end: August 2025
@@ -46,7 +194,8 @@ experience:
   # section, and sits above NeuroAI because it is the more active of the two.
   # `contract_work: false` keeps it out of the (now conditional) Selected
   # Contract Work section while leaving that machinery available.
-  - organization: "Independent Research Contractor"
+  - id: frontier-ai-contracting
+    organization: "Independent Research Contractor"
     role: "Frontier AI labs"
     contract_work: false
     location: null
@@ -58,10 +207,59 @@ experience:
     resume_visible: true
     bullets:
       - "Code and mathematics contributions across agentic workflow design, task and capability evaluation, reasoning assessment, model safety, and red-teaming."
+    presentation_sets:
+      ai-infra-assurance:
+        bullets:
+          - >-
+            Design frontier-model evaluation environments and scoring rubrics,
+            largely in Harbor; execute models, debug agent scaffolds, calibrate
+            evaluators, and analyze reasoning, capability, safety, and red-team
+            failures. Client identities and specific results are confidential.
+      frontier-evals-control:
+        bullets:
+          - >-
+            Design and build frontier-model evaluation environments and scoring
+            rubrics, largely in Harbor; execute models and debug agent scaffolds
+            across agentic workflows.
+          - >-
+            Calibrate evaluators before scaling runs; investigate whether
+            apparent failures arise from model behavior, agent scaffolds, task
+            design, or scoring, and analyze reasoning, capability, safety, and
+            red-team failures. Client identities and specific results are
+            confidential.
+      inference-systems-performance:
+        bullets:
+          - >-
+            Design frontier-model evaluation environments and scoring rubrics,
+            largely in Harbor; execute models, debug agent scaffolds, and
+            calibrate evaluators to distinguish apparent model failures from
+            failures in scaffolding, task design, or scoring. Analyze reasoning,
+            capability, safety, and red-team failures; client identities and
+            specific results are confidential.
+      software-engineering-systems:
+        bullets:
+          - >-
+            Build frontier-model evaluation environments and scoring systems,
+            largely in Harbor; execute models, debug agent scaffolds, and
+            calibrate evaluators to isolate failures in model behavior,
+            scaffolding, task design, or scoring. Client identities and specific
+            results are confidential.
+      agent-platform-systems:
+        bullets:
+          - >-
+            Design and build frontier-model evaluation harnesses and scoring
+            systems, largely in Harbor; execute models and debug agent scaffolds
+            across multi-step workflows.
+          - >-
+            Calibrate evaluators before scaled runs and attribute failures across
+            model behavior, scaffolding, task design, and scoring; analyze
+            reasoning, capability, safety, and red-team failures. Client
+            identities and results are confidential.
 
   # Held to one line: the role is stated plainly without framing the venture's
   # scope or direction.
-  - organization: NeuroAI LLC
+  - id: neuroai
+    organization: NeuroAI LLC
     role:
     location: neuroai.health
     location_url: https://neuroai.health
@@ -81,7 +279,8 @@ experience:
   # Both live under "Research Experience" on the CV (a separate section from
   # Industry Experience) and under "Experience" on the résumé. The template
   # handles the section-header difference.
-  - organization: Shu Laboratory, Brown University Department of Neurology
+  - id: shu-lab-undergrad
+    organization: Shu Laboratory, Brown University Department of Neurology
     role: Undergraduate Researcher and Technical Lead
     location: Providence, RI
     start: October 2023
@@ -96,12 +295,37 @@ experience:
     bullets:
       - "Technical lead on \\textbf{NeuroPose}, a 3D pose-estimation and kinematic-analysis system for neurological-recovery research. Built end-to-end pipeline: Python/TensorFlow deep-learning inference, MATLAB statistical post-processing, Rust backend with HTML/JS frontends. System supports four externally-funded sub-projects; clinical-implications manuscript in preparation."
       - "Co-lead developer on an \\textbf{order-invariant ICD-10-CM embedding model} for 30-day readmission (AUC 0.75 vs 0.66 CCI baseline) and postdischarge mortality prediction (AUC 0.86 vs 0.78), Deep Sets architecture trained on 113M+ adult hospitalizations from the HCUP Nationwide Readmissions Database. Preprint under review at \\textit{JAMIA}; public calculator deployed at \\href{https://levineuwirth.github.io/icd_embeddings/}{levineuwirth.github.io}."
+    presentation_sets:
+      software-engineering-systems:
+        preamble: null
+        bullets:
+          - >-
+            Technical lead for NeuroPose's Python/TensorFlow inference pipeline
+            and Rust-backed analysis platform across four externally funded
+            sub-projects.
+          - >-
+            Co-led Deep Sets outcome models trained on 113M+ hospitalizations
+            and deployed their public readmission and mortality calculator.
+      agent-platform-systems:
+        preamble: null
+        bullets:
+          - >-
+            Technical lead for NeuroPose's Python/TensorFlow inference system
+            across four externally funded sub-projects; built validated output
+            handling, persistent job state across crashes and restarts, Docker
+            deployment, and Rust-backed analysis tooling.
+          - >-
+            Co-led Deep Sets outcome models trained on 113M+ hospitalizations and
+            deployed their public calculator. Built its FastAPI model-serving
+            backend in Python, with TensorFlow, ICD lookup and parsing, and
+            input validation.
 
   # Post-graduation continuation, deliberately bulletless: the work is fully
   # described in the block above, so this entry's only job is to show the
   # collaboration did not stop at the degree. Winding down through 2026.
   # (The templates skip the itemize when `bullets` is absent.)
-  - organization: Shu Laboratory, Brown University Department of Neurology
+  - id: shu-lab-affiliate
+    organization: Shu Laboratory, Brown University Department of Neurology
     role: Research Affiliate
     location: Providence, RI
     start: May 2026
@@ -114,7 +338,8 @@ experience:
 
   # CCV / PQC block — research experience on CV only. Not on résumé because
   # the PQC work appears there under Projects instead.
-  - organization: Brown University Center for Computation and Visualization (CCV)
+  - id: ccv-pqc
+    organization: Brown University Center for Computation and Visualization (CCV)
     role: Independent Researcher
     location: Providence, RI
     start: March 2025

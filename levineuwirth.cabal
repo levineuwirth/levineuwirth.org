@@ -36,6 +36,7 @@ executable site
         BibExtras
         Filters
         Filters.Typography
+        Filters.FigureRefs
         Filters.Sidenotes
         Filters.Dropcaps
         Filters.Smallcaps
@@ -46,6 +47,7 @@ executable site
         Filters.Links
         Filters.SourceRefs
         Filters.Math
+        Filters.Headings
         Filters.Code
         Filters.Images
         Filters.Score

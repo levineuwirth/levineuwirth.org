@@ -2,7 +2,8 @@
 # with equal_contrib: true; the template renders the appropriate footnote.
 
 publications:
-  - authors: "Shu L, Neuwirth L†, Wang X†, Zheng H†"
+  - id: icd-embeddings-jamia
+    authors: "Shu L, Neuwirth L†, Wang X†, Zheng H†"
     title: "Beyond Comorbidity Indices: An Order-Invariant ICD-10-CM Embedding for Readmission and Mortality Prediction"
     venue: "Under review at \\textit{Journal of the American Medical Informatics Association} (JAMIA)"
     year: 2026
@@ -17,7 +18,8 @@ publications:
     cv_visible: true
     resume_visible: false # surfaced instead via the Shu Lab bullet on résumé
 
-  - authors: "Neuwirth L"
+  - id: branch-tube-persistence
+    authors: "Neuwirth L"
     title: "Branch-Tube Persistence and Static Coverage in Tree-Ball Geometry"
     venue: "Preprint"
     year: 2026
@@ -28,7 +30,8 @@ publications:
     cv_visible: true
     resume_visible: false # math preprint; engineering résumé surfaces other work
 
-  - authors: "Neuwirth L"
+  - id: growing-radius-domination
+    authors: "Neuwirth L"
     title: "The Annealed Critical Window for Growing-Radius Domination in Random Regular Graphs"
     venue: "Preprint"
     year: 2026
@@ -39,7 +42,8 @@ publications:
     cv_visible: true
     resume_visible: false # math preprint; engineering résumé surfaces other work
 
-  - authors: "Neuwirth L"
+  - id: pqc-avx2-report
+    authors: "Neuwirth L"
     title: "Where Does SIMD Help Post-Quantum Cryptography? A Micro-Architectural Study of ML-KEM on x86 AVX2"
     venue: "Technical report, Brown University Department of Computer Science"
     year: 2026
@@ -52,7 +56,8 @@ publications:
     cv_visible: true
     resume_visible: false # surfaced instead via the PQC project on résumé
 
-  - authors: "NeuroPose clinical-implications manuscript"
+  - id: neuropose-manuscript
+    authors: "NeuroPose clinical-implications manuscript"
     title: null
     venue: "In preparation. Shu laboratory, Brown University Department of Neurology."
     year: "2026--2027"

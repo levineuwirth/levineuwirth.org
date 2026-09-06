@@ -1,0 +1,10 @@
+version: 1
+abstract: true
+description: Reusable base for technical and research-employer CVs.
+layout: application-cv
+availability: null
+header:
+  links:
+    - github
+    - forgejo
+    - linkedin

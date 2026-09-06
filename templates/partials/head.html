@@ -3,7 +3,7 @@
 $if(home)$<title>Levi Neuwirth</title>$else$$if(title)$<title>$title$ — Levi Neuwirth</title>$else$<title>Levi Neuwirth</title>$endif$$endif$
 $if(description)$<meta name="description" content="$description$">$endif$
 $if(noindex)$<meta name="robots" content="noindex">$endif$
-<link rel="canonical" href="$site-url$$url$">
+<link rel="canonical" href="$site-url$$canonical-url$">
 <link rel="alternate" type="application/atom+xml" title="Levi Neuwirth" href="/feed.xml">
 <link rel="alternate" type="application/atom+xml" title="Levi Neuwirth — music" href="/music/feed.xml">
 <link rel="alternate" type="application/atom+xml" title="Levi Neuwirth — photography" href="/photography/feed.xml">
@@ -12,7 +12,7 @@ $if(noindex)$<meta name="robots" content="noindex">$endif$
 <meta property="og:site_name" content="Levi Neuwirth">
 $if(home)$<meta property="og:title" content="Levi Neuwirth">$else$$if(work)$<meta property="og:title" content="Levi Neuwirth — Work">$else$$if(title)$<meta property="og:title" content="$title$">$endif$$endif$$endif$
 $if(description)$<meta property="og:description" content="$description$">$endif$
-<meta property="og:url" content="$site-url$$url$">
+<meta property="og:url" content="$site-url$$canonical-url$">
 $if(date)$<meta property="og:type" content="article">$else$<meta property="og:type" content="website">$endif$
 <meta property="og:image" content="$site-url$/og-image.png">
 <meta property="og:image:width" content="1200">
@@ -36,6 +36,15 @@ $if(description)$<meta name="twitter:description" content="$description$">$endif
 <link rel="stylesheet" href="/css/selection-popup.css">
 <link rel="stylesheet" href="/css/annotations.css">
 <link rel="stylesheet" href="/css/images.css">
+<!-- viz.css is deliberately ungated, unlike the Vega scripts further down.
+     Static .figure divs need it and, per WRITING.md, do not set viz: true,
+     so gating it meant the only page with figures never loaded it.
+     Matplotlib writes no fill for default-coloured text, so without the
+     g[id^="text_"] rule in here every axis label, tick label and legend
+     entry rendered black on #121212 in dark mode. A few hundred bytes.
+     NB: template syntax is parsed inside HTML comments too - never write a
+     conditional here, even as prose, or it opens a real one. -->
+<link rel="stylesheet" href="/css/viz.css">
 <link rel="stylesheet" href="/css/marks.css">
 $if(home)$<link rel="stylesheet" href="/css/home.css">$endif$
 $if(library)$<link rel="stylesheet" href="/css/library.css">$endif$
@@ -61,7 +70,11 @@ $if(photography-map)$<link rel="stylesheet" href="/leaflet/MarkerCluster.css">$e
 $if(photography-map)$<link rel="stylesheet" href="/leaflet/MarkerCluster.Default.css">$endif$
 <link rel="stylesheet" href="/css/print.css" media="print">
 $if(math)$
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<!-- Pinned + SRI. KaTeX was already exact-versioned; the integrity hash is new.
+     To bump it: choose the version, recompute the hash with the command in the
+     viz block below, paste it here, and re-test math rendering. The KaTeX
+     *script* tag lives in templates/default.html and needs the same treatment. -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
 $endif$
 $if(search)$
 <link rel="stylesheet" href="/pagefind/pagefind-ui.css">
@@ -69,10 +82,30 @@ $endif$
 <script src="/js/utils.js"></script>
 <script src="/js/theme.js"></script>
 $if(viz)$
-<link rel="stylesheet" href="/css/viz.css">
-<script src="https://cdn.jsdelivr.net/npm/vega@5" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/vega-lite@5" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/vega-embed@6" defer></script>
+<!-- Pinned to exact versions with Subresource Integrity (audit S08). The old
+     @5 / @5 / @6 major-range URLs let jsDelivr ship new code into every visitor
+     without a commit, a rebuild, or any way to notice afterwards. These three
+     pins are the same bytes those ranges resolved to when they were taken, so
+     the pin changed nothing visible; from here a CDN swap fails the integrity
+     check and the figure simply does not render, rather than running.
+
+     Kept on the 5/5/6 line deliberately: vega 6 / vega-lite 6 / vega-embed 7
+     exist, but that is a spec migration for every authored figure, not a pin.
+
+     To update: bump the version in each URL below, then recompute that file's
+     hash and paste it after "sha384-" in the same tag. One line per file --
+     no shell variables, because Hakyll interpolates a dollar sign anywhere in
+     this template, comments included:
+
+       curl -sSL <url> | openssl dgst -sha384 -binary | openssl base64 -A
+
+     Then reload a page carrying a figure and confirm it still draws: a wrong
+     hash is silent except in the browser console. crossorigin="anonymous" is
+     required for SRI to be checked at all (jsDelivr answers
+     Access-Control-Allow-Origin: *). -->
+<script src="https://cdn.jsdelivr.net/npm/vega@5.33.1/build/vega.min.js" integrity="sha384-NMXhl2TbCXxcN7o4ROC56Funm78m4AylL8gMg/7Kn4YU+wrm23K9l7cY8lDRXQ9d" crossorigin="anonymous" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@5.23.0/build/vega-lite.min.js" integrity="sha384-D9LYH0esGjcxQJsBuxOuXtCDJGXRWW1+KhluzWPqi0rLJmiR/ygPChefaD+rFFDQ" crossorigin="anonymous" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6.29.0/build/vega-embed.min.js" integrity="sha384-M+Ax7e/WFJpxSOF09HzI+Sj4wg9ottVd/uxmV2ItGGh02fLH28t2FAOJx3TJBap5" crossorigin="anonymous" defer></script>
 <script src="/js/viz.js" defer></script>
 $endif$
 $if(list-page)$<script src="/js/list-pagination.js" defer></script>$endif$

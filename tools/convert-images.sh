@@ -15,9 +15,40 @@
 set -euo pipefail
 
 if ! command -v cwebp >/dev/null 2>&1; then
-    echo "convert-images: cwebp not found — skipping WebP conversion." >&2
-    echo "  Install: pacman -S libwebp-utils  (or: apt install webp)" >&2
-    echo "  Note: Arch ships the cwebp binary in libwebp-utils, not libwebp." >&2
+    # Exit 0 deliberately: build/Filters/Images.hs only emits a
+    # <source type="image/webp"> when the .webp file actually exists, so a
+    # build without cwebp produces a correct site — just a heavier one.
+    #
+    # But "correct and silently 3x heavier" is exactly the failure the
+    # audit found shipped: zero WebP files site-wide, 375 JPEGs, and a
+    # one-line note nobody read. So the notice is loud, and the production
+    # knob is `tools/check-site.py --require-webp`, which turns "JPEGs but
+    # no WebP" into a build failure.
+    cat >&2 <<'WARN'
+
+  ==============================================================
+   WARNING: cwebp not found — NO WebP images will be generated.
+  ==============================================================
+
+   Every photograph and figure will be served as full-size
+   JPEG/PNG. The <picture> WebP sources are omitted entirely
+   (they are only emitted when the .webp file exists), so the
+   site stays correct — it just ships several times more bytes.
+
+   Install the converter:
+
+     Arch    pacman -S libwebp-utils     <- NOT libwebp; that
+                                            package is the
+                                            library only and
+                                            has no cwebp binary
+     Debian  apt install webp
+     macOS   brew install webp
+
+   Then re-run `make build`. To make this a hard failure in a
+   production build, run:  tools/check-site.py _site --require-webp
+   (`make validate REQUIRE_WEBP=1`).
+
+WARN
     exit 0
 fi
 

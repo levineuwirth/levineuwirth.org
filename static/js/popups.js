@@ -152,6 +152,12 @@
         root.querySelectorAll('[data-date-start]').forEach(function (el) {
             bind(el, dateContent);
         });
+
+        /* Item-card revision markers (/new, library, tag pages). The card
+           gutter says only "Revised"; the dates and the note live here. */
+        root.querySelectorAll('.item-card-revised').forEach(function (el) {
+            bind(el, revisionContent);
+        });
     }
 
     /* Public re-init hook used by transclude.js after it injects new
@@ -344,6 +350,35 @@
             '<div class="popup-annotation">'
             + (ann.title      ? '<div class="popup-title">'    + esc(ann.title)      + '</div>' : '')
             + (ann.annotation ? '<div class="popup-abstract">' + esc(ann.annotation) + '</div>' : '')
+            + '</div>'
+        );
+    }
+
+    /* Item-card revision markers — a synchronous read of the card the
+       marker sits in. Every piece is already in the markup (the note as a
+       visually-hidden <p>, the original date inside the marker itself), so
+       nothing is fetched and the popup cannot drift from what the page
+       rendered. Text is extracted with textContent and re-escaped, never
+       lifted as innerHTML. */
+    function revisionContent(target) {
+        var card = target.closest('.item-card');
+        if (!card) return Promise.resolve(null);
+
+        var dateEl = card.querySelector('.item-card-date');
+        var fromEl = target.querySelector('.item-card-revised-from');
+        var noteEl = card.querySelector('.item-card-revision-note');
+
+        var on   = dateEl ? dateEl.textContent.trim() : '';
+        var from = fromEl ? fromEl.textContent.replace(/^\s*from\s+/i, '').trim() : '';
+        var note = noteEl ? noteEl.textContent.trim() : '';
+
+        var meta = on ? 'Revised ' + on + (from ? ' \u00b7 from ' + from : '') : '';
+        if (!meta && !note) return Promise.resolve(null);
+
+        return Promise.resolve(
+            '<div class="popup-revision">'
+            + (meta ? '<div class="popup-meta">'     + esc(meta) + '</div>' : '')
+            + (note ? '<div class="popup-abstract">' + esc(note) + '</div>' : '')
             + '</div>'
         );
     }

@@ -12,26 +12,32 @@
 
 :root {
     --library-accent:        #524638;   /* muted warm-gray — reads as "warm" only if you look */
-    --library-accent-muted:  #7c7164;   /* dusty taupe */
+    /* #7c7164 measured 4.50:1 on --bg and 4.19:1 on --bg-offset — on the
+       wrong side of AA for the "More on this shelf" link and the intro
+       attribution line. #726758 is the same dusty taupe a shade deeper:
+       5.21:1 / 4.86:1. */
+    --library-accent-muted:  #726758;   /* dusty taupe */
     --library-intro-ink:     #3c3328;
 }
 
 [data-theme="dark"] {
     --library-accent:        #b5a890;   /* soft oat */
-    --library-accent-muted:  #897f6e;
+    --library-accent-muted:  #8d8373;   /* was #897f6e — 4.41:1 on --bg-offset */
     --library-intro-ink:     #c8beac;
 }
 
 [data-theme="cappuccino"] {
     --library-accent:        #d0b888;   /* foam — matches text-muted */
-    --library-accent-muted:  #957a5a;
+    /* #957a5a was 2.58:1 on --bg — effectively unreadable in this theme.
+       #c5a880 holds the same roasted-tan role at 4.59:1 / 4.90:1. */
+    --library-accent-muted:  #c5a880;
     --library-intro-ink:     #dcc296;
 }
 
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme]) {
         --library-accent:        #b5a890;
-        --library-accent-muted:  #897f6e;
+        --library-accent-muted:  #8d8373;
         --library-intro-ink:     #c8beac;
     }
 }
@@ -378,10 +384,22 @@
    ============================================================ */
 
 .library-see-also {
+    /* The row is emitted as <a>·<a>·<a> with no whitespace, which gives
+       the line-breaker nothing to work with: at 320–375px it stayed one
+       372px run and carried the Library document to 402px. Flex items
+       wrap on their own. */
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
     font-family: var(--font-sans);
     font-size: 0.85rem;
     color: var(--text-muted);
     margin: 0.25rem 0 2rem;
+    min-width: 0;
+}
+
+.library-see-also a {
+    overflow-wrap: anywhere;
 }
 
 .library-see-also a {

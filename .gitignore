@@ -74,6 +74,19 @@ data/build-stats.json
 data/build-start.txt
 data/build-stamp.txt
 data/last-build-seconds.txt
+# Build-freshness state (tools/build-freshness.sh): which rules/commit
+# the last build used and when the last full rebuild happened
+data/rules-hash.txt
+data/last-build-commit.txt
+data/last-full-rebuild.txt
+data/.full-rebuild-pending
+# Build mutex (tools/with-lock.sh) — a flock file that exists only while a
+# build is in flight; it is machine state, never a build input.
+data/.site-build.lock
+# Written only by `make deploy ALLOW_DIRTY_DEPLOY=1`, recording which build
+# inputs differed from HEAD at deploy time. Local forensics; never shipped,
+# and committing it would defeat the point of the clean-tree guard.
+data/last-deploy-dirty.txt
 data/semantic-index.bin
 data/semantic-meta.json
 # Both embed caches (pages + paragraphs); the trailing glob also
@@ -104,6 +117,9 @@ FORGEJO-MIGRATION.md
 # build.py are what regenerate them. Only artifacts stay local.
 yaml-source/build/
 yaml-source/output/
+# Application/company-specific audience metadata stays local. The resolver
+# discovers YAML here, but Git does not track or publish it by default.
+yaml-source/variants/private/
 yaml-source/data/*~
 # Handover bundle (archived locally for reference; not part of the site).
 levineuwirth_handover.zip
@@ -171,3 +187,14 @@ content/photography/**/*.psd
 # Claude Code local settings — machine-specific, and this repo mirrors
 # to a public GitHub remote.
 .claude/settings.local.json
+
+# Private working notes — interview briefs, strategy docs, drafts with
+# confidential context. The suffix is the signal; no specific filename is
+# named here, so this pattern is safe to publish in a public repo.
+*.local.md
+
+# Site audit report. Describes server-side configuration, log paths, and
+# operational internals; this repo mirrors to public remotes, so the report
+# stays local. Anchored so it matches only the file at the repository root,
+# and named explicitly because `*.local.md` above does not cover it.
+/local.md

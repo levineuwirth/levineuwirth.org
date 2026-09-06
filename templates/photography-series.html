@@ -1,8 +1,12 @@
-<header class="essay-frontmatter photo-series-frontmatter">
+<!-- A05: neutral element — see templates/essay.html. -->
+<div class="essay-frontmatter photo-series-frontmatter">
     $if(photo-url)$
     <div class="frontmatter-mark-slot frontmatter-mark-slot--left">
         <figure class="photo-series-lead">
-            <picture>$if(photo-webp-url)$<source srcset="$photo-webp-url$" type="image/webp">$endif$<img src="$photo-url$" alt="$title$" decoding="async" data-lightbox="true"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$></picture>
+            <!-- P01: the lead mark is 156-266px in the frontmatter slot and
+                 426px once the layout stacks below 900px. Written out rather
+                 than sizes="auto" because this image is not lazy. -->
+            <picture>$if(photo-webp-srcset)$<source srcset="$photo-webp-srcset$" type="image/webp" sizes="(max-width: 900px) 440px, 280px">$endif$<img src="$photo-url$"$if(photo-srcset)$ srcset="$photo-srcset$" sizes="(max-width: 900px) 440px, 280px"$endif$ alt="$if(alt)$$alt$$else$$title$$endif$" decoding="async" data-lightbox="true"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$></picture>
         </figure>
     </div>
     $endif$
@@ -41,10 +45,15 @@
         </dl>
     </div>
     $endif$
-</header>
+</div>
 
-<div class="content-divider content-divider--frontmatter" aria-hidden="true">
-    <a href="/new.html" class="content-divider-logo" aria-label="New"></a>
+<!-- A04: the rule and the mark are drawn by CSS (::before/::after and a
+     mask-image on the anchor), so nothing here needs aria-hidden. The
+     anchor is a real destination and stays exposed with an accessible
+     name; hiding it from assistive technology while leaving it in the
+     tab order was the defect. -->
+<div class="content-divider content-divider--frontmatter">
+    <a href="/new.html" class="content-divider-logo"><span class="visually-hidden">New</span></a>
 </div>
 
 <div id="content">

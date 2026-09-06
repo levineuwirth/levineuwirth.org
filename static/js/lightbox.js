@@ -162,9 +162,13 @@
         // Wire up lightbox-marked images
         // ----------------------------------------------------------------
 
-        var images = document.querySelectorAll('img[data-lightbox]');
+        // Wiring is per-image and idempotent (a data flag), so it can run
+        // again over content injected after load. Smaller finding 7:
+        // transcluded photographs used to arrive with no lightbox at all.
+        function wireImage(el) {
+            if (el.dataset.lightboxWired === '1') return;
+            el.dataset.lightboxWired = '1';
 
-        images.forEach(function (el) {
             // Keyboard activation: the trigger acts as a button, and the
             // tabindex also lets close() return focus to it.
             el.setAttribute('tabindex', '0');
@@ -190,6 +194,22 @@
                     activate();
                 }
             });
+        }
+
+        function wireLightbox(root) {
+            var scope = root && root.querySelectorAll ? root : document;
+            if (scope.nodeType === 1 && scope.matches
+                && scope.matches('img[data-lightbox]')) {
+                wireImage(scope);
+            }
+            scope.querySelectorAll('img[data-lightbox]').forEach(wireImage);
+        }
+
+        window.reinitLightbox = wireLightbox;
+        wireLightbox(document);
+
+        document.addEventListener('ln:content-added', function (e) {
+            wireLightbox(e.detail && e.detail.container);
         });
 
         // ----------------------------------------------------------------

@@ -1,0 +1,16 @@
+layouts:
+  academic-cv:
+    template: cv.tex.j2
+    description: Multi-page academic curriculum vitae.
+
+  one-page-resume:
+    template: resume.tex.j2
+    description: Tight one-page industry résumé.
+
+  ats-resume:
+    template: resume_ats.tex.j2
+    description: Plain, keyword-rich ATS résumé.
+
+  application-cv:
+    template: application_cv.tex.j2
+    description: Approximately two-page technical/research application CV.

@@ -1,6 +1,9 @@
 ---
 title: Levi Neuwirth — Vita
 tags: meta
+description: >-
+  The formal record: curriculum vitae and résumé, research interests,
+  publications, presentations, grants, affiliations, and projects.
 history:
   - date: "2026-09-03"
   - date: "2026-08-11"

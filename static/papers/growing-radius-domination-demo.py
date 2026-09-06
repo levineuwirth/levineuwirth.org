@@ -3,8 +3,11 @@
 
 This script accompanies the essay version of the preprint
 
-    Near-Critical First-Moment Lower Bounds for
-    Growing-Radius Domination in Random Regular Graphs.
+    The Annealed Critical Window for Growing-Radius Domination
+    in Random Regular Graphs.
+
+The numerical table targets the earlier near-critical lower bound, retained
+as a consequence of the current preprint.
 
 It deliberately keeps the mathematical structure visible.  The core steps are:
 
@@ -215,9 +218,11 @@ def _w_e(rho: mp.mpf, b: int) -> tuple[mp.mpf, mp.mpf]:
 def reverse_step(rho_next: mp.mpf, v_next: mp.mpf, b: int) -> tuple[mp.mpf, mp.mpf]:
     r"""Invert one stationary transfer step.
 
-    Input lies in D={(rho,v): 0<rho<=v<=1}.  The output is the unique
-    predecessor in D.
+    Input lies in D={(rho,v): 0<rho<=v<=1, rho<1}.  The output is the
+    unique predecessor in D; the singular endpoint (1,1) is excluded.
     """
+    if not (0 < rho_next <= v_next <= 1 and rho_next < 1):
+        raise ValueError("require 0 < rho <= v <= 1 and rho < 1")
     w, e = _w_e(rho_next, b)
     R = v_next * e / w
     M = mp.power(e + w / v_next, b)
@@ -487,7 +492,7 @@ def make_table(
         )
     if csv_path:
         with open(csv_path, "w", newline="") as handle:
-            writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()))
+            writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()), lineterminator="\n")
             writer.writeheader()
             writer.writerows(rows)
     return rows
