@@ -3,6 +3,8 @@ title: "Ball-Occupation Certificates under Coarse Graph Projections"
 subtitle: "Degree Reduction, Square-Root Hard Families, and Toroidal Barriers"
 date: 2026-07-27
 revised:
+  - date: "2026-09-06"
+    note: "Added the adaptive multistage transfer, early-accessibility derivation, and fixed-degree random-regular corollary, with full hypotheses, source attribution, and pinned Prałat–Wormald versions."
   - date: "2026-09-05"
     note: "Corrected the cloud-product estimate and expansion loss, completed the core and metric proofs, and clarified upper-bound tightness and traversal-time claims. The subsequent literature revision sharpens connected-cloud expansion and qualifies the HMGHM transfer exponent."
 abstract: >
@@ -16,7 +18,12 @@ abstract: >
   proves a sharp limit on the strategy
   class itself: Cartesian tori of cycles have bounded doubling and constant
   cop number but linear occupation cost at every radius, so weak expansion
-  alone cannot certify a universal robustness theorem.
+  alone cannot certify a universal robustness theorem. The adaptive multistage
+  strategy of Prałat and Wormald does transfer when the base has sphere growth
+  and reservoirs accessible five layers early: for fixed degree, every
+  $(\lambda,P)$-occupation projection satisfies $c(H)\le C_dP\sqrt N$,
+  with no logarithm or scale dependence in the cop count. Fixed-degree random
+  regular bases satisfy the strengthened hypothesis with high probability.
 tags:
   - research
   - research/mathematics
@@ -34,6 +41,8 @@ evidence: 5
 peer-status: unreviewed
 result-shape: mixed
 history:
+  - date: "2026-09-06"
+    note: "Added the adaptive multistage transfer, early-accessibility derivation, and fixed-degree random-regular corollary, with full hypotheses, source attribution, and pinned Prałat–Wormald versions."
   - date: "2026-09-05"
     note: "Corrected the cloud-product estimate and expansion loss, completed the core and metric proofs, and clarified upper-bound tightness and traversal-time claims. The subsequent literature revision sharpens connected-cloud expansion and qualifies the HMGHM transfer exponent."
   - date: "2026-07-27"
@@ -50,7 +59,20 @@ An arbitrary winning strategy does not lift transparently. Moving one step in th
 
 The first result is therefore stated for an abstract projection, rather than for the HMGHM gadget. The gadget enters only later, through an exact metric calculation. The resulting upper bound is stronger quantitatively than the notation $M^{1/2+o(1)}$ suggests: it is $\sqrt M$ times a polylogarithmic factor. By contrast, the available lower bound approaches the square-root exponent at the triple-logarithmic rate displayed in the abstract. These two facts should not be conflated merely because both can be written $M^{1/2+o(1)}$.
 
-The final result marks the boundary of the mechanism. A one-shot occupation certificate needs polynomial ball amplification between radii $R$ and $2R$. Polynomially weak expansion alone does not supply this. For every fixed $k$, the Cartesian tori $C_L^{\square k}$ have bounded metric doubling, exact cop number $k+1$, and linear one-shot occupation cost at every radius. Taking $k>1/\delta$ puts these examples inside every window $h(G)\ge |G|^{-\delta}$. A separate cubic replacement retains the barrier at $\delta=1/2$. The obstacle in the universal problem is therefore not degree reduction itself; it is the need for adaptive reuse over many weak-growth layers.
+The one-shot barrier marks the boundary of the occupation mechanism. A one-shot occupation certificate needs polynomial ball amplification between radii $R$ and $2R$. Polynomially weak expansion alone does not supply this. For every fixed $k$, the Cartesian tori $C_L^{\square k}$ have bounded metric doubling, exact cop number $k+1$, and linear one-shot occupation cost at every radius. Taking $k>1/\delta$ puts these examples inside every window $h(G)\ge |G|^{-\delta}$. A separate cubic replacement retains the barrier at $\delta=1/2$. The obstacle in the universal problem is therefore not degree reduction itself; it is the need for adaptive reuse over many weak-growth layers.
+
+The last section supplies an adaptive transfer for one base class.  The
+deterministic multistage theorem of Prałat and Wormald
+[@PralatWormald, Theorem 4.1] wins with $O(\sqrt N)$ cops on bases with sphere
+growth, accessible reservoirs, and a small exceptional set.  Its phase
+argument lifts unchanged through a coarse projection once randomly placed
+cops become squads that fill whole fibers and the reservoirs are required
+five base layers closer to their targets, which pays for the additive
+metric error.  The result is $c(H)\le C_dP\sqrt N$ for fixed $d$
+([Theorem 25](#thm-multistage)), without the logarithm of
+[Theorem 3](#thm-abstract-transfer); random regular bases of fixed degree satisfy
+the strengthened hypothesis ([Corollary 30](#cor-regular)).  This does not improve
+the growing-degree hard-family estimates, which are retained as stated.
 
 # Scale-adaptive cores and the robustness window
 
@@ -533,19 +555,643 @@ Given $\delta>0$, choose $k=\max\{2,\lfloor1/\delta\rfloor+1\}$. Then $1/k<\delt
 *Remark 23* (Architectural meaning). The logical obstruction is not that tori are difficult pursuit instances; they are not. Rather, [Theorem 15](#thm-occ-lower) makes every vertex-transitive bounded-doubling graph expensive for one-shot occupation, and bounded doubling is compatible with every polynomial weak-expansion window by [Theorem 20](#thm-full-window). The tori certify that the hypothesis class contains such graphs while coordinate-wise shadowing still uses exactly $k+1$ cops. Therefore ball amplification is the wrong invariant for adaptive pursuit, not merely a poor description of one particular easy family. The cubic family $Q_L$ records that the same separation already occurs in maximum degree three at exponent $1/2$.
 :::
 
+# Adaptive multistage transfer for fixed-degree bases {#adaptive-multistage}
+
+The barrier of the previous section rules out one-shot occupation as a
+universal mechanism, and [Theorem 3](#thm-abstract-transfer) carries a factor
+$\log(ePN)$ even where it applies.  This section transfers an adaptive
+strategy instead.  Prałat and Wormald proved Meyniel's conjecture for
+random graphs through a deterministic multistage theorem
+[@PralatWormald, Theorem 4.1]: successive fresh teams of cops, with geometrically
+decreasing budgets, cover most of each sphere the robber must cross, and a
+final team finishes by a Hall matching.  Their phase argument is used here
+without change and is theirs throughout; the contribution of this section
+is the lifting.  Randomly placed cops become squads that fill whole fibers,
+deadlines are recomputed from the distortion bounds, and the accessibility
+hypothesis is read five base layers early, which pays for the additive
+metric error.  The result is a bound $C_dP\sqrt N$ with no logarithm and no
+dependence on the scale $\lambda$ in the cop count.  Random
+$(d+1)$-regular bases of fixed degree satisfy the strengthened hypothesis
+with high probability, by reading intermediate levels of the reservoir
+trees constructed in the companion paper [@PralatWormaldRegular].
+
+## Multistage bases
+
+For $V'\subseteq V(G)$ and $r\ge0$, let $S_G(V',r)$ be the set of vertices
+at distance exactly $r$ from $V'$; $B_G(V',r)$ is the closed
+$r$-neighborhood, as before.  Following [@PralatWormald, Section 4], a set
+$U\subseteq V(G)$ is *$(t,c_1,c_2)$-accessible* if there are pairwise
+disjoint sets $W(w)\subseteq B_G(w,t)$, one for each $w\in U$, with
+$$
+ |W(w)|\ge c_1\min\Bigl(d^{t},\frac{c_2N}{|U|}\Bigr).
+$$
+A cop starting anywhere in $W(w)$ reaches $w$ within $t$ moves, and
+disjointness lets distinct targets draw on distinct cops.
+
+::: {#def-multistage-base .exhibit .exhibit--definition data-exhibit-type="definition" data-exhibit-name="Definition 24 (Multistage base)"}
+**Definition 24** (Multistage base).
+Let $d\ge2$ and $s\ge0$ be integers, let $a_0\ge0$, and let
+$\delta,J,a_1,\ldots,a_5>0$.
+A connected graph $G$ on $N$ vertices is an
+$(s;d,\delta,J,a_0,\ldots,a_5)$-*multistage base* if there is a set
+$X\subseteq V(G)$ with $|X|\le a_0\sqrt N$ such that:
+
+- [**(H1)**]{#multistage-h1} for all $v\in V(G)\setminus X$, all $r,r'\ge1$ with
+  $d^{r}<N^{1/2+\delta}$ and $d^{r'}<N^{1/2+\delta}$, and all
+  $V'\subseteq B_G(v,r)\setminus X$ with $|V'|=k$ and $kd^{r'}\le N/(\log N)^J$,
+  $$
+   a_1kd^{r'}\le|S_G(V',r')|\le a_2kd^{r'};
+  $$
+
+- [**(H2)**]{#multistage-h2} for all $r,r'$ with
+  $N^{1/4-\delta}<(d+1)d^{r}<N^{1/4+\delta}$ and
+  $N^{1/4-\delta}<(d+1)d^{r'}<N^{1/4+\delta}$, all $v\in V(G)\setminus X$,
+  all $A\subseteq S_G(v,r)\setminus X$ with $|A|>N^{1/4-\delta}$, and
+  $U=\bigcup_{a\in A}S_G(a,r')$ with $d^{r+r'}<a_3N/|U|$, there is
+  $Q\subseteq V(G)$ with $|S_G(a,r')\cap Q|<N^{1/4-2\delta}$ for every
+  $a\in A$ such that $U\setminus Q$ is
+  $(r+r'+1-s,\,a_4,\,a_5)$-accessible;
+
+- [**(H3)**]{#multistage-h3} $G-X$ is contained in one component of $G$.
+
+:::
+
+For $s=0$ these are exactly the hypotheses of [@PralatWormald, Theorem 4.1], whose
+conclusion is $c(G)=O(\sqrt N)$ when $d<(\log N)^J$.  Increasing $s$
+strengthens [(H2)](#multistage-h2): the reservoirs must sit $s$ layers closer to their
+targets.  The case $s=5$ is what a projection consumes.
+
+::: {#thm-multistage .exhibit .exhibit--theorem data-exhibit-type="theorem" data-exhibit-name="Theorem 25 (Fibered multistage transfer)"}
+**Theorem 25** (Fibered multistage transfer).
+Fix an integer $d\ge2$ and constants $a_0\ge0$ and
+$\delta,J,a_1,\ldots,a_5>0$.  There are $C$ and $N_0$ such that the following holds
+for every $N\ge N_0$.  Let $G$ be a $(5;d,\delta,J,a_0,\ldots,a_5)$-multistage base
+on $N$ vertices, and let $H$ admit a $(\lambda,P)$-occupation projection
+onto $G$ for some $\lambda\ge1$ and $P\ge1$.  Then
+$$
+ \boxed{c(H)\le CP\sqrt N,}
+$$
+and the displayed cops capture the robber within
+$(\lceil(J+2)\log\log N\rceil+2)\,PN$ robber moves.  The constant $C$
+depends only on $d$ and the listed constants; it depends neither on
+$\lambda$ nor on $P$.
+
+:::
+
+The identity projection $\lambda=P=1$ returns the source's theorem under a
+stronger hypothesis than it needs.  The scale $\lambda$ enters the deployment
+and escape deadlines, while the stated cop-count and capture-time bounds
+are independent of it.  The factor $\log(ePN)$ of
+[Theorem 3](#thm-abstract-transfer) is gone.
+
+::: {#rem-attribution .exhibit .exhibit--remark data-exhibit-type="remark" data-exhibit-name="Remark 26 (Attribution)"}
+*Remark 26* (Attribution).
+The proof below is the proof of [@PralatWormald, Theorem 4.1] with a fixed list of
+substitutions, and every probabilistic estimate in it is theirs: the radius
+schedule (4.1), the vulnerability threshold (4.3), the union bound over
+robber strategies, the claim that each team restores vulnerability, and
+the finishing Hall argument are used unchanged.  New are
+[Lemma 27](#lem-shadow) and [Lemma 28](#lem-squad), the deadline comparison that fixes $s=5$, the
+scaling of the exceptional guards and the clean-up team by $P$, and the
+ball-shaped finishing set.  [Proposition 29](#prop-early) is likewise a reading of
+intermediate levels of the tree family in [@PralatWormaldRegular]; its
+contribution is the level shift, disjointness at the shifted level, and a
+repaired exceptional set.
+
+:::
+
+## Two lifting lemmas
+
+::: {#lem-shadow .exhibit .exhibit--lemma data-exhibit-type="lemma" data-exhibit-name="Lemma 27 (Lazy shadows and exit times)"}
+**Lemma 27** (Lazy shadows and exit times).
+Let $\pi:V(H)\to V(G)$ be a $(\lambda,P)$-occupation projection.
+
+- **(i)** Every edge of $H$ lies inside one fiber or joins fibers over adjacent
+  base vertices.  Consequently the shadow $\pi(\rho_0),\pi(\rho_1),\ldots$ of
+  any walk in $H$ is a lazy walk in $G$.
+
+- **(ii)** If a walk starts in $F_u$ and its shadow first lies in $S_G(u,r)$
+  after the $m$-th step, then $m\ge\lambda(r-1)+1$, and all earlier shadows
+  lie in $B_G(u,r-1)$.
+
+:::
+
+::: proof
+*Proof.*
+
+If $x\in F_u$ and $y\in F_v$ are adjacent with $u\ne v$, the lower
+distortion bound gives $\lambda(\operatorname{dist}_G(u,v)-1)+1\le1$, so
+$\operatorname{dist}_G(u,v)=1$.  This proves (i).  For (ii), the shadow moves by at most
+one base step per move, so it passes through every smaller distance before
+reaching distance $r$, and the lower distortion bound applied to the
+endpoints gives $m\ge\operatorname{dist}_H(\rho_0,\rho_m)\ge\lambda(r-1)+1$.
+
+◻
+:::
+
+::: {#lem-squad .exhibit .exhibit--lemma data-exhibit-type="lemma" data-exhibit-name="Lemma 28 (Squad deployment)"}
+**Lemma 28** (Squad deployment).
+Let $\pi$ be a $(\lambda,P)$-occupation projection, let $t\ge0$, and let
+$\{W(w):w\in U'\}$ be pairwise disjoint subsets of $V(G)$ with
+$W(w)\subseteq B_G(w,t)$.  Fix a representative $z^*\in F_z$ for every
+$z\in V(G)$.  Let $Z\subseteq V(G)$ contain each base vertex independently
+with probability $p$, and place a *squad* of $P$ cops on $z^*$ for
+each $z\in Z$.  Then:
+
+- **(i)** assigning to each $w\in U'$ with $W(w)\cap Z\ne\varnothing$ the squad
+  at the first element of $W(w)\cap Z$, in a fixed order of $V(G)$, is
+  injective;
+
+- **(ii)** if a squad based at $z$ is assigned to $w$, and $|F_w|$ of its
+  members are sent to the distinct vertices of $F_w$ while the remaining
+  $P-|F_w|$ stay idle, then after at most $\lambda(t+2)-2$ cop moves every
+  vertex of $F_w$ is occupied, and the squad can hold $F_w$ for as long as
+  required;
+
+- **(iii)** the events $E_w=\{W(w)\cap Z=\varnothing\}$, $w\in U'$, are mutually
+  independent, and $\Pr(E_w)=(1-p)^{|W(w)|}\le e^{-p|W(w)|}$.
+
+:::
+
+::: proof
+*Proof.*
+
+Part (i) is disjointness of the reservoirs.  For (ii), if $z\ne w$ then
+each dispatched member travels along a shortest path of length at most
+$\lambda(\operatorname{dist}_G(z,w)+2)-2\le\lambda(t+2)-2$ by the upper distortion bound;
+if $z=w$, the fiber-diameter bound gives at most
+$2(\lambda-1)\le\lambda(t+2)-2$.  Cops may share vertices, so the members
+do not obstruct one another, and once in place they stay.  Part (iii) holds
+because the reservoirs are disjoint sets of independent coordinates.
+
+◻
+:::
+
+The lemma is the reason the transfer costs no logarithm: a squad is one
+Bernoulli trial at the source's base density, so the probability that a
+reservoir delivers a squad equals the probability that it delivered a
+single cop in [@PralatWormald].  Filling a fiber of order up to $P$ multiplies the
+number of cops by $P$ and leaves every failure probability unchanged.
+
+## Proof of [Theorem 25](#thm-multistage)
+
+::: proof
+*Proof.*
+
+Throughout, $d$, $\delta$, $J$ and $a_0,\ldots,a_5$ are fixed, $N$ is
+large, and the game is played on $H$ with the cops moving first.  We
+follow the proof of [@PralatWormald, Theorem 4.1] step by step, citing its
+displayed equations by their numbers there.
+
+*Placement.*
+The cops first occupy every vertex of $\pi^{-1}(X)$ permanently, using at
+most $P|X|\le a_0P\sqrt N$ cops; the robber never enters $\pi^{-1}(X)$, and
+every set of base vertices below excludes $X$.  Let $F=J+2$ and
+$i_f=\lceil F\log\log N\rceil$.  For $1\le i\le i_f$ let $Z_i\subseteq V(G)$
+be independent random sets in which each base vertex appears independently
+with probability $c_i/N$, where $c_i=Ce^{-i}\sqrt N$ for $i<i_f$ and
+$c_{i_f}=\sqrt N$; here $C\ge1$ is a constant fixed below.  Team $i$
+consists of one squad of $P$ cops at $z^*$ for each $z\in Z_i$, as in
+[Lemma 28](#lem-squad).  A clean-up team of $PN^{1/3}$ further cops is placed
+anywhere.  All cops are placed before the robber chooses her start
+$\rho_1\in V(H)\setminus\pi^{-1}(X)$; she sees every cop and knows the
+strategy.  By the Chernoff bound, with probability $1-o(1)$ every team $i$
+has at most $2c_i$ squads, so the total number of cops is at most
+$$
+ a_0P\sqrt N+2P\sqrt N\Bigl(C\sum_{i\ge1}e^{-i}+1\Bigr)+PN^{1/3}
+ \le(a_0+2C+3)P\sqrt N.
+$$
+It remains to show that, with probability $1-o(1)$ over the placement, the
+cops have a winning strategy against every robber strategy; a placement of
+the displayed size then exists.
+
+*Radii and rounds.*
+Let $r_1,\ldots,r_{i_f+1}$ be the radii of [@PralatWormald, (4.1)], defined from
+$N$, $d$ and a small constant $\varepsilon_0$ chosen below.  They satisfy
+[@PralatWormald, (4.2)], namely $d^{r_i}=\Omega(N^{1/4}/d)$ and
+$d^{r_i}=O(e^{2i}N^{1/4})$, and $d^{r_{i}+r_{i+1}}$ lies between
+$\varepsilon_0e^{2i}\sqrt N/d$ and $\varepsilon_0e^{2i}\sqrt N$.  Since $d$ is fixed and
+$e^{2i}\le(\log N)^{2F}$, every pair $r_i,r_{i+1}$ with $i\le i_f$ lies in
+the window of [(H2)](#multistage-h2) for large $N$.
+
+Let $v_i$ be the robber's shadow at the start of round $i$; then
+$v_i\notin X$.  Round $i$ ends at the robber's first move whose shadow lies
+in $S_G(v_i,r_i)$, and $v_{i+1}$ is that shadow.  By [Lemma 27](#lem-shadow), the
+round lasts at least $\lambda(r_i-1)+1$ robber moves, during which the
+shadow stays in $B_G(v_i,r_i-1)$.
+
+*Waiting and reversal.*
+At the start of each round the clean-up team assigns one cop to each vertex
+of $\pi^{-1}(B_G(v_i,r_i)\setminus X)$ and walks there.  By [(H1)](#multistage-h1) with
+$k=1$ and by (4.2), this set has at most
+$P(1+2a_2d^{r_i})\le PN^{1/4}(\log N)^{2F+1}\le PN^{1/3}$ vertices, and each
+cop arrives within $PN$ moves because $H$ is connected on at most $PN$
+vertices.  A robber whose shadow is still in $B_G(v_i,r_i-1)$ after $PN$
+moves stands on an occupied vertex, so every round lasts at most $PN$
+robber moves.  Reversal inside the current ball is waiting, and reversal
+after a round has ended is movement within the next round; the round
+structure is insensitive to it.
+
+*Vulnerable positions.*
+Team $i$ is dispatched at the start of round $i$, with destinations chosen
+from $v_i$ and the uncovered set $S_{i-1}$ defined next, and it has rounds
+$i$ and $i+1$ to arrive.  Let $S_0=S_G(v_1,r_1)\setminus X$, and for
+$i\ge1$ let
+$$
+ S_i=\bigl\{\,w\in S_G(v_{i+1},r_{i+1})\setminus X:\ \text{no squad of
+ team $i$ is assigned to }F_w\,\bigr\}.
+$$
+Call $v_i$ *vulnerable* if $|S_{i-1}|\le e^{-5(i-1)}|S_G(v_i,r_i)|$,
+which is [@PralatWormald, (4.3)]; $v_1$ is vulnerable.  The robber sees the cops,
+so $S_{i-1}$ depends on her earlier choices as well as on the samples.  As
+in [@PralatWormald, p. 13], a robber strategy to round $i$ is a sequence
+$(u_1,\ldots,u_i)$ of base vertices that she can feasibly realize as
+$(v_1,\ldots,v_i)$; there are at most $N^{i}$ of them, the strategy of team
+$i$ is defined for each, and it depends on the robber only through
+$(v_1,\ldots,v_i)$, because squads are placed at base vertices.
+
+*The squad form of Claim 4.2.*
+Fix $i<i_f$, a vulnerable $v_i$, and a possible $S_{i-1}$ with
+$|S_{i-1}|>e^{-5(i_f-1)}|S_G(v_i,r_i)|$.  We claim that, with probability
+$1-O(N^{-\log N})$ over $Z_i$, team $i$ can be assigned so that $v_{i+1}$
+is vulnerable whatever the robber does.
+
+Put $A=S_{i-1}$, $r=r_i$, $r'=r_{i+1}$ and $U=\bigcup_{a\in A}S_G(a,r')$.
+The hypotheses of [(H2)](#multistage-h2) hold by the source's verification, which uses
+base quantities only: $v_i\notin X$ and $A\subseteq S_G(v_i,r_i)\setminus X$
+by construction; $|A|>N^{1/4-\delta}$ from
+$|S_{i-1}|>e^{-5i_f}a_1d^{r_i}$ and (4.2); and, by [(H1)](#multistage-h1) with $k=1$,
+
+::: {#eq-u-bound}
+$$
+|U|\le|S_{i-1}|\,a_2d^{r'}\le e^{-5(i-1)}a_2^2d^{r+r'},
+ \qquad
+ |U|\,d^{r+r'}\le a_2^2\varepsilon_0^2e^{5-i}N<a_3N\tag{7}
+$$
+:::
+
+once $\varepsilon_0$ is small, using $d^{r+r'}\le\varepsilon_0e^{2i}\sqrt N$; this is
+[@PralatWormald, (4.4)].  Hence [(H2)](#multistage-h2) supplies $Q$ and pairwise disjoint
+reservoirs $W(w)\subseteq B_G(w,r+r'-4)$, $w\in U\setminus Q$, with
+
+::: {#eq-reservoir}
+$$
+|W(w)|
+ \ge a_4\min\Bigl(d^{r+r'-4},\frac{a_5N}{|U|}\Bigr)
+ \ge\kappa\,e^{2i}\sqrt N,
+ \qquad
+ \kappa=a_4\min\Bigl(\varepsilon_0d^{-5},\ \frac{a_5}{a_2^2\varepsilon_0e^{5}}\Bigr),\tag{8}
+$$
+:::
+
+by the lower part of (4.1) and by [(7)](#eq-u-bound).  The source's
+estimate at radius $r+r'+1$ is the same with $d^{-5}$ removed; this factor
+is the entire cost of the early radius.
+
+Apply [Lemma 28](#lem-squad) with $t=r+r'-4$, $Z=Z_i$ and $p=c_i/N$.  Each
+$w\in U\setminus Q$ with $W(w)\cap Z_i\ne\varnothing$ receives its own
+squad, and
+$$
+ \Pr(E_w)\le\exp\bigl(-Ce^{-i}\sqrt N\cdot\kappa e^{2i}\sqrt N/N\bigr)
+ =\exp(-C\kappa e^{i})\le\tfrac12e^{-5i}
+$$
+for all $i\ge1$ once $C\ge6/(e\kappa)$.  We fix
+$C=\lceil6/(e\kappa)\rceil$, which has the form $C_0d^{5}$ with
+$C_0=C_0(a_2,a_4,a_5,\varepsilon_0)$.  Fix $u\in A$ and let
+$H_u=S_G(u,r')\setminus Q$.  By [(H1)](#multistage-h1) with $k=1$ and by [(H2)](#multistage-h2),
+$|S_G(u,r')|\ge a_1d^{r'}>a_1N^{1/4-\delta}/(d+1)$ and
+$|S_G(u,r')\cap Q|<N^{1/4-2\delta}$, so $|H_u|\ge\tfrac12a_1d^{r'}$.  The
+events $E_w$, $w\in H_u$, are independent, each of probability at most
+$\tfrac12e^{-5i}$, so the number that occur is dominated by a binomial
+variable of mean
+$\mu=\tfrac12e^{-5i}|H_u|=\Omega(N^{1/4-\delta}(\log N)^{-5F})$, and the
+Chernoff bound gives at most $\tfrac23e^{-5i}|H_u|$ of them with
+probability $1-\exp(-\mu/27)=1-\exp(-\Omega(N^{1/4-2\delta}))$.  Since
+$N^{1/4-2\delta}\le\tfrac13e^{-5i}|S_G(u,r')|$ for large $N$, all but an
+$e^{-5i}$ fraction of $S_G(u,r')$ then receives a squad.  A union bound
+over the at most $N$ choices of $u\in A$ gives the assignment with
+probability $1-O(N^{-\log N})$.
+
+Now let the robber end round $i+1$ at a vertex of $F_w$ with
+$w\in S_G(v_{i+1},r_{i+1})\setminus X$, where $v_{i+1}=u\in A$.  By
+[Lemma 27](#lem-shadow) this happens at her $m$-th move after the dispatch of
+team $i$ with
+$m\ge\lambda(r_i-1)+1+\lambda(r_{i+1}-1)+1=\lambda(r+r'-2)+2$, and the cops
+then make their $(m+1)$-st move.  By [Lemma 28](#lem-squad)(ii) with
+$t=r+r'-4$, a squad assigned to $F_w$ has occupied every vertex of $F_w$
+after $\lambda(r+r'-2)-2\le m+1$ cop moves and has held it since; so the
+robber is captured, on her own move if the squad arrived earlier and on the
+next cop move otherwise.  Hence she can end round $i+1$ only at a vertex of
+$S_i$, and $|S_i|\le e^{-5i}|S_G(v_{i+1},r_{i+1})|$: $v_{i+1}$ is
+vulnerable.  The margin in the deadline is five cop moves for every
+$\lambda$; for reservoirs at radius $r+r'+1-s$ the same comparison reads
+$\lambda(5-s)\le5$, which is why the hypothesis takes $s=5$.
+
+A union bound over the at most $N^{i}$ robber strategies to round $i$, and
+then over $i<i_f$, as in [@PralatWormald, p. 13], shows that with probability
+$1-o(1)$ all teams have such assignments, so every $v_i$ with $i\le i_f$ is
+vulnerable.
+
+*The finishing team.*
+Team $i_f$ is dispatched at the start of the first round $i^*$ with
+$|S_{i^*-1}|\le e^{-5(i_f-1)}|S_G(v_{i^*},r_{i^*})|$; by the above,
+$i^*\le i_f$ with probability $1-o(1)$, and teams $i^*,\ldots,i_f-1$ are
+not needed.  Put
+$$
+ r''=r_{i_f}+r_{i_f+1}-r_{i^*},
+ \qquad
+ \hat r=r_{i_f}+r_{i_f+1}+1,
+ \qquad
+ \hat t=\hat r-5,
+ \qquad
+ U_{\mathrm{fin}}=\bigcup_{u\in S_{i^*-1}}B_G(u,r'')\setminus X.
+$$
+Balls replace the spheres of [@PralatWormald, p. 14] because the robber may stay
+still.  Since $r''\ge\min(r_{i_f},r_{i_f+1})\ge1$ and, by [(H1)](#multistage-h1),
+$|B_G(u,r'')|\le1+2a_2d^{r''}$, the source's bound persists:
+
+::: {#eq-ufin}
+$$
+|U_{\mathrm{fin}}|
+ \le e^{-5(i_f-1)}a_2d^{r_{i^*}}\cdot3a_2d^{r''}
+ \le3a_2^2e^{5}\varepsilon_0\,e^{-3i_f}\sqrt N .\tag{9}
+$$
+:::
+
+Team $i_f$ must occupy all of $\pi^{-1}(U_{\mathrm{fin}})$.  By Hall's
+theorem it suffices that every $V''\subseteq U_{\mathrm{fin}}$ with
+$|V''|=k$ has at least $k$ squads of team $i_f$ based in
+$B_G(V'',\hat t)$.  Apply [(H1)](#multistage-h1) with $v=v_{i^*}$, $r=\hat r-1$,
+$r'=\hat t$ and $V'=V''$: indeed
+$V''\subseteq B_G(v_{i^*},r_{i^*}+r'')\setminus X=B_G(v_{i^*},\hat r-1)\setminus X$,
+the radii satisfy $d^{\hat r-1}\le\varepsilon_0e^{2i_f}\sqrt N<N^{1/2+\delta}$,
+and
+$kd^{\hat t}\le|U_{\mathrm{fin}}|d^{\hat r}=O(dNe^{-i_f})=O(N(\log N)^{-F})\le N/(\log N)^J$
+by [(9)](#eq-ufin), (4.1) and $F=J+2$.  Hence
+$$
+ |S_G(V'',\hat t)|\ge a_1kd^{\hat t}
+ \ge a_1\varepsilon_0d^{-5}\,k\sqrt N\,(\log N)^{2F},
+$$
+using $d^{\hat t}=d^{-4}d^{r_{i_f}+r_{i_f+1}}\ge\varepsilon_0d^{-5}e^{2i_f}\sqrt N$.
+The number of squads of team $i_f$ based in $S_G(V'',\hat t)$ is binomial
+with mean at least $a_1\varepsilon_0d^{-5}k(\log N)^{2F}\ge k(\log N)^2$ for
+large $N$, so it is smaller than $k$ with probability at most
+$\exp(-k(\log N)^2/8)$.  Summing over $k$ and over the at most $N^{k}$
+sets $V''$ of order $k$ gives failure probability $O(e^{-(\log N)^2/9})$,
+and a union bound over the $N^{O(i_f)}$ feasible pairs
+$(v_{i^*},S_{i^*-1})$ leaves probability $1-o(1)$.  A system of distinct
+representatives therefore gives every $w\in U_{\mathrm{fin}}$ its own squad
+based within base distance $\hat t$ of $w$, and by [Lemma 28](#lem-squad)(ii)
+that squad occupies all of $F_w$ within
+$\lambda(\hat t+2)-2=\lambda(r_{i^*}+r''-2)-2$ cop moves after dispatch.
+
+Let $T=\lambda(r_{i^*}+r''-2)+2$.  If the robber ends round $i^*$ at her
+$m$-th move after dispatch with $m\le T$, then $m\ge\lambda(r_{i^*}-1)+1$
+by [Lemma 27](#lem-shadow), so $T-m\le\lambda(r''-1)+1$, and by the same lemma
+her shadow at move $T$ lies in $B_G(v_{i^*+1},r'')\setminus X\subseteq U_{\mathrm{fin}}$;
+at the following cop move every vertex of $\pi^{-1}(U_{\mathrm{fin}})$ is
+occupied and she is captured.  If she has not ended round $i^*$ by move
+$T$, the finishing squads are already in place and hold their fibers, so
+she is captured on entering $F_{v_{i^*+1}}\subseteq\pi^{-1}(U_{\mathrm{fin}})$;
+and if she never ends the round, the clean-up team captures her.  This
+completes the proof, with $C=C_0d^{5}$ and at most $(i_f+2)PN$ robber
+moves.
+
+◻
+:::
+
+## Early accessibility for random regular bases
+
+Write $\mathcal G_{N,d+1}$ for the uniform random $(d+1)$-regular graph on
+$N$ vertices; the branching parameter is $d$, matching [@PralatWormaldRegular].
+Prałat and Wormald verify the hypotheses of their Theorem 4.1 for
+$\mathcal G_{N,d+1}$ with $X=\varnothing$ [@PralatWormaldRegular, Lemma 3.2], and
+their proof of accessibility constructs a family of disjoint trees rooted
+at the targets whose every level is bounded from below, not only the top
+level.  Reading the level $s$ layers below the top gives accessibility $s$
+layers early.
+
+::: {#prop-early .exhibit .exhibit--proposition data-exhibit-type="proposition" data-exhibit-name="Proposition 29 (Early accessibility)"}
+**Proposition 29** (Early accessibility).
+Fix an integer $d\ge2$, a constant $0<\delta<1/32$, an integer $s\ge1$, and
+$0<c_1<2/5$.  With probability $1-o(1)$, $G\in\mathcal G_{N,d+1}$ is
+disconnected or has the following property.  For all $r,r'$ with
+$N^{1/4-\delta}<(d+1)d^{r}<N^{1/4+\delta}$ and
+$N^{1/4-\delta}<(d+1)d^{r'}<N^{1/4+\delta}$, every $v\in V(G)$, every
+$A\subseteq S_G(v,r)$ with $|A|>N^{1/4-\delta}$, and
+$U=\bigcup_{a\in A}S_G(a,r')$ with $d^{r+r'}<N/(9|U|)$, there is a set
+$Q''\subseteq V(G)$, determined by $(G,v,r,r',s)$ and not by $A$, with
+$|Q''|\le N^{5\delta}$, such that $U\setminus Q''$ is
+$(r+r'+1-s,\,c_1,\,1/9)$-accessible.
+
+:::
+
+For $s=0$ and $c_1=2/5$ this is [@PralatWormaldRegular, Lemma 3.2(iii)], with the
+exceptional set $Q$ of that proof.  The proof below reads intermediate
+levels of the same tree family on the same probability event, so the
+statement holds for all fixed $s$ simultaneously; the shallow exclusion
+$B_G(v,s-1)$ is the only place where $s$ enters the exceptional set.
+
+::: proof
+*Proof.*
+
+We use the objects constructed in the proof of
+[@PralatWormaldRegular, Lemma 3.2(iii)], arXiv v2, pp. 16–24, with their
+probability estimates, citing by page.  Fix $v$, $r$, $r'$.  Write
+$L_i=S_G(v,i)$ and $t_{\mathrm s}=\lfloor\log_d\log^{12}N\rfloor$, and let
+$U_0=\bigcup_{u\in S_G(v,r)}S_G(u,r')$, so that $U\subseteq U_0$ for every
+$A$.
+
+*Inherited objects.*
+The graph is exposed from $v$ in the pairing model, and a pair is
+*bad* when its second point lands in an already exposed vertex
+(p. 11).  Phase 2 (p. 17) places $w\in U_0$ into $Q$ exactly when the tree
+$T_{t_{\mathrm s}}(w)$ of descendants of $w$ to depth $t_{\mathrm s}$ meets
+a bad pair; for $w\notin Q$ that tree is a perfect $d$-ary tree, and two
+such trees rooted in the same $L_i$ are disjoint (p. 18).  Phase 3
+(pp. 18–20) grows, for each $w\in\hat U_0=L_{r+r'}\setminus Q$, a tree
+$\tilde T(w)$ of height $i_0=t_0-r-r'$ whose level $i$ has at least
+$(1-\varepsilon_i)d^{i}$ vertices with $\varepsilon_i=o(1)$, and Property 3.3 (p. 20)
+makes these trees pairwise disjoint.  Sub-lemma 3.4 (pp. 20–21) extends
+them, for any $U^*\subseteq\hat U_0$ with $|U^*|<N/(9d^{r+r'})$, keeping
+them disjoint, so that for every $1\le i\le r+r'+1$ the level $i$ of
+$\tilde T(w)$ has at least $\tfrac25\min(d^{i},N/(9|U^*|))$ vertices; the
+bound is stated for every level.  Finally, for $j\ge0$ let
+$R_j=L_{r+r'-j}\cap U_0\setminus Q$.  The mixed-depth argument
+(pp. 23–24) grows from each $w\in R_j$ a bad-pair-free tree $T(w)$ up to
+$L_{r+r'}$, disjoint for distinct $w$ of the same level, with root set
+$F(w)=V(T(w))\cap L_{r+r'}$ of order $(1-o(1))d^{j}$; with
+$\tilde U=\bigcup_wF(w)$ and $\tilde U_j$ the roots whose least such $j$
+equals $j$, it asserts its (3.19): pairwise disjoint extensions
+$\tilde T(v')$, $v'\in\tilde U$, such that for $v'\in\tilde U_j$ the height
+is $r+r'+1-j$ and every level $1\le i\le r+r'+1-j$ has at least
+$\tfrac25\min(d^{i},Nd^{-j}/(9|U|))$ vertices.  The source obtains its
+reservoirs from the top levels of these trees.  The source grows the trees
+$T(w)$ only for $w\in U\setminus Q$; growing them from every vertex of
+$L_{r+r'-j}\cap U_0\setminus Q$ changes nothing, since they are subtrees of
+the exposure pruned at bad pairs, and all of them are determined by
+$(G,v,r,r')$.
+
+*The exceptional set.*
+The source asserts $F(w)\cap Q=\varnothing$ without proof.  Let
+$Q^{\mathrm{anc}}$ be the set of $w\in U_0\setminus Q$ with
+$F(w)\cap Q\ne\varnothing$, and put
+$$
+ Q''=Q\cup Q^{\mathrm{anc}}\cup B_G(v,s-1).
+$$
+Phase 2 records more than its displayed conclusion $|Q|=o(N^{5\delta})$
+(p. 17): after $r+r'+t_{\mathrm s}$ rounds at most
+$O(d^{r+r'+t_{\mathrm s}})=O(N^{1/2+2\delta}\log^{12}N)$ vertices carry
+exposed points, at most $d$ times as many pairs are exposed, each is bad
+with probability $O(N^{-1/2+2\delta}\log^{12}N)$, so by its (3.11) the
+number of bad pairs is $O(dN^{4\delta}\log^{24}N)$ with probability
+$1-o(N^{-3})$, and each bad pair eliminates at most
+$|T_{t_{\mathrm s}}(w)|=O(d\log^{12}N)$ vertices $w$.  Hence
+$|Q|=O(d^{2}N^{4\delta}\log^{36}N)$.  Since the trees $T(w)$ from one level
+are disjoint, each $q\in Q\cap L_{r+r'}$ lies in $F(w)$ for at most one $w$
+per level, so $|Q^{\mathrm{anc}}|\le(r+r'+1)|Q|=O(d^{2}N^{4\delta}\log^{37}N)$.
+With $|B_G(v,s-1)|\le3d^{s-1}$ and $d$ fixed, $|Q''|\le N^{5\delta}$ for
+large $N$, and $Q''$ depends on $(G,v,r,r',s)$ only.
+
+*Reservoirs.*
+Put $t=r+r'+1-s$.  Let $w\in U\setminus Q''$, let $\ell=\operatorname{dist}_G(v,w)$ and
+$j=r+r'-\ell$, so that $w\in R_j$ and, since $w\notin B_G(v,s-1)$,
+$h:=t-j=\ell+1-s\ge1$.  Define
+$$
+ W(w)=\bigcup_{v'\in F(w)}L_h\bigl(\tilde T(v')\bigr),
+$$
+the union of the level-$h$ sets of the trees rooted at $F(w)$; these trees
+exist because $w\notin Q^{\mathrm{anc}}$.  Each $v'\in F(w)$ is at depth
+$j$ in $T(w)$, and each vertex of $L_h(\tilde T(v'))$ is at tree distance
+$h$ from $v'$, so $W(w)\subseteq B_G(w,j+h)=B_G(w,t)$.  For disjointness,
+the trees $\tilde T(v')$, $v'\in\tilde U$, are pairwise disjoint and each
+vertex has one height in its tree, so the global level sets
+$\mathcal L_h=\bigcup_{v'}L_h(\tilde T(v'))$ are disjoint for distinct
+$h$.  If $w_1,w_2\in U\setminus Q''$ have
+$\operatorname{dist}_G(v,w_1)\ne\operatorname{dist}_G(v,w_2)$ then $h_1\ne h_2$ and
+$W(w_1)\cap W(w_2)=\varnothing$; if the distances agree, then
+$F(w_1)\cap F(w_2)=\varnothing$ and distinct roots have disjoint trees.
+This is the source's disjointness argument (p. 24) with the height
+$r+r'+1-j$ replaced by $t-j$; it uses no alignment of tree height with
+distance from $v$.  For the size, a root $v'\in F(w)$ lies in
+$\tilde U_{j'}$ with $j'\le j$, its tree has height $r+r'+1-j'\ge h$, and
+(3.19) at level $h$ gives
+$$
+ |L_h(\tilde T(v'))|
+ \ge\tfrac25\min\Bigl(d^{h},\frac{Nd^{-j'}}{9|U|}\Bigr)
+ \ge\tfrac25\,d^{-j}\min\Bigl(d^{t},\frac{N}{9|U|}\Bigr).
+$$
+Summing over the $(1-o(1))d^{j}$ roots,
+$|W(w)|\ge\tfrac25(1-o(1))\min(d^{t},N/(9|U|))\ge c_1\min(d^{t},N/(9|U|))$
+for large $N$.
+
+*Probability.*
+Nothing new is random.  The sets $W(w)$ are sub-level-sets of the family
+whose existence the source establishes with probability
+$1-o(2^{-N^{1/4+\delta}}/N^{4})$ for each $(v,A)$ given the exposed
+subgraph, and with probability $1-o(N^{-3})$ for the exposed subgraph,
+before its union bound over $v$, $r$, $r'$ and the $2^{N^{1/4+\delta}}$
+sets $A$ (p. 20).  The proposition therefore holds on the same event as the
+source's lemma.
+
+◻
+:::
+
+::: {#cor-regular .exhibit .exhibit--corollary data-exhibit-type="corollary" data-exhibit-name="Corollary 30 (Random regular bases)"}
+**Corollary 30** (Random regular bases).
+Fix an integer $d\ge2$.  There is a constant $C_d$ such that, with
+probability $1-o(1)$, $G\in\mathcal G_{N,d+1}$ has the following property:
+for every $\lambda\ge1$, every $P\ge1$, and every graph $H$ admitting a
+$(\lambda,P)$-occupation projection onto $G$,
+$$
+ \boxed{c(H)\le C_dP\sqrt N.}
+$$
+
+:::
+
+::: proof
+*Proof.*
+
+Take $\delta=1/40$, $J=2$ and $X=\varnothing$.  Random $(d+1)$-regular
+graphs are connected with probability $1-o(1)$ for $d+1\ge3$
+[@PralatWormaldRegular, Section 3], which gives [(H3)](#multistage-h3) and removes the
+disconnected alternative in [Proposition 29](#prop-early).  Regularity gives
+$|S_G(V',r')|\le k(d+1)d^{r'-1}\le2kd^{r'}$, so $a_2=2$.  The lower bound
+of [(H1)](#multistage-h1) with $a_1=1/10$ is [@PralatWormaldRegular, Lemma 3.2(ii)], which
+holds with probability $1-o(1)$ for all $k=O(N^{1/2+\delta})$, all $V'$ of
+order $k$, and all $r'$ with $k(d+1)d^{r'-1}\le N/\log N$; the constraint
+$kd^{r'}\le N/(\log N)^2$ in [(H1)](#multistage-h1) implies this, and
+$k\le|B_G(v,r)|<3d^{r}=O(N^{1/2+\delta})$.  [Proposition 29](#prop-early) with $s=5$
+and $c_1=1/3$ gives [(H2)](#multistage-h2) with $a_3=a_5=1/9$ and $a_4=1/3$, since
+$|S_G(a,r')\cap Q''|\le N^{5\delta}<N^{1/4-2\delta}$.  Hence, with
+probability $1-o(1)$, $G$ is a
+$(5;d,\tfrac1{40},2,0,\tfrac1{10},2,\tfrac19,\tfrac13,\tfrac19)$-multistage
+base, and [Theorem 25](#thm-multistage) applies to every $H$ projecting onto it.
+
+◻
+:::
+
+::: {#rem-multistage-scope .exhibit .exhibit--remark data-exhibit-type="remark" data-exhibit-name="Remark 31 (Scope of the adaptive transfer)"}
+*Remark 31* (Scope of the adaptive transfer).
+[Theorem 25](#thm-multistage) does not supersede [Theorem 3](#thm-abstract-transfer), and
+it does not change the estimates of [Theorem 10](#thm-hardfamily).  The hard family
+has base degree $d=(\log N)^4$ growing with $N$ and base $G(N,p)$, whereas
+[Corollary 30](#cor-regular) concerns fixed $d$ and random regular bases; early
+accessibility is derived here only for the latter, and for growing $d$ the
+team constant $C_0d^{5}$ and the finishing estimate would require a larger
+$F$, which we do not pursue.  What the theorem removes is the factor
+$\log(ePN)$, for fixed-degree bases and under the stronger hypothesis
+[(H2)](#multistage-h2).  Neither route approaches $\sqrt{|V(H)|}$ when $P$ grows, since
+$P\sqrt N$ exceeds $\sqrt{PN}$ by $\sqrt P$.  Random regular graphs already
+satisfy Meyniel; the content of [Corollary 30](#cor-regular) is robustness of the
+square-root bound under every coarse projection of the base, including the
+HMGHM tower of [Theorem 6](#thm-metric).
+
+:::
+
 # Outlook
 
-For vertex expansion $h(G)\ge\phi$, iterating the elementary growth factor $1+\phi$ reaches global scale after $O(\phi^{-1}\log |G|)$ layers. The same iteration gives the standard diameter bound of that order; these are two forms of the same calculation, not independent evidence. When $\phi=|G|^{-a}$, this supplies an $O(|G|^a\log|G|)$ upper bound on the number of layers needed to reach global scale. It does not establish a necessary pursuit timescale: for example, the fixed-dimensional tori above have $h(G)=\Theta(|G|^{-1/k})$ and diameter $\Theta(|G|^{1/k})$, without the extra logarithm.
+For vertex expansion $h(G)\ge\phi$, iterating the elementary growth factor
+$1+\phi$ reaches global scale after $O(\phi^{-1}\log |G|)$ layers.  The same
+iteration gives the standard diameter bound of that order; these are two
+forms of the same calculation, not independent evidence.  When
+$\phi=|G|^{-a}$, this supplies an $O(|G|^a\log|G|)$ upper bound on the
+number of layers needed to reach global scale.  It does not establish a
+necessary pursuit timescale: for example, the fixed-dimensional tori above
+have $h(G)=\Theta(|G|^{-1/k})$ and diameter $\Theta(|G|^{1/k})$, without
+the extra logarithm.
 
-The present paper separates three phenomena:
+The present paper separates four phenomena:
 
-1. bounded normalized metric distortion preserves a strong occupation certificate through degree reduction;
+- **(1)** bounded normalized metric distortion preserves a strong occupation
+  certificate through degree reduction;
 
-2. the HMGHM stressing family has an upper bound within a polylogarithmic factor of the square-root scale;
+- **(2)** the HMGHM stressing family has an upper bound within a polylogarithmic
+  factor of the square-root scale;
 
-3. one-shot occupation is nevertheless incapable of proving a universal robustness theorem throughout any polynomial weak-expansion window, even on bounded-degree graphs with constant cop number; a cubic instance already appears at exponent $1/2$.
+- **(3)** one-shot occupation is nevertheless incapable of proving a universal
+  robustness theorem throughout any polynomial weak-expansion window, even on
+  bounded-degree graphs with constant cop number; a cubic instance already
+  appears at exponent $1/2$;
 
-The remaining universal question is therefore an adaptive one. On the tori, ball growth carries essentially no information about pursuit cost; product structure instead supports coordinate-wise shadowing. What geometric or combinatorial quantity replaces product coordinates on a general polynomially weak expander? Equivalently, can a capacitated, correlated, or deferred witness system reuse the same cop resources over polynomially many weak-growth layers, or must every such one-traversal certificate incur polynomial congestion?
+- **(4)** the adaptive multistage strategy of Prałat and Wormald transfers
+  through every coarse projection of a fixed-degree base with sphere growth
+  and early accessibility, without the logarithm or scale dependence in the
+  cop count.
+
+The multistage transfer consumes four quantitative inputs: reservoir sizes,
+exceptional fractions, frontier contraction, and the final Hall expansion.
+Extracting the weakest such conditions the proof actually uses, and asking
+which weaker geometric assumptions supply them, is the concrete route from
+[the adaptive multistage transfer section](#adaptive-multistage) toward shrinking expansion; expansion alone is not
+known to suffice.  The remaining universal question is therefore an adaptive one.  On the tori,
+ball growth carries essentially no information about pursuit cost; product
+structure instead supports coordinate-wise shadowing.  What geometric or
+combinatorial quantity replaces product coordinates on a general
+polynomially weak expander?  Equivalently, can a capacitated, correlated, or
+deferred witness system reuse the same cop resources over polynomially many
+weak-growth layers, or must every such one-traversal certificate incur
+polynomial congestion?
 
 # Acknowledgments
 
@@ -561,5 +1207,15 @@ literature revision applies the connected-cloud cut estimate once to the
 final ancestry fibers, improving the expansion denominator from
 $CD^4(\log D)^5$ to $CD^3(\log D)^2$.  It also records the quantitative
 scope of the threshold proof in the inspected HMGHM preprint.
+
+The September 6, 2026 revision adds [the adaptive multistage transfer section](#adaptive-multistage).  Its phase
+argument is inherited from Prałat–Wormald's Theorem 4.1, and its
+early-accessibility proposition reads intermediate levels of the tree
+family in their random-regular proof on the same probability event; the
+new steps are the squad lemma, the deadline comparison, the ball-shaped
+finishing set, and the repaired exceptional set with its explicit size.
+The original occupation theorem and the growing-degree hard-family
+estimates are retained unchanged.  No computation accompanies the new
+section.
 
 The metric inequalities were independently tested on HMGHM towers rebuilt from the published gadget description, including structured base graphs not used in the original audit. The Hall inequalities and timing margins were checked numerically, and exact small replacement games were solved by retrograde analysis. The toroidal barrier audit computes exact ball profiles of $C_L^{\square k}$ by convolving cyclic distance distributions, verifies the $(5k)^k$ doubling bound for $k=2,3,4,5$, constructs $Q_L$, checks cubicity, connectivity, and the displayed rotation automorphism, and evaluates the counting lower bound at every radius. No theorem depends on the computations.
