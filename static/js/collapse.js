@@ -174,8 +174,16 @@
 
     /* Reveal the section containing the current hash target, at load and on
        every subsequent hash change. Runs for any element inside a collapsed
-       .section-body, including nested ones, outermost first. */
-    function revealHashTarget() {
+       .section-body, including nested ones, outermost first.
+
+       `initial` marks the call made once initHeading has run over the whole
+       body. That pass rewrites the document under the anchor the browser has
+       already scrolled to — every section's content is moved into a new
+       .section-body wrapper, and any section the reader had left collapsed
+       shrinks to nothing — so the landing position computed during load is
+       stale by however much the material above the target changed. Re-aim
+       at the target even when no ancestor needed expanding. */
+    function revealHashTarget(initial) {
         var id = location.hash ? decodeURIComponent(location.hash.slice(1)) : '';
         if (!id) return;
         var target = document.getElementById(id);
@@ -189,15 +197,29 @@
                 ? node.parentElement.closest('.section-body')
                 : null;
         }
-        if (!chain.length) return;
+        if (!chain.length && !initial) return;
 
         chain.forEach(function (w) { if (w.lnExpand) w.lnExpand(); });
 
-        // The anchor was hidden when the browser first tried to scroll to it.
+        // The anchor was hidden, or the page around it moved, when the
+        // browser first tried to scroll to it.
+        //
+        // Deferred to the next frame for two reasons: the expansions above
+        // need a layout pass, and nav.js — which runs later in document
+        // order, so its DOMContentLoaded handler fires after this one —
+        // must have published the measured --nav-height that base.css's
+        // scroll-padding-top is calculated from. A rAF callback runs after
+        // the whole DOMContentLoaded dispatch, so both hold by then.
+        //
+        // A correction is not a movement the reader asked for: on load it
+        // is applied instantly, so the page does not appear to jump twice.
+        // 'instant', not 'auto' — per spec 'auto' defers to the CSS
+        // scroll-behavior, which is `smooth` site-wide, so it would animate
+        // exactly what must not be animated.
         requestAnimationFrame(function () {
             target.scrollIntoView({
                 block: 'start',
-                behavior: reducedMotion() ? 'auto' : 'smooth'
+                behavior: initial ? 'instant' : (reducedMotion() ? 'auto' : 'smooth')
             });
         });
     }
@@ -220,10 +242,12 @@
         if (!headings.length) return;
 
         headings.forEach(initHeading);
-        revealHashTarget();
+        revealHashTarget(true);
     });
 
-    window.addEventListener('hashchange', revealHashTarget);
+    /* Bound through a wrapper: the listener is handed an Event, and
+       revealHashTarget's first argument is the `initial` flag. */
+    window.addEventListener('hashchange', function () { revealHashTarget(); });
 
     // Public entry point for transclude.js: initialize collapse toggles on
     // headings inside a newly injected fragment.

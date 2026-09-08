@@ -127,6 +127,22 @@
     --body-max-width:  800px;
     --page-padding:    1.5rem;
 
+    /* Height of the sticky site header (layout.css: body > header).
+       Four rules already consumed var(--nav-height) — the TOC's sticky
+       offset and max-height, the sticky-footer math, and the TOC
+       overflow cap — and nothing ever defined it, so every one of them
+       silently used its 4rem fallback while the real header is ~60px on
+       desktop and over twice that on a phone, where the nav wraps to
+       three rows.
+
+       The value here is a static estimate for the pre-script window and
+       for the breakpoints below; nav.js measures the header for real and
+       writes the result to this property as an inline style on <html>,
+       which outranks this declaration. It re-measures whenever the
+       header resizes — a viewport change, the Portals row opening, a
+       font swap, focus mode hiding the nav. */
+    --nav-height:      3rem;   /* ~59px: one row */
+
     /* Transitions */
     --transition-fast:    0.15s ease;
     --transition-medium:  0.28s ease;
@@ -161,6 +177,15 @@
     --bp-tablet:   680px;
     --bp-desktop:  900px;
     --bp-wide:    1500px;
+}
+
+/* Below --bp-phone the primary links wrap to two rows and the Portals
+   row sits under them: the header measures ~141px rather than ~59px.
+   Kept in lockstep with the nav's own 540px block in components.css. */
+@media (max-width: 540px) {
+    :root {
+        --nav-height: 7rem;   /* ~140px: three rows */
+    }
 }
 
 
@@ -289,6 +314,22 @@ html {
     line-height: var(--line-height);
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
+
+    /* Anchor landing offset. The site header is position:sticky at
+       top:0, so an un-padded jump to #some-heading parks the heading's
+       top edge at y=0 — underneath the nav. scroll-padding-top on the
+       scroll container is the one declaration that fixes every path at
+       once: clicking a TOC entry, following a heading's own ¶ link, a
+       footnote reference, :target, restoring a hash on load, and any
+       scripted scrollIntoView (collapse.js, gallery.js).
+
+       Preferred over scroll-margin-top on the targets themselves, which
+       would have to be repeated for every kind of anchor on the page
+       and silently miss the ones nobody remembered.
+
+       The 1.25rem is breathing room below the nav's border so the
+       heading does not land flush against it. */
+    scroll-padding-top: calc(var(--nav-height) + 1.25rem);
 }
 
 body {

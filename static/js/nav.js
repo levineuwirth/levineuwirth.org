@@ -20,7 +20,49 @@
         return !!(motionQuery && motionQuery.matches);
     }
 
+    /* --nav-height: the sticky header's real height, published to <html>
+       as an inline style so base.css's static estimate is superseded.
+       Four rules depend on it — scroll-padding-top (the landing offset
+       for every in-page anchor), the TOC's sticky top and max-height,
+       and the sticky-footer math — and a wrong value shows up as an
+       anchor jump that lands the heading under the nav.
+
+       An estimate cannot be right on its own: the header is one row on
+       desktop and three on a phone, grows again when the Portals row is
+       opened, changes when a web font swaps in, and collapses to nothing
+       under focus mode. A ResizeObserver on the header catches all five
+       without a listener per cause. */
+    function initNavHeight() {
+        var header = document.querySelector('body > header:not(.essay-frontmatter)');
+        if (!header) return;
+
+        var last = null;
+        function sync() {
+            var h = Math.round(header.getBoundingClientRect().height);
+            if (h === last) return;          /* no needless style invalidation */
+            last = h;
+            document.documentElement.style.setProperty('--nav-height', h + 'px');
+        }
+
+        sync();
+
+        if (window.ResizeObserver) {
+            new ResizeObserver(sync).observe(header);
+        } else {
+            window.addEventListener('resize', sync, { passive: true });
+        }
+
+        /* A font swapping in after first paint changes the nav's height
+           without resizing anything the observer above is watching in
+           browsers that lack ResizeObserver. */
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(sync).catch(function () {});
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
+        initNavHeight();
+
         // Return-to-top button. Scripted scrolling is motion the CSS
         // override cannot reach — behavior is decided here instead.
         var totop = document.querySelector('.footer-totop');
