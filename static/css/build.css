@@ -40,6 +40,16 @@
     border-bottom: none;
 }
 
+/* A run of charts and tables under one h2 is broken up by <p><strong>
+   sub-labels ("Focal length", "Aperture", "Places"). Neither a table nor a
+   .build-bars stack carries a bottom margin of its own, so without this the
+   next sub-label sits hard against the last bar of the chart above it and
+   the sections read as one block. 1.65rem is the site's line rhythm. */
+.build-table,
+.build-bars {
+    margin-bottom: 1.65rem;
+}
+
 /* Word-length distribution bars */
 .build-bars {
     display: flex;

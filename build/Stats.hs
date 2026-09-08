@@ -1,17 +1,24 @@
 {-# LANGUAGE GHC2021 #-}
 {-# LANGUAGE OverloadedStrings #-}
--- | Build telemetry page (/build/): corpus statistics, word-length
--- distribution, tag frequencies, link analysis, epistemic coverage,
--- output metrics, repository overview, and build timing.
--- Rendered as a full essay (3-column layout, TOC, metadata block).
+-- | The two generated statistics pages.
+--
+--   * @/build/@ — build telemetry: corpus statistics, word-length
+--     distribution, tag frequencies, link analysis, epistemic coverage,
+--     output metrics, repository overview, and build timing.
+--   * @/stats/@ — the work itself: writing activity, monthly volume,
+--     corpus, notable pages, photography, and tags.
+--
+-- Both are rendered as full essays (3-column layout, TOC, metadata block).
 module Stats (statsRules) where
 
 import Control.Exception          (IOException, catch)
 import Control.Monad              (forM)
-import Data.Char                  (isSpace, toLower)
-import Data.List                  (find, isPrefixOf, isSuffixOf, sort, sortBy)
+import Data.Char                  (isDigit, isSpace, toLower)
+import Data.List                  (find, intercalate, isPrefixOf, isSuffixOf,
+                                   sort, sortBy)
 import qualified Data.Map.Strict  as Map
-import Data.Maybe                 (catMaybes, fromMaybe, isJust, listToMaybe)
+import Data.Maybe                 (catMaybes, fromMaybe, isJust, listToMaybe,
+                                   mapMaybe)
 import Data.Ord                   (comparing, Down (..))
 import qualified Data.Set         as Set
 import Data.String                (fromString)
@@ -52,6 +59,28 @@ data TypeRow = TypeRow
     { trLabel :: String
     , trCount :: Int
     , trWords :: Int
+    , trProse :: Bool
+      -- ^ Does a word count mean anything for this type? Photographs are
+      -- corpus members with no prose in them; rendering them as @0 words,
+      -- 0 min@ would read as a measurement rather than as inapplicable, so
+      -- their two text columns become em-dashes instead.
+    }
+
+-- | One photographic frame, as recorded in its own frontmatter. Every field
+-- is optional because the importer writes whatever EXIF it found and the
+-- values are editable afterwards — a scan carrying no camera data is still
+-- a frame, and must not drop out of the counts it does belong to.
+data PhotoInfo = PhotoInfo
+    { phCamera   :: Maybe String
+    , phLens     :: Maybe String
+    , phFocal    :: Maybe Int      -- ^ millimetres, as recorded
+    , phAperture :: Maybe String   -- ^ e.g. @f\/1.8@
+    , phISO      :: Maybe Int
+    , phLocation :: Maybe String
+    , phSeries   :: Maybe String
+    , phOrient   :: Maybe String
+    , phCaptured :: Maybe Day
+    , phGeo      :: Bool
     }
 
 data PageInfo = PageInfo
@@ -113,6 +142,41 @@ rtStr totalWords
 pctStr :: Int -> Int -> String
 pctStr _ 0     = "—"
 pctStr n total = show (n * 100 `div` total) ++ "%"
+
+-- | Frequency table over any orderable key, ascending by key.
+tally :: Ord a => [a] -> [(a, Int)]
+tally xs = Map.toAscList (Map.fromListWith (+) [(x, 1 :: Int) | x <- xs])
+
+-- | Same, ordered by descending count.
+tallyDesc :: Ord a => [a] -> [(a, Int)]
+tallyDesc = sortBy (comparing (Down . snd)) . tally
+
+-- | Assign each value to the first bucket whose predicate accepts it, and
+-- count. Values matching no bucket are dropped; empty buckets are kept,
+-- because a gap is part of a distribution's shape and dropping the row
+-- would quietly rescale the axis around it.
+--
+-- First-match, so a spec need only name its upper bounds, and a label like
+-- @f/2.8-4@ followed by @f/4-5.6@ resolves the shared endpoint the way a
+-- photographer reads it: into the lower band.
+bucketed :: [(String, a -> Bool)] -> [a] -> [(String, Int)]
+bucketed spec xs =
+    [ (lbl, Map.findWithDefault 0 i counts) | (i, (lbl, _)) <- indexed ]
+  where
+    indexed    = zip [0 :: Int ..] spec
+    bucketOf x = listToMaybe [ i | (i, (_, p)) <- indexed, p x ]
+    counts     = Map.fromListWith (+)
+        [ (i, 1 :: Int) | x <- xs, Just i <- [bucketOf x] ]
+
+-- | Drop content types that hold nothing.
+--
+-- The row list is spelled out in full at both call sites so that a type
+-- gaining its first piece needs no code change to appear. Printing the
+-- empty ones was the visible cost of that: /build/ carried three permanent
+-- @0 / 0 / 0 min@ rows — blog posts, fiction, compositions — which said
+-- only that the pattern had matched nothing.
+liveRows :: [TypeRow] -> [TypeRow]
+liveRows = filter ((> 0) . trCount)
 
 -- | Strip HTML tags for plain-text word counting.
 --
@@ -189,6 +253,51 @@ median xs
     upper  = sorted !! (n `div` 2)
     lower  = sorted !! (n `div` 2 - 1)
 
+
+-- ---------------------------------------------------------------------------
+-- Photograph frontmatter
+-- ---------------------------------------------------------------------------
+
+-- | Is the key present at all? @geo:@ holds a two-element list of numbers,
+-- which neither 'lookupString' nor 'lookupStringList' can see, so presence
+-- is the only question worth asking of it.
+hasKey :: String -> Metadata -> Bool
+hasKey k = KM.member (AK.fromString k)
+
+-- | Leading integer of a recorded focal length: @\"24mm\"@ to @24@.
+parseFocal :: String -> Maybe Int
+parseFocal = readMaybe . takeWhile isDigit . dropWhile (not . isDigit)
+
+-- | @exposure:@ is a single string holding shutter, aperture and
+-- sensitivity — @\"1/200 f/7.1 ISO 100\"@ — because that is how the three
+-- are read off the back of a camera. These pull them back apart. Each is
+-- independent, so a partial or reordered string still yields what it has.
+parseAperture :: String -> Maybe String
+parseAperture s = listToMaybe [ w | w <- words s, "f/" `isPrefixOf` w ]
+
+parseISO :: String -> Maybe Int
+parseISO s = case dropWhile (/= "ISO") (words s) of
+    (_ : v : _) -> readMaybe v
+    _           -> Nothing
+
+-- | Numeric value of an @f/@ label, so a histogram orders by stop rather
+-- than by the string naming it (where @f/10@ sorts before @f/2@).
+apertureValue :: String -> Double
+apertureValue = fromMaybe 0 . readMaybe . drop 2
+
+toPhotoInfo :: Metadata -> PhotoInfo
+toPhotoInfo m = PhotoInfo
+    { phCamera   = lookupString "camera"       m
+    , phLens     = lookupString "lens"         m
+    , phFocal    = lookupString "focal-length" m >>= parseFocal
+    , phAperture = lookupString "exposure"     m >>= parseAperture
+    , phISO      = lookupString "exposure"     m >>= parseISO
+    , phLocation = lookupString "location"     m
+    , phSeries   = lookupString "series"       m
+    , phOrient   = lookupString "orientation"  m
+    , phCaptured = lookupString "captured"     m >>= parseDay
+    , phGeo      = hasKey "geo" m
+    }
 
 -- ---------------------------------------------------------------------------
 -- Date helpers (for /stats/ page)
@@ -381,6 +490,29 @@ renderHeatmap wordsByDay today =
 -- Stats page sections
 -- ---------------------------------------------------------------------------
 
+-- | Horizontal bar chart over pre-ordered @(label, value)@ pairs. Ordering
+-- is the caller's business — months run chronologically, apertures by stop,
+-- places by frequency — so this only scales and draws.
+--
+-- Bars are relative to the largest value in the set, and any non-zero value
+-- claims at least 2% so that one frame beside two hundred is a mark rather
+-- than nothing.
+barChart :: [(String, Int)] -> H.Html
+barChart rows
+    | null rows = H.p (H.em "Nothing to chart yet.")
+    | otherwise = H.div H.! A.class_ "build-bars" $ mapM_ bar rows
+  where
+    maxV = max 1 (maximum (map snd rows))
+    bar (lbl, v) =
+        let pct = if v == 0 then 0 else max 2 (v * 100 `div` maxV)
+        in  H.div H.! A.class_ "build-bar-row" $ do
+                H.span H.! A.class_ "build-bar-label" $ txt lbl
+                H.span H.! A.class_ "build-bar-wrap" $
+                    H.span H.! A.class_ "build-bar"
+                           H.! A.style (H.stringValue ("width:" ++ show pct ++ "%"))
+                         $ mempty
+                H.span H.! A.class_ "build-bar-count" $ txt (commaInt v)
+
 renderMonthlyVolume :: Map.Map Day Int -> H.Html
 renderMonthlyVolume wordsByDay =
     section "volume" "Monthly volume" $
@@ -391,49 +523,41 @@ renderMonthlyVolume wordsByDay =
             ]
     in  if Map.null byMonth
         then H.p (H.em "No dated content yet.")
-        else
-            let maxWC = max 1 $ maximum $ Map.elems byMonth
-                bar (y, m) =
-                    let wc  = fromMaybe 0 (Map.lookup (y, m) byMonth)
-                        pct = if wc == 0 then 0 else max 2 (wc * 100 `div` maxWC)
-                        lbl = shortMonth m ++ " \x2019" ++ drop 2 (show y)
-                    in  H.div H.! A.class_ "build-bar-row" $ do
-                            H.span H.! A.class_ "build-bar-label" $ txt lbl
-                            H.span H.! A.class_ "build-bar-wrap" $
-                                H.span H.! A.class_ "build-bar"
-                                       H.! A.style (H.stringValue ("width:" ++ show pct ++ "%"))
-                                     $ mempty
-                            H.span H.! A.class_ "build-bar-count" $
-                                if wc > 0 then txt (commaInt wc) else mempty
-            in  H.div H.! A.class_ "build-bars" $
-                    mapM_ bar (Map.keys byMonth)
+        else barChart
+                [ (shortMonth m ++ " \x2019" ++ drop 2 (show y), wc)
+                | ((y, m), wc) <- Map.toAscList byMonth
+                ]
 
 renderCorpus :: [TypeRow] -> [PageInfo] -> H.Html
 renderCorpus typeRows allPIs =
     section "corpus" "Corpus" $ do
-        dl [ ("Total words",        txt (commaInt totalWords))
-           , ("Total pages",        txt (commaInt (length allPIs)))
-           , ("Total reading time", txt (rtStr totalWords))
-           , ("Average length",     txt (commaInt avgWC ++ " words"))
-           , ("Median length",      txt (commaInt medWC ++ " words"))
-           ]
+        -- Written and unwritten pages are counted separately here. Folding
+        -- them into one "total pages" figure was what let the old page say
+        -- "21 pages" three inches above a tag table listing 97 photographs
+        -- from Copenhagen alone.
+        dl $ [ ("Total words",        txt (commaInt totalWords))
+             , ("Written pages",      txt (commaInt writtenPages))
+             ] ++
+             [ ("Photographs",        txt (commaInt unwrittenPages))
+             | unwrittenPages > 0 ] ++
+             [ ("Total reading time", txt (rtStr totalWords))
+             , ("Average length",     txt (commaInt avgWC ++ " words"))
+             , ("Median length",      txt (commaInt medWC ++ " words"))
+             ]
         table ["Type", "Pages", "Words", "Reading time"]
-              (map row typeRows)
+              (map typeRowCells typeRows)
               (Just [ "Total"
-                    , txt (commaInt (sum (map trCount typeRows)))
+                    , txt (commaInt (writtenPages + unwrittenPages))
                     , txt (commaInt totalWords)
                     , txt (rtStr totalWords)
                     ])
   where
-    hasSomeWC  = filter (\p -> piWC p > 0) allPIs
-    totalWords = sum (map trWords typeRows)
-    avgWC      = if null hasSomeWC then 0 else totalWords `div` length hasSomeWC
-    medWC      = median (map piWC hasSomeWC)
-    row r = [ txt (trLabel r)
-            , txt (commaInt (trCount r))
-            , txt (commaInt (trWords r))
-            , txt (rtStr    (trWords r))
-            ]
+    hasSomeWC      = filter (\p -> piWC p > 0) allPIs
+    totalWords     = sum (map trWords typeRows)
+    writtenPages   = sum [ trCount r | r <- typeRows,       trProse r ]
+    unwrittenPages = sum [ trCount r | r <- typeRows, not (trProse r) ]
+    avgWC          = if null hasSomeWC then 0 else totalWords `div` length hasSomeWC
+    medWC          = median (map piWC hasSomeWC)
 
 renderNotable :: [PageInfo] -> H.Html
 renderNotable allPIs =
@@ -450,6 +574,110 @@ renderNotable allPIs =
                   txt (" \x2014 " ++ commaInt (piWC p) ++ " words")
               ) ps
 
+-- | Everything the frames already say about themselves.
+--
+-- Nothing here is computed at import time or cached anywhere: each frame's
+-- camera, lens, focal length, exposure, place and capture date were written
+-- into its own frontmatter when it was imported, and are editable text from
+-- then on. That makes this section a reading of the corpus rather than of
+-- the EXIF — a frame whose recorded values were corrected by hand counts as
+-- corrected, which is the behaviour a photographer expects.
+--
+-- The three histograms run along their own axis rather than by frequency,
+-- so each reads as a distribution and keeps its shape as frames are added.
+-- Bodies and places have no natural axis and run by count instead.
+renderPhotography :: [PhotoInfo] -> H.Html
+renderPhotography photos
+    | null photos = mempty
+    | otherwise = section "photography" "Photography" $ do
+        dl $
+            [ ("Frames",     txt (commaInt total)) ] ++
+            [ ("Series",     txt (commaInt (length serieses)))  | not (null serieses) ] ++
+            [ ("Places",     txt (commaInt (length places)))    | not (null places)   ] ++
+            [ ("Bodies",     txt (commaInt (length cameras)))   | not (null cameras)  ] ++
+            [ ("Geotagged",  txt (commaInt geoCount ++ " (" ++ pctStr geoCount total ++ ")")) ] ++
+            [ ("Captured",   txt span_) | Just span_ <- [capturedSpan] ] ++
+            [ ("Orientation", txt orientText) | not (null orients) ]
+
+        subhead "Bodies"
+        table ["Camera", "Lens", "Frames", "Share"]
+              [ [ txt cam
+                , txt (fromMaybe "\x2014" lens)
+                , txt (commaInt n)
+                , txt (pctStr n total)
+                ]
+              | ((cam, lens), n) <- tallyDesc bodyPairs
+              ]
+              Nothing
+
+        histogram "Focal length" focalBands  (mapMaybe phFocal photos)
+        histogram "Aperture"     apertureBands
+                                 (map apertureValue (mapMaybe phAperture photos))
+        histogram "Sensitivity"  isoBands    (mapMaybe phISO photos)
+
+        if null places then mempty else do
+            subhead "Places"
+            table ["Place", "Frames"]
+                  [ [txt place, txt (commaInt n)] | (place, n) <- take 12 places ]
+                  Nothing
+  where
+    total     = length photos
+    cameras   = tallyDesc (mapMaybe phCamera   photos)
+    serieses  = tallyDesc (mapMaybe phSeries   photos)
+    places    = tallyDesc (mapMaybe phLocation photos)
+    orients   = tallyDesc (mapMaybe phOrient   photos)
+    geoCount  = length (filter phGeo photos)
+
+    -- Bands, not the 31 distinct focal lengths and 27 sensitivities the
+    -- corpus actually holds: at one bar each that is a list, not a shape.
+    -- The bounds are the ones a photographer already thinks in.
+    focalBands =
+        [ ("≤ 20mm",   (<= 20))
+        , ("20–35mm",  (<= 35))
+        , ("35–50mm",  (<= 50))
+        , ("50–85mm",  (<= 85))
+        , ("85–135mm", (<= 135))
+        , ("135mm +",  const True)
+        ]
+    apertureBands =
+        [ ("< f/2.8",  (< 2.8))
+        , ("f/2.8–4",  (<= 4))
+        , ("f/4–5.6",  (<= 5.6))
+        , ("f/5.6–8",  (<= 8))
+        , ("f/8–11",   (<= 11))
+        , ("f/11 +",   const True)
+        ]
+    isoBands =
+        [ ("≤ 100",     (<= 100))
+        , ("100–200",   (<= 200))
+        , ("200–400",   (<= 400))
+        , ("400–800",   (<= 800))
+        , ("800–1600",  (<= 1600))
+        , ("1600 +",    const True)
+        ]
+
+    -- A body is grouped with the lens mounted on it: the same camera with a
+    -- different lens is a different row, and a phone with no lens field
+    -- reports one row rather than vanishing from the table.
+    bodyPairs = [ (cam, phLens ph) | ph <- photos, Just cam <- [phCamera ph] ]
+
+    capturedSpan = case sort (mapMaybe phCaptured photos) of
+        []  -> Nothing
+        [d] -> Just (show d)
+        ds  -> Just (show (head ds) ++ " \x2013 " ++ show (last ds))
+
+    orientText =
+        intercalate " \x00b7 " [ o ++ " " ++ commaInt n | (o, n) <- orients ]
+
+    subhead t = H.p (H.strong (txt t))
+
+    -- Silent when nothing carries the field: a frame set imported without
+    -- EXIF should not sprout three charts of zeros.
+    histogram t bands vals
+        | null vals = mempty
+        | otherwise = do subhead t
+                         barChart (bucketed bands vals)
+
 -- | Renamed/aliased to 'renderTagsSection' below — kept as a name for
 -- legacy call sites until they are migrated. Defining it as the same
 -- function (instead of an independent copy) prevents the two from
@@ -464,11 +692,12 @@ statsTOC = H.ol $ mapM_ item entries
         H.li $ H.a H.! A.href (H.stringValue ("#" ++ i))
                    H.! customAttr "data-target" i
                  $ txt t
-    entries = [ ("activity", "Writing activity")
-              , ("volume",   "Monthly volume")
-              , ("corpus",   "Corpus")
-              , ("notable",  "Notable")
-              , ("tags",     "Tags")
+    entries = [ ("activity",    "Writing activity")
+              , ("volume",      "Monthly volume")
+              , ("corpus",      "Corpus")
+              , ("notable",     "Notable")
+              , ("photography", "Photography")
+              , ("tags",        "Tags")
               ]
 
 -- ---------------------------------------------------------------------------
@@ -583,7 +812,7 @@ renderContent :: [TypeRow] -> H.Html
 renderContent rows =
     section "corpus" "Content" $
     table ["Type", "Count", "Words", "Reading time"]
-          (map row rows)
+          (map typeRowCells rows)
           (Just [ "Total"
                 , txt (commaInt totalCount)
                 , txt (commaInt totalWords)
@@ -592,11 +821,16 @@ renderContent rows =
   where
     totalCount = sum (map trCount rows)
     totalWords = sum (map trWords rows)
-    row r = [ txt (trLabel r)
-            , txt (commaInt (trCount r))
-            , txt (commaInt (trWords r))
-            , txt (rtStr    (trWords r))
-            ]
+
+-- | One corpus row. A type that carries no prose gets em-dashes rather than
+-- zeros in the two text columns — see 'trProse'.
+typeRowCells :: TypeRow -> [H.Html]
+typeRowCells r =
+    [ txt (trLabel r)
+    , txt (commaInt (trCount r))
+    , if trProse r then txt (commaInt (trWords r)) else txt "\x2014"
+    , if trProse r then txt (rtStr    (trWords r)) else txt "\x2014"
+    ]
 
 renderPages :: [PageInfo]
             -> Maybe (String, String, String)
@@ -605,7 +839,7 @@ renderPages :: [PageInfo]
 renderPages allPIs mOldest mNewest =
     section "pages" "Pages" $ do
         dl $
-            [ ("Total pages",    txt (commaInt (length allPIs)))
+            [ ("Written pages",  txt (commaInt (length allPIs)))
             , ("Average length", txt (commaInt avgWC ++ " words"))
             ] ++
             maybe [] (\(d,t,u) -> [("Oldest content", datedLink d t u)]) mOldest ++
@@ -615,7 +849,10 @@ renderPages allPIs mOldest mNewest =
         H.p (H.strong "Shortest")
         pageList (take 3 (sortBy (comparing piWC)         hasSomeWC))
   where
-    hasSomeWC = filter (\p -> piWC p > 0) allPIs
+    -- Same floor as 'renderNotable' on /stats/. Below it are placeholder
+    -- pages ("a fuller write-up follows"), which are real pages but are not
+    -- what a reader means by the shortest thing here.
+    hasSomeWC = filter (\p -> piWC p > 50) allPIs
     avgWC     = if null hasSomeWC then 0
                 else sum (map piWC hasSomeWC) `div` length hasSomeWC
     datedLink d t u = do
@@ -629,8 +866,7 @@ renderPages allPIs mOldest mNewest =
 
 renderDistribution :: [Int] -> H.Html
 renderDistribution wcs =
-    section "distribution" "Word-length distribution" $
-    H.div H.! A.class_ "build-bars" $ mapM_ bar buckets
+    section "distribution" "Word-length distribution" $ barChart buckets
   where
     bucketOf w
         | w <  500 = 0
@@ -638,7 +874,6 @@ renderDistribution wcs =
         | w < 2000 = 2
         | w < 5000 = 3
         | otherwise = 4
-    labels :: [H.Html]
     labels = [ "< 500"
              , "500 \x2013 1k"
              , "1k \x2013 2k"
@@ -651,16 +886,6 @@ renderDistribution wcs =
     -- the function total even if the bucket count and @labels@ list ever
     -- drift out of sync (matching the discipline used in 'median').
     buckets = [(lbl, fromMaybe 0 (Map.lookup i counts)) | (i, lbl) <- zip [0 :: Int ..] labels]
-    maxCount = max 1 (maximum (map snd buckets))
-    bar (lbl, n) =
-        let pct = n * 100 `div` maxCount
-        in  H.div H.! A.class_ "build-bar-row" $ do
-                H.span H.! A.class_ "build-bar-label" $ lbl
-                H.span H.! A.class_ "build-bar-wrap" $
-                    H.span H.! A.class_ "build-bar"
-                           H.! A.style (H.stringValue ("width:" ++ show pct ++ "%"))
-                         $ mempty
-                H.span H.! A.class_ "build-bar-count" $ txt (show n)
 
 renderTagsSection :: [(String, Int)] -> Int -> H.Html
 renderTagsSection topTags uniqueCount =
@@ -716,6 +941,11 @@ data MarkRow = MarkRow
     , mrMonogram :: Int
     , mrFigure   :: Int
     }
+
+-- | Drop mark rows for types that hold nothing, for the reason given on
+-- 'liveRows'.
+liveMarkRows :: [MarkRow] -> [MarkRow]
+liveMarkRows = filter ((> 0) . mrCount)
 
 renderMarks :: [MarkRow] -> H.Html
 renderMarks rows =
@@ -844,13 +1074,27 @@ statsRules tags = do
             fictionWCs <- mapM loadWC fiction
             compWCs    <- mapM loadWC comps
 
+            -- ----------------------------------------------------------------
+            -- Photographs
+            --
+            -- 'allPhotoEntries' minus the series landings: a landing is a
+            -- cover for a roll, not a frame in it, and counting both would
+            -- inflate every figure below by one per series. Patterns.hs
+            -- owns the enumeration; this only narrows it.
+            -- ----------------------------------------------------------------
+            frames <- loadAll (P.allPhotoEntries
+                          .&&. complement "content/photography/*/index.md"
+                          .&&. hasNoVersion) :: Compiler [Item String]
+            photos <- map toPhotoInfo <$> mapM (getMetadata . itemIdentifier) frames
+
             let allWCs = essayWCs ++ postWCs ++ poemWCs ++ fictionWCs ++ compWCs
-                rows =
-                    [ TypeRow "Essays"       (length essays)  (sum essayWCs)
-                    , TypeRow "Blog posts"   (length posts)   (sum postWCs)
-                    , TypeRow "Poems"        (length poems)   (sum poemWCs)
-                    , TypeRow "Fiction"      (length fiction) (sum fictionWCs)
-                    , TypeRow "Compositions" (length comps)   (sum compWCs)
+                rows = liveRows
+                    [ TypeRow "Essays"       (length essays)  (sum essayWCs)   True
+                    , TypeRow "Blog posts"   (length posts)   (sum postWCs)    True
+                    , TypeRow "Poems"        (length poems)   (sum poemWCs)    True
+                    , TypeRow "Fiction"      (length fiction) (sum fictionWCs) True
+                    , TypeRow "Compositions" (length comps)   (sum compWCs)    True
+                    , TypeRow "Photographs"  (length photos)  0                False
                     ]
 
             -- ----------------------------------------------------------------
@@ -934,7 +1178,7 @@ statsRules tags = do
             compMonos    <- mapM hasMonogram comps
             let countTrue  = length . filter id
                 countStat  = length . filter (isJust . lookupString "status")
-                markRows =
+                markRows = liveMarkRows
                     [ MarkRow "Essays"       (length essays)
                                               (countTrue essayMonos)
                                               (countStat essayMetas)
@@ -1049,13 +1293,27 @@ statsRules tags = do
             fictionWCs <- mapM loadWC fiction
             compWCs    <- mapM loadWC comps
 
+            -- ----------------------------------------------------------------
+            -- Photographs
+            --
+            -- 'allPhotoEntries' minus the series landings: a landing is a
+            -- cover for a roll, not a frame in it, and counting both would
+            -- inflate every figure below by one per series. Patterns.hs
+            -- owns the enumeration; this only narrows it.
+            -- ----------------------------------------------------------------
+            frames <- loadAll (P.allPhotoEntries
+                          .&&. complement "content/photography/*/index.md"
+                          .&&. hasNoVersion) :: Compiler [Item String]
+            photos <- map toPhotoInfo <$> mapM (getMetadata . itemIdentifier) frames
+
             let allItems = essays ++ posts ++ poems ++ fiction ++ comps
-                typeRows =
-                    [ TypeRow "Essays"       (length essays)  (sum essayWCs)
-                    , TypeRow "Blog posts"   (length posts)   (sum postWCs)
-                    , TypeRow "Poems"        (length poems)   (sum poemWCs)
-                    , TypeRow "Fiction"      (length fiction) (sum fictionWCs)
-                    , TypeRow "Compositions" (length comps)   (sum compWCs)
+                typeRows = liveRows
+                    [ TypeRow "Essays"       (length essays)  (sum essayWCs)   True
+                    , TypeRow "Blog posts"   (length posts)   (sum postWCs)    True
+                    , TypeRow "Poems"        (length poems)   (sum poemWCs)    True
+                    , TypeRow "Fiction"      (length fiction) (sum fictionWCs) True
+                    , TypeRow "Compositions" (length comps)   (sum compWCs)    True
+                    , TypeRow "Photographs"  (length photos)  0                False
                     ]
 
             allPIs <- catMaybes <$> mapM loadPI allItems
@@ -1082,6 +1340,7 @@ statsRules tags = do
                     renderMonthlyVolume wordsByDay
                     renderCorpus typeRows allPIs
                     renderNotable allPIs
+                    renderPhotography photos
                     renderStatsTags topTags uniqueTags
                 contentString = renderHtml htmlContent
                 plainText     = stripHtmlTags contentString
@@ -1090,11 +1349,17 @@ statsRules tags = do
                 ctx           = constField "toc"          (renderHtml statsTOC)
                              <> constField "word-count"   (show wc)
                              <> constField "reading-time" (show rt)
-                             <> constField "title"        "Writing Statistics"
+                             -- "Statistics", matching the only link into
+                             -- this page (the portal row on the home page).
+                             -- The page stopped being about the writing
+                             -- alone once the photographs were counted.
+                             <> constField "title"        "Statistics"
                              <> constField "abstract"     "Writing activity, corpus breakdown, \
-                                                          \and tag distribution — computed at build time."
+                                                          \photography, and tag distribution — \
+                                                          \computed at build time."
                              <> constField "description"  "Writing activity, corpus breakdown, \
-                                                          \and tag distribution — computed at build time."
+                                                          \photography, and tag distribution — \
+                                                          \computed at build time."
                              <> constField "build"        "true"
                              <> monogramSvgFieldFor "content/stats.mark.svg"
                              <> hasMonogramFieldFor "content/stats.mark.svg"
