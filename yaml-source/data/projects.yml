@@ -229,7 +229,7 @@ projects:
     group: Formal Verification & Assurance
     start: "2026"
     end: Present
-    description: "Routes proof goals from Lean 4 and Rocq through a shared intermediate representation to untrusted SMT solvers, automated theorem provers, and LLM provers, grades and checks the returned certificate, then reconstructs or replays it as a proof term the home kernel verifies. The R4 release closes 19 of 19 targeted obligations in an unmodified downstream Lean development, inside the sanctioned axiom ceiling, with generated evidence."
+    description: "Routes proof goals from Lean 4 and Rocq through a shared intermediate representation to untrusted SMT solvers, automated theorem provers, and LLM provers, grades and checks the returned certificate, then reconstructs or replays it as a proof term the home kernel verifies. The downstream VerInf Lean demonstration closes 19 of 19 targeted obligations in an otherwise unmodified development, inside the sanctioned axiom ceiling, with generated evidence."
     presentation_sets:
       agent-platform-systems:
         description: >-

@@ -279,9 +279,14 @@
         widows: 3;
     }
 
-    pre, figure, .exhibit, table {
+    pre, .code-block, figure, .exhibit, table {
         page-break-inside: avoid;
         break-inside: avoid;
+    }
+
+    /* The copy button is screen chrome; on paper it is an empty box. */
+    .copy-btn {
+        display: none !important;
     }
 
     /* Decorative inline link-icon glyphs (wikipedia W, arxiv X, github,

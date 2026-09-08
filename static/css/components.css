@@ -1932,49 +1932,97 @@ h3:hover .section-toggle,
 
 /* ============================================================
    COPY BUTTON
-   Injected by copy.js into every <pre> block. Fades in on hover.
+   Injected by copy.js as a *sibling* of each <pre>, inside a
+   .code-block positioning context — never as a child. Three
+   things follow from that, and they are the reason for it:
+
+     1. The button sits outside the <pre>'s scroll box, so it
+        stays in the corner when long lines are scrolled
+        sideways instead of drifting off with the code.
+     2. It is out of flow, so it cannot shorten or indent the
+        block's first line the way a float does.
+     3. It is not in the copied subtree, so the copied text
+        needs no scrubbing.
+
+   Placement: the <pre> reserves 1.65rem of top padding, so a
+   ~22px control pinned to the top-right overlays empty gutter
+   rather than code — true at every viewport width, which is
+   what makes it safe to leave visible on touch.
    ============================================================ */
 
-.copy-btn {
-    position: sticky;
-    float: right;
-    top: 0;
-    right: 0;
-    margin-top: -0.4rem;
-    margin-right: -0.5rem;
-    margin-bottom: -1.6em;
-    font-family: var(--font-sans);
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    color: var(--text-faint);
-    background: var(--bg);
-    border: 1px solid var(--border-muted);
-    border-radius: 3px;
-    padding: 0.2em 0.55em;
-    cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.15s, color 0.15s, border-color 0.15s;
-    user-select: none;
-    line-height: 1.6;
-    z-index: 1;
+.code-block {
+    position: relative;
 }
 
-pre:hover .copy-btn,
-.copy-btn:focus-visible {
+/* The wrapper inherits the block's vertical rhythm; the <pre>
+   inside it must not double it. */
+#markdownBody .code-block > pre {
+    margin: 0;
+}
+
+.copy-btn {
+    position: absolute;
+    top: 0.36rem;
+    right: 0.4rem;
+    z-index: 2;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.45rem;
+    height: 1.45rem;
+    padding: 0;
+
+    color: var(--text-faint);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease, color 0.12s ease,
+                border-color 0.12s ease, background-color 0.12s ease;
+}
+
+.copy-btn-glyph {
+    width: 0.82rem;
+    height: 0.82rem;
+    display: block;
+}
+
+/* Idle shows the clipboard; the copied/error state shows the tick. */
+.copy-btn-glyph--done { display: none; }
+.copy-btn[data-state] .copy-btn-glyph--idle { display: none; }
+.copy-btn[data-state] .copy-btn-glyph--done { display: block; }
+
+/* Revealed by intent only: pointing at the block, tabbing to the
+   button, or having just used it. */
+.code-block:hover .copy-btn,
+.copy-btn:focus-visible,
+.copy-btn[data-state] {
     opacity: 1;
+    pointer-events: auto;
 }
 
 .copy-btn:hover {
     color: var(--text-muted);
-    border-color: var(--border);
+    background: var(--bg);
+    border-color: var(--border-muted);
 }
 
-.copy-btn[data-copied] {
-    color: var(--text-muted);
-    border-color: var(--border);
-    opacity: 1;
+.copy-btn:focus-visible {
+    outline: 1px solid var(--border);
+    outline-offset: 1px;
+}
+
+.copy-btn[data-state="copied"] { color: var(--text-muted); }
+.copy-btn[data-state="error"]  { color: var(--text-faint); }
+
+@media (prefers-reduced-motion: reduce) {
+    .copy-btn { transition: none; }
 }
 
 /* ============================================================
@@ -2028,8 +2076,40 @@ pre:hover .copy-btn,
     .backlink-source:hover         { color: var(--text-muted); }
     .section-toggle:hover          { color: var(--text-faint); }
 
-    /* Copy button: always visible on touch (no persistent hover) */
-    .copy-btn { opacity: 1; }
+    /* Copy button: no hover to reveal it, so it stays present — but
+       faint, and only as an outline glyph, so it reads as an affordance
+       in the block's empty top gutter rather than a label stuck to the
+       code. It never gains a hover background here (that state sticks
+       after a tap on touch). */
+    .copy-btn {
+        opacity: 0.55;
+        pointer-events: auto;
+    }
+
+    .copy-btn:hover {
+        color: var(--text-faint);
+        background: transparent;
+        border-color: transparent;
+    }
+
+    .copy-btn[data-state] {
+        opacity: 1;
+        color: var(--text-muted);
+    }
+
+    /* Finger-sized hit area without a finger-sized button: ~45x49px of
+       slop around a 23px glyph. It grows up into the block's own top
+       margin and left along its empty top gutter — both dead space —
+       and only ~10px down, so it steals as little of the first code
+       row (where a touch-drag scrolls long lines) as it can. */
+    .copy-btn::after {
+        content: '';
+        position: absolute;
+        top: -0.9rem;
+        right: -0.45rem;
+        bottom: -0.45rem;
+        left: -1.1rem;
+    }
 }
 
 /* ============================================================

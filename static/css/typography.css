@@ -221,12 +221,12 @@ body[data-dingbat="ai"] #markdownBody hr::after {
 }
 
 /* Reset indent after any block-level element */
-#markdownBody :is(blockquote, pre, ul, ol, figure, table, h1, h2, h3, h4, h5, h6, hr) + p {
+#markdownBody :is(blockquote, pre, .code-block, ul, ol, figure, table, h1, h2, h3, h4, h5, h6, hr) + p {
     text-indent: 0;
 }
 
 /* Space between block-level elements: Exactly 1 line-height */
-#markdownBody :is(blockquote, pre, ul, ol, figure, table) {
+#markdownBody :is(blockquote, pre, .code-block, ul, ol, figure, table) {
     margin: 1.65rem 0;
 }
 

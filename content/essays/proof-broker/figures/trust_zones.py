@@ -101,4 +101,14 @@ if __name__ == '__main__':
              'verification, the acceptance boundary, to a reconstruction '
              'or closer, which produces a final proof term that the Lean '
              'kernel checks.'),
+        desc=('Three boxes left to right: heavy-bordered KERNEL-CHECKED, '
+              'wide thin-bordered BROKER MACHINERY, dashed UNTRUSTED SEARCH. '
+              'The query path runs across the top from Lean goal through '
+              'reify, IR and dispatch to the external solvers; the answer '
+              'path returns along the bottom from certificate through '
+              'verification and reconstruction to a final proof term, with '
+              'a final upward arrow into the Lean kernel. The shape spreads '
+              'work outward on the way out and funnels it back through '
+              'verification into one kernel-checked term, so only the left '
+              'box carries soundness trust.'),
     )

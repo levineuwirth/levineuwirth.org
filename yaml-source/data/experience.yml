@@ -5,6 +5,33 @@
 # us order independently per audience without duplicating content.
 
 experience:
+  # Self-directed graph-theory program. Kept canonical so research-focused
+  # application variants can present the current manuscripts without
+  # misclassifying them as employment or a software project.
+  - id: independent-graph-theory-research
+    organization: Independent Mathematical Research
+    role: Graph Theory and Pursuit-Evasion
+    location: Remote
+    start: July 2026
+    end: Present
+    cv_visible: false
+    resume_visible: false
+    bullets:
+      - >-
+        Develop a sustained research program motivated by Cops and Robber and
+        Meyniel's conjecture, combining proof development with adversarial
+        auditing and exact computational checks; current outputs include two
+        graph-theory preprints.
+      - >-
+        Proved a fixed-degree adaptive multistage transfer theorem for
+        occupation projections, preserving square-root-scale cop-number bounds
+        under specified random-regular-base hypotheses; the result is not a
+        general cop-number bound.
+      - >-
+        Derived the annealed bounded critical window for growing-radius
+        domination in random regular graphs; typical existence at that crossing
+        remains open.
+
   # MARS V heads both documents. On the CV it is routed into "Research
   # Experience" via cv_section and sits first because it appears first among
   # research entries in this file (the CV template preserves file order).
