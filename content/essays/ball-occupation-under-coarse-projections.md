@@ -1142,15 +1142,15 @@ base, and [Theorem 25](#thm-multistage) applies to every $H$ projecting onto it.
 
 ::: {#rem-multistage-scope .exhibit .exhibit--remark data-exhibit-type="remark" data-exhibit-name="Remark 31 (Scope of the adaptive transfer)"}
 *Remark 31* (Scope of the adaptive transfer).
-[Theorem 25](#thm-multistage) does not supersede [Theorem 3](#thm-abstract-transfer), and
-it does not change the estimates of [Theorem 10](#thm-hardfamily).  The hard family
+[Theorem 25](/essays/ball-occupation-under-coarse-projections.html#thm-multistage) does not supersede [Theorem 3](/essays/ball-occupation-under-coarse-projections.html#thm-abstract-transfer), and
+it does not change the estimates of [Theorem 10](/essays/ball-occupation-under-coarse-projections.html#thm-hardfamily).  The hard family
 has base degree $d=(\log N)^4$ growing with $N$ and base $G(N,p)$, whereas
-[Corollary 30](#cor-regular) concerns fixed $d$ and random regular bases; early
+[Corollary 30](/essays/ball-occupation-under-coarse-projections.html#cor-regular) concerns fixed $d$ and random regular bases; early
 accessibility is derived here only for the latter, and for growing $d$ the
 team constant $C_0d^{5}$ and the finishing estimate would require a larger
 $F$, which we do not pursue.  What the theorem removes is the factor
 $\log(ePN)$, for fixed-degree bases and under the stronger hypothesis
-[(H2)](#multistage-h2). The two general-projection estimates here still carry $P\sqrt N$, which exceeds $\sqrt{PN}$ by $\sqrt P$. The subsequent [timed-guarding theorem](/essays/timed-guarding-in-degree-reduction-clouds.html#thm-cloud-transfer) removes that factor for the actual HMGHM stopping tower under the same fixed base hypotheses. It does not assert the corresponding strengthening for arbitrary occupation projections. Random regular graphs already satisfy Meyniel; the content of [Corollary 30](#cor-regular) remains robustness under every coarse projection of the base.
+[(H2)](/essays/ball-occupation-under-coarse-projections.html#multistage-h2). The two general-projection estimates here still carry $P\sqrt N$, which exceeds $\sqrt{PN}$ by $\sqrt P$. The subsequent [timed-guarding theorem](/essays/timed-guarding-in-degree-reduction-clouds.html#thm-cloud-transfer) removes that factor for the actual HMGHM stopping tower under the same fixed base hypotheses. It does not assert the corresponding strengthening for arbitrary occupation projections. Random regular graphs already satisfy Meyniel; the content of [Corollary 30](/essays/ball-occupation-under-coarse-projections.html#cor-regular) remains robustness under every coarse projection of the base.
 
 :::
 
