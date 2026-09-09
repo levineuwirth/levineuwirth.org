@@ -56,6 +56,9 @@ history:
 
 ---
 
+The companion [timed-guarding paper's explicit lower-transfer proof](/essays/timed-guarding-in-degree-reduction-clouds.html#lower-transfer-clock) also proves $c(G)\le c(H)$ for the entire actual HMGHM tower. Its robber-turn checkpoints verify every intermediate cop reply, including shared-hub paths. This supplies a self-contained account of the lower comparison used in the hard-family and degree-reduction arguments below.
+
+
 # Introduction and main conclusions
 
 The multi-cop version of Cops and Robber was developed by Aigner and Fromme, who proved that three cops suffice on every planar graph [@AignerFromme]. Meyniel's conjecture asks whether every connected $n$-vertex graph has cop number $O(\sqrt n)$. The current best universal upper bound remains $$\frac{n}{2^{(1-o(1))\sqrt{\log_2 n}}},$$ proved independently by Lu–Peng and Scott–Sudakov [@LuPeng; @ScottSudakov]. Bose–Esperet–Hodor–Joret–Micek–Rambaud recently extended the same scale of bound from graph order to vertex-cover number [@BoseEsperetHodorJoretMicekRambaud]. Expansion is one of the principal settings in which polynomial savings are known: Bradshaw–Hosseini–Mohar–Stacho obtain weak Meyniel bounds from bounded-degree expansion restricted to sublinear set scales [@BradshawHosseiniMoharStacho], while Clow's withdrawn preprint developed a closely related structural program connecting failure of weak Meyniel to high-cop expanding examples [@Clow].

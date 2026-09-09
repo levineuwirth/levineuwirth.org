@@ -28,6 +28,8 @@ peer-status: unreviewed
 result-shape: mixed
 history:
   - date: "2026-09-09"
+    note: "Explicit whole-tower lower-transfer clock; isometric geodesic lifts, longer-walk cloud counts, and the exact adjacent-cloud retraction criterion. Direct internal two-cop proof. The timed upper theorem is unchanged."
+  - date: "2026-09-09"
     note: "Initial paper: explicit cloud retractions, timed port-anchor deployment, synchronized cleanup and finishing, and the remaining Hall-capacity obstruction."
 ---
 
@@ -64,6 +66,32 @@ $$
 
 and the reservoirs are pairwise disjoint. Connectivity supplies the remaining condition. These hypotheses and the multistage probability argument come from Prałat–Wormald's framework; the earlier paper derives the required early levels from their fixed-degree random-regular construction [@PralatWormald, Theorem 4.1; @PralatWormaldRegular, Lemma 3.2 and Sub-lemma 3.4].
 
+# Why the tower retains the base cop number {#lower-transfer-clock}
+
+The lower comparison $c(G)\le c(H)$ holds for every actual HMGHM tower, with no growth or accessibility assumptions [@HMG, Theorem 3(a)]. The revised paper gives a self-contained proof for the entire tower. Its timing matters: after the first actual cop move, the checkpoints occur immediately after cop moves, when it is the robber's turn.
+
+At a checkpoint the robber occupies a designated port $p\in F_v$. A base escape strategy selects $w\in N_G[v]$ at distance at least two from every current cop shadow. For any actual cop position $z$, the metric lower bound gives
+
+$$
+\operatorname{dist}_H(z,F_w)\ge\lambda+1.
+$$
+
+For a move $v\to w$, let $a$ be the port of $F_v$ toward $w$. Follow a length-$L$ port path to $a$, or wait $L$ times if already there, then cross into $F_w$. The block runs
+
+$$
+R_1,C_1,\ldots,R_\lambda,C_\lambda.
+$$
+
+The starting cop distance to $a$ is at least $\lambda$. At the robber's intermediate position $r_j$, the remaining route to $a$ has length at most $L-j$, so
+
+$$
+\operatorname{dist}_H(z,r_j)\ge\lambda-(L-j)=j+1.
+$$
+
+This excludes capture even after the $j$th cop reply. The last position is safe through reply $\lambda$ by the distance to $F_w$. A base wait is handled by waiting $\lambda$ times in its safe cloud. During these $\lambda$ cop moves, each cop visits at most two clouds, so its endpoint shadows give one legal base cop move. The invariant repeats against arbitrary cop walks, including paths through shared hubs.
+
+The initial base escape placement is at distance at least two from the initial cop shadows, making the first actual cop move safe. Thus the construction respects the original cop-first game. Giving a cop an additional move from an exterior door into the departure cloud before $R_1$ changes the checkpoint: its shadow would already coincide with the base robber. That interception does not invalidate the lower comparison. No private-tunnel assumption is needed.
+
 # Why one cop can guard a cloud
 
 Write $F_v$ for the final ancestry cloud of a base vertex $v$, and put $L=\lambda-1$. Distinct designated ports in one cloud are at intrinsic distance exactly $L$. The paper constructs a retraction $\rho_v:H\to H[F_v]$ fixing every vertex of the cloud. A cop that reaches the robber's retracted image can subsequently follow that image, capturing any actual entry into the cloud on the next cop move. Guarding through a retracted robber image is a standard method [@RetractCover2013, p. 2]; the issue here is its timed implementation in these clouds.
@@ -71,6 +99,14 @@ Write $F_v$ for the final ancestry cloud of a base vertex $v$, and put $L=\lambd
 The setup also has a useful clock. Choose a designated port as anchor and a common breadth-first tree for its paths to the other ports. While the robber stays outside the cloud, the explicit retraction sends her walk to a lazy walk along this tree, whose depth is at most $L$. A cop starting at the anchor meets that exterior shadow within $L$ cop moves. This claim concerns the edges of the projected walk: merely placing its vertices in a spanning tree would not suffice.
 
 A robber can cross an external cloud edge in one move, so setup cannot be postponed until that crossing threatens. The proof instead dispatches fresh cops to their anchors and starts setup only after both anchor arrival and revelation of the relevant round root. Either event may occur first; a cop arriving after the root is revealed still receives its full setup allowance.
+
+# When one guard can cover two clouds {#adjacent-cloud-criterion}
+
+For a nontrivial tower, the induced union $H[F_u\cup F_v]$ of two adjacent clouds is a retract exactly when the base edge $uv$ lies in no triangle. In that case the two port trees can be joined across their unique bridge. The paper extends the retraction through exterior distance regions and obtains a tree shadow of height at most $L+1$. One cop starting at either bridge endpoint establishes the guard within that many moves, provided the robber stays outside the union throughout setup. This is a guard-setup statement, not a one-cop internal pursuit bound.
+
+If a triangle contains $uv$, its two ports toward the third cloud have intrinsic distance $2L+1$ in the union and an exterior route of length $L+2$. For $L\ge2$ the shortcut excludes a retract. Triangles elsewhere in the base do not matter. The restriction to nontrivial towers is necessary: at $k=0$ the union is an ordinary edge and is always a lazy retract.
+
+The proposed neighborhood extension at girth five fails. In $C_5$, the three clouds over a closed neighborhood have two outward-facing ports at intrinsic distance $3L+2$, whereas the complementary route has length $2L+3$. A high-degree tree attached outside that neighborhood forces a nontrivial stopping tower while preserving the obstruction.
 
 # Port anchors pay for the setup
 
@@ -80,7 +116,7 @@ $$
 q+(q+1)L=\lambda q+L.
 $$
 
-The $q$ external edges and the endpoint and intermediate port traversals account for every move. Compared with deployment to arbitrary vertices, this saves the $L$ moves needed for exterior-shadow setup.
+The $q$ external edges and the endpoint and intermediate port traversals account for every move. If the endpoint ports are specifically those of the first and last edges of a base geodesic, both endpoint traversals vanish. The lift then has length $\lambda(q-1)+1$, attains the ambient lower bound, and is an isometric path. Arbitrary endpoint anchors need not have that property. Compared with deployment to arbitrary vertices, this saves the $L$ moves needed for exterior-shadow setup.
 
 For successive round radii $r,r'$, the existing reservoirs lie at radius $t=r+r'-4$. All assigned cops reach their target anchors by cop move
 
@@ -102,11 +138,13 @@ The random event still concerns reservoir hits and observed base-exit sequences.
 
 The finishing targets form a union of remaining balls, since a robber can stay inside a cloud. Their cops arrive at the anchors and begin setup at one common time. During $L$ robber moves, at most two ancestry clouds can be visited: reaching a third would require two external edges and an intervening traversal between distinct ports, costing at least $L+2$ moves.
 
+More generally, a walk of at most $j\lambda$ edges visits at most $j+1$ ancestry clouds. For a window of $T\ge1$ moves, the exact general upper bound used here is $2+\lfloor(T-1)/\lambda\rfloor$. This bounds the number of exceptions in a longer setup window; keeping them confined still requires a guarded boundary.
+
 Every unvisited target cloud acquires a persistent guard. The finishing clock ends strictly before the robber can reach the relevant ball's boundary, so the at most two visited exceptions lie in its interior. All their other neighboring clouds are guarded. If two exceptions remain, their union has exactly one joining edge because the base is simple.
 
 Let $K=\max_v c(H[F_v])$. One reusable reserve of $K+1$ cops now suffices: one guards that joining edge, and $K$ deploy and pursue within the observed robber side. The same synchronized procedure supplies reusable cleanup in each ordinary round. Travel after the exceptional union has been isolated may take arbitrary finite time; the established guards remain active throughout.
 
-The internal cloud bound is $K\le2D$ for the actual stopping tower. Its proof uses the uniform-subdivision result of Joret–Kamiński–Theis for one-round gadgets and then a recursive setup argument through descendant-cloud retractions [@JoretKaminskiTheis, Proposition 11]. Before the multistage rounds start, the exceptional $X$ clouds receive their own retained guards using the same reserve, while all sampled teams remain at their initial ports. Thus the intermediate cop budget is
+The internal cloud bound is $K\le2D$ for the actual stopping tower. Its proof gives a direct two-cop strategy on a once-subdivided clique, preserves that bound through independent twin classes, and then uses recursive setup through descendant-cloud retractions. Before the multistage rounds start, the exceptional $X$ clouds receive their own retained guards using the same reserve, while all sampled teams remain at their initial ports. Thus the intermediate cop budget is
 
 $$
 C\sqrt N+K+1\le C\sqrt N+2D+1.
@@ -122,7 +160,7 @@ and the total is $C'\sqrt N$ with fixed constants.
 
 # What remains between this theorem and Meyniel
 
-The theorem applies to the actual stopping tower over the stated multistage base class. It does not transfer an arbitrary winning strategy on an arbitrary base, improve the growing-degree hard-family estimate, or establish uniformity for a growing branching parameter $d$ in the random-regular input. The maximum degree $D$ may grow subject to H1 and is absorbed by the bound above. A late transition team restricted to the old side can still miss a five-turn handoff; the successful schedule pays for travel before that deadline.
+The theorem applies to the actual stopping tower over the stated multistage base class. The unconditional lower comparison above preserves feedback to the base; the unproved universal extension is the upper strategy under weaker base hypotheses. It does not transfer an arbitrary winning strategy on an arbitrary base, improve the growing-degree hard-family estimate, or establish uniformity for a growing branching parameter $d$ in the random-regular input. The maximum degree $D$ may grow subject to H1 and is absorbed by the bound above. A late transition team restricted to the old side can still miss a five-turn handoff; the successful schedule pays for travel before that deadline.
 
 The remaining demand condition is a separate obstruction. For a nonempty target set $U$, define
 

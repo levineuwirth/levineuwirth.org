@@ -60,7 +60,7 @@ entries:
     status: revising
     updated: 2026-09-09
     link: /essays/timed-guarding-in-degree-reduction-clouds.html
-    note: "Mathematics preprint proving a square-root cop bound for actual stopping-rule degree-reduction towers over bases satisfying fixed multistage expansion and accessibility hypotheses. Port placement and synchronized guarding remove the cloud-order factor. The remaining full-ball Hall requirement still blocks the proposed shrinking-base route to Meyniel's conjecture."
+    note: "Mathematics preprint proving a square-root cop bound for actual stopping-rule degree-reduction towers over bases satisfying fixed multistage expansion and accessibility hypotheses. Port placement and synchronized guarding remove the cloud-order factor. The follow-up gives an explicit whole-tower lower-transfer proof and an exact criterion for guarding adjacent-cloud unions. The remaining full-ball Hall requirement still blocks the proposed shrinking-base route to Meyniel's conjecture."
 
   - title: "Branch-Tube Persistence and Static Coverage in Tree-Ball Geometry"
     section: research
