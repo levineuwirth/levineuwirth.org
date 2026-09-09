@@ -185,6 +185,8 @@ untrusted?
 
 ### Mathematics
 
+- [Timed guarding in degree-reduction clouds](/essays/timed-guarding-in-degree-reduction-clouds.html) — preprint, revising
+- [Ball-occupation certificates under coarse graph projections](/essays/ball-occupation-under-coarse-projections.html) — preprint, revising
 - [Branch-tube persistence and static coverage in tree-ball geometry](/essays/branch-based-local-capture-in-tree-balls/) — preprint, revising
 - [The annealed critical window for growing-radius domination in random regular graphs](/essays/near-critical-growing-radius-domination.html) — preprint, revising
 

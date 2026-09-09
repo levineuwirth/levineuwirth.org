@@ -1193,6 +1193,46 @@ nav.site-nav {
     color: var(--text);
 }
 
+/* Second and later mentions from the same source page, folded away.
+   Styled as the version-history "More" disclosure below, so the two
+   collapsed lists in this footer read as one affordance. The quotes keep
+   their own margin, so the summary only needs to clear the first one. */
+.backlink-more {
+    margin-top: 0.35rem;
+}
+
+.backlink-more > summary {
+    list-style: none;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    font-variant-caps: all-small-caps;
+    letter-spacing: 0.06em;
+    color: var(--text-faint);
+    user-select: none;
+    padding-left: 1em;
+    transition: color var(--transition-fast);
+}
+
+.backlink-more > summary:hover,
+.backlink-more > summary:focus-visible {
+    color: var(--text-muted);
+}
+
+.backlink-more > summary::-webkit-details-marker {
+    display: none;
+}
+
+.backlink-more > summary::before {
+    content: "\25B8\00a0";
+    font-size: 0.7em;
+    vertical-align: 0.1em;
+}
+
+.backlink-more[open] > summary::before {
+    content: "\25BE\00a0";
+}
+
 /* ============================================================
    RELATED (SIMILAR LINKS) — promoted to a full-width aftermatter
    section, sitting just under Backlinks. Source file:

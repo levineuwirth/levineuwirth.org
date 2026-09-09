@@ -26,10 +26,11 @@ module Backlinks
     ( backlinkRules
     , backlinksField
     , referencedByField
+    , backlinkMathField
     ) where
 
-import           Data.List                  (nubBy, partition, sortBy,
-                                             stripPrefix)
+import           Data.List                  (isInfixOf, nub, nubBy, partition,
+                                             sortBy, stripPrefix)
 import           Data.Ord                   (comparing)
 import           Data.Maybe                 (fromMaybe)
 import qualified Data.Map.Strict            as Map
@@ -117,12 +118,29 @@ instance Aeson.FromJSON BacklinkSource where
 -- ---------------------------------------------------------------------------
 
 -- | Minimal writer options for rendering paragraph context: no template
--- (fragment only), plain math fallback (context excerpts are previews, not
--- full renders, and KaTeX CSS may not be loaded on all target pages).
+-- (fragment only) and the site's own math method, so a quoted sentence
+-- typesets exactly like the same sentence on its source page.
+--
+-- This used to be 'PlainMath', on the reasoning that an excerpt is a
+-- preview and KaTeX might not be loaded on the target page. Both halves
+-- were wrong. 'PlainMath' converts what it can to Unicode and re-emits
+-- everything else as its literal TeX *with the @$@ delimiters kept*,
+-- still wearing @class="math"@ — and @static\/js\/katex-bootstrap.js@
+-- renders every @.math@ element from its @textContent@. So a preview
+-- quoting @$c(H)\\le C\\sqrt N$@ handed KaTeX a string beginning with a
+-- dollar sign, which it rejected and (@throwOnError: false@) painted red
+-- in the footer of an otherwise finished page. The KaTeX method emits
+-- bare LaTeX with no delimiters, which is exactly what that bootstrap
+-- expects, so the quote and the @¶@ full-paragraph popup both typeset.
+--
+-- Loading: every template that renders @$backlinks$@ sets @math@ through
+-- 'Contexts.essayCtx' (essay, reading, composition; the commonplace page
+-- has no backlinks field at all). The one surface outside that set is the
+-- archive page's @$referenced-by$@, which 'backlinkMathField' covers.
 contextWriterOpts :: WriterOptions
 contextWriterOpts = writerOpts
     { writerTemplate       = Nothing
-    , writerHTMLMathMethod = PlainMath
+    , writerHTMLMathMethod = KaTeX ""
     }
 
 -- ---------------------------------------------------------------------------
@@ -423,6 +441,37 @@ backlinksField = backlinksFieldWith renderBacklinks "backlinks"
 referencedByField :: Context String
 referencedByField = backlinksFieldWith renderReferencedBy "referenced-by"
 
+-- | @$math$@ for a page whose only math arrives through a backlink context.
+--
+-- 'contextWriterOpts' emits quoted math the way the rest of the site does:
+-- bare LaTeX in a @class="math"@ span, typeset at runtime by
+-- @static\/js\/katex-bootstrap.js@. That script and the KaTeX stylesheet are
+-- both behind @$if(math)$@, and every template carrying @$backlinks$@ gets
+-- @math@ from 'Contexts.essayCtx'. The archive page does not: it renders
+-- @$referenced-by$@ off a bare 'siteCtx', so a citing sentence containing
+-- math would otherwise show its LaTeX source. This field sets the flag for
+-- exactly those pages, mirroring the @needsKatex@ guards the bibliography
+-- routes already use in 'Site.rules', and returns 'noResult' otherwise so a
+-- math-free archive page keeps loading no typesetter.
+backlinkMathField :: Context String
+backlinkMathField = field "math" $ \item -> do
+    blItem <- load (fromFilePath "data/backlinks.json") :: Compiler (Item String)
+    case Aeson.decodeStrict (TE.encodeUtf8 (T.pack (itemBody blItem)))
+            :: Maybe (Map T.Text [BacklinkSource]) of
+        Nothing    -> noResult "backlink math: could not parse data/backlinks.json"
+        Just blMap -> do
+            mRoute <- getRoute (itemIdentifier item)
+            case mRoute of
+                Nothing -> noResult "backlink math: item has no route"
+                Just r  ->
+                    let key     = T.pack (normaliseUrl ("/" ++ r))
+                        sources = fromMaybe [] (Map.lookup key blMap)
+                    in  if any hasMath sources
+                        then return "true"
+                        else noResult "no math in any backlink context"
+  where
+    hasMath s = any ("class=\"math" `isInfixOf`) [blSentence s, blParagraph s]
+
 -- | Shared machinery for 'backlinksField' and 'referencedByField': look the
 -- page up in @data/backlinks.json@ by its normalised route, then hand the
 -- sorted sources to the given renderer.
@@ -459,8 +508,25 @@ backlinksFieldWith renderSources name = field name $ \item -> do
 renderBacklinks :: [BacklinkSource] -> String
 renderBacklinks sources =
     "<ul class=\"backlinks-list\">\n"
-    ++ concatMap renderBacklinkItem sources
+    ++ concatMap renderBacklinkItem (groupBySource sources)
     ++ "</ul>"
+
+-- | Collect the sources that share a page into one list each, in order of
+-- first appearance.
+--
+-- @data/backlinks.json@ holds one record per *link*, so a companion paper
+-- citing this one from four different paragraphs arrived as four sibling
+-- entries and printed its title four times over. Grouping is by URL, not
+-- title: two distinct pages may legitimately share a title, and merging
+-- those would attribute one page's sentence to the other.
+--
+-- The incoming list is already sorted by title, so this preserves that
+-- order and is deterministic — the signing pipeline needs byte-identical
+-- output from identical inputs. Quadratic in the number of sources, which
+-- is a handful per page.
+groupBySource :: [BacklinkSource] -> [[BacklinkSource]]
+groupBySource sources =
+    [ [ s | s <- sources, blUrl s == u ] | u <- nub (map blUrl sources) ]
 
 -- | "Referenced by", grouped by the fragment each citation targets.
 -- Sources citing the work with no fragment render first as a plain list;
@@ -475,7 +541,8 @@ renderReferencedBy sources =
   where
     renderList [] = ""
     renderList ss = "<ul class=\"backlinks-list\">\n"
-                    ++ concatMap renderBacklinkItem ss ++ "</ul>\n"
+                    ++ concatMap renderBacklinkItem (groupBySource ss)
+                    ++ "</ul>\n"
     renderGroup (frag, ss) =
         "<div class=\"referenced-by-group\">"
         ++ "<h3 class=\"referenced-by-fragment\">"
@@ -491,22 +558,54 @@ fragmentLabel frag =
         Just n  -> "Page " ++ n
         Nothing -> "\x00A7 " ++ frag
 
--- | One backlink @<li>@: the source title as a link, the sentence of
--- context as a blockquote, and a hover affordance revealing the full
--- paragraph. 'blSentence' / 'blParagraph' are already HTML fragments from
--- the Pandoc writer, so they are emitted unescaped.
-renderBacklinkItem :: BacklinkSource -> String
-renderBacklinkItem bl =
+-- | One backlink @<li>@ per *source page*: the title as a link, then the
+-- sentence around its first mention as a blockquote. When that page links
+-- here more than once, the remaining mentions go inside a closed
+-- @<details>@ so a page cited four times costs four lines instead of four
+-- repetitions of its title.
+--
+-- The disclosure is plain @<details>/<summary>@, the same construct the
+-- version-history "More" list uses: it needs no JavaScript, it is
+-- keyboard-operable and announced by screen readers for free, and its
+-- contents stay in the DOM while closed — which is what lets
+-- @katex-bootstrap.js@ typeset the math in a hidden mention on load, and
+-- lets in-page search find it.
+--
+-- 'blSentence' / 'blParagraph' are already HTML fragments from the Pandoc
+-- writer, so they are emitted unescaped.
+renderBacklinkItem :: [BacklinkSource] -> String
+renderBacklinkItem [] = ""
+renderBacklinkItem (bl : rest) =
     "<li class=\"backlink-item\">"
     ++ "<a class=\"backlink-source\" href=\""
     ++ escapeHtml (blUrl bl) ++ "\">"
     ++ escapeHtml (blTitle bl) ++ "</a>"
-    ++ ( if null (blSentence bl) then ""
-         else "<blockquote class=\"backlink-quote\">"
-              ++ blSentence bl
-              ++ paragraphAffordance
-              ++ "</blockquote>" )
+    ++ renderQuote bl
+    ++ moreMentions
     ++ "</li>\n"
+  where
+    moreMentions
+        | null rest = ""
+        | otherwise =
+            "<details class=\"backlink-more\">"
+            ++ "<summary>" ++ escapeHtml summaryLabel ++ "</summary>"
+            ++ concatMap renderQuote rest
+            ++ "</details>"
+    summaryLabel = case length rest of
+        1 -> "1 more mention"
+        n -> show n ++ " more mentions"
+
+-- | The quoted sentence for one mention, with the @¶@ affordance that
+-- reveals its full paragraph on hover or keyboard focus. Emits nothing
+-- when the extractor found no sentence.
+renderQuote :: BacklinkSource -> String
+renderQuote bl
+    | null (blSentence bl) = ""
+    | otherwise =
+        "<blockquote class=\"backlink-quote\">"
+        ++ blSentence bl
+        ++ paragraphAffordance
+        ++ "</blockquote>"
   where
     paragraphAffordance
         | null (blParagraph bl)            = ""

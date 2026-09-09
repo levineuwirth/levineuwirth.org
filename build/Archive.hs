@@ -49,7 +49,7 @@ import           System.Process         (readProcess)
 import           Text.Read              (readMaybe)
 import           Hakyll
 import           Contexts               (siteCtx)
-import           Backlinks              (referencedByField)
+import           Backlinks              (referencedByField, backlinkMathField)
 import           SimilarLinks           (similarLinksField)
 import           ArchiveIndex           (ArchiveStatus (..), statusName,
                                          archiveStatusForSlug, normalizeUrl)
@@ -473,6 +473,10 @@ archiveEntryCtx ae = mconcat
     -- they need no archive-specific wiring; each is a $if(...)$-guarded
     -- section in archive.html.
     , referencedByField
+    -- A citing sentence can carry math. The KaTeX stylesheet and bootstrap
+    -- are behind $if(math)$, which this page gets from nowhere else, so
+    -- the field sets it only when some referenced-by context needs it.
+    , backlinkMathField
     , similarLinksField
     , siteCtx
     ]
