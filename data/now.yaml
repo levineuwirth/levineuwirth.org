@@ -36,7 +36,7 @@
 # Sorted newest-first at render time. Curate by hand — items don't
 # auto-prune. Move things off the list when they stop earning the slot.
 
-last-updated: 2026-09-05
+last-updated: 2026-09-09
 
 entries:
   - title: "MARS V: Zero-Knowledge Proofs for LLM Verification"
@@ -55,6 +55,13 @@ entries:
     link: /essays/proof-broker/
     note: "Routing proof goals out of Lean 4 and Rocq to untrusted external provers — SMT solvers, ATPs, LLMs — grading and checking what returns, and closing the goal with a proof term the home kernel verifies for itself. R4 shipped 5 September 2026 — 19 of 19 targeted obligations close in an unmodified VerInf Lean file — and R5 consolidated the specification into v1.1 with an R-series roadmap. Next is finite-field certificates for VerInf's uniqueness queries, stronger certificate reconstruction, and Rocq parity."
 
+  - title: "Timed Guarding in Degree-Reduction Clouds"
+    section: research
+    status: revising
+    updated: 2026-09-09
+    link: /essays/timed-guarding-in-degree-reduction-clouds.html
+    note: "Mathematics preprint proving a square-root cop bound for actual stopping-rule degree-reduction towers over bases satisfying fixed multistage expansion and accessibility hypotheses. Port placement and synchronized guarding remove the cloud-order factor. The remaining full-ball Hall requirement still blocks the proposed shrinking-base route to Meyniel's conjecture."
+
   - title: "Branch-Tube Persistence and Static Coverage in Tree-Ball Geometry"
     section: research
     status: revising
@@ -65,9 +72,9 @@ entries:
   - title: "The Annealed Critical Window for Growing-Radius Domination in Random Regular Graphs"
     section: research
     status: revising
-    updated: 2026-09-05
+    updated: 2026-09-09
     link: /essays/near-critical-growing-radius-domination.html
-    note: "Mathematics preprint determining the bounded annealed critical window for growing-radius domination in random regular graphs — its universal scaling function and a scalar coupon-root asymptotic expansion. A bounded literature pass closed 5 September 2026, with the Duckworth–Mans attribution corrected and the relative overlap estimate completed. Adaptive-pursuit transfer and paired distance labels are the open targets."
+    note: "Mathematics preprint determining the bounded annealed critical window for growing-radius domination in random regular graphs — its universal scaling function and a scalar coupon-root asymptotic expansion. A bounded literature pass closed 5 September 2026, with the Duckworth–Mans attribution corrected and the relative overlap estimate completed. Typical existence in the growing-radius window remains open. A separate timed cloud-guarding paper now resolves the cloud-order loss in the conditional multistage pursuit transfer."
 
   - title: "Order-Invariant ICD-10-CM Embedding (JAMIA submission)"
     section: research

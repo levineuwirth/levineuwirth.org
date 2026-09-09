@@ -18,6 +18,20 @@ publications:
     cv_visible: true
     resume_visible: false # surfaced instead via the Shu Lab bullet on résumé
 
+  - id: timed-guarding-degree-reduction-clouds
+    authors: "Neuwirth L"
+    title: "Timed Guarding in Degree-Reduction Clouds"
+    venue: "Preprint"
+    year: 2026
+    month: September
+    links:
+      - label: Full text
+        href: https://levineuwirth.org/essays/timed-guarding-in-degree-reduction-clouds.html
+      - label: PDF
+        href: https://levineuwirth.org/papers/timed-guarding-in-degree-reduction-clouds.pdf
+    cv_visible: true
+    resume_visible: false # math preprint; engineering résumé surfaces other work
+
   - id: branch-tube-persistence
     authors: "Neuwirth L"
     title: "Branch-Tube Persistence and Static Coverage in Tree-Ball Geometry"

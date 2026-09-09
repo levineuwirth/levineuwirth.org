@@ -3,6 +3,8 @@ title: "Ball-Occupation Certificates under Coarse Graph Projections"
 subtitle: "Degree Reduction, Square-Root Hard Families, and Toroidal Barriers"
 date: 2026-07-27
 revised:
+  - date: "2026-09-09"
+    note: "Linked the companion timed-guarding theorem, which removes the cloud-order factor for the actual stopping tower under the same fixed multistage hypotheses; reconciled the scope and remaining-demand question."
   - date: "2026-09-06"
     note: "Added the adaptive multistage transfer, early-accessibility derivation, and fixed-degree random-regular corollary, with full hypotheses, source attribution, and pinned Prałat–Wormald versions."
   - date: "2026-09-05"
@@ -24,6 +26,9 @@ abstract: >
   $(\lambda,P)$-occupation projection satisfies $c(H)\le C_dP\sqrt N$,
   with no logarithm or scale dependence in the cop count. Fixed-degree random
   regular bases satisfy the strengthened hypothesis with high probability.
+  A companion paper now removes the cloud-order factor for the actual
+  stopping tower under these same fixed multistage hypotheses, using timed
+  cloud guards rather than full-fiber occupation.
 tags:
   - research
   - research/mathematics
@@ -41,6 +46,8 @@ evidence: 5
 peer-status: unreviewed
 result-shape: mixed
 history:
+  - date: "2026-09-09"
+    note: "Linked the companion timed-guarding theorem, which removes the cloud-order factor for the actual stopping tower under the same fixed multistage hypotheses; reconciled the scope and remaining-demand question."
   - date: "2026-09-06"
     note: "Added the adaptive multistage transfer, early-accessibility derivation, and fixed-degree random-regular corollary, with full hypotheses, source attribution, and pinned Prałat–Wormald versions."
   - date: "2026-09-05"
@@ -73,6 +80,8 @@ metric error.  The result is $c(H)\le C_dP\sqrt N$ for fixed $d$
 [Theorem 3](#thm-abstract-transfer); random regular bases of fixed degree satisfy
 the strengthened hypothesis ([Corollary 30](#cor-regular)).  This does not improve
 the growing-degree hard-family estimates, which are retained as stated.
+
+The companion [Timed Guarding in Degree-Reduction Clouds](/essays/timed-guarding-in-degree-reduction-clouds.html) proves $c(H)\le C\sqrt N$ for the actual HMGHM stopping tower under the same five-layer multistage base hypotheses. Fixed port anchors fund the guard setup, and synchronized activation leaves at most two clouds for a reusable pursuit reserve. That theorem uses the internal cloud structure; the general occupation-projection results below retain their stated fiber factor.
 
 # Scale-adaptive cores and the robustness window
 
@@ -1141,11 +1150,7 @@ accessibility is derived here only for the latter, and for growing $d$ the
 team constant $C_0d^{5}$ and the finishing estimate would require a larger
 $F$, which we do not pursue.  What the theorem removes is the factor
 $\log(ePN)$, for fixed-degree bases and under the stronger hypothesis
-[(H2)](#multistage-h2).  Neither route approaches $\sqrt{|V(H)|}$ when $P$ grows, since
-$P\sqrt N$ exceeds $\sqrt{PN}$ by $\sqrt P$.  Random regular graphs already
-satisfy Meyniel; the content of [Corollary 30](#cor-regular) is robustness of the
-square-root bound under every coarse projection of the base, including the
-HMGHM tower of [Theorem 6](#thm-metric).
+[(H2)](#multistage-h2). The two general-projection estimates here still carry $P\sqrt N$, which exceeds $\sqrt{PN}$ by $\sqrt P$. The subsequent [timed-guarding theorem](/essays/timed-guarding-in-degree-reduction-clouds.html#thm-cloud-transfer) removes that factor for the actual HMGHM stopping tower under the same fixed base hypotheses. It does not assert the corresponding strengthening for arbitrary occupation projections. Random regular graphs already satisfy Meyniel; the content of [Corollary 30](#cor-regular) remains robustness under every coarse projection of the base.
 
 :::
 
@@ -1179,19 +1184,9 @@ The present paper separates four phenomena:
   and early accessibility, without the logarithm or scale dependence in the
   cop count.
 
-The multistage transfer consumes four quantitative inputs: reservoir sizes,
-exceptional fractions, frontier contraction, and the final Hall expansion.
-Extracting the weakest such conditions the proof actually uses, and asking
-which weaker geometric assumptions supply them, is the concrete route from
-[the adaptive multistage transfer section](#adaptive-multistage) toward shrinking expansion; expansion alone is not
-known to suffice.  The remaining universal question is therefore an adaptive one.  On the tori,
-ball growth carries essentially no information about pursuit cost; product
-structure instead supports coordinate-wise shadowing.  What geometric or
-combinatorial quantity replaces product coordinates on a general
-polynomially weak expander?  Equivalently, can a capacitated, correlated, or
-deferred witness system reuse the same cop resources over polynomially many
-weak-growth layers, or must every such one-traversal certificate incur
-polynomial congestion?
+The multistage transfer consumes reservoir sizes, exceptional fractions, frontier contraction, and final Hall expansion. The companion [timed-guarding paper](/papers/timed-guarding-in-degree-reduction-clouds.pdf) removes the cloud-order cost from the actual HMGHM tower by replacing occupation with persistent guards and a reusable pursuit reserve. Its [remaining-demand discussion](/essays/timed-guarding-in-degree-reduction-clouds.html#what-remains-between-this-theorem-and-meyniel) also gives an explicit Hall-capacity obstruction for full remaining balls. Removing the cost inside a cloud does not make that demand compatible with shrinking expansion.
+
+The next target is a timed frontier or boundary demand that both has enough accessible cops and forces capture when the robber waits. On the tori, ball growth carries little information about pursuit cost, while product structure supports coordinate-wise shadowing. A corresponding invariant for general polynomially weak expanders remains unproved.
 
 # Acknowledgments
 
