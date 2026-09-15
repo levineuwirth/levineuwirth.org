@@ -1,0 +1,39 @@
+# The Anki sync server: the PyPI `anki` wheel in a venv, always latest
+# (anki-sync-upgrade.timer), bound to localhost behind nginx
+# (nginx/anki-sync.conf). Decided 2026-09-15, anki-sync/ROADMAP.md.
+#
+#   useradd --system --home-dir /var/lib/anki-sync --create-home --shell /usr/bin/nologin anki-sync
+#   python3 -m venv /opt/anki-sync/venv && /opt/anki-sync/venv/bin/pip install --upgrade pip anki
+#   install -d -m 700 /etc/anki-sync
+#   scp anki-sync/server.env.example root@<vps>:/etc/anki-sync/server.env
+#   scp anki-sync/users.env.example  root@<vps>:/etc/anki-sync/users.env     (then fill in, chmod 600)
+#   scp systemd/anki-sync.service root@<vps>:/etc/systemd/system/
+#   ssh root@<vps> systemctl daemon-reload && systemctl enable --now anki-sync
+
+[Unit]
+Description=Anki sync server
+Documentation=https://docs.ankiweb.net/sync-server.html
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=anki-sync
+Group=anki-sync
+EnvironmentFile=/etc/anki-sync/server.env
+EnvironmentFile=/etc/anki-sync/users.env
+ExecStart=/opt/anki-sync/venv/bin/python -m anki.syncserver
+Restart=on-failure
+RestartSec=5s
+# hardening: the server needs its data directory and nothing else
+ProtectSystem=strict
+ReadWritePaths=/var/lib/anki-sync
+PrivateTmp=true
+ProtectHome=true
+NoNewPrivileges=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+CapabilityBoundingSet=
+
+[Install]
+WantedBy=multi-user.target

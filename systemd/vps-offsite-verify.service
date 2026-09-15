@@ -1,0 +1,21 @@
+# Monthly proof that the off-host backups restore: borg check on the
+# repository, then the newest Forgejo and Anki archives extracted from it
+# and verified — checksum, then the same integrity checks the local
+# --verify runs. Fails loudly in the journal; tools/vps-status reads it.
+#
+#   scp systemd/vps-offsite-verify.{service,timer} root@<vps>:/etc/systemd/system/
+#   ssh root@<vps> systemctl daemon-reload && systemctl enable --now vps-offsite-verify.timer
+
+[Unit]
+Description=Off-host backup verification (borg check + restore test)
+Documentation=https://git.levineuwirth.org/neuwirth/levineuwirth.org
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/default/anki-sync-backup
+ExecStart=/usr/local/bin/vps-offsite-verify.sh
+Nice=15
+IOSchedulingClass=idle
+TimeoutStartSec=2h
+# scratch on disk: /tmp is a RAM tmpfs and the restore tests extract gigabytes
+Environment=TMPDIR=/var/tmp

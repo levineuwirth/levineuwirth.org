@@ -57,8 +57,9 @@ CONTAINER=${CONTAINER:-forgejo}
 
 # Off-host copy. Unset by default: the feature is opt-in, and a run with no
 # destination configured is a successful local backup, not a failure.
-#   OFFHOST_DEST   rsync/rclone destination, e.g. user@storage:forgejo/ or remote:forgejo/
-#   OFFHOST_TOOL   rsync (default) or rclone
+#   OFFHOST_DEST   rsync/rclone destination, e.g. user@storage:forgejo/ or remote:forgejo/;
+#                  for borg, the repository URL (also exported as BORG_REPO)
+#   OFFHOST_TOOL   rsync (default), rclone, or borg (/usr/local/lib/borg-offhost.sh)
 #   OFFHOST_VERIFY readback (default) or none
 OFFHOST_DEST=${OFFHOST_DEST:-}
 OFFHOST_TOOL=${OFFHOST_TOOL:-}
@@ -194,6 +195,15 @@ offhost_copy() {
         fi
     fi
     command -v "$tool" >/dev/null 2>&1 || die "off-host: $tool is not installed"
+
+    if [ "$tool" = borg ]; then
+        # encrypted, deduplicated, retention on the box; verified by readback
+        # inside — see the library for what it does and does not promise
+        . /usr/local/lib/borg-offhost.sh || die "off-host: /usr/local/lib/borg-offhost.sh is missing"
+        export BORG_REPO=${BORG_REPO:-$OFFHOST_DEST}
+        borg_offhost_copy forgejo "$archive" "$sum"
+        return 0
+    fi
 
     log "off-host: copying to $OFFHOST_DEST with $tool"
     case "$tool" in

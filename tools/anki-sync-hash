@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+"""anki-sync-hash — a PHC pbkdf2-sha256 hash for the Anki sync server's
+users.env (PASSWORDS_HASHED=1). Reads the password from stdin so it never
+lands in a shell history:
+
+    printf '%s' "$(pass show anki-sync/ln)" | tools/anki-sync-hash
+
+Prints one line: $pbkdf2-sha256$i=600000,l=32$<salt>$<hash>. Verified
+against `python -m anki.syncserver` 2026-09-15 (login accepted, wrong
+password refused)."""
+import base64
+import hashlib
+import os
+import sys
+
+ITERATIONS = 600_000
+password = sys.stdin.read().rstrip("\n")
+if not password:
+    sys.exit("anki-sync-hash: empty password on stdin")
+salt = os.urandom(16)
+dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, ITERATIONS, dklen=32)
+b64 = lambda b: base64.b64encode(b).decode().rstrip("=")
+print(f"$pbkdf2-sha256$i={ITERATIONS},l=32${b64(salt)}${b64(dk)}")

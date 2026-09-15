@@ -23,6 +23,8 @@ Documentation=https://git.levineuwirth.org/neuwirth/levineuwirth.org
 After=docker.service
 
 [Service]
+# scratch on disk: /tmp is a RAM tmpfs and the restore tests extract gigabytes
+Environment=TMPDIR=/var/tmp
 Type=oneshot
 EnvironmentFile=-/etc/default/forgejo-backup
 ExecStart=/usr/local/bin/forgejo-backup.sh --verify

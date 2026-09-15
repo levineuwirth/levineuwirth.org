@@ -1,0 +1,13 @@
+[Unit]
+Description=Nightly Anki sync server backup
+
+[Timer]
+# 03:45 UTC: after the Forgejo backup's window (03:30 + up to 20 min
+# delay is fine — the two are independent), before anyone in Europe is
+# awake to sync.
+OnCalendar=*-*-* 03:45
+RandomizedDelaySec=10min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

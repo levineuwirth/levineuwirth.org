@@ -36,3 +36,5 @@ IOSchedulingClass=idle
 # The read-back verification of an off-host copy transfers the archive a
 # second time; on a slow link that is minutes, not seconds.
 TimeoutStartSec=45min
+# scratch on disk: /tmp is a RAM tmpfs and the restore tests extract gigabytes
+Environment=TMPDIR=/var/tmp

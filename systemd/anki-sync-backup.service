@@ -1,0 +1,22 @@
+# Nightly snapshot of the Anki sync server's collections (tools/anki-sync-backup.sh).
+#
+#   scp tools/anki-sync-backup.sh root@<vps>:/usr/local/bin/ && ssh root@<vps> chmod 755 /usr/local/bin/anki-sync-backup.sh
+#   scp tools/borg-offhost.sh root@<vps>:/usr/local/lib/
+#   scp systemd/anki-sync-backup.{service,timer} root@<vps>:/etc/systemd/system/
+#   scp systemd/anki-sync-backup.env.example root@<vps>:/etc/default/anki-sync-backup   (then edit, chmod 600)
+#   ssh root@<vps> systemctl daemon-reload && systemctl enable --now anki-sync-backup.timer
+
+[Unit]
+Description=Anki sync server backup (consistent SQLite snapshots + media)
+Documentation=https://git.levineuwirth.org/neuwirth/levineuwirth.org
+After=anki-sync.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/default/anki-sync-backup
+ExecStart=/usr/local/bin/anki-sync-backup.sh
+Nice=15
+IOSchedulingClass=idle
+TimeoutStartSec=45min
+# scratch on disk: /tmp is a RAM tmpfs and the restore tests extract gigabytes
+Environment=TMPDIR=/var/tmp

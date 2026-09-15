@@ -1,0 +1,19 @@
+# Daily: bring the sync server's `anki` wheel to the latest release and
+# restart only if the version changed. The server must be at least as new
+# as every client; newer never breaks an older client, so latest is the
+# posture (no pins — decided 2026-09-15). If a Python major bump on this
+# rolling box breaks the venv, it is rebuilt.
+#
+#   scp tools/anki-sync-upgrade.sh root@<vps>:/usr/local/bin/ && ssh root@<vps> chmod 755 /usr/local/bin/anki-sync-upgrade.sh
+#   scp systemd/anki-sync-upgrade.{service,timer} root@<vps>:/etc/systemd/system/
+#   ssh root@<vps> systemctl daemon-reload && systemctl enable --now anki-sync-upgrade.timer
+
+[Unit]
+Description=Anki sync server: upgrade to the latest release
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/anki-sync-upgrade.sh
+Nice=10

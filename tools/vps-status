@@ -1,0 +1,19 @@
+#!/bin/bash
+# vps-status — one line about the VPS's units, for the weekly agent log.
+#
+# Run from oneiros (`tools/vps-status`); reads, never writes. Prints one
+# line: failed units, the last result and time of each backup/verify job,
+# the sync server's state, disk use. The weekly pass copies it into
+# Archivum Diarium; nothing here counts or nags. (root's login shell on
+# the box is fish, hence the explicit bash.)
+set -euo pipefail
+ssh -o BatchMode=yes -o ConnectTimeout=10 vps bash -c "'
+    failed=\$(systemctl --failed --no-legend --plain | awk \"{print \\\$1}\" | tr \"\\n\" \" \")
+    printf \"vps %s: failed=[%s]\" \"\$(date -u +%Y-%m-%d)\" \"\${failed:-none}\"
+    for u in forgejo-backup anki-sync-backup forgejo-backup-verify vps-offsite-verify anki-sync-upgrade; do
+        r=\$(systemctl show -p Result --value \$u.service 2>/dev/null)
+        t=\$(systemctl show -p ExecMainExitTimestamp --value \$u.service 2>/dev/null | awk \"{print \\\$2}\")
+        printf \" %s=%s@%s\" \"\$u\" \"\${r:-never}\" \"\${t:-never}\"
+    done
+    printf \" anki-sync=%s disk=%s\\n\" \"\$(systemctl is-active anki-sync 2>/dev/null)\" \"\$(df -h / | awk \"NR==2{print \\\$5}\")\"
+'"

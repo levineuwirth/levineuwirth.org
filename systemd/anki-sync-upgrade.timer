@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Anki sync server upgrade
+
+[Timer]
+# 04:30 UTC: after the backups have run, before Europe syncs.
+OnCalendar=*-*-* 04:30
+RandomizedDelaySec=15min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
