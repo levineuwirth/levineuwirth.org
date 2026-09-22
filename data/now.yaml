@@ -36,24 +36,24 @@
 # Sorted newest-first at render time. Curate by hand — items don't
 # auto-prune. Move things off the list when they stop earning the slot.
 
-last-updated: 2026-09-09
+last-updated: 2026-09-22
 
 entries:
-  - title: "MARS V: Zero-Knowledge Proofs for LLM Verification"
+  - title: "VerInf: Verified Inference and Scale-Out (MARS V)"
     section: research
     status: building
-    updated: 2026-09-05
+    updated: 2026-09-22
     priority: 2
     link: /essays/verified-inference/
-    note: "Zero-knowledge proofs for cryptographic verification of claims about LLM training, inference, and deployment, as a MARS V fellow with the Cambridge AI Safety Hub, mentored by James Petrie (FLI). The profiler, calibration suite, and corrected traffic model are merged upstream; current work is the multi-GPU prover — a stage-aware weight-split model, a verifier-transparent weight split of the enrolled block, and streamed worker openings — on both the mathematics and the engineering. The linked case study is an informal account of the work so far; the technical write-up is expected Q4 2026, for review and publication."
+    note: "I own profiling and scale-out for VerInf, which develops proofs of language-model inference that mutually distrustful parties can check on their own hardware. The profiler and calibration tools are merged upstream. Current work spans multi-GPU proving, optimization guided by H200/B200 experiments, and integration and verifier hardening of a new expert-weight authentication mechanism. Weight splitting has passed proof-byte equivalence and independent Rust verification on one GPU; multi-device execution remains in progress. The experimental weight bridge's intended privacy protection and its profiler cost model remain unfinished. I work on this as a MARS V fellow, mentored by James Petrie (FLI)."
 
   - title: "Proof Broker"
     section: research
     status: building
-    updated: 2026-09-05
+    updated: 2026-09-22
     priority: 1
     link: /essays/proof-broker/
-    note: "Routing proof goals out of Lean 4 and Rocq to untrusted external provers — SMT solvers, ATPs, LLMs — grading and checking what returns, and closing the goal with a proof term the home kernel verifies for itself. R4 shipped 5 September 2026 — 19 of 19 targeted obligations close in an unmodified VerInf Lean file — and R5 consolidated the specification into v1.1 with an R-series roadmap. Next is finite-field certificates for VerInf's uniqueness queries, stronger certificate reconstruction, and Rocq parity."
+    note: "Proof Broker routes Lean 4 and Rocq goals to untrusted solvers and LLMs, checking evidence before kernel-verified closure. R4 closed 19/19 targeted VerInf obligations; R5 consolidated spec v1.1; exact-coefficient recovery now reconstructs four VerInf carry goals in Lean term mode. R6 has kernel-validated deterministic episodes for one real and one synthetic task, and frozen a 15-site VerInf census. Current work audits that census and checks which sites the broker can represent before broader evaluation."
 
   - title: "Timed Guarding in Degree-Reduction Clouds"
     section: research
