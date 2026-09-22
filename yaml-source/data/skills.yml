@@ -64,6 +64,17 @@ skills:
     cv_visible: false
     resume_visible: false
 
+  research-infrastructure:
+    label: Research infrastructure
+    # Evaluation harnesses, NeuroPose inference, and VerInf profiler work.
+    # Separate grouping preserves variants selecting all systems-performance items.
+    items:
+      - Evaluation and inference systems
+      - Distributed systems
+      - Workload profiling
+    cv_visible: false
+    resume_visible: false
+
   verification:
     label: Cryptography and verification
     items:

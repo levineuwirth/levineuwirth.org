@@ -2,12 +2,11 @@
 title: "Verified Inference Between Adversaries"
 date: 2026-08-29
 abstract: >
-  A compute operator who claims to have run a particular model can be lying, and
-  the logs that would settle it are written by the party under suspicion. VerInf
-  produces zero-knowledge proofs of LLM inference, bounding the information in an
-  output stream that a committed model does not account for. This living document
-  details what the system certifies, what it does not, and what I contributed to
-  it during the MARS V fellowship.
+  An operator can fabricate execution logs and hold approved weights while running
+  something else. VerInf investigates proofs of language-model inference that
+  mutually distrustful parties can verify on their own hardware. This living
+  document explains what the proof certifies, the system I started from, and my
+  work on profiling, prover optimization, and scale-out during the MARS V fellowship.
 tags:
   - research
   - research/machine-learning
@@ -21,344 +20,184 @@ scope: broad
 novelty: moderate
 practicality: moderate
 history:
+  - date: "2026-09-22"
+    note: "Rewritten to cover the proof guarantee, contribution history, and current profiling and scale-out work."
   - date: "2026-08-31"
   - date: "2026-08-30"
   - date: "2026-08-29"
+revised:
+  - date: "2026-09-22"
+    note: "Comprehensive update on the proof guarantee and current research."
 ---
 
-A datacenter asserts that it ran a 400-billion-parameter model on your prompt. It
-might have run a smaller one, an older checkpoint, or a quantized copy that
-costs a fraction as much. Ordinary logging cannot settle this, because the logs
-are produced by the party whose behavior is in question. Neither can a hash of
-the weights: the operator can hold the right weights and still run something
-else.
+A datacenter asserts that it ran a particular model on your prompt. It might have run a smaller one, an older checkpoint, or a cheaper quantized copy. The operator can fabricate logs describing the agreed computation regardless of what it actually ran. A hash of the right weights does not settle the matter either: the operator can possess those weights and execute something else.
 
-Similarly, assume that a treaty between two governments is reached regarding
-AI research and development. Both governments claim that they are using particular
-models that meet certain thresholds, have been approved by regulatory boards, etc.
-The same problem applies; there is not any obvious way for one party to such an
-agreement to verify the claims of the other.
+Consider an agreement between two mutually distrustful states concerning permitted AI models or workloads. Neither party can be expected to accept the other's execution logs as evidence that the agreement was followed. Nor can either be expected to trust the other's hardware or execution environment. Both may also require their weights, prompts, and outputs to remain confidential. Evaluating a model beforehand leaves the central question unanswered: what can either party establish about the computation the other subsequently performed?
 
-This remains an unresolved gap wherever the verifier cannot trust the operator,
-or the attestation stack the operator controls. Evaluations measure a model under
-conditions you control, and say nothing about the model served to somebody else
-afterward. Hardware-backed attestation can say a great deal about platform and
-software state — but it buys that by requiring trust in a hardware root-of-trust
-ecosystem, and it still does not yield an operator-independent statement about
-*this* computation producing *that* output. What is missing is a way to replace
-trust in the operator's execution environment with a proof an independent
-verifier can check on hardware it controls.
+VerInf takes this mutual distrust as a design requirement. Hardware attestation would introduce a hardware root of trust; the intended arrangement here requires no trust in the other party's hardware, including the hardware that generates the proof. Each party runs an independent verifier on its own cluster and checks the proof produced on the other's. The proving cluster is outside the verifier's trusted base. The aim is to make a computational claim checkable across that boundary without requiring either party to disclose its private data.
 
-[VerInf](https://github.com/JamesPetrie/VerInf) is a research prototype
-addressing that gap, led by James Petrie at the Future of Life Institute. I
-work on it as a [MARS V](https://caish.org/mars) fellow. This living document
-records what the system does and does not currently prove, where the work is
-heading, and which parts of it are mine.
+[VerInf](https://github.com/JamesPetrie/VerInf), led by James Petrie at the Future of Life Institute, investigates this question through proofs of language-model inference. I work on it through the [MARS V fellowship](https://caish.org/mars). My responsibility began with the profiler and the path to multi-GPU proving, and has grown to include hardware measurement, prover optimization, and the integration and hardening of new proof mechanisms.
+
+Work on VerInf remains ongoing. Our current results have produced a weight-splitting decomposition and measured improvements on individual-GPU workflows, and work on a multi-device executor is well underway. The engineering questions at the heart of the system have evolved just as the system has.
 
 ## What the proof certifies
 
-The naive framing — chiefly, "prove the model produced this output" — is the wrong one.
-Frontier inference runs in floating point, on nondeterministic kernels, across hardware that does not
-reproduce bit-for-bit. Demanding exact reproduction would make the problem intractable, and would
-still answer the wrong question.
+The output of a deployed language model is, generally, not a bit-for-bit reproduction of a fixed integer computation. Between floating-point kernels, hardware, and sampling, nondeterminism is introduced. VerInf represents the model with integer arithmetic and proves an upper bound on the output stream's total [surprisal](https://en.wikipedia.org/wiki/Information_content) under a predictor derived from that computation.
 
-VerInf instead bounds the **unexplained information** in an output stream: the
-number of bits in the output that the committed model does not account for. If
-the operator swapped in a different model, the outputs it produced would be
-poorly predicted by the model it committed to, and the bound rises. A cheap
-substitution is therefore expensive to hide.
+Surprisal measures how unexpected an output is: a token assigned a low probability costs more bits to explain. The predictor derives these probabilities from the integer model's logits, the scores it assigns to possible next tokens. The proof checks both the model computation that supplies those scores and the arithmetic that turns them into a bound. Rounding must push the bound upward, so approximation cannot make the output appear better explained than it is.
 
-The intended end-to-end certificate combines three pieces, held to different
-standards — and one of them is not yet integrated:
+Writing $Q$ for the predictor and $o_t$ for the output token at position $t$, the proof certifies
 
-- a **transcript anchor**, binding the committed token streams to digests
-  recorded independently at generation time, so the certificate is about the run
-  that actually happened rather than a convenient reconstruction. *The AES and
-  SHA-256 circuits for this are implemented and tested; they are not yet wired
-  end to end against recorded digests.* The demonstrated runs below are therefore
-  internally consistent — the scored tokens are the tokens the proven forward
-  pass consumed — but not yet externally anchored to a record made at generation
-  time;
-- the **forward pass**, where every claim must admit exactly one satisfying
-  assignment. Slack in an intermediate value would propagate through the
-  remaining layers in directions nobody can analyze;
-- the **surprisal bound** itself, where freedom *is* permitted, provided every
-  free direction pushes the reported number up rather than down.
+$$
+\sum_t -\log_2 Q(o_t \mid \text{model computation}, o_{<t}) \leq \widehat U.
+$$
 
-Upstream of the logits the prover must have no room at all;
-downstream, in the short arithmetic from logits to the reported
-bound, the prover may have room, so long as every rounding is forced upward.
-Cheating there can only make the prover's own number worse.
+Here $o_{<t}$ denotes the preceding tokens, and $\widehat U$ is the reported upper bound in bits.
 
-A related move governs our predictor. The bound is computed against a predictor
-of the deployment's outputs that the *prover* supplies.
-By [Gibbs' inequality](https://en.wikipedia.org/wiki/Gibbs%27_inequality) the resulting sum
-is a valid upper bound for *any* predictor, so the choice can indeed be left to the prover
-entirely.
+The predictor and the information it may use are part of the statement being proved. For a fixed predictor, averaging this score over possible output streams gives an upper bound on their [conditional entropy](https://en.wikipedia.org/wiki/Conditional_entropy): the uncertainty that remains given the information available to the predictor. This is the connection to unexplained information. An individual proof certifies the score of a particular transcript; it does not, on its own, measure the uncertainty of the deployment's entire output distribution.
 
-Underneath, matrix products are checked with Freivalds projections over [Ligero](https://link.springer.com/content/pdf/10.1007/s10623-023-01222-8.pdf)
-commitments, which are hash-based — so there is no trusted setup, and the construction is plausibly post-quantum^[Future research intends to make this statement of "plausible" post-quantum security into one of "definitive" post-quantum security.].
+A small score means the stream is well explained by the committed model and the specified predictor. It is important to keep in mind that it does not uniquely identify the implementation that produced it, as another computation could produce equally well-explained outputs. Nor does the score, by itself, establish a model's capabilities or whether a broader agreement was obeyed. Those claims require a policy and an observation process around the proof.
 
-## Where trust is required
+The intended end-to-end certificate has three parts:
 
-The **prover** wants confidentiality: weights, activations, and both token
-streams must not leak. The **verifier** wants soundness: the reported bound must
-be genuine. Their interface is a public claim list stating what kind of
-computation was performed — which reveals the model architecture, though not the
-weights.
+- **An externally anchored transcript.** The committed inputs and outputs must be tied to a record made independently at generation time. Otherwise, the prover can choose a convenient transcript to explain. AES and SHA-256 circuits for this binding exist and have tests; the recorded-transcript construction has not yet been demonstrated end to end in the runs discussed here.
+- **The integer forward pass.** Intermediate values upstream of the logits must be pinned by the constraints. Allowing the prover to choose among materially different intermediate values would give it control over the predictions being scored.
+- **The reported bound.** Once the logits are fixed, the calculation of the bound may allow some freedom, but only in a direction that makes the reported value larger. Rounding upward is one such allowance. The prover may overstate how much the model leaves unexplained; the constraints must prevent it from understating it.
 
-Under the protocol's soundness assumptions and a correct verifier
-implementation, the prover need not be trusted for correctness: prover
-deviations can cause false acceptance only within the protocol's soundness
-error, and otherwise cause verification to fail. Those are real assumptions,
-not decoration — soundness rests on the cryptographic primitives, the challenge
-generation, the verifier's own parser boundaries, and the per-challenge bound of
-the chosen configuration, which is a deployment parameter rather than a fixed
-property. The verifier's trusted base is deliberately small and shares no code
-with the prover, which narrows that surface without eliminating it. VerInf has
-not had a full security audit.
+The model commitment and the public claim list also need to match what the verifier intended to approve. A valid proof of a statement the prover chose is not enough. The current full-proof path therefore checks externally supplied model-root and statement-digest policy. That anchors a particular statement; it does not automatically decide whether that statement constitutes an acceptable workload.
 
-The arrangement this enables between mutually distrustful parties: each runs its
-own verifier on its own hardware, and neither has to trust the datacenter where
-the proving happened.
+The claim list reveals the model's architecture. The intended [zero-knowledge](https://en.wikipedia.org/wiki/Zero-knowledge_proof) protection covers weights, activations, and tokens, subject to the masking and opening-budget requirements of the chosen protocol. The hash-based construction requires no trusted setup and is plausibly post-quantum. The system has not had a full security audit, and the experimental weight bridge described below does not yet provide the intended hiding of all its intermediate values.
 
-## Results on record
+## The system I started from
 
-First, the single-chip results, which predate my involvement.
+The core construction and the original large-model demonstration predate my contributions. The upstream already had a tensor-like claim language, a CUDA prover, an independently implemented Rust verifier, persistent-weight commitments and refresh/linking machinery, and an analytical performance model.
 
-| | Llama-4-Maverick | Llama-2-7B |
-|:---|:---|:---|
-| Parameters | 400B MoE, 48 layers, 128 experts committed per layer | 7B, 32 layers |
-| Transcript | 1000 tokens, **all hidden** | 1000 tokens |
-| Prove | 14.3 h, 78.1 GB GPU peak | ~44 min, 11.2 GB peak |
-| Verify | 17.7 h, 20 CPU cores, 40 columns opened | ~23 min, 10 columns |
-| Proof size | 93.6 GB | 1.44 GB |
-| Bound | 0.880 bits/token | — |
+Its central implementation choice is streaming. A proof of the full Maverick model can involve terabytes of witness data. The prover generates an operation's witness, encodes rows, updates hashes or fold accumulators, and releases the data as it becomes unnecessary. Subsequent proof stages regenerate the witness instead of requiring the entire encoded computation to remain in memory.
 
-All on a single NVIDIA DGX Spark. The committed witness for the Maverick run is
-roughly 7.2 TB, streamed at the working set rather than held.
+That made a large demonstration possible on one DGX Spark. The archived 1,000-token Maverick run reports 14.26 hours to prove, 17.67 hours for independent Rust verification, a 93.6 GB proof, and a 78.13 GB GPU peak. Its reported score was 0.8801 bits per continuation token.[^original-run] These are results from the original system, not measurements of my optimizations.
 
-At 0.880 bits per token against a 202,048-token vocabulary, the proof accounts for about 95% of the information a
-token could carry. That is not "the model produced this"; it is "very little
-here is unexplained by the model that was committed."
+The historical run establishes the scale of the computation and its checking, but its verifier acceptance does not establish all the confidentiality and adversarial-soundness properties described in the accompanying prose. The default path at that point used fixed public masking entropy and prederived challenges; later collaborator work changed both and required external policy.[^historical-security] Those conditions matter when moving from a computational demonstration to an adversarial deployment.
 
-## What I have contributed thus far
+Streaming solves a memory problem by creating a regeneration problem. The model and its auxiliaries are revisited across proof stages. At small context lengths, loading and converting the weights can dominate even when little token computation is required. The upstream had already identified this effect. My initial task was to make the workload and its distribution measurable enough to decide what to do about it.
 
-Parallelizing the prover across GPUs is named future work in the paper, and it
-is the direction I am working in. It runs into an immediate problem: you cannot
-measure a cluster you do not yet have access to, and partitioning decisions have
-to be made before the hardware arrives.
+## Making the cost model executable
 
-My first deliverable was the measurement scaffolding that parallelism needs.
-I built a **dry-run profiler** that predicts a
-proving run's time, memory, bandwidth, and proof size *before* running it, from
-a workload manifest plus measured hardware constants, and exposes the dependency
-structure a future scheduler will consume:
+The existing model separated three kinds of work: witness slots, distinct linear constraint IDs, and quadratic products. Each claim contributes counts determined by its shape. Hardware constants translate those counts into an approximate cost:
 
-- a **manifest contract** — one record per tape operation, with two independent
-  producers (an exact tape-walker that runs where the prover runs, and
-  closed-form builders in pure Python that cross-check it);
-- a **cost model** in per-claim accounting form, carrying the production
-  expressions from the paper's cost appendix;
-- a **claim-level dependency DAG** with critical path and width profile, which
-  is what tells you how much parallelism actually exists;
-- a **partition scorecard** that maps claims onto *N* shards under competing
-  strategies — contiguous tape ranges, pipelined layers, expert-sharded — and
-  scores them.
+$$
+T_{\mathrm{kernel}} \approx A W + B L + C Q.
+$$
 
-A profiler is only as good as its predictions, so validation came in two
-rounds. The first was retrodictive: predict the archived Maverick run from a
-synthetic manifest plus the development box's measured constants, then compare
-against what that run actually recorded.
+I built a [dry-run profiler](https://github.com/JamesPetrie/VerInf/tree/3508ef1d63d004686e85373f6100689ae94b922a/profiler) around a common workload manifest. One producer walks a real lazy tape; another constructs synthetic workloads from model dimensions. Consumers calculate costs, expose the dependency graph, and compare ways of assigning claims to devices. The manifest preserves enough structure to distinguish model weights, ordinary inputs, produced variables, and their consumers.
 
-| quantity | predicted | measured |
-|:---|:---|:---|
-| witness rows | 108.7 M | 109.27 M |
-| proof size | 93.1 GB | 93.6 GB |
-| opened-column GPU payload | 34.8 GB | ~35 GB |
-| verifier peak RSS | 76.1 GB | 75.7 GB |
-| proof dump time | 751 s | 756 s |
-| prove wall-clock | 3.0 h floor / 9.9 h aggregate | 14.26 h |
+The separation matters. Witness counts can be checked against the prover's layout without trusting the timing model. Hardware rates can be measured without running a full proof. A runtime estimate can then fail because a rate was wrong, a count was wrong, or the model omitted a class of work. Those failures call for different changes.
 
-Prove time is deliberately a *bracket*, not a point estimate. The floor is the
-bandwidth-bound target the design should reach after planned reorganization;
-the aggregate is calibrated on today's code. The gap between bracket and
-measurement largely reflects itemized implementation overhead, and so functions
-as a work-list rather than an unexplained residual.
+The first B200 session reproduced 109,273,513 rows from a real Maverick tape, agreeing with the archived run's approximately 109.27 million.[^first-calibration] It also measured the machine primitives and exposed limitations in the benchmarks. A small transform can measure launch overhead rather than the throughput of the prover's batched path. Later batched measurements on H200 and B200 did not follow the simple bandwidth extrapolation: measured NTT time per element was roughly three to four times the bandwidth-scaled expectation on those configurations.[^batched-transforms]
 
-The second round I ran end to end myself, on hardware the tooling had never
-seen: a single rented B200, the class of machine the multi-GPU effort actually
-targets. One morning and about eleven dollars of GPU time later:
+The profiler also corrected an error in my own distribution model. Its first scorecard attributed approximately 950 GB per sweep to cross-device traffic. Most of that was lookup-settlement data that could be reduced locally: the settlement needs each shard's contribution to a sum, not every element used to produce it. Correcting the accounting reduced the estimate to approximately 2.4–2.8 GB per sweep. This was a correction to a model, not a measured networking speedup. Message latency, synchronization, and the eventual interconnect topology still require measurement.
 
-- the calibration suite filled a complete machine profile from scratch, every
-  constant measured on the box with its provenance recorded (headline: 29×
-  the development box's memory bandwidth);
-- the exact tape-walker ran against real tapes for the first time and
-  **cross-checked clean against the closed-form builders — zero flags**: every
-  claim count, witness slot, linear constraint, and quadratic product matched
-  within the documented expected set, and the per-row witness layout agreed
-  with the prover's own accounting row for row;
-- the extracted Maverick manifest reported **109,273,513 witness rows,
-  against the production run's measured 109.27 M** — the profiler reproducing
-  reality, not merely its own model of it;
-- the cost bracket priced on measured Blackwell constants puts the
-  routed-projected Maverick proof at S=1000 at a **254-second floor** on one
-  B200, the dominant terms riding memory bandwidth and tracking that 29×
-  ratio — which is what the cost model's scaling story says should happen.
+The profiler's scope has followed the implementation. It now distinguishes fresh witness from enrolled weights, physical row padding from logical lengths, and packed source bytes from expanded field tensors. The latest integration repair preserves bridge-held weights as source dependencies while excluding them from ordinary witness accounting. Reports explicitly say that the bridge's own costs are not yet modeled. Counting less witness is correct; treating the replacement mechanism as free would not be.
 
-I also corrected the cost model's RMSNorm row to the wrap-free bracket
-constants, bringing it into line with the paper's own analysis.
+## What the experiments changed
 
-### Splitting the enrolled weights without touching the verifier
+The first cache targeted routed expert outputs that were being regenerated across sweeps. On an H200, caching them eliminated 7,020 shard loads and approximately 2.36 TB of decoded traffic in a 100-token proof. Prove time improved by only 1.2%.[^routed-cache]
 
-The first piece of real multi-GPU work is now on a review branch, and the result
-worth reporting is not a speedup. It is that there is no new trust surface.
+The counters explained why. Those expert shards were inexpensive to fetch from the page-cached model and decode on the GPU. Dense weight loading was much more expensive, including repeated decoding of groups of tensors. I added group memoization and a decoded-weight cache, then measured those paths separately.
 
-Under enrollment the weights are touched by exactly two per-proof passes, and
-both are exact field sums over ranges of rows. A sum does not care which device
-computed its addends. So the enrolled-weight work can be cut across devices and
-recombined into a proof that is **byte-identical** to the one a single device
-would have produced — not equivalent, not accepted under some new rule, but the
-same bytes. The unmodified Rust verifier accepts it because, as far as the
-verifier can tell, nothing happened.
+The first host-backed cache lost. On the session-3 B200 host, prove time rose from 2,492.8 to 2,966.6 seconds. The cache avoided repeated decoding, but pinned allocations competed with the model's page cache inside the container's memory limit. Initial stores became expensive and subsequent shard reads paid for reclaimed pages. Other host effects were not fully separable in that session, which led to additional resource sampling.[^host-cache]
 
-That matters more than the phrasing suggests. Parallelism normally costs
-protocol surface: a new aggregation step, a new commitment, a fresh argument
-about why the combined object is as sound as the original. Here it costs none,
-by construction, and [the trust boundary](#where-trust-is-required) stays
-exactly where it was. The acceptance gate passed 4/4 on hardware — including a
-Rust ACCEPT on a sharded proof — at every N=2 cut and with deliberately
-non-nesting N=3 stage cuts.
+A GPU tier avoided the host-memory pressure. On the next B200 host, it reduced prove time from 1,890.8 to 1,787.0 seconds, or 5.5%. The cache consumed approximately 64.7 GB of GPU memory, so the result is a time–memory tradeoff whose usefulness depends on the rest of the workload.[^gpu-cache]
 
-Byte-identity also makes correctness cheap to test. If the sharded output must
-equal the single-device output bit for bit, the roles can be run sequentially on
-one GPU and the proof bytes diffed; no cluster is required. The whole gate ran
-on a rented A40 for about forty cents, against the eleven dollars the B200
-calibration session cost. That partly retires the problem this section opened
-with. After this branch, only *speed* needs hardware I do not have. Correctness
-does not.
+These experiments narrowed the question. Saving a large number of bytes is useful only when moving or producing those bytes limits the run. Once dense loading became cheaper, the repeated encoding and folding of enrolled weights stood out more clearly.
 
-### A retraction
+## Splitting work while preserving the proof
 
-The same B200 session produced a finding I later had to withdraw: an apparent
-interconnect bottleneck that turned out to be almost entirely an artifact of my
-own traffic model. Nothing was wrong with the machine; something was wrong with
-what I had assumed about it.
+Ordinary enrollment avoids rebuilding the weight commitment for every proof, but leaves two expensive passes over the enrolled rows: folding them into the test polynomials and reconstructing the challenged columns for opening.
 
-I record it because it is the discipline the whole exercise exists to enforce.
-A profiler that only ever confirms its author is not a measurement instrument.
-Predictions go out before the measurement, and get corrected in public when the
-measurement disagrees — otherwise the numbers above would be worth very little.
+I implemented a decomposition of those passes. Each worker owns a contiguous interval of weight variables. For the fold, it returns unfinalized field-sum partials, which the coordinator adds before finalizing the polynomials. For the opening, it writes column pieces at their original absolute row positions. Coverage checks reject missing or overlapping pieces. Padding retains the logical offsets used by the enrollment.
 
-The correction is now upstream rather than only narrated here. The original
-scorecard reported roughly 950 GB per sweep of cross-shard traffic and returned
-a binding verdict on interconnect; with the traffic model corrected — settlement
-vectors reduce to per-shard scalars rather than shipping whole — the same
-configuration moves 2.4 to 2.8 GB per sweep, and communication is negligible at
-every bandwidth swept. Nearly all of the original figure was my own modeling
-error. The retraction is part of the merged record, not a footnote to it.
+With the proof's secret randomness pinned for the comparison, the result must be byte-identical to the ordinary proof. The existing Rust verifier therefore checks the same object under the same rules. This decomposition introduces no new verifier-side aggregation argument.
 
-### What is upstream, and what is not
+The ownership plan can differ between the two stages, but their timings cannot be combined arbitrarily. The opening challenge depends on the completed test polynomials. Every fold contribution must arrive before the opening stage begins, giving a scheduling model of
 
-**Merged code** — the dry-run profiler and its parts: manifest contract,
-extractor, cost model, execution DAG, partition scorecard; the RMSNorm
-cost-model correction; and, as of 30 August 2026, the calibration suite, the
-machine-profile tooling, and the corrected traffic model.
+$$
+T = T_{\mathrm{commit}} + \max_i T_{\mathrm{fold},i}
+    + \max_i T_{\mathrm{open},i}.
+$$
 
-**Publicly inspectable evidence** — the B200 session archive, the extracted
-manifests, the calibration logs, and the measured machine profile are all in the
-repository.
+A slow fold on one device cannot be canceled by a fast opening on that device. Memory must also accommodate the union of the device's fold and opening ownership. The implementation and model account for whole-variable cuts and per-variable row padding rather than assuming arbitrary fractions of the weights can be assigned.
 
-**On a review branch** — the stage-aware weight-split model, the
-verifier-transparent weight split itself, and per-variable packed-source
-provenance for the storage mode: three commits on
-[`weight-split-model`](https://github.com/JamesPetrie/VerInf/tree/weight-split-model),
-pushed and readable, but not merged.
+The hardware gate checked proof-byte identity and Rust acceptance across different partitions and stage cuts.[^split-gate] The roles ran sequentially on one GPU. Actual multi-device execution still needs device-local state, transport, synchronization, and its own correctness and performance tests; the current worker deliberately refuses an unsupported second-device placement.
 
-**On agent assistance.** Implementation was agent-assisted. I owned the research
-direction, the cost-model derivation and checking, the experimental design, the
-validation, and the review; generated code was kept only after it was tested and
-cross-checked. This is project-wide practice rather than a personal one, across contributors,
-as part of how the fellowship's compute is used. 
+## Removing expert-weight work with a bridge
 
-::: {.work-entry-links}
-[Merged pull requests](https://github.com/JamesPetrie/VerInf/pulls?q=is%3Apr+author%3Alevineuwirth) ·
-[Upstream repository](https://github.com/JamesPetrie/VerInf)
-:::
+While I was developing the distribution and measurement work, collaborators were changing the protocol. Routed projection removed the need to commit every expert's activation for every token. A subsequent coefficient-RS weight enrollment and late bridge moved expert-weight authentication out of the ordinary Ligero witness.
 
-## Where this goes next
+The bridge is the collaborator's construction and implementation. I integrated it into my branch, added it to the research driver and measurement workflow, reviewed the verification boundaries, and worked on its remaining implementation costs.
 
-The immediate step is a port to 2–8 GPUs, and the reason is not that more GPUs
-sound better. Multi-device proving is what lifts the ceiling on model scale,
-context length, and mixture-of-experts breadth — the dimensions along which a
-single box runs out first.
+This changed the scale-out problem. The original weight split distributes passes over a very large enrolled block. The bridge removes most expert rows from that block and authenticates the projections through a separate mechanism. Dense weights still use the ordinary commitment. The remaining work must be measured and modeled under this new division.
 
-The honest projection carries the same bracket as everything else here. The
-anchor is a **254-second floor for the routed-projected Maverick proof at
-S=1000 on one B200**: a floor, not today's code, and it assumes the
-reorganization the cost model already itemizes. The sharding numbers have already moved once, downward, and the correction is
-worth more than the original figure was. An earlier version of this section
-reported 3.95× of a possible 4× at four devices. That model quietly allowed an
-imbalance in one stage to cancel against the other. It cannot: the fold and open
-stages are separated by a transcript barrier, so each stage's slowest shard sets
-its own pace. Modeling the stages separately gives **1.90× at two devices and
-3.47× at four**, saturating near 3.75× as the coordinator's own fresh-path work
-becomes the wall. These are modeled zero-overhead ratios under a stated
-stage-split assumption — the tool prints a 2.00×–1.79× sensitivity band on the
-two-device case — and none of them is a ceiling or a promise.
+In the same-host B200 experiment, the bridge reduced 100-token prove time from 1,890.8 to 988.0 seconds. The comparison was:
 
-That saturation is what orders the work rather than merely describing it: split
-the weights first, then the fresh rows, then attention for long context. The
-wall moves each time. And even at saturation this is the 254-second floor
-divided by less than four, which is minutes rather than seconds.
+| Mode | Prove-return time | Change from baseline |
+|:---|---:|---:|
+| Ordinary enrolled weights | 1,890.8 s | — |
+| GPU-tier decoded-weight cache | 1,787.0 s | −5.5% |
+| Weight bridge | 988.0 s | −47.7% |
 
-The first wall in practice was not the GPU at all. Streaming the 226.5 GB
-enrolled block from the rental's shared network volume capped proving at roughly
-1,523 seconds however many devices were attached — 0.17× of the floor, with the
-disk setting the pace. Local NVMe recovers about 1.9× at two devices; only
-keeping the block resident in HBM reaches the modeled ratio, and residency is
-named engineering work rather than a free consequence of adding GPUs.
+All three arms used the same instrumentation and routed-output cache on one B200, with 50 prompt and 50 continuation tokens. Times exclude construction, enrollment, the separate reveal pass, and proof serialization.[^bridge-comparison] The full arms passed their internal leaf checks; independently accepted Rust proofs were the smaller two-layer gates. No full proof was dumped during that session.
 
-No multi-GPU speedup has been measured. Every ratio above is a prediction priced
-on measured constants, from a model validated against one archived run and one
-live machine — good enough to plan against, and the first measurement is the
-next milestone.
+The bridge result also has a confidentiality qualification: its interim implementation sends the projections, projected masks, and aggregate in the clear. The committed form needed for the intended zero-knowledge guarantee is unfinished. The table measures the cost reduction of the implemented mechanism, not a completed private deployment.
 
-Beyond that, fleets of 64–128 GPUs are what an order-of-magnitude larger model
-would require. That figure comes from the same cost model and has not been
-validated at that scale.
+Instrumentation then showed where the bridge itself spent time. I moved mask generation onto the GPU using the prover's existing BLAKE3 row PRG. The following session measured a 198.5-second bridge pass, including 66.5 seconds of shard decoding and 46 seconds converting columns to Python integers.[^bridge-timing] The latest code removes duplicate shard decoding and keeps columns as tensors through compact serialization. Their combined effect has not yet been measured at full scale.
 
-## Current Limitations
-While VerInf looks promising, there are currently limitations:
+The whole prove in that following session became slower despite the shorter bridge pass. The host differed, and resource sampling showed heavy CPU throttling: thread pools were sized for visible cores rather than the container's quota. It would be misleading to present the cross-host difference as a controlled total-runtime improvement. This is why the archives retain the host configuration and separate stage times from the proof's wall time.
 
-- **No security audit.** It is a research prototype.
-- **Proof Size** — 93.6 GB at full scale. This is a real deployment
-  obstacle, not a rounding error.
-- **0.880 bits per token is not zero.** For some applications that residue is
-  fine; for others it is not, and the paper is explicit that tightening it is
-  open work.
-- **Soundness is a per-challenge bound** (about 2⁻¹⁶·⁶ in the demonstrated
-  configuration), raised by opening more columns at a measured cost in
-  verification time. It is a deployment choice, not a fixed property.
-- **The claim list reveals the architecture.** The public claim list states what
-  kind of computation was performed, so layer counts and expert breadth are
-  visible to the verifier even though the weights are not.
-- **No multi-GPU speedup has been measured.** The weight split is verified
-  byte-identical on hardware, but every scaling ratio here is modeled. The first
-  end-to-end multi-device timing is the next milestone.
-- **The transcript anchor is not yet demonstrated end to end.** The AES and
-  SHA-256 circuits are implemented and tested; binding them against
-  independently recorded digests is not yet shown.
+## Checking which model the bridge authenticates
 
-## Why this matters for assurance
+Integration also exposed a verification issue that is easy to miss when concentrating on performance. A bridged proof has two model anchors: the ordinary root for dense weights and a separate enrollment root for expert weights. The verifier checked the first, but in that mixed configuration left the second without an external policy comparison.
 
-The reason to care is not that datacenters are presumed dishonest. It is that
-"trust us, we ran the model we said" is the current state of the art, and it
-does not scale to a world where the stakes of that claim keep rising —
-third-party evaluation, regulatory audit, compute governance, any arrangement
-where an inference claim carries weight and the parties are not aligned.
+Authenticating a projection against a root supplied by the prover does not establish that those are the approved expert weights. I added a separate required policy input for the enrollment root, keeping both comparisons explicit.[^bridge-policy] A proof must satisfy its algebraic checks and authenticate the model the verifier meant to approve.
 
-Verified inference is one approach to a general question: how do you establish
-trustworthy claims about an AI system when the system, the operator, and the
-evaluator may each be untrusted? Cryptography attacks it from below. Evaluations
-attack it from above. Neither is sufficient alone.
+The same review added bridge geometry and opening-count checks and refused bridge verification on the legacy file-seed path. In the imported sumcheck implementation, I also fixed missing checks on the number of rounds and the factor domains: the verifier must enforce the transcript length required by the statement, rather than merely iterating over whatever rounds it receives.[^sumcheck]
+
+These changes are distinct from the verifier-transparent weight split. They modify verification boundaries and need their own review and negative tests. They illustrate why a system can have correct arithmetic checks and still authenticate the wrong statement or accept an inadequately formed argument.
+
+## Current state and the next questions
+
+The profiler, calibration tooling, and earlier accounting corrections are merged upstream. The weight-split decomposition, caches, bridge integration and hardening, and later measurement archives are on the public [weight-split-model branch](https://github.com/JamesPetrie/VerInf/tree/weight-split-model). The latest external-weight profiler corrections are committed locally and awaiting publication. Implementation throughout this project is agent-assisted; I own the direction, experiments, review, and validation of the work described here as mine.
+
+The immediate questions follow the current implementation:
+
+- **What does the bridged proof cost as a whole?** The profiler now excludes external weights from ordinary witness counts, but does not yet price their enrollment, the per-proof bridge pass, or the bridge proof section. The measured stage breakdown supplies starting points for that model. Completing the private bridge form is a separate protocol requirement.
+- **Which remaining work should run on additional devices?** The weight-split decomposition is validated on one GPU. A multi-device implementation must establish correct device-local execution and measure transfer and synchronization costs. Its baseline must reflect the protocol actually being distributed.
+- **How much regeneration should be replaced by storage?** Witness caching competes with weights and working memory. The useful tradeoff changes with context length, hardware capacity, and host storage; it cannot be settled by a single cache benchmark.
+- **What changes for larger and differently routed models?** Top-k routing and a second level of enrollment commitments are design work aimed at broader model support and smaller opening traffic. Neither is a demonstrated trillion-parameter deployment.
+
+The repository also contains a separate sampled-audit approach, with a different detection guarantee from a full proof. Its timings are not included in the comparisons here. Selecting a proof or audit mode requires specifying what a verifier needs to establish and what probability of missed violations is acceptable.
+
+The larger assurance question remains open. A proof must be about an approved computation, tied to the inputs and outputs that were actually observed, and checked under an appropriate soundness and confidentiality policy. Even then, a policy about permitted models needs an argument connecting those models to the risks the policy is meant to reduce. VerInf supplies a candidate computational component of that arrangement. The work now is to make its guarantees explicit and its costs tractable enough to find out where that component is useful.
+
+[^original-run]: The [original run archive](https://github.com/JamesPetrie/VerInf/blob/2bdf823b08ea012cf5d26eeaac1c65698bb51e20/analysis/full-model-hidden-run-archive.md) records 500 prompt and 500 continuation tokens, all hidden, with 40 columns opened and 20 Rust verifier threads. The prove time excludes the separate reveal and dump stages; the proof size is in decimal GB.
+
+[^historical-security]: At the [pre-contribution snapshot](https://github.com/JamesPetrie/VerInf/tree/2bdf823b08ea012cf5d26eeaac1c65698bb51e20), `prover/core.py` supplied a fixed `MASTER_SEED` to the streaming setup. The [later protocol record](https://github.com/JamesPetrie/VerInf/blob/3508ef1d63d004686e85373f6100689ae94b922a/analysis/routed-projected-status.md) documents fresh secret masking entropy, sequential Fiat–Shamir challenges, and external policy requirements. This qualification comes from comparing implementations; it is not a claim to have reconstructed an attack on the archived proof.
+
+[^first-calibration]: The [first B200 archive](https://github.com/JamesPetrie/VerInf/blob/3508ef1d63d004686e85373f6100689ae94b922a/analysis/blackwell-session-1-archive.md) includes the extracted manifests, layout crosschecks, measured machine profile, and calibration logs. Agreement on the row count validates that part of the accounting independently of the runtime prediction.
+
+[^batched-transforms]: See the batched NTT measurements in [H200 session 2](https://github.com/JamesPetrie/VerInf/blob/3508ef1d63d004686e85373f6100689ae94b922a/analysis/h200-session-2-archive.md) and [B200 session 3](https://github.com/JamesPetrie/VerInf/blob/3508ef1d63d004686e85373f6100689ae94b922a/analysis/b200-session-3-archive.md). These are comparisons with a bandwidth-based prediction, not measured slowdowns of the full prover.
+
+[^routed-cache]: [H200 session 2](https://github.com/JamesPetrie/VerInf/blob/3508ef1d63d004686e85373f6100689ae94b922a/analysis/h200-session-2-archive.md) records 3,833.3 seconds with the routed-output cache off and 3,788.9 seconds with it on. The decoded-traffic counter describes work avoided across repeated sweeps, not the size of the stored model.
+
+[^host-cache]: The [session-3 archive](https://github.com/JamesPetrie/VerInf/blob/3508ef1d63d004686e85373f6100689ae94b922a/analysis/b200-session-3-archive.md) retains the paired logs and the diagnosis of host-memory pressure. The approximately 19% regression belongs to this host and cache configuration.
+
+[^gpu-cache]: In [session 4](https://github.com/JamesPetrie/VerInf/blob/3508ef1d63d004686e85373f6100689ae94b922a/analysis/b200-session-4-archive.md), the 3,982 dense resolutions became 362 initial decodes and 3,620 cache hits. Each cache comparison here uses its own same-host baseline; the absolute runtimes across sessions are not a controlled comparison.
+
+[^split-gate]: The [weight-split review gate](https://github.com/JamesPetrie/VerInf/blob/3508ef1d63d004686e85373f6100689ae94b922a/analysis/weight-split-review-gate.md) covers two- and three-way partitions, differing fold and opening cuts, chunk boundaries, and both fold representations. Pinned secret randomness makes proof-byte identity a reproducible test condition, not a prescription for deployment.
+
+[^bridge-comparison]: The table comes from the three same-host arms in [B200 session 4](https://github.com/JamesPetrie/VerInf/blob/3508ef1d63d004686e85373f6100689ae94b922a/analysis/b200-session-4-archive.md). The archive includes configurations, raw logs, and the smaller Rust verification gates. Its timing boundary is the return from the prover, which is why enrollment and subsequent serialization are excluded.
+
+[^bridge-timing]: [B200 session 5](https://github.com/JamesPetrie/VerInf/blob/3508ef1d63d004686e85373f6100689ae94b922a/analysis/b200-session-5-archive.md) records the 198.5-second bridge stage alongside a 1,271.2-second full prove. Resource sampling found 144 Torch threads against a quota of approximately 30.6 CPUs. These observations motivate another controlled run; they do not isolate every cause of the total-runtime change.
+
+[^bridge-policy]: The [policy repair](https://github.com/JamesPetrie/VerInf/commit/3c47d54) requires separate external approval of the ordinary dense-weight root and the expert-weight enrollment root. Checking that the proof is consistent with its own declared roots is insufficient.
+
+[^sumcheck]: The [sumcheck repair](https://github.com/JamesPetrie/VerInf/commit/f426f97) enforces the expected number of rounds and the factor domains, with negative tests for malformed arguments.

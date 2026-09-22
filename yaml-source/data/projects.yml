@@ -16,6 +16,26 @@
 # the web (\textbf, \textit, \texttt, \href, $\times$, --, ~, {,}).
 
 projects:
+  - id: specification-dilemma
+    name: The Specification Dilemma
+    group: AI Evaluation
+    start: "2026"
+    end: null
+    description: >-
+      Designed and ran a preregistered experiment on prompt specificity and LLM
+      output diversity using 30 matched prompt pairs. Built generation and
+      embedding-analysis pipelines; diagnosed ignored seeds, reasoning-budget
+      effects, and empty completions. Published code, outputs, and limitations;
+      a single-model probe using authored user scenarios.
+    links:
+      - label: Source
+        href: https://github.com/levineuwirth/specification-dilemma
+      - label: Write-up
+        href: https://levineuwirth.org/essays/specification-dilemma/
+    cv_visible: false
+    resume_visible: false
+    web_visible: false
+
   # ---------------------------------------------------------------------
   # Systems & Infrastructure
   # ---------------------------------------------------------------------
