@@ -1,0 +1,119 @@
+{
+ "path": "profiler",
+ "entries": [
+  {
+   "name": "bench",
+   "type": "dir",
+   "size": 0
+  },
+  {
+   "name": "data",
+   "type": "dir",
+   "size": 0
+  },
+  {
+   "name": "machines",
+   "type": "dir",
+   "size": 0
+  },
+  {
+   "name": "calibrate.py",
+   "type": "file",
+   "size": 38409
+  },
+  {
+   "name": "claimcosts.py",
+   "type": "file",
+   "size": 9816
+  },
+  {
+   "name": "cli.py",
+   "type": "file",
+   "size": 11993
+  },
+  {
+   "name": "crosscheck.py",
+   "type": "file",
+   "size": 30142
+  },
+  {
+   "name": "dag.py",
+   "type": "file",
+   "size": 4007
+  },
+  {
+   "name": "demo.py",
+   "type": "file",
+   "size": 7168
+  },
+  {
+   "name": "extract.py",
+   "type": "file",
+   "size": 13492
+  },
+  {
+   "name": "instrumented_prove.py",
+   "type": "file",
+   "size": 15346
+  },
+  {
+   "name": "machine.py",
+   "type": "file",
+   "size": 1690
+  },
+  {
+   "name": "manifest.py",
+   "type": "file",
+   "size": 6224
+  },
+  {
+   "name": "partition.py",
+   "type": "file",
+   "size": 25996
+  },
+  {
+   "name": "predict.py",
+   "type": "file",
+   "size": 14560
+  },
+  {
+   "name": "README.md",
+   "type": "file",
+   "size": 13446
+  },
+  {
+   "name": "RUNBOOK-blackwell.md",
+   "type": "file",
+   "size": 38630
+  },
+  {
+   "name": "synth.py",
+   "type": "file",
+   "size": 20433
+  },
+  {
+   "name": "test_calibration_tools.py",
+   "type": "file",
+   "size": 31399
+  },
+  {
+   "name": "test_hbm_bench.py",
+   "type": "file",
+   "size": 2326
+  },
+  {
+   "name": "test_profiler.py",
+   "type": "file",
+   "size": 83874
+  },
+  {
+   "name": "weightsplit.py",
+   "type": "file",
+   "size": 41158
+  }
+ ],
+ "readme": {
+  "name": "README.md",
+  "text": "# VerInf dry-run profiler\n\nFirst deliverable of the multi-GPU (Blackwell) parallelization effort: predict\na proving run's exact costs — time, memory, bandwidth, proof size — *before*\nrunning it, on hardware we haven't touched yet, and expose the dependency\nstructure a dispatcher/scheduler will consume. Everything here is measurement\nscaffolding for the future dispatch architecture; nothing touches the\nsoundness-critical `prover/` path.\n\n## Architecture\n\nOne contract, two producers, several consumers:\n\n```\n                    ┌─ extract.py  (tape walker; runs where the prover runs; EXACT,\n                    │              model-agnostic — anything that builds a Tape)\n  manifest.json  ◄──┤\n                    └─ synth.py    (closed-form builders: maverick, maverick-projected, llama7b;\n                                   pure Python — runs anywhere, cross-checks extract)\n        │\n        ├─► predict.py   × machines/<name>.json  →  cost report\n        └─► dag.py       →  dependency DAG + parallelism profile\n```\n\n- **`manifest.py`** — the workload manifest: one record per tape op (type,\n  shape params, produced/consumed variables, exact witness slots when\n  extracted). The scheduler's future work-list format.\n- **`claimcosts.py`** — per-claim `(W, #cids, Q)` accounting, the\n  active-in-production forms from `analysis/maverick-cost-model.md`.\n- **`machines/`** — measured hardware constants with provenance strings.\n  `gb10-spark.json` is seeded from `analysis/` measurements;\n  `_template-blackwell.json` is the calibration checklist for cluster access.\n  `interconnect` is null by design — topology is unknown as of 2026-07; the\n  schema grows when it lands.\n- **`predict.py`** — totals, bracketed prove time, memory terms, proof/verify\n  estimates, ideal N-GPU what-ifs.\n- **`dag.py`** — claim-level dependency graph (weight variables excluded —\n  they're streamed inputs, not dataflow edges), critical path, width profile.\n- **`partition.py`** — the strategy scorecard: maps claims to N shards\n  (`rows` contiguous tape ranges, `layers` pipeline blocks, `experts`\n  round-robin over the MoE fan with a layer backbone), computes per-shard\n  work/imbalance, reduction-aware cross-shard traffic (Freivalds combines\n  send one output-sized partial per remote shard, not their inputs; LogUp\n  multiplicity vectors likewise reduce as one table-sized partial per\n  participating remote shard — extracted manifests only), weight\n  streaming, per-shard opened-column memory — and prices comms across a\n  swept interconnect bandwidth since topology is unknown. Conclusions stable\n  across the sweep are actionable now; ones that flip wait for topology.\n\n## Usage\n\n```sh\npython3 profiler/demo.py        # guided tour of everything below (no torch)\npython3 profiler/cli.py synth   --model maverick --seq 1000 --t-queries 40 -o man.json\npython3 profiler/cli.py predict man.json --machine gb10-spark\npython3 profiler/cli.py predict man.json --machine gb10-spark --gpus 8      # ideal scaling\npython3 profiler/cli.py dag     man.json -o dag.json\npython3 profiler/cli.py partition man.json --shards 8 --weight-bytes-per-param 0.7   # compare strategies\npython3 profiler/cli.py partition man.json --shards 8 --strategy experts             # one in detail\npython3 profiler/crosscheck.py maverick --from-gguf <gguf> --t-queries 54 --seq 1000 --layout\npython3 profiler/calibrate.py --name <sku> --tmpdir /local/disk\npython3 profiler/instrumented_prove.py --from-gguf <gguf> --t-queries 54 --prompt-n 500 --cont-n 500\n#   the hardware-session tools (GPU box): extraction cross-check against\n#   synth + the prover's own layout, machine-profile calibration, and the\n#   research timing prove (the demo's proof path is fail-closed on main) —\n#   RUNBOOK-blackwell.md is the session script.\npython3 profiler/cli.py weightsplit man.json --machine b200-runpod --resident --intervals 2\n#   stage-aware wall for the weight-split prover (coordinator + enrolled-block\n#   workers) from executable whole-variab"
+ }
+}

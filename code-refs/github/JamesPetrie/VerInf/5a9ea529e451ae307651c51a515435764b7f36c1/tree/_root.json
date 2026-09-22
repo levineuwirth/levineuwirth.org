@@ -1,0 +1,119 @@
+{
+ "path": "",
+ "entries": [
+  {
+   "name": ".github",
+   "type": "dir",
+   "size": 0
+  },
+  {
+   "name": "analysis",
+   "type": "dir",
+   "size": 0
+  },
+  {
+   "name": "arxiv",
+   "type": "dir",
+   "size": 0
+  },
+  {
+   "name": "demo",
+   "type": "dir",
+   "size": 0
+  },
+  {
+   "name": "docs",
+   "type": "dir",
+   "size": 0
+  },
+  {
+   "name": "layergkr",
+   "type": "dir",
+   "size": 0
+  },
+  {
+   "name": "profiler",
+   "type": "dir",
+   "size": 0
+  },
+  {
+   "name": "prover",
+   "type": "dir",
+   "size": 0
+  },
+  {
+   "name": "tools",
+   "type": "dir",
+   "size": 0
+  },
+  {
+   "name": "verifier",
+   "type": "dir",
+   "size": 0
+  },
+  {
+   "name": ".gitignore",
+   "type": "file",
+   "size": 749
+  },
+  {
+   "name": "gdoc-reference.docx",
+   "type": "file",
+   "size": 12010
+  },
+  {
+   "name": "LICENSE",
+   "type": "file",
+   "size": 1069
+  },
+  {
+   "name": "paper.docx",
+   "type": "file",
+   "size": 373555
+  },
+  {
+   "name": "paper.md",
+   "type": "file",
+   "size": 154725
+  },
+  {
+   "name": "paper.pdf",
+   "type": "file",
+   "size": 627014
+  },
+  {
+   "name": "pyproject.toml",
+   "type": "file",
+   "size": 1147
+  },
+  {
+   "name": "README-routed-projected.md",
+   "type": "file",
+   "size": 5363
+  },
+  {
+   "name": "README.md",
+   "type": "file",
+   "size": 6560
+  },
+  {
+   "name": "requirements.txt",
+   "type": "file",
+   "size": 820
+  },
+  {
+   "name": "uv.lock",
+   "type": "file",
+   "size": 242262
+  },
+  {
+   "name": "VerInf-routed-projected-4h.tar.gz",
+   "type": "file",
+   "size": 2482270
+  }
+ ],
+ "readme": {
+  "name": "README.md",
+  "text": "# VerInf: zero-knowledge proofs of LLM inference\n\nVerInf produces zero-knowledge proofs of large-language-model inference. It has proven a 400B-parameter model with the prover running on a single consumer NVIDIA DGX Spark, and it uses only hash-based commitments, so there is no trusted setup and the construction is plausibly post-quantum.\n\nVerInf certifies an observed output stream against a committed integer model and bounds the *unexplained information*: the output bits that computation does not account for. Proving similarity rather than exact reproduction is what lets it target a real, already-trained model whose inference runs in floating point. The proof reveals nothing beyond this bound and the public claim list, which discloses the model architecture but not the weights, activations, or hidden tokens.\n\nThe intended use cases are high-stakes settings where inference must be checked without revealing the model: verifying AI compute agreements between mutually distrustful parties, detecting model-weight exfiltration, auditing a deployed model against an approved version, or checking inference for bugs or tampering.\n\nThe formulation, the construction, the soundness analysis, and the cost model are in the draft paper ([PDF](paper.pdf)); this README covers what the system does and how to run it.\n\n## Status\n\nVerInf has produced a sound, four-round proof of a 1000-token forward pass of the full 48-layer Llama 4 Maverick (a 400B-parameter mixture of experts, all 128 experts committed per layer), with every token hidden. Proving took 14.3 hours on a single DGX Spark (78.1 GB GPU, 83.9 GB unified), certifying an unexplained-information bound of 0.880 bits per token over the 500-token continuation, the proof's only public value. The independent Rust verifier accepted at 40 opened columns in 17.7 hours on 20 CPU cores over the 93.6 GB proof. The smaller gate, a 32-layer Llama-2-7B at 1000 tokens, proves in about 44 minutes and verifies in about 23 minutes.\n\nSee [`analysis/full-model-hidden-run-archive.md`](analysis/full-model-hidden-run-archive.md) for every metric of the full-model run.\n\n## Caveats\n\n- Research prototype; no security audit of the full construction.\n- The demonstrated run explains about 95% of the per-token information in the token stream (0.880 unexplained bits per token against a 202,048-token vocabulary), which may not suffice for all applications.\n- Proofs are large (93.6 GB for the 1000-token full-model run at 40 opened columns; higher soundness opens more columns and grows the proof).\n- The protocol is interactive, which allows a lower per-challenge soundness level without enabling grinding. The demonstrated full-scale run opened 40 columns; raising it to the deployment grade of 80 costs verifier runtime, not memory (a GPU verifier is the planned fix).\n\n## Build and run\n\n**Quickstart.** With the gated `Llama-2-7b-hf` checkpoint downloaded (`huggingface-cli login` then `huggingface-cli download meta-llama/Llama-2-7b-hf`, or set `VERINF_GATE_MODEL` to a local path), a CUDA GPU, and Rust installed:\n\n```sh\npython demo/gate.py\n```\n\nThis builds the verifier, proves a small real-weights forward with the calibrated unexplained-information bound (output tokens hidden), checks it with the Rust verifier, and prints `PASS` on success. It exits 0 only if the verifier ACCEPTs and the bound is non-degenerate, so it also serves as the regression gate. It opens 10 columns for speed; production soundness is 80.\n\nThe manual walk-through:\n\n```sh\n# 1. Build the verifier (Rust, CPU-only). Cargo.lock regenerates on first build; commit it for a reproducible TCB.\ncd verifier && cargo build --release\n\n# 2. Set up the prover (Python + CUDA). Needs an NVIDIA GPU, nvcc on PATH, and ninja (primitives JIT-compile on first use).\npython -m venv venv && . venv/bin/activate && pip install -r requirements.txt\ncd prover && python tests/run_tests.py test_claims          # unit and differential tests\n\n# 3. Prove the unexplained-information bound ov"
+ }
+}

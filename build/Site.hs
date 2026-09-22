@@ -17,7 +17,7 @@ import Data.Time.Format (defaultTimeLocale, formatTime)
 import System.Directory (listDirectory)
 import System.Environment (lookupEnv)
 import System.FilePath (splitDirectories, takeDirectory, takeFileName, takeExtension,
-                        replaceExtension, (</>))
+                        replaceExtension, dropExtension, (</>))
 import Text.Read     (readMaybe)
 import qualified Data.Aeson as Aeson
 import qualified Data.ByteString.Lazy.Char8 as LBS
@@ -39,6 +39,7 @@ import Contexts   (siteCtx, essayCtx, postCtx, pageCtx, poetryCtx, fictionCtx, c
                    tagLinksFieldExcludingTopSegment, isProvedConfidence,
                    canonicalUrlPath, feedMetaFields, identifierDisplayUTC)
 import qualified Filters.SourceRefs as SR
+import MarkdownSections (markdownSectionsCompiler)
 import qualified Patterns as P
 import Photography (photographyRules)
 import Tags       (buildAllTags, applyTagRules, sidecarIdentifier,
@@ -358,6 +359,30 @@ rules = do
     match sourcePreviewable $ version "source-preview" $ do
         route   $ customRoute (\ident -> "source/" ++ toFilePath ident)
         compile copyFileCompiler
+
+    -- Markdown among them also gets a sectioned rendering, so a popup can
+    -- show a .md file as prose, or just the section a #fragment names
+    -- (MarkdownSections; renderMarkdownPopup in static/js/popups.js).
+    match (sourcePreviewable .&&. "**.md") $ version "source-sections" $ do
+        route   $ customRoute (\ident -> "source/" ++ toFilePath ident ++ ".sections.json")
+        compile markdownSectionsCompiler
+
+    -- Code-reference snapshots — GitHub blobs, trees and commits that prose
+    -- links to, fetched by tools/code-refs.py and served at /code-refs/…
+    -- for the popup (codeRefContent in static/js/popups.js). Blob bodies
+    -- carry a .txt suffix so nothing from another repository is ever served
+    -- as a document on this origin. The index is read directly by
+    -- Filters.CodeRefs and is not published.
+    match ("code-refs/**" .&&. complement "code-refs/index.json") $ do
+        route   idRoute
+        compile copyFileCompiler
+
+    -- …and each Markdown blob's sectioned rendering beside it:
+    -- <path>.md.txt -> <path>.md.sections.json.
+    match "code-refs/**.md.txt" $ version "sections" $ do
+        route   $ customRoute (\ident ->
+            dropExtension (toFilePath ident) ++ ".sections.json")
+        compile markdownSectionsCompiler
 
     -- Link annotations — author-defined previews for any URL
     match "data/annotations.json" $ do

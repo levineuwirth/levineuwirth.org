@@ -134,6 +134,11 @@ build-locked:
 	else \
 	  echo "Archive fetch skipped: run 'uv sync' to enable link archiving (build continues)"; \
 	fi
+	# Code-reference snapshots: fetch any GitHub blob/tree/commit linked from
+	# content/ that has no snapshot in code-refs/ yet, for the hover popup.
+	# Stdlib only, so not gated on .venv. Network failures are warnings;
+	# the link keeps its previous snapshot or gets no code popup.
+	@python3 tools/code-refs.py fetch
 	# Seed an empty similar-links map on a first-ever build so the
 	# identifier data/similar-links.json EXISTS during pass 1. build/
 	# SimilarLinks.hs reaches it with `load`, and Hakyll only records a

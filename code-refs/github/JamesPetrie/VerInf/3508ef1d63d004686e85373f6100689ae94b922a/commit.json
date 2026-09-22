@@ -1,0 +1,29 @@
+{
+ "sha": "3508ef1d63d004686e85373f6100689ae94b922a",
+ "message": "wc_bridge: the twin keeps the columns unsigned; the verifier rejects a zero mask width",
+ "author": "Levi Neuwirth",
+ "date": "2026-09-20T18:11:15Z",
+ "parents": [
+  "8d2e3fa48376b65511828efb871b2dbf4092ad42"
+ ],
+ "stats": {
+  "total": 13,
+  "additions": 9,
+  "deletions": 4
+ },
+ "files_total": 2,
+ "files": [
+  {
+   "filename": "prover/wc_bridge.py",
+   "status": "modified",
+   "additions": 3,
+   "deletions": 2
+  },
+  {
+   "filename": "verifier/src/bin/verify_proof.rs",
+   "status": "modified",
+   "additions": 6,
+   "deletions": 2
+  }
+ ]
+}

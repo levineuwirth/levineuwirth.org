@@ -352,20 +352,75 @@
     background: var(--bg);
 }
 
-.popup-source-pre {
-    margin: 0;
-    padding: 0.55rem 0.65rem;
+/* Range locator after the path ("L40–52", "§ Results"). */
+.popup-source-locator {
+    margin-left: 0.6em;
+    color: var(--text);
+}
+
+/* The scrolling viewport. The gutter, the code, and the range band sit
+   in one row inside it, so they scroll vertically together while the
+   gutter stays put horizontally. */
+.popup-source-scroll {
     max-height: 360px;
     overflow: auto;
     background: var(--bg);
+}
+
+.popup-source-lines {
+    position: relative;
+    display: flex;
+    min-width: max-content;
+    /* One line of code. Fixed rather than a unitless multiple so the
+       range band (below) can be placed by arithmetic on line numbers. */
+    --line: 1.05rem;
+}
+
+.popup-source-gutter,
+.popup-source-pre {
+    margin: 0;
+    padding: 0.55rem 0.65rem;
     font-family: var(--font-mono);
     font-size: 0.7rem;
-    line-height: 1.5;
-    color: var(--text);
+    line-height: var(--line);
     white-space: pre;
     border: none;
     border-radius: 0;
+    background: transparent;
 }
+
+.popup-source-gutter {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    padding-right: 0.5rem;
+    text-align: right;
+    color: var(--text-faint);
+    background: var(--bg);
+    border-right: 1px solid var(--border);
+    user-select: none;
+}
+
+.popup-source-pre {
+    position: relative;   /* paint above the range band */
+    z-index: 1;
+    flex: 1;
+    color: var(--text);
+}
+
+/* The linked line range: a faint band behind the code, placed from
+   --mark-from (0-based line within the window) and --mark-lines. */
+.popup-source-mark {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(0.55rem + var(--mark-from) * var(--line));
+    height: calc(var(--mark-lines) * var(--line));
+    background: var(--bg-offset);
+    border-left: 2px solid var(--text-faint);
+    pointer-events: none;
+}
+
 
 .popup-source-pre code {
     background: transparent;
@@ -388,6 +443,180 @@
     color: var(--text-faint);
     background: var(--bg);
 }
+
+.popup-source-truncated a {
+    color: inherit;
+    text-decoration-color: var(--border-muted);
+}
+
+.popup-source-truncated a:hover {
+    color: var(--text);
+}
+
+/* Markdown rendered as prose (MarkdownSections.hs) — a whole file, or
+   the section a #fragment names. Compact reading type; tables scroll
+   sideways rather than widening the popup. */
+.popup-md {
+    max-height: 420px;
+    overflow: auto;
+    padding: 0.55rem 0.75rem 0.65rem;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+.popup-md > :first-child { margin-top: 0; }
+.popup-md > :last-child  { margin-bottom: 0; }
+
+.popup-md p,
+.popup-md ul,
+.popup-md ol,
+.popup-md pre,
+.popup-md blockquote,
+.popup-md table {
+    margin: 0 0 0.55rem;
+}
+
+.popup-md ul,
+.popup-md ol {
+    padding-left: 1.2rem;
+}
+
+.popup-md-heading {
+    margin: 0.75rem 0 0.3rem;
+    color: var(--text);
+    line-height: 1.3;
+}
+
+.popup-md-heading:first-child { margin-top: 0; }
+.popup-md-h1 { font-size: 0.92rem; }
+.popup-md-h2 { font-size: 0.86rem; }
+.popup-md-h3,
+.popup-md-h4 { font-size: 0.8rem; font-style: italic; }
+
+.popup-md code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+}
+
+.popup-md pre {
+    padding: 0.4rem 0.5rem;
+    overflow-x: auto;
+    background: var(--bg-offset);
+    font-size: 0.68rem;
+}
+
+.popup-md blockquote {
+    padding-left: 0.6rem;
+    border-left: 2px solid var(--border);
+}
+
+.popup-md table {
+    display: block;
+    overflow-x: auto;
+    border-collapse: collapse;
+    font-size: 0.7rem;
+    line-height: 1.4;
+}
+
+.popup-md th,
+.popup-md td {
+    padding: 0.25rem 0.5rem 0.25rem 0;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: top;
+}
+
+.popup-md th {
+    color: var(--text);
+    font-weight: 500;
+}
+
+.popup-md a {
+    color: inherit;
+}
+
+/* Repository and revision under the path — the line that says which
+   commit a GitHub code-reference popup is showing. */
+.popup-source-rev {
+    margin-top: 0.1rem;
+    font-family: var(--font-sans);
+    font-size: 0.68rem;
+    word-break: normal;
+}
+
+/* GitHub tree and commit snapshots: prose-ish body inside the same
+   header/footer frame as the code popups. */
+.popup-code-body {
+    padding: 0.55rem 0.65rem 0.6rem;
+}
+
+.popup-code-subject {
+    font-size: 0.85rem;
+    color: var(--text);
+    line-height: 1.35;
+    margin-bottom: 0.35rem;
+}
+
+.popup-code-body .popup-abstract {
+    white-space: pre-line;
+    margin-bottom: 0.45rem;
+}
+
+.popup-code-stat {
+    font-size: 0.7rem;
+    color: var(--text-faint);
+    margin-bottom: 0.25rem;
+}
+
+.popup-code-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    line-height: 1.55;
+    columns: 2;
+    column-gap: 1.2rem;
+}
+
+.popup-code-list li {
+    break-inside: avoid;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.popup-code-list .is-dir {
+    color: var(--text);
+}
+
+.popup-code-files {
+    columns: 1;
+}
+
+.popup-code-files li {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.8rem;
+}
+
+.popup-code-file {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.popup-code-delta {
+    flex: none;
+}
+
+.popup-code-ref ins,
+.popup-code-ref del {
+    text-decoration: none;
+}
+
+.popup-code-ref ins { color: var(--text); }
+.popup-code-ref del { color: var(--text-faint); }
 
 /* Inline source-ref link styling: keep the inline-code chrome of the
    wrapped <code> intact and resist the link-classifier's external/

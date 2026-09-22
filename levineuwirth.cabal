@@ -26,6 +26,7 @@ executable site
         Compilers
         Contexts
         Marks
+        MarkdownSections
         Patterns
         Photography
         Stats
@@ -41,6 +42,7 @@ executable site
         Filters.Dropcaps
         Filters.Smallcaps
         Filters.Archive
+        Filters.CodeRefs
         Filters.Wikilinks
         Filters.Transclusion
         Filters.EmbedPdf

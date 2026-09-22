@@ -1,0 +1,41 @@
+{
+ "sha": "3c47d5498d2e7b9abeba0f51abe22875beb9933a",
+ "message": "verifier: bind the bridge's enrollment root, floor its opening count, refuse file seeds\n\nA production proof carries a weight block (the dense weights stay\ncommitted rows) and a wc section (the expert weights), and the verifier\nhad one policy slot for a model root: with a weight block present it\nchecked that block's root and left the enrollment root compared with\nnothing. The enrollment root is now a second anchor with its own slot,\nargv[4]: required whenever a wc section is present, never accepted in\nthe weight-root slot, never left unchecked beside a checked weight block.\n\nThe bridge's geometry came off the wire unvalidated and q_w is the whole\nsoundness of the check. The verifier now requires K_w = B + lam a power\nof two, N_w a power of two above it, q_w in range, and q_w >= ceil(0.416\nt) for t opened Ligero columns (t = 54 gives 23; the production 40 clears\nit, the toy 8 over t = 4 clears it).\n\nA proof without a statement digest took its seeds from the file and the\nbridge ran on them. The legacy path now carries no s_bind for the bridge.\n\nprover/tests/test_wc_bridge_rust_negatives.py holds six cases through\nthe binary, the production shape with both anchors among them. The\nbridge suites and ours are in the session gates.",
+ "author": "Levi Neuwirth",
+ "date": "2026-09-19T13:40:09Z",
+ "parents": [
+  "f426f976ace5feb656afec088854de332999d61a"
+ ],
+ "stats": {
+  "total": 305,
+  "additions": 280,
+  "deletions": 25
+ },
+ "files_total": 4,
+ "files": [
+  {
+   "filename": "prover/tests/_rust_verify.py",
+   "status": "modified",
+   "additions": 8,
+   "deletions": 5
+  },
+  {
+   "filename": "prover/tests/test_wc_bridge_rust_negatives.py",
+   "status": "added",
+   "additions": 200,
+   "deletions": 0
+  },
+  {
+   "filename": "tools/session2_gates.sh",
+   "status": "modified",
+   "additions": 14,
+   "deletions": 0
+  },
+  {
+   "filename": "verifier/src/bin/verify_proof.rs",
+   "status": "modified",
+   "additions": 58,
+   "deletions": 20
+  }
+ ]
+}

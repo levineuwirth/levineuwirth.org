@@ -1,0 +1,53 @@
+{
+ "sha": "5a9ea529e451ae307651c51a515435764b7f36c1",
+ "message": "profiler: the bridged note on every report, the crosscheck row total, the runner's list",
+ "author": "Levi Neuwirth",
+ "date": "2026-09-21T11:18:59Z",
+ "parents": [
+  "5ac94ec840f71fe29277201a743f4cca4959cda2"
+ ],
+ "stats": {
+  "total": 130,
+  "additions": 84,
+  "deletions": 46
+ },
+ "files_total": 6,
+ "files": [
+  {
+   "filename": "profiler/crosscheck.py",
+   "status": "modified",
+   "additions": 2,
+   "deletions": 1
+  },
+  {
+   "filename": "profiler/manifest.py",
+   "status": "modified",
+   "additions": 17,
+   "deletions": 0
+  },
+  {
+   "filename": "profiler/partition.py",
+   "status": "modified",
+   "additions": 5,
+   "deletions": 1
+  },
+  {
+   "filename": "profiler/predict.py",
+   "status": "modified",
+   "additions": 4,
+   "deletions": 9
+  },
+  {
+   "filename": "profiler/test_profiler.py",
+   "status": "modified",
+   "additions": 44,
+   "deletions": 31
+  },
+  {
+   "filename": "profiler/weightsplit.py",
+   "status": "modified",
+   "additions": 12,
+   "deletions": 4
+  }
+ ]
+}

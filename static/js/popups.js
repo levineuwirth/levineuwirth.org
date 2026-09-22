@@ -6,7 +6,9 @@
      4.  Wikipedia          — MediaWiki action API, full lead section
      5.  arXiv              — export.arxiv.org Atom API
      6.  DOI / CrossRef     — api.crossref.org, title/authors/abstract
-     7.  GitHub             — api.github.com, repo description + stars
+     7.  GitHub             — code links (blob/tree/commit): build-time
+                              snapshots under /code-refs/ (codeRefContent);
+                              bare repo links: api.github.com description + stars
      8.  Open Library       — openlibrary.org JSON API, book description
      9.  bioRxiv / medRxiv  — api.biorxiv.org, abstract
      10. YouTube            — oEmbed, title + channel (no key required)
@@ -129,6 +131,15 @@
             bind(el, sourceContent);
         });
 
+        /* GitHub code references — blob / tree / commit links that
+           tools/code-refs.py snapshotted at build time and
+           build/Filters/CodeRefs.hs tagged. Bound before the external
+           dispatcher so the repository-card provider does not claim
+           them; untagged GitHub links still fall through to it. */
+        root.querySelectorAll('a[data-code-ref][data-code-src]').forEach(function (el) {
+            bind(el, codeRefContent);
+        });
+
         /* PDF links — rewritten to viewer URL by Links.hs; thumbnail on hover */
         root.querySelectorAll('a.pdf-link[data-pdf-src]').forEach(function (el) {
             bind(el, pdfContent);
@@ -229,6 +240,7 @@
                 popup.classList.toggle('link-popup--rich',
                     !!popup.querySelector('.popup-provider'));
                 positionPopup(target);
+                placeSourceMark(popup);
                 popup.classList.add('is-visible');
                 popup.setAttribute('aria-hidden', 'false');
                 /* Images with width/height attrs reserve their space
@@ -1002,58 +1014,120 @@
     }
 
     /* Source-file preview — fetches /source/<path> (a same-origin copy
-       emitted by the source-preview Hakyll rule), runs Prism on the
-       first chunk of lines, and returns a DocumentFragment so the popup
-       receives ready-highlighted DOM rather than re-parsing innerHTML.
+       emitted by the source-preview Hakyll rule) and renders it with
+       renderSourcePopup; a Markdown file instead gets its sectioned
+       prose rendering (/source/<path>.sections.json, MarkdownSections.hs)
+       unless the link asks for a line range.
 
-       The raw response is cached; rendering is repeated per hover so
-       a cached entry never gets re-parented (a Node can only live in
-       one place at a time). */
+       Raw responses are cached (cachedFetch); rendering is repeated per
+       hover so a cached entry never gets re-parented (a Node can only
+       live in one place at a time). */
     function sourceContent(target) {
         var path = target.dataset.sourcePath;
         if (!path) return Promise.resolve(null);
-        var fetchUrl = '/source/' + path;
+        var opts = sourceOpts(target, 'view full file');
+        var raw  = '/source/' + path;
+        return sourceOrProse(path, raw, raw + '.sections.json', null, opts);
+    }
 
-        var cached = cache[fetchUrl];
-        var pending = (cached !== undefined)
-            ? Promise.resolve(cached)
-            : fetch(fetchUrl, { credentials: 'same-origin' })
-                .then(function (r) { return r.ok ? r.text() : null; })
-                .then(function (text) { cache[fetchUrl] = text; return text; })
-                .catch(function () { return null; });
-
-        return pending.then(function (text) {
-            if (text == null) return null;
-            return renderSourcePopup(path, text);
+    /* Shared by source-ref and GitHub blob popups: prose for Markdown
+       (falling back to the raw text if its rendering is missing), code
+       for everything else. */
+    function sourceOrProse(path, rawUrl, sectionsUrl, meta, opts) {
+        var asCode = function () {
+            return cachedFetch(rawUrl, 'text').then(function (text) {
+                return text == null ? null : renderSourcePopup(path, text, meta, opts);
+            });
+        };
+        if (!isMarkdown(path) || opts.range) return asCode();
+        return cachedFetch(sectionsUrl, 'json').then(function (doc) {
+            if (doc && doc.sections && doc.sections.length) {
+                return renderMarkdownPopup(path, doc, meta, opts);
+            }
+            return asCode();
         });
     }
 
-    /* Build the popup body for sourceContent. Truncates to MAX_LINES
-       so a 2,000-line file doesn't blow the popup height; the link's
-       href still points at the Forgejo full-file viewer for readers
-       who want more. */
-    function renderSourcePopup(path, text) {
-        var MAX_LINES = 80;
-        var lines     = text.split('\n');
-        var truncated = lines.length > MAX_LINES;
-        var preview   = lines.slice(0, MAX_LINES).join('\n');
-        var lang      = languageFromPath(path);
+    function isMarkdown(path) { return /\.(md|markdown)$/i.test(path); }
+
+    /* What the link's fragment asks for — a line range (#L12, #L12-L30,
+       as GitHub and Forgejo write them) or a heading id — plus the
+       click-through target for the popup's footer. */
+    function sourceOpts(target, footerLabel) {
+        var hash = '';
+        try { hash = decodeURIComponent((target.hash || '').slice(1)); }
+        catch (_) { /* malformed escape: treat as no fragment */ }
+        var m = /^L(\d+)(?:-L?(\d+))?$/.exec(hash);
+        var range = null;
+        if (m) {
+            var a = +m[1], b = m[2] ? +m[2] : a;
+            range = [Math.min(a, b), Math.max(a, b)];
+        }
+        return {
+            range:    range,
+            fragment: m ? '' : hash,
+            href:     target.href,
+            footer:   footerLabel
+        };
+    }
+
+    /* Code body for source and GitHub blob popups: a line-number gutter,
+       Prism highlighting, and — when the link names a line range — a
+       band over those lines, scrolled into view by scheduleShow. Files
+       longer than WINDOW lines show a window (around the range, when
+       there is one); the footer says which lines, and links through. */
+    function renderSourcePopup(path, text, meta, opts) {
+        var WINDOW = 400;
+        opts = opts || {};
+        var lines = text.split('\n');
+        if (lines.length > 1 && lines[lines.length - 1] === '') lines.pop();
+        var n     = lines.length;
+        var range = opts.range && opts.range[0] <= n
+            ? [opts.range[0], Math.min(opts.range[1], n)] : null;
+
+        var start = 1;
+        if (n > WINDOW && range) {
+            start = Math.max(1, Math.min(range[0] - 20, n - WINDOW + 1));
+        }
+        var end  = Math.min(n, start + WINDOW - 1);
+        var lang = languageFromPath(path);
 
         var wrap = document.createElement('div');
         wrap.className = 'popup-source-code';
+        wrap.appendChild(sourceHeader(path, meta, range
+            ? 'L' + range[0] + (range[1] > range[0] ? '–' + range[1] : '') : ''));
 
-        var label = document.createElement('div');
-        label.className = 'popup-source-path';
-        label.textContent = path;
-        wrap.appendChild(label);
+        var scroll = document.createElement('div');
+        scroll.className = 'popup-source-scroll';
+        var body = document.createElement('div');
+        body.className = 'popup-source-lines';
+
+        var gutter = document.createElement('pre');
+        gutter.className = 'popup-source-gutter';
+        gutter.setAttribute('aria-hidden', 'true');
+        var nums = [];
+        for (var i = start; i <= end; i++) nums.push(i);
+        gutter.textContent = nums.join('\n');
+        body.appendChild(gutter);
 
         var pre  = document.createElement('pre');
         pre.className = lang ? 'popup-source-pre language-' + lang : 'popup-source-pre';
         var code = document.createElement('code');
         if (lang) code.className = 'language-' + lang;
-        code.textContent = preview;
+        code.textContent = lines.slice(start - 1, end).join('\n');
         pre.appendChild(code);
-        wrap.appendChild(pre);
+        body.appendChild(pre);
+
+        if (range && range[0] >= start && range[0] <= end) {
+            var mark = document.createElement('div');
+            mark.className = 'popup-source-mark';
+            mark.style.setProperty('--mark-from', range[0] - start);
+            mark.style.setProperty('--mark-lines', Math.min(range[1], end) - range[0] + 1);
+            body.appendChild(mark);
+        }
+
+        scroll.appendChild(body);
+        wrap.appendChild(scroll);
 
         /* Prism is loaded with `defer` from the page template; by the
            time a hover delay fires it is reliably available. Guard
@@ -1063,17 +1137,282 @@
             try { Prism.highlightElement(code); } catch (_) { /* keep plain */ }
         }
 
-        if (truncated) {
-            var more = document.createElement('div');
-            more.className = 'popup-source-truncated';
-            var n = lines.length - MAX_LINES;
-            more.textContent =
-                n + ' more line' + (n === 1 ? '' : 's')
-                + ' · view full file →';
-            wrap.appendChild(more);
+        var partial = start > 1 || end < n;
+        wrap.appendChild(sourceFooter(opts,
+            partial ? 'lines ' + start + '–' + end + ' of ' + n : ''));
+        return wrap;
+    }
+
+    /* Place the line-range band from the gutter's used line-height, not
+       from CSS calc() on --line: that is rem-based, the root size varies
+       by viewport, and engines snap line boxes to whole pixels, so the
+       calc drifts a fraction of a pixel per line and is visibly off by
+       line 20. Needs layout, so it runs once the popup is in the
+       document; then scrolls the band into view with two lines of
+       lead-in. */
+    function placeSourceMark(root) {
+        var mark   = root.querySelector('.popup-source-mark');
+        var gutter = mark && mark.parentNode.querySelector('.popup-source-gutter');
+        if (!gutter) return;
+        var cs    = getComputedStyle(gutter);
+        var padT  = parseFloat(cs.paddingTop) || 0;
+        /* The used line-height, in px. (The gutter's box height is no
+           use: flex stretches it to the code column, which carries an
+           extra strut of descent below its last line.) */
+        var lineH = parseFloat(cs.lineHeight);
+        if (!(lineH > 0)) return;
+        var from  = +mark.style.getPropertyValue('--mark-from') || 0;
+        var lines = +mark.style.getPropertyValue('--mark-lines') || 1;
+        mark.style.left   = gutter.offsetWidth + 'px';
+        mark.style.top    = (padT + from * lineH) + 'px';
+        mark.style.height = (lines * lineH) + 'px';
+        var scroller = mark.closest('.popup-source-scroll');
+        if (scroller) scroller.scrollTop = Math.max(0, padT + (from - 2) * lineH);
+    }
+
+    /* Prose body for Markdown: the section the fragment names (with its
+       subsections), or the whole document when there is none or it
+       names no heading. The HTML comes from MarkdownSections.hs, which
+       renders it at build time from a sanitised AST — raw HTML off, only
+       absolute http(s) links, no images, no ids — so it is inserted
+       as-is. */
+    function renderMarkdownPopup(path, doc, meta, opts) {
+        var secs = doc.sections;
+        var from = 0, to = secs.length, excerpt = null;
+        if (opts.fragment) {
+            for (var i = 0; i < secs.length; i++) {
+                if (secs[i].id === opts.fragment) { from = i; break; }
+            }
+            if (i < secs.length) {
+                excerpt = secs[from];
+                for (to = from + 1; to < secs.length; to++) {
+                    if (secs[to].level <= excerpt.level) break;
+                }
+            }
         }
 
+        var html = '';
+        for (var k = from; k < to; k++) {
+            var s = secs[k];
+            /* The excerpt's own heading is already in the header strip. */
+            if (s.level > 0 && !(excerpt && k === from)) {
+                html += '<div class="popup-md-heading popup-md-h' + Math.min(s.level, 4) + '">'
+                      + s.heading + '</div>';
+            }
+            html += s.html;
+        }
+
+        var wrap = document.createElement('div');
+        wrap.className = 'popup-source-code popup-source-prose';
+        wrap.appendChild(sourceHeader(path, meta,
+            excerpt ? '§ ' + stripTags(excerpt.heading) : ''));
+        var body = document.createElement('div');
+        body.className = 'popup-md';
+        body.innerHTML = html;
+        wrap.appendChild(body);
+        wrap.appendChild(sourceFooter(opts,
+            excerpt ? 'section ' + (from + 1) + ' of ' + secs.length : ''));
         return wrap;
+    }
+
+    function stripTags(html) {
+        var t = document.createElement('template');
+        t.innerHTML = html;
+        return t.content.textContent.trim();
+    }
+
+    /* Footer strip: an optional note ("lines 1–400 of 912") and the
+       click-through, which is the link itself — fragment included, so
+       GitHub or Forgejo opens at the same place. */
+    function sourceFooter(opts, note) {
+        var foot = document.createElement('div');
+        foot.className = 'popup-source-truncated';
+        if (note) foot.appendChild(document.createTextNode(note + ' · '));
+        if (opts.href) {
+            var a = document.createElement('a');
+            a.href = opts.href;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.textContent = (opts.footer || 'view full file') + ' →';
+            foot.appendChild(a);
+        }
+        return foot;
+    }
+
+    /* Header strip for source and code-reference popups: the path, an
+       optional locator after it (a line range, or "§ Results"), and
+       optionally a quieter line naming the repository and revision. */
+    function sourceHeader(path, meta, locator) {
+        var label = document.createElement('div');
+        label.className = 'popup-source-path';
+        label.textContent = path;
+        if (locator) {
+            var loc = document.createElement('span');
+            loc.className = 'popup-source-locator';
+            loc.textContent = locator;
+            label.appendChild(loc);
+        }
+        if (meta) {
+            var m = document.createElement('div');
+            m.className = 'popup-source-rev';
+            m.textContent = meta;
+            label.appendChild(m);
+        }
+        return label;
+    }
+
+    /* ------------------------------------------------------------------
+       Code references — GitHub blob / tree / commit snapshots.
+
+       tools/code-refs.py stores each linked object under /code-refs/
+       at build time; build/Filters/CodeRefs.hs puts its location and
+       revision on the link as data-code-* attributes. Everything here
+       is same-origin: no GitHub API call, no rate limit, and the popup
+       shows exactly the revision the link is pinned to.
+    ------------------------------------------------------------------ */
+
+    function codeRefContent(target) {
+        var d    = target.dataset;
+        var kind = d.codeRef;
+        var src  = d.codeSrc;
+        if (!src || !/^\/code-refs\//.test(src)) return Promise.resolve(null);
+
+        var info = {
+            repo:   d.codeRepo || '',
+            sha:    d.codeSha || '',
+            path:   d.codePath || '',
+            date:   d.codeDate || '',
+            branch: d.codeBranch || ''
+        };
+
+        if (kind === 'blob') {
+            return sourceOrProse(info.path, src,
+                src.replace(/\.txt$/, '.sections.json'),
+                revisionLine(info), sourceOpts(target, 'view on GitHub'));
+        }
+        if (kind === 'tree') {
+            return cachedFetch(src, 'json').then(function (tree) {
+                return tree ? renderTreePopup(info, tree) : null;
+            });
+        }
+        if (kind === 'commit') {
+            return cachedFetch(src, 'json').then(function (c) {
+                return c ? renderCommitPopup(info, c) : null;
+            });
+        }
+        return Promise.resolve(null);
+    }
+
+    /* Same-origin fetch of a snapshot, memoised by URL. The raw text or
+       parsed JSON is cached, never a rendered node: a Node can only have
+       one parent, so each hover renders afresh. */
+    function cachedFetch(url, as) {
+        var key = as + ':' + url;
+        if (cache[key] !== undefined) return Promise.resolve(cache[key]);
+        return fetch(url, { credentials: 'same-origin' })
+            .then(function (r) { return r.ok ? (as === 'json' ? r.json() : r.text()) : null; })
+            .then(function (v) { if (v != null) cache[key] = v; return v; })
+            .catch(function () { return null; });
+    }
+
+    /* "JamesPetrie/VerInf @ 3508ef1 · 20 Sep 2026" — or, for a link to
+       a branch, which snapshot of that branch the popup is showing. */
+    function revisionLine(info) {
+        var short = info.sha.slice(0, 7);
+        var date  = formatDay(info.date);
+        if (info.branch) {
+            return info.repo + ' · ' + info.branch + ' as of ' + short
+                 + (date ? ', ' + date : '');
+        }
+        return info.repo + ' @ ' + short + (date ? ' · ' + date : '');
+    }
+
+    function formatDay(iso) {
+        var d = iso ? new Date(iso) : null;
+        if (!d || isNaN(d.getTime())) return '';
+        return d.toLocaleDateString('en-GB',
+            { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+    }
+
+    /* First paragraph of a README that is prose rather than a heading,
+       badge row, or HTML block — markup stripped to plain text. */
+    function readmeLead(text) {
+        var paras = String(text).split(/\n\s*\n/);
+        for (var i = 0; i < paras.length; i++) {
+            var p = paras[i].trim();
+            if (!p || /^(#|!\[|\[!\[|<|```|---|\|)/.test(p)) continue;
+            return p.replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+                    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+                    .replace(/[`*_]/g, '')
+                    .replace(/\s+/g, ' ');
+        }
+        return '';
+    }
+
+    /* The snapshot commit's own message is deliberately not shown: it
+       describes whatever change happened to land last, which is rarely
+       about the directory linked. The revision line is what matters. */
+    function renderTreePopup(info, tree) {
+        var MAX_ENTRIES = 24;
+        var entries = tree.entries || [];
+        var html = '<div class="popup-source-code popup-code-ref">';
+        var path = info.path ? info.path.replace(/\/?$/, '/') : info.repo + '/';
+        var rev  = revisionLine(info);
+        html += '<div class="popup-source-path">' + esc(path)
+              + '<div class="popup-source-rev">' + esc(rev) + '</div></div>';
+        html += '<div class="popup-code-body">';
+        var lead = tree.readme ? readmeLead(tree.readme.text) : '';
+        if (lead) html += '<div class="popup-abstract">' + esc(truncate(lead, 320)) + '</div>';
+        html += '<ul class="popup-code-list">';
+        entries.slice(0, MAX_ENTRIES).forEach(function (e) {
+            var dir = e.type === 'dir';
+            html += '<li class="' + (dir ? 'is-dir' : 'is-file') + '">'
+                  + esc(e.name) + (dir ? '/' : '') + '</li>';
+        });
+        html += '</ul></div>';
+        if (entries.length > MAX_ENTRIES) {
+            var n = entries.length - MAX_ENTRIES;
+            html += '<div class="popup-source-truncated">' + n + ' more entr'
+                  + (n === 1 ? 'y' : 'ies') + '</div>';
+        }
+        return html + '</div>';
+    }
+
+    function renderCommitPopup(info, c) {
+        var MAX_FILES = 12;
+        var lines   = String(c.message || '').split('\n');
+        var subject = lines[0] || '';
+        var body    = lines.slice(1).join('\n').trim();
+        var files   = c.files || [];
+        var total   = +(c.files_total != null ? c.files_total : files.length) || 0;
+        var st      = c.stats || {};
+
+        var html = '<div class="popup-source-code popup-code-ref">';
+        html += '<div class="popup-source-path">' + esc(info.repo) + ' @ '
+              + esc(String(c.sha || info.sha).slice(0, 7))
+              + '<div class="popup-source-rev">'
+              + esc([c.author, formatDay(c.date)].filter(Boolean).join(' · '))
+              + '</div></div>';
+        html += '<div class="popup-code-body">';
+        html += '<div class="popup-code-subject">' + esc(subject) + '</div>';
+        if (body) html += '<div class="popup-abstract">' + esc(truncate(body, 420)) + '</div>';
+        html += '<div class="popup-code-stat">' + total + ' file' + (total === 1 ? '' : 's')
+              + (st.additions != null ? ' · <ins>+' + (+st.additions) + '</ins>' : '')
+              + (st.deletions != null ? ' <del>−' + (+st.deletions) + '</del>' : '')
+              + '</div>';
+        html += '<ul class="popup-code-list popup-code-files">';
+        files.slice(0, MAX_FILES).forEach(function (f) {
+            html += '<li><span class="popup-code-file">' + esc(f.filename) + '</span>'
+                  + '<span class="popup-code-delta"><ins>+' + (+f.additions || 0) + '</ins> '
+                  + '<del>−' + (+f.deletions || 0) + '</del></span></li>';
+        });
+        html += '</ul></div>';
+        if (total > MAX_FILES) {
+            var n = total - MAX_FILES;
+            html += '<div class="popup-source-truncated">' + n + ' more file'
+                  + (n === 1 ? '' : 's') + '</div>';
+        }
+        return html + '</div>';
     }
 
     /* Map a path's extension (or basename, for Makefile) onto the set

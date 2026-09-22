@@ -15,7 +15,7 @@
 #   2. Deletions/renames. Hakyll never removes outputs for deleted
 #      sources, and deploy mirrors _site with rsync --delete — so without
 #      a clean, deleted pages would stay live forever. A D/R under
-#      content/ static/ data/ archive/ (committed since the last successful
+#      content/ static/ data/ archive/ code-refs/ (committed since the last successful
 #      build, or sitting uncommitted in the worktree) forces a clean.
 #   2b. Route-defining metadata. A route can also disappear without any
 #      file being deleted: drop the last `tags: [x]` entry naming a tag and
@@ -82,8 +82,9 @@ rules_hash() {
 }
 
 # Paths whose deletion/rename removes a published route. archive/ is here
-# because an evicted snapshot leaves archive/<slug>/index.html behind.
-DIFF_PATHS=(content/ static/ data/ archive/)
+# because an evicted snapshot leaves archive/<slug>/index.html behind;
+# code-refs/ for the same reason (`tools/code-refs.py gc`).
+DIFF_PATHS=(content/ static/ data/ archive/ code-refs/)
 
 # Frontmatter fields that generate routes of their own (tag indexes, author
 # pages, collection and series listings, epistemic-status listings).

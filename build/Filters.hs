@@ -14,6 +14,7 @@ import qualified Filters.Links      as Links
 import qualified Filters.SourceRefs as SourceRefs
 import qualified Filters.Smallcaps  as Smallcaps
 import qualified Filters.Archive    as Archive
+import qualified Filters.CodeRefs   as CodeRefs
 import qualified Filters.Dropcaps   as Dropcaps
 import qualified Filters.Math       as Math
 import qualified Filters.Wikilinks     as Wikilinks
@@ -47,6 +48,7 @@ applyAll numberFigures srcDir doc = do
         . Sidenotes.apply
         . Typography.apply
         . Links.apply
+        . CodeRefs.apply
         . Archive.apply
         . Smallcaps.apply
         . Dropcaps.apply

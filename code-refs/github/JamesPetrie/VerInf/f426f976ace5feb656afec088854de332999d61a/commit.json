@@ -1,0 +1,35 @@
+{
+ "sha": "f426f976ace5feb656afec088854de332999d61a",
+ "message": "prover/layergkr: an ext column for bridge-held weights; the sumcheck verifier checks the round count\n\nThe composition instrument and the layout breakdown share one walk over\nthe claims' variables; a weight the bridge holds (Variable.external) is a\nprover input and never a witness row, and the walk classified it as a\ncommitted activation. The composition now has an ext column and the\nlayout breakdown skips external variables, as the layout itself does.\n\nverify_terms and the single-product verify iterated over whatever rounds\nthe transcript carried and never compared their number with log2 of the\ndomain; mle_eval folds only over the point it is given, so a zero-round\ntranscript was accepted whenever the product at index 0 matched the\nclaim. Both now require exactly log2(size) rounds and equal factor sizes.\nThe gap predates the merge. Locked by test_short_transcript_rejects.",
+ "author": "Levi Neuwirth",
+ "date": "2026-09-19T13:40:09Z",
+ "parents": [
+  "4292d41ddb7ac1fa84a33e4c756739f5cde9f896"
+ ],
+ "stats": {
+  "total": 72,
+  "additions": 68,
+  "deletions": 4
+ },
+ "files_total": 3,
+ "files": [
+  {
+   "filename": "layergkr/sumcheck.py",
+   "status": "modified",
+   "additions": 32,
+   "deletions": 0
+  },
+  {
+   "filename": "layergkr/tests/test_sumcheck.py",
+   "status": "modified",
+   "additions": 28,
+   "deletions": 0
+  },
+  {
+   "filename": "prover/core.py",
+   "status": "modified",
+   "additions": 8,
+   "deletions": 4
+  }
+ ]
+}

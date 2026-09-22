@@ -1,0 +1,23 @@
+{
+ "sha": "2bdf823b08ea012cf5d26eeaac1c65698bb51e20",
+ "message": "Archive the small-context run measurements (Spark offline; logs at risk)\n\nEverything captured from mav10h.log / mav100h.log over ssh during and\nafter the runs, consolidated before more is lost: headline numbers for\nboth runs, the S=10 per-round sweep times against their identity\nbudgets, verbatim log tails, transcript provenance, and the T_wit\nweight-processing-floor finding (R2's 33 min at S=10 as the\ndiagnostic). Reconstructed values are marked as such; the S=100\nper-round confirmation (R2 ~33 min predicted) is flagged as pending\nthe box's return.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>",
+ "author": "claude",
+ "date": "2026-07-23T10:58:23Z",
+ "parents": [
+  "6d69e65976c544d088dc557a64f34b4afd4bcd8a"
+ ],
+ "stats": {
+  "total": 117,
+  "additions": 117,
+  "deletions": 0
+ },
+ "files_total": 1,
+ "files": [
+  {
+   "filename": "analysis/small-context-runs-archive.md",
+   "status": "added",
+   "additions": 117,
+   "deletions": 0
+  }
+ ]
+}
