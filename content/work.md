@@ -3,6 +3,7 @@ title: Work
 work: true
 description: Research engineer working on technical AI assurance — verifiable inference, model evaluations, systems and cryptography.
 history:
+  - date: "2026-09-24"
   - date: "2026-09-23"
   - date: "2026-09-05"
   - date: "2026-09-03"
@@ -72,6 +73,7 @@ publication.
 ::: {.work-entry-links}
 [Merged pull requests](https://github.com/JamesPetrie/VerInf/pulls?q=is%3Apr+author%3Alevineuwirth) ·
 [Weight-split branch](https://github.com/JamesPetrie/VerInf/tree/weight-split-model) ·
+[Pull request 21](https://github.com/JamesPetrie/VerInf/pull/21) ·
 [Upstream repository](https://github.com/JamesPetrie/VerInf) ·
 [MARS](https://caish.org/mars)
 :::
@@ -151,12 +153,12 @@ Research engineering · manuscript under review
 :::
 
 Comorbidity indices compress a patient's diagnosis history into a single
-weighted score, discarding both order and interaction. This work learns a
+weighted score, discarding the interactions between diagnoses. This work learns a
 permutation-invariant representation over ICD-10-CM diagnosis-code sets and
 predicts 30-day unplanned readmission and 30-day post-discharge mortality,
-trained on 113M+ adult hospitalizations from the Nationwide Readmissions
-Database. On the temporal test split it reaches 0.750 AUROC for readmission
-against 0.655 for the Charlson index. The calculator is deployed.
+built on 113M+ adult hospitalizations from the Nationwide Readmissions
+Database. Trained on 2016–2020 and tested on 2021–2022, it reaches 0.750 AUROC
+for readmission against 0.655 for the Charlson index. The calculator is deployed.
 
 ::: {.work-limit}
 **Status.** Under review at *JAMIA*; results are unrefereed.
@@ -188,7 +190,7 @@ untrusted?
 ### Systems and performance
 
 - [pmacs](https://github.com/levineuwirth/pmacs) — Rust-cored, Lua-scripted editor
-- [kyber-simd-profiling](https://github.com/levineuwirth/kyber-simd-profiling) — SIMD post-quantum cryptography across AVX2, ARM NEON-SVE, and RISC-V V, with hardware counters and RAPL energy
+- [where-simd-helps](https://git.levineuwirth.org/neuwirth/where-simd-helps) — where hand-written AVX2 beats the compiler in ML-KEM, with a reproducible artifact; ARM, RISC-V, and energy next
 - [LeVCS](https://github.com/levineuwirth/LeVCS) — federated version control with signed authority chains
 - [arcana](https://github.com/levineuwirth/arcana) — Magic: The Gathering rules engine, built as a substrate for reinforcement-learning research
 - Weenix — Unix kernel

@@ -20,6 +20,8 @@ scope: broad
 novelty: moderate
 practicality: moderate
 history:
+  - date: "2026-09-24"
+    note: "Verification section updated for the enrollment-identity anchor and the index-bound Merkle opening in pull request 21."
   - date: "2026-09-22"
     note: "Rewritten to cover the proof guarantee, contribution history, and current profiling and scale-out work."
   - date: "2026-08-31"
@@ -161,6 +163,10 @@ Authenticating a projection against a root supplied by the prover does not estab
 
 The same review added bridge geometry and opening-count checks and refused bridge verification on the legacy file-seed path. In the imported sumcheck implementation, I also fixed missing checks on the number of rounds and the factor domains: the verifier must enforce the transcript length required by the statement, rather than merely iterating over whatever rounds it receives.[^sumcheck]
 
+A later review, before the branch was proposed for merge, went further on two points. The enrollment root alone was not enough: it did not fix where the enrolled weights end and the masks begin. The trusted anchor is now the enrollment's identity, a versioned digest of the root, the manifest, the geometry, the claims' row layout, and the padding rule, encoded identically by the Python and Rust verifiers.[^enrollment-identity]
+
+The second gap was in the main proof, not only the bridge. The verifier checked each opened column's Merkle path by walking the direction bits the proof supplied rather than deriving them from the challenged index, so a valid path for a different column could answer a query. The verifiers now derive the path from the queried index, require the tree's exact depth, and check that the index is in range. The fix applies to `main` as well.[^index-binding]
+
 These changes are distinct from the verifier-transparent weight split. They modify verification boundaries and need their own review and negative tests. They illustrate why a system can have correct arithmetic checks and still authenticate the wrong statement or accept an inadequately formed argument.
 
 ## Current state and the next questions
@@ -201,3 +207,7 @@ The larger assurance question remains open. A proof must be about an approved co
 [^bridge-policy]: The [policy repair](https://github.com/JamesPetrie/VerInf/commit/3c47d54) requires separate external approval of the ordinary dense-weight root and the expert-weight enrollment root. Checking that the proof is consistent with its own declared roots is insufficient.
 
 [^sumcheck]: The [sumcheck repair](https://github.com/JamesPetrie/VerInf/commit/f426f97) enforces the expected number of rounds and the factor domains, with negative tests for malformed arguments.
+
+[^enrollment-identity]: The [identity anchor](https://github.com/JamesPetrie/VerInf/commit/fd92b5e) and [its exact encoding](https://github.com/JamesPetrie/VerInf/commit/830d6fd) are described in [pull request 21](https://github.com/JamesPetrie/VerInf/pull/21).
+
+[^index-binding]: The [index-bound opening](https://github.com/JamesPetrie/VerInf/commit/84dcc67) and the bridge's [counterpart for enrollment openings](https://github.com/JamesPetrie/VerInf/commit/76ce501) are listed under the fixes that also apply to `main` in [pull request 21](https://github.com/JamesPetrie/VerInf/pull/21).
