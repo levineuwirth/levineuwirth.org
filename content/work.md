@@ -3,6 +3,7 @@ title: Work
 work: true
 description: Research engineer working on technical AI assurance — verifiable inference, model evaluations, systems and cryptography.
 history:
+  - date: "2026-09-23"
   - date: "2026-09-05"
   - date: "2026-09-03"
   - date: "2026-08-29"
@@ -21,8 +22,9 @@ not be trusted. That question spans cryptography, systems, evaluations, and
 mathematics, which is roughly the shape of my background.
 
 I am a MARS V fellow with the [Cambridge AI Safety Hub](https://caish.org/mars),
-mentored by James Petrie (Future of Life Institute). I previously studied
-computer science and mathematics at Brown.
+mentored by James Petrie (Future of Life Institute), and a graduate student in
+computer science and engineering at DTU. I previously studied computer science
+and mathematics at Brown.
 
 **Open to full-time research and research-engineering positions worldwide.**
 :::
@@ -47,20 +49,29 @@ settle it are written by the party under suspicion.
 [VerInf](https://github.com/JamesPetrie/VerInf), a Future of Life Institute project led by James Petrie, proves
 LLM inference in zero knowledge with no trusted setup by bounding the
 *unexplained information* in an output stream rather than re-running the
-computation. I have contributed the dry-run profiler (manifest contract, cost model,
-execution DAG, partition scorecard) and an RMSNorm cost-model correction. My current
-work is on proving multi-GPU, which is the ceiling on model scale, context
-length, and mixture-of-experts breadth.
+computation. I built the dry-run profiler (manifest contract, cost model,
+execution DAG, partition scorecard) and validated it against an archived
+full-scale Llama 4 Maverick run and live B200 calibration; the measurements also
+corrected my own cross-shard communication model, from roughly 950 GB to
+2.4–2.8 GB per sweep. Since then I have implemented a verifier-transparent weight
+split, whose partitioned proofs are byte-identical to ordinary ones, built and
+measured weight caches, and integrated a collaborator's expert-weight bridge. That
+integration exposed two verification gaps, which I fixed: an expert-weight root
+the verifier never compared against policy, and a sumcheck verifier that did not
+enforce its round count. My current work is on multi-GPU proving, which is the
+ceiling on model scale, context length, and mixture-of-experts breadth.
 
 ::: {.work-limit}
-**Ongoing.** The profiler and calibration tooling are merged upstream; the
-multi-GPU figures are projections from a validated cost model rather than
-measurements at that scale. Technical write-up expected Q4 2026, for review and
+**Ongoing.** The profiler, calibration tooling, and accounting corrections are
+merged upstream; the weight split, caches, and bridge hardening are on the
+public `weight-split-model` branch. The multi-GPU figures are projections from a
+validated cost model rather than measurements at that scale. Technical write-up expected Q4 2026, for review and
 publication.
 :::
 
 ::: {.work-entry-links}
 [Merged pull requests](https://github.com/JamesPetrie/VerInf/pulls?q=is%3Apr+author%3Alevineuwirth) ·
+[Weight-split branch](https://github.com/JamesPetrie/VerInf/tree/weight-split-model) ·
 [Upstream repository](https://github.com/JamesPetrie/VerInf) ·
 [MARS](https://caish.org/mars)
 :::

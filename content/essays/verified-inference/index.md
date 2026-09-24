@@ -165,7 +165,7 @@ These changes are distinct from the verifier-transparent weight split. They modi
 
 ## Current state and the next questions
 
-The profiler, calibration tooling, and earlier accounting corrections are merged upstream. The weight-split decomposition, caches, bridge integration and hardening, and later measurement archives are on the public [weight-split-model branch](https://github.com/JamesPetrie/VerInf/tree/weight-split-model). The latest external-weight profiler corrections are committed locally and awaiting publication. Implementation throughout this project is agent-assisted; I own the direction, experiments, review, and validation of the work described here as mine.
+The profiler, calibration tooling, and earlier accounting corrections are merged upstream. The weight-split decomposition, caches, bridge integration and hardening, and later measurement archives are on the public [weight-split-model branch](https://github.com/JamesPetrie/VerInf/tree/weight-split-model). The latest external-weight profiler corrections are published there too, and [pull request 21](https://github.com/JamesPetrie/VerInf/pull/21) proposes the branch for merge into `main`. Implementation throughout this project is agent-assisted; I own the direction, experiments, review, and validation of the work described here as mine.
 
 The immediate questions follow the current implementation:
 
