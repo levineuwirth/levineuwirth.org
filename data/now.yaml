@@ -42,10 +42,10 @@ entries:
   - title: "VerInf: Verified Inference and Scale-Out (MARS V)"
     section: research
     status: building
-    updated: 2026-09-22
+    updated: 2026-09-24
     priority: 2
     link: /essays/verified-inference/
-    note: "I own profiling and scale-out for VerInf, which develops proofs of language-model inference that mutually distrustful parties can check on their own hardware. The profiler and calibration tools are merged upstream. Current work spans multi-GPU proving, optimization guided by H200/B200 experiments, and integration and verifier hardening of a new expert-weight authentication mechanism. Weight splitting has passed proof-byte equivalence and independent Rust verification on one GPU; multi-device execution remains in progress. The experimental weight bridge's intended privacy protection and its profiler cost model remain unfinished. I work on this as a MARS V fellow, mentored by James Petrie (FLI)."
+    note: "I own profiling and scale-out for VerInf, which develops proofs of language-model inference that mutually distrustful parties can check on their own hardware. The profiler and calibration tools are merged upstream; the weight split, caches, bridge integration, and a verifier correctness pass are proposed for merge in pull request 21. Weight splitting has passed proof-byte equivalence and independent Rust verification on one GPU; multi-device execution remains in progress. The experimental weight bridge's intended privacy protection and its profiler cost model remain unfinished. I work on this as a MARS V fellow, mentored by James Petrie (FLI)."
 
   - title: "Proof Broker"
     section: research
