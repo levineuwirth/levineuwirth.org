@@ -10,6 +10,8 @@ module Contexts
     , compositionCtx
     , declaresScore
     , scorePageList
+    , durationPrimes
+    , svgAspect
     , photographyCtx
     , photoVariantName
     , contentKindField
@@ -1301,6 +1303,9 @@ data Movement = Movement
     , movPage     :: Int
     , movDuration :: String
     , movAudio    :: Maybe String
+      -- | A tempo or character marking shown beside the movement's name
+      --   (@♩ = 80@, @Molto rubato@) — optional, for the landing page.
+    , movTempo    :: Maybe String
       -- | Offset of this movement into the composition's full @recording@,
       --   normalised to whole seconds. Parsed and carried through the
       --   context now so the schema is settled before any composition
@@ -1366,6 +1371,7 @@ parseMovementsWithWarnings meta =
         <*> (getInt    =<< KM.lookup "page"     o)
         <*> (getString =<< KM.lookup "duration" o)
         <*> pure (getString =<< KM.lookup "audio" o)
+        <*> pure (getString =<< KM.lookup "tempo" o)
 
     getString (String t) = Just (T.unpack t)
     getString _          = Nothing
@@ -1396,6 +1402,27 @@ parseTimecode s =
 
 parseMovements :: Metadata -> [Movement]
 parseMovements = fst . parseMovementsWithWarnings
+
+-- | Split a movement name into its roman numeral and the rest, so the
+--   landing page can hang the numerals in their own column:
+--   @"III. Sempre molto espressivo"@ → @("III.", "Sempre molto espressivo")@.
+--   A name with no leading numeral is all title.
+splitNumeral :: String -> (String, String)
+splitNumeral name =
+    let (num, rest) = span (`elem` ("IVXLC" :: String)) name
+    in  case rest of
+            '.' : rest' | not (null num) -> (num ++ ".", trim rest')
+            _ | not (null num), all isSpace (take 1 rest) -> (num ++ ".", trim rest)
+            _ -> ("", name)
+
+-- | Straight quotes in a duration become the primes they stand for:
+--   @ca. 35'@ → @ca. 35′@, @4'30"@ → @4′30″@.
+durationPrimes :: String -> String
+durationPrimes = map prime
+  where
+    prime '\'' = '′'
+    prime '"'  = '″'
+    prime c    = c
 
 -- | Extract the composition slug from an item's identifier.
 --   "content/music/symphonic-dances/index.md" → "symphonic-dances"
@@ -1534,6 +1561,10 @@ compositionCtx :: Context String
 compositionCtx =
     constField "composition" "true"
     <> slugField
+    <> durationField
+    <> scoringField
+    <> scoreStackField
+    <> hasNotesField
     <> scoreUrlField
     <> hasScoreField
     <> scorePageCountField
@@ -1546,6 +1577,38 @@ compositionCtx =
     <> essayCtx
   where
     slugField = field "slug" (return . compSlug)
+
+    -- Authors type durations with the keyboard's straight quotes; the
+    -- page sets them as the minute and second primes they stand for.
+    durationField = field "duration" $ \item -> do
+        meta <- getMetadata (itemIdentifier item)
+        maybe (noResult "no duration") (return . durationPrimes)
+              (lookupString "duration" meta)
+
+    -- The full scoring, one line per instrument or section, as a score's
+    -- inside cover lists it. Optional: `instrumentation` stays the short
+    -- form the catalog and the title block use.
+    scoringField = listFieldWith "scoring" (field "scoring-line" (return . itemBody)) $ \item -> do
+        meta <- getMetadata (itemIdentifier item)
+        case lookupStringList "scoring" meta of
+            Just ls@(_ : _) ->
+                return [ Item (fromFilePath ("scoring" ++ show i)) l
+                       | (i, l) <- zip [1 :: Int ..] ls ]
+            _ -> noResult "no scoring"
+
+    -- Programme notes are optional, and an empty body still renders as
+    -- a present (empty) @$body$@, so the divider above the notes would
+    -- otherwise stand over nothing.
+    hasNotesField = field "has-notes" $ \item ->
+        if all isSpace (itemBody item) then noResult "no notes" else return "true"
+
+    -- How many sheets show beneath the frontispiece: a sonata is a thin
+    -- sheaf, a symphony a thick one. Logarithmic, so the stack stays a
+    -- detail rather than a bar chart.
+    scoreStackField = field "score-stack" $ \item -> do
+        n <- length <$> scorePageList item
+        if n == 0 then noResult "no score pages" else return . show $
+            (if n < 2 then 0 else if n < 16 then 1 else if n < 64 then 2 else 3 :: Int)
 
     scoreUrlField = field "score-url" $ \item ->
         return $ "/music/" ++ compSlug item ++ "/score/"
@@ -1656,8 +1719,18 @@ compositionCtx =
       where
         movCtx =
             field "movement-name"        (return . movName     . mvOf)
+            <> field "movement-numeral"
+                (\i -> case fst (splitNumeral (movName (mvOf i))) of
+                          "" -> noResult "no numeral"
+                          n  -> return n)
+            <> field "movement-title"
+                (\i -> case snd (splitNumeral (movName (mvOf i))) of
+                          "" -> noResult "no title"
+                          t  -> return t)
+            <> field "movement-tempo"
+                (\i -> maybe (noResult "no tempo") return (movTempo (mvOf i)))
             <> field "movement-page"     (return . show . movPage . mvOf)
-            <> field "movement-duration" (return . movDuration . mvOf)
+            <> field "movement-duration" (return . durationPrimes . movDuration . mvOf)
             <> field "movement-time"
                 (\i -> maybe (noResult "no time offset") (return . show)
                              (movTime (mvOf i)))
