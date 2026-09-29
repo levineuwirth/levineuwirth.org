@@ -14,7 +14,7 @@ module Catalog
     ) where
 
 import Data.Char       (isSpace, toLower)
-import Data.List       (groupBy, isPrefixOf, sortBy, stripPrefix)
+import Data.List       (groupBy, intercalate, isPrefixOf, sortBy, stripPrefix)
 import Data.Maybe      (fromMaybe, listToMaybe)
 import Data.Ord        (Down (..), comparing)
 import Data.Aeson      (Value (..))
@@ -40,6 +40,7 @@ data CatalogEntry = CatalogEntry
     , ceCategory        :: String      -- defaults to "other"
     , ceFeatured        :: Bool
     , ceHasRecording    :: Bool
+    , ceWithheld        :: [String]       -- movements listed with a status
     , cePages           :: Int
     , ceFirstPage       :: Maybe String   -- absolute URL of page 1
     , ceAspect          :: Maybe String   -- page 1's width / height
@@ -91,6 +92,18 @@ hasRecordingMeta meta =
     movHasAudio (Object o) = KM.member "audio" o
     movHasAudio _          = False
 
+-- | The movements a partial work lists but does not publish — those with
+--   a @status@ — as the names the catalogue will print ("III", not "III.").
+withheldMovements :: Metadata -> [String]
+withheldMovements meta =
+    case KM.lookup "movements" meta of
+        Just (Array v) ->
+            [ reverse (dropWhile (== '.') (reverse (T.unpack n)))
+            | Object o <- V.toList v
+            , KM.member "status" o
+            , Just (String n) <- [KM.lookup "name" o] ]
+        _ -> []
+
 -- | A scalar that YAML may hand over as a number or a string:
 --   @year: 2019@ and @opus: '17'@ alike.
 parseScalar :: String -> Metadata -> Maybe String
@@ -134,6 +147,7 @@ parseCatalogEntry item = do
                 , ceCategory        = cat
                 , ceFeatured        = isFeatured meta
                 , ceHasRecording    = hasRecordingMeta meta
+                , ceWithheld        = withheldMovements meta
                 , cePages           = length pages
                 , ceFirstPage       = (\p -> slugDir ++ "/" ++ p) <$> listToMaybe pages
                 , ceAspect          = aspect
@@ -281,12 +295,21 @@ renderEntry e = concat
     ,     "</span>"
     ,     "<span class=\"cat-work-forces\">", escText (forcesText e)
     ,       if ceHasRecording e then "<span class=\"cat-work-rec\">with recording</span>" else ""
+    ,       withheldNote (ceWithheld e)
     ,     "</span>"
     ,   "</a>"
     , "</li>"
     ]
   where
     dropCa d = fromMaybe d (stripPrefix "ca. " d)
+    -- A partial work says so where its duration would otherwise read as
+    -- the whole: "III in revision", "III and IV in revision".
+    withheldNote [] = ""
+    withheldNote ms = "<span class=\"cat-work-note\">" ++ escText (names ms)
+                      ++ " in revision</span>"
+    names [m]    = m
+    names [a, b] = a ++ " and " ++ b
+    names ms     = intercalate ", " (init ms) ++ " and " ++ last ms
 
 renderCategorySection :: String -> [CatalogEntry] -> String
 renderCategorySection cat entries = concat

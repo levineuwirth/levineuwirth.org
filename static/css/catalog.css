@@ -135,15 +135,19 @@
 .shelf-spine::before { top: 0.5rem; }
 .shelf-spine::after  { bottom: 2rem; }
 
+/* A long title turns a second line down the spine where the volume is
+   thick enough to carry one; only the slimmest spines cut a title short. */
 .shelf-spine-title {
     max-height: calc(var(--shelf-height) - 4.6rem);
+    max-width: calc(100% - 0.5rem);
     overflow: hidden;
     font-family: var(--font-serif);
     font-size: var(--spine-type);
-    line-height: 1.1;
+    line-height: 1.15;
     letter-spacing: 0.04em;
-    white-space: nowrap;
+    text-align: center;
     text-overflow: ellipsis;
+    text-wrap: balance;
     writing-mode: vertical-rl;
 }
 
@@ -363,7 +367,8 @@ a.cat-work-row:visited {
     color: var(--text-muted);
 }
 
-.cat-work-rec {
+.cat-work-rec,
+.cat-work-note {
     margin-left: 0.6em;
     font-size: 0.9em;
     font-style: normal;
