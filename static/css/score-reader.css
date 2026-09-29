@@ -69,6 +69,7 @@
     align-items: center;
     gap: 0.75rem;
     flex: 0 0 auto;
+    margin-left: auto;   /* stays right when there is no movement nav */
 }
 
 .score-reader-back {
@@ -424,86 +425,31 @@
     }
 }
 
-/* ------------------------------------------------------------------
-   Composition landing page additions (metadata block)
------------------------------------------------------------------- */
-
-.composition-details {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0 1.5rem;
+/* A reader routed for a score whose pages are absent from this build
+   (templates/score-reader.html). */
+.score-page-missing {
+    max-width: 28rem;
+    margin: 20vh auto 0;
+    padding: 0 var(--score-gutter);
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    line-height: 1.6;
+    text-align: center;
     color: var(--text-muted);
-    font-family: var(--font-sans);
-    font-size: 0.875rem;
 }
 
-.comp-detail { white-space: nowrap; }
-
-.composition-actions {
-    display: flex;
-    gap: 0.75rem;
-    align-items: center;
-}
-
-.comp-btn {
-    display: inline-block;
-    padding: 0.35em 0.9em;
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    font-family: var(--font-sans);
-    font-size: 0.825rem;
-    text-decoration: none;
+/* The reader does not load typography.css, so the link takes the site's
+   link treatment here rather than the browser's blue. */
+.score-page-missing a {
+    display: block;
+    margin-top: 0.75rem;
     color: var(--text);
-    background: var(--bg);
-    transition: background 0.15s, border-color 0.15s;
-}
-.comp-btn:hover {
-    background: var(--bg-subtle);
-    border-color: var(--text-muted);
-}
-.comp-btn--secondary { color: var(--text-muted); }
-
-/* ------------------------------------------------------------------
-   Movement list
------------------------------------------------------------------- */
-
-.composition-movements {
-    border-top: 1px solid var(--border);
-    margin: 1.5rem 0;
-    padding-top: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    text-decoration: underline;
+    text-decoration-color: var(--border-muted);
+    text-decoration-thickness: 0.1em;
+    text-underline-offset: 0.2em;
 }
 
-.comp-movement-header {
-    display: flex;
-    align-items: baseline;
-    gap: 0.75rem;
-    font-family: var(--font-sans);
-    font-size: 0.875rem;
-}
-
-.comp-movement-name {
-    font-weight: 600;
-    color: var(--text);
-}
-
-.comp-movement-duration {
-    color: var(--text-muted);
-    font-size: 0.8rem;
-}
-
-.comp-movement-score {
-    color: var(--text-muted);
-    font-size: 0.8rem;
-    text-decoration: none;
-    margin-left: auto;
-}
-.comp-movement-score:hover { color: var(--text); }
-
-.movement-audio {
-    width: 100%;
-    margin-top: 0.4rem;
-    accent-color: var(--text-muted);
+.score-page-missing a:hover {
+    text-decoration-color: var(--text);
 }

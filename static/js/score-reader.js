@@ -61,6 +61,14 @@
         Array.prototype.forEach.call(svg.querySelectorAll('script'), function (n) {
             n.parentNode.removeChild(n);
         });
+        /* The root <title> is a hover tooltip once inlined, and MuseScore
+           fills it with the source filename — "s6 (1)" over every page.
+           The page's accessible name lives on #score-page, not here. */
+        Array.prototype.slice.call(svg.children).forEach(function (n) {
+            if (n.localName === 'title' || n.localName === 'desc') {
+                svg.removeChild(n);
+            }
+        });
         var walker = document.createTreeWalker(svg, NodeFilter.SHOW_ELEMENT);
         var el = svg;
         while (el) {
