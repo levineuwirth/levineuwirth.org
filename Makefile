@@ -417,6 +417,13 @@ deploy-preflight:
 	   rm -f data/last-deploy-dirty.txt; \
 	   echo "deploy: build inputs are clean at $$(git rev-parse --short HEAD)"; \
 	 fi
+	# Score pages are ignored by git: a fresh checkout builds without them,
+	# but deploying it would remove the published scores.
+	@if [ -x .venv/bin/python3 ]; then \
+	  .venv/bin/python3 tools/music-import.py check; \
+	else \
+	  python3 tools/music-import.py check; \
+	fi
 
 deploy:
 	@$(WITH_LOCK) $(MAKE) --no-print-directory deploy-locked
