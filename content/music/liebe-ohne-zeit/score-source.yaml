@@ -1,0 +1,8 @@
+# Written by tools/music-import.py. The score pages in scores/ are
+# not versioned; this records how to regenerate them:
+#   tools/music-import.py refresh liebe-ohne-zeit
+source: fermata_26.mscz
+engraver: MuseScore 4.7.5
+pages: 14
+pdf: false
+exported: '2026-09-29T16:59:12'
