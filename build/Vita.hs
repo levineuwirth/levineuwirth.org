@@ -368,7 +368,7 @@ dateRange s me = tex s ++ maybe "" (\e -> " &ndash; " ++ tex e) me
 --   date is not prose.
 --
 --   Dates stay in a @span@ rather than a @time@ element on purpose. Half of
---   them are "Fall 2024", "expected 2028", "Present" — no valid @datetime@
+--   them are "Fall 2024", "September 2026", "Present" — no valid @datetime@
 --   value exists for those, and a @time@ without one is worse than no @time@.
 headerRow :: String -> String -> String
 headerRow titleHtml dates = concat

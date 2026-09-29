@@ -27,7 +27,7 @@ The formal record. For a less formal, more detailed introduction to who I am, se
 - **[Resume (PDF)](/resume.pdf)** — one page, engineering-facing.
 - **[Project index](/cv/projects/)** — engineering artifacts in depth, with links to writeups and source.
 
-The sections below are generated from the same data as the two PDFs, so they cannot fall out of step with them.
+The record sections below and both PDFs draw from the same YAML records, with separate visibility choices for each format.
 
 ## Research Interests
 

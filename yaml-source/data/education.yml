@@ -3,13 +3,13 @@ education:
   - id: dtu-msc-cse
     institution: Technical University of Denmark (DTU)
     location: Kongens Lyngby, Denmark
-    degree: MSc in Computer Science and Engineering
+    degree: Graduate study, Computer Science and Engineering
     start: September 2026
-    end: expected 2028
+    end: Present
     notes_cv: null
     notes_resume: null
-    # Retained as canonical history, but omitted from the public academic CV
-    # and Vita because the degree is no longer expected to be completed.
+    # Current enrollment remains visible on the résumé, but is omitted from
+    # the academic CV and Vita because degree completion is not expected.
     cv_visible: false
     web_visible: false
     resume_visible: true

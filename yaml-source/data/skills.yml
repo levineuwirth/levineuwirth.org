@@ -86,6 +86,20 @@ skills:
     cv_visible: false
     resume_visible: false
 
+  formal-tooling:
+    label: Formal methods and tooling
+    # Proof Broker's shared OCaml SDK, prover bridges, and search backends;
+    # hidden from the legacy documents and selected only by relevant variants.
+    items:
+      - Lean 4
+      - Rocq
+      - OCaml
+      - SMT (cvc4, cvc5, Z3)
+      - Vampire
+      - Zero-knowledge proofs
+    cv_visible: false
+    resume_visible: false
+
 # Human languages — separate section on CV, folded into Skills on résumé.
 languages:
   - id: english
