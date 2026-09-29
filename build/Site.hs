@@ -32,7 +32,7 @@ import Compilers  (essayCompiler, postCompiler, pageCompiler, poetryCompiler, fi
                    compositionCompiler, sidecarCompiler)
 import Catalog      (musicCatalogCtx)
 import Commonplace  (commonplaceCtx)
-import Now          (nowCtx)
+import Now          (nowCtx, nowLastUpdated)
 import Vita         (vitaCtx, projectsCtx)
 import Contexts   (siteCtx, essayCtx, postCtx, pageCtx, poetryCtx, fictionCtx, compositionCtx,
                    contentKindField, declaresScore, recentFirstByDisplay,
@@ -1635,9 +1635,14 @@ sitemapEntry ident = do
             -- rather than repeating its creation date to crawlers.
             -- 'identifierDisplayUTC' falls back to the creation date when
             -- there is no `revised:` entry.
-            mDay <- fmap Just (formatTime defaultTimeLocale "%Y-%m-%d"
-                                <$> identifierDisplayUTC ident)
-                        `catchError` const (return Nothing)
+            mDay <- if ident == fromFilePath "content/current.md"
+                -- Current's content lives in now.yaml, which also owns the
+                -- date shown in its masthead. Loading it tracks the sitemap
+                -- dependency when that date changes.
+                then Just <$> nowLastUpdated
+                else fmap Just (formatTime defaultTimeLocale "%Y-%m-%d"
+                                    <$> identifierDisplayUTC ident)
+                         `catchError` const (return Nothing)
             return (Just (canonicalUrlPath r, mDay))
 
 -- | True for routes that name an HTML document. Used to keep @map.json@

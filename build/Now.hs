@@ -6,6 +6,7 @@
 -- ("4 days ago") is computed at build time from getCurrentTime.
 module Now
     ( nowCtx
+    , nowLastUpdated
     ) where
 
 import Data.Aeson         (FromJSON (..), withObject, (.:), (.:?), (.!=))
@@ -293,6 +294,23 @@ relativeTime today iso =
 -- Load
 -- ---------------------------------------------------------------------------
 
+-- The masthead describes the whole feed, so it cannot predate a dated item.
+-- Check at the source boundary rather than relying on the editor to remember
+-- to bump a second field whenever an entry moves.
+validateNowDoc :: NowDoc -> Either String NowDoc
+validateNowDoc doc = do
+    stamp <- parseDate "last-updated" (nLastUpdated doc)
+    entryDates <- traverse (\e -> parseDate ("updated for " ++ neTitle e) (neUpdated e)) (nEntries doc)
+    shippedDates <- traverse (\s -> parseDate ("completed for " ++ nsTitle s) (nsCompleted s)) (nShipped doc)
+    if any (> stamp) (entryDates ++ shippedDates)
+        then Left "last-updated predates an entry's updated or completed date"
+        else Right doc
+  where
+    parseDate label iso =
+        case parseTimeM True defaultTimeLocale "%Y-%m-%d" iso :: Maybe Day of
+            Nothing -> Left (label ++ " is not a valid YYYY-MM-DD date: " ++ iso)
+            Just d  -> Right d
+
 -- | UTF-8 round-trip String → ByteString. Hakyll's @getResourceBody@
 --   hands us a 'String' (Unicode codepoints); the yaml library wants
 --   a UTF-8 'ByteString'. 'Data.ByteString.Char8.pack' would truncate
@@ -303,16 +321,19 @@ loadNow = do
     rawItem <- load (fromFilePath "data/now.yaml") :: Compiler (Item String)
     case Y.decodeEither' (TE.encodeUtf8 (T.pack (itemBody rawItem))) of
         Left  err -> fail ("now.yaml: " ++ show err)
-        Right doc -> return doc
+        Right doc -> either (fail . ("now.yaml: " ++)) return (validateNowDoc doc)
 
 -- ---------------------------------------------------------------------------
 -- Context
 -- ---------------------------------------------------------------------------
 
+nowLastUpdated :: Compiler String
+nowLastUpdated = nLastUpdated <$> loadNow
+
 nowCtx :: Context String
 nowCtx =
     constField "now" "true"
-    <> field "now-last-updated" (\_ -> nLastUpdated <$> loadNow)
+    <> field "now-last-updated" (\_ -> nowLastUpdated)
     <> field "now-last-updated-display" (\_ -> formatWriterly . nLastUpdated <$> loadNow)
     <> field "now-last-updated-relative" (\_ -> do
         doc  <- loadNow

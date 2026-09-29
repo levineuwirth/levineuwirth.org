@@ -36,7 +36,7 @@
 # Sorted newest-first at render time. Curate by hand — items don't
 # auto-prune. Move things off the list when they stop earning the slot.
 
-last-updated: 2026-09-22
+last-updated: 2026-09-29
 
 entries:
   - title: "VerInf: Verified Inference and Scale-Out (MARS V)"
@@ -50,10 +50,10 @@ entries:
   - title: "Proof Broker"
     section: research
     status: building
-    updated: 2026-09-22
+    updated: 2026-09-28
     priority: 1
     link: /essays/proof-broker/
-    note: "Proof Broker routes Lean 4 and Rocq goals to untrusted solvers and LLMs, checking evidence before kernel-verified closure. R4 closed 19/19 targeted VerInf obligations; R5 consolidated spec v1.1; exact-coefficient recovery now reconstructs four VerInf carry goals in Lean term mode. R6 has kernel-validated deterministic episodes for one real and one synthetic task, and frozen a 15-site VerInf census. Current work audits that census and checks which sites the broker can represent before broader evaluation."
+    note: "Proof Broker routes Lean 4 and Rocq goals to untrusted solvers and LLMs, checking evidence before kernel-verified closure. R4 closed 19/19 targeted VerInf obligations; R5 consolidated spec v1.1. R6 has frozen a 15-site VerInf call-site census, checked representability, and run kernel-validated deterministic baselines. An audited learned-proposal comparison is in progress; the evidence remains bounded to these sites and the reported runs."
 
   - title: "Timed Guarding in Degree-Reduction Clouds"
     section: research
