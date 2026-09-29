@@ -120,6 +120,11 @@ yaml-source/output/
 # Application/company-specific audience metadata stays local. The resolver
 # discovers YAML here, but Git does not track or publish it by default.
 yaml-source/variants/private/
+# Variants stay local until deliberately added: an untracked variant is
+# work in progress or application-specific, and deploy-preflight refuses
+# untracked files under yaml-source/. Variants already tracked are
+# unaffected; publish a new one with `git add -f`.
+yaml-source/variants/*.yml
 yaml-source/data/*~
 # Handover bundle (archived locally for reference; not part of the site).
 levineuwirth_handover.zip
