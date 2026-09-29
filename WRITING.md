@@ -201,21 +201,28 @@ Compositions live in their own directory. See the Music section for full details
 ```yaml
 ---
 title: "Symphony No. 1"
-date: 2026-01-15
+date: 2026-01-15                  # when the page was published — required (feeds)
+completed: "30 December 2025"     # optional; when the work was finished
 abstract: >
   A four-movement work for large orchestra.
 tags: [music]
-instrumentation: "orchestra (2222/4231/timp+2perc/str)"
+year: 2026                        # shown in the title block and the catalog
+composed: "March – June 2026"     # optional; replaces the year in the title block
+opus: "17"                        # optional; set under the title as "op. 17"
+instrumentation: "orchestra"      # short form; the title block prints "for orchestra"
 duration: "ca. 32'"
 premiere: "2026-05-20"
 commissioned-by: "—"              # optional
+dedication: "to …"                # optional
+text: "Alfred, Lord Tennyson"      # optional; the author of a vocal work's words
 recording: audio/full-recording.mp3  # optional; full-piece audio player
 pdf: scores/symphony.pdf          # optional; download link
 category: orchestral              # orchestral | chamber | solo | vocal | choral | electronic
-featured: true                    # optional; appears in Featured section of /music/
+featured: true                    # optional; stands face-out on the /music/ shelf
 score-dir: scores/                # every *.svg in here becomes a page, in order
 movements:                        # optional
   - name: "I. Allegro"
+    tempo: "♩ = 132"              # optional; set in italic beside the name
     page: 1                       # 1-indexed page in the reader (see below)
     duration: "10'"
     time: "0:00"                  # optional; offset into `recording`
@@ -224,8 +231,30 @@ movements:                        # optional
     page: 18
     duration: "12'"
     time: "10:24"
+scoring:                          # optional; one line per family, as a programme lists it
+  - "2 flutes (2nd doubling piccolo), 2 oboes, 2 clarinets in B♭, 2 bassoons"
+  - "4 horns in F, 3 trumpets in B♭, 3 trombones, tuba"
+  - "timpani, percussion (2)"
+  - "strings"
 ---
 ```
+
+**The landing page** sets the score's first page beside a title block — title,
+"for" + `instrumentation`, composer, `year`, then duration, dedication,
+commission and premiere where given. The sheets drawn beneath the first page
+grow with the page count. Movements list as a programme does: the leading roman
+numeral of `name` hangs in its own column, `tempo` follows in italic, and a
+dotted leader runs to the duration. Programme notes are the body; `scoring`
+prints under them as the instrumentation. There is no table of contents.
+
+Durations are typed with the keyboard's quotes (`"10'"`, `"4'30\""`) and set
+as primes (10′, 4′30″) on the page and in the catalog.
+
+**Tempo marks** render in Leland Text, MuseScore's own text font, whatever the
+reader's system has installed: type `♩` or `♪`, paste a Unicode note value
+(𝅗𝅥, 𝅘𝅥), or copy the tempo text straight out of MuseScore, whose note glyphs
+are in the SMuFL private-use range. The font is built by
+`tools/build-notes-font.py` and is a kilobyte.
 
 **Declaring the score.** Use either `score-dir` or `score-pages`; the reader
 page at `/music/<slug>/score/` is generated only when one of them is present.
@@ -784,14 +813,51 @@ Each composition lives in its own subdirectory:
 
 ```
 content/music/symphony-no-1/
-├── index.md            ← frontmatter + program notes prose
-├── scores/
-│   ├── page-01.svg     ← one file per score page
-│   └── symphony.pdf    ← optional PDF download
+├── index.md            ← frontmatter + programme notes (committed)
+├── score-source.yaml   ← where the pages come from (committed)
+├── scores/             ← exported pages, NOT committed
+│   ├── page-1.svg      ← one file per score page
+│   └── symphony-no-1.pdf  ← optional PDF download
+├── excerpts/           ← score fragments quoted in the notes (committed)
 └── audio/
     ├── full.mp3        ← optional full-piece recording
     └── movement-1.mp3  ← optional per-movement recordings
 ```
+
+**Importing a score.** From MuseScore, one command does the export:
+
+```bash
+tools/music-import.py import ~/Documents/Scores/s6_condensed.mscz symphony-no-6
+tools/music-import.py import <score.mscz> <slug> --pdf   # with a PDF download
+```
+
+It writes the pages into `scores/`, records the source file, MuseScore
+version and page count in `score-source.yaml`, and — for a new piece —
+scaffolds `index.md` with the title, year, duration, category and every
+movement (numeral, tempo, reader page, duration) read from the score.
+Movements are the score's sections, so put a section break between them.
+It cannot see divisi, so write `scoring:` yourself.
+
+**Score pages are not versioned** — the same policy as photography's
+delivery JPEGs (see `.gitignore`). The deploy carries them in `_site/`; a
+fresh clone runs `tools/music-import.py refresh` to regenerate every piece
+from `~/Documents/Scores` (`MUSIC_SCORES_DIR` overrides). `check` lists
+pieces whose pages are missing or whose source changed since the export.
+A build without the pages still succeeds — the landing page drops the
+frontispiece and the reader says the score is unavailable. `deploy-preflight`
+runs `check` and refuses missing pages or a page-count mismatch; run `refresh`
+before deploying from a fresh checkout. Missing or newer score sources are
+reported as advisories when the exported pages are present.
+
+A re-export is not a pure function of the source: a newer MuseScore can
+reflow the layout, and then every movement's `page:` is wrong. `refresh`
+therefore refuses a changed page count without `--force`, names the
+engraver change, and compares the new movement pages against `index.md`.
+
+**Hide empty staves** for an orchestral score (Format → Style → Score)
+before exporting. Symphony No. 6 went from 220 pages to 145, and a system
+of the six instruments actually playing is legible on a phone where
+twenty-six staves of mostly rests are not.
 
 **Turn LilyPond's point-and-click off before exporting.** It is on by
 default, and it wraps every notehead in an anchor holding the *absolute path
@@ -839,16 +905,18 @@ mode and `+`/`−` zoom from there, panning by ordinary scroll. Arrow keys,
 With scripting off, page 1 still renders at the right size — the build reads
 its dimensions and the stylesheet fits it without help.
 
-**Catalog indicators** — the `/music/` catalog auto-derives:
-- ◼ (score available): the composition resolves to at least one page
-- ♫ (recording available): `recording` key is present, or any movement has `audio`
+**The catalogue page (`/music/`)** opens with a shelf: every work as the
+spine of a bound score, oldest to newest, each spine as thick as its score has
+pages. One work stands face-out at the end of the row, showing its first page —
+the one marked `featured: true`, else the newest — and pointing at any spine
+turns that work face-out in its place. Below the shelf, the works are listed
+by genre, newest first: year, title and opus, a dotted leader to the duration,
+and the forces beneath.
 
-**Catalog grouping** — `category` controls which section the work appears in.
+**Catalogue grouping** — `category` sets the genre a work is listed under.
 Valid values: `orchestral`, `chamber`, `solo`, `vocal`, `choral`, `electronic`.
-Anything else appears under "Other". Omitting `category` defaults to "other".
-
-**Featured works** — set `featured: true` to also appear in the Featured section
-at the top of the catalog.
+Anything else appears under "Other"; omitting `category` defaults to "other".
+The shelf ignores genre: it is the chronological view.
 
 ---
 

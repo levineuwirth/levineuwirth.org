@@ -171,6 +171,17 @@ content/photography/**/*.jpg
 content/photography/**/*.jpeg
 content/photography/**/*.png
 
+# Composition score pages — the same policy as the photography delivery
+# images above, decided September 2026. They are exported from the
+# engraver's source (~/Documents/Scores) by tools/music-import.py: a
+# 145-page orchestral score is ~80 MB of SVG and ~9 MB in git, and every
+# re-export would add that again. Each piece's score-source.yaml is
+# committed and records how to regenerate them
+# (`tools/music-import.py refresh`); a fresh clone builds without them.
+# Excerpts quoted in the programme notes live in <slug>/excerpts/ and are
+# versioned like any other figure.
+content/music/*/scores/
+
 # Defense-in-depth — refuse to commit RAW or oversize originals, which were
 # never meant to be here even when the delivery JPEGs were. To intentionally
 # commit one of these formats (rare), use `git add -f path/to/file`.
