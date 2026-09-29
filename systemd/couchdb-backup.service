@@ -1,0 +1,32 @@
+# Nightly CouchDB backup (logical dump of each LiveSync database) on the
+# VPS. System unit, mirrors forgejo-backup.service / anki-sync-backup.service.
+#
+#   scp tools/couchdb-backup.sh root@<vps>:/usr/local/bin/couchdb-backup.sh
+#   ssh root@<vps> chmod 755 /usr/local/bin/couchdb-backup.sh
+#   scp tools/borg-offhost.sh root@<vps>:/usr/local/lib/    (skip if already installed for forgejo/anki)
+#   scp systemd/couchdb-backup.{service,timer} root@<vps>:/etc/systemd/system/
+#   scp systemd/couchdb-backup-verify.{service,timer} root@<vps>:/etc/systemd/system/
+#   scp systemd/couchdb-backup.env.example root@<vps>:/etc/default/couchdb-backup   (then edit, chmod 600)
+#   ssh root@<vps> systemctl daemon-reload
+#   ssh root@<vps> systemctl enable --now couchdb-backup.timer
+#   ssh root@<vps> systemctl enable --now couchdb-backup-verify.timer
+#
+# Needs couchbackup/couchrestore on the host (npm install -g
+# @cloudant/couchbackup) — a new dependency for this VPS, since forgejo and
+# anki-sync back up with tools already on the box.
+
+[Unit]
+Description=CouchDB backup (logical dump of the LiveSync databases)
+Documentation=https://git.levineuwirth.org/neuwirth/levineuwirth.org
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/default/couchdb-backup
+ExecStart=/usr/local/bin/couchdb-backup.sh
+Nice=15
+IOSchedulingClass=idle
+TimeoutStartSec=45min
+# scratch on disk: /tmp is a RAM tmpfs and the dumps can run to hundreds of MB
+Environment=TMPDIR=/var/tmp

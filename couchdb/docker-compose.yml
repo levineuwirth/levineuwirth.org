@@ -1,0 +1,55 @@
+# CouchDB for Obsidian's Self-hosted LiveSync plugin (universum + apocrypha
+# sync to the iPad; PDFs/bibliotheca are out of scope for now). Lives at
+# /root/couchdb-server/docker-compose.yml on the VPS; this copy is the
+# tracked source, same spirit as forgejo/.
+#
+#   scp couchdb/{docker-compose.yml,local.ini} root@<vps>:/root/couchdb-server/
+#   ssh root@<vps> "cd /root/couchdb-server && docker compose up -d"
+#
+# server.env (COUCHDB_USER / COUCHDB_PASSWORD, the admin account) is never
+# committed — copy couchdb/server.env.example to /root/couchdb-server/server.env
+# on the box and fill it in. The admin account is only ever used for the
+# one-time setup (creating the universum/apocrypha databases and their
+# scoped per-database users) and by couchdb-backup.sh; no device's plugin
+# config holds it.
+#
+# local.ini is mounted into local.d/ rather than replacing CouchDB's own
+# local.ini outright, so an image upgrade's own defaults still apply and
+# this file only overrides the handful of keys LiveSync actually needs
+# (CORS, no anonymous "admin party" window, a document-size ceiling).
+#
+# The mount is read-write, not :ro. Confirmed empirically (2026-09-20):
+# the official image's docker-entrypoint.sh chowns everything under
+# /opt/couchdb/etc/local.d/ to the couchdb user on every start, and a
+# read-only bind mount there makes that fail and the entrypoint exit 1
+# before Erlang ever logs a line — a `docker logs` that stays silent
+# is the symptom. CouchDB itself never writes to this file at runtime;
+# the entrypoint's chown is the only writer, so read-write here costs
+# nothing.
+#
+# 5984 is bound to 127.0.0.1 deliberately: reachable only through the
+# host's nginx (nginx/couchdb-sync.conf), never directly — same as
+# forgejo's 3000.
+#
+# VERSION — the pin below is a placeholder. Check current 3.x tags at
+# hub.docker.com/_/couchdb before the first `docker compose up` and put
+# the real one here: this file should describe what is actually running,
+# and "latest" describes nothing (same reasoning as forgejo's pinned tag).
+
+services:
+  couchdb:
+    image: couchdb:3.4.2
+    container_name: couchdb
+    restart: unless-stopped
+    env_file:
+      - server.env
+    volumes:
+      - ./couchdb-data:/opt/couchdb/data
+      - ./local.ini:/opt/couchdb/etc/local.d/10-livesync.ini
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "127.0.0.1:5984:5984"
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    cpus: 1.0

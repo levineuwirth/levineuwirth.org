@@ -1,0 +1,26 @@
+# Weekly restore test of the newest CouchDB backup: extract the archive,
+# restore each database's dump into a disposable scratch CouchDB
+# container, and compare document counts against the manifest recorded at
+# backup time. It reads only; it never touches the live instance.
+#
+# Why a second unit rather than a step inside the nightly backup: same
+# reasoning as forgejo-backup-verify.service — a failed *verification* is a
+# different fact about a different (already-accepted) archive, and
+# `systemctl status` should be able to say which of the two broke.
+#
+# See couchdb-backup.service for the install commands.
+
+[Unit]
+Description=CouchDB backup verification (restore into a scratch container + doc-count check)
+Documentation=https://git.levineuwirth.org/neuwirth/levineuwirth.org
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/default/couchdb-backup
+ExecStart=/usr/local/bin/couchdb-backup.sh --verify
+Nice=15
+IOSchedulingClass=idle
+TimeoutStartSec=30min
+Environment=TMPDIR=/var/tmp

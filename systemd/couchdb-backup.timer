@@ -1,0 +1,17 @@
+# Nightly trigger for couchdb-backup.service. See that unit's header for
+# the install commands.
+
+[Unit]
+Description=Nightly CouchDB backup
+
+[Timer]
+# 03:15 UTC: ahead of Forgejo's 03:30 and Anki's 03:45 so the three
+# nightly jobs don't contend for the same disk I/O window.
+OnCalendar=*-*-* 03:15
+RandomizedDelaySec=10min
+# The VPS is not always up. Persistent=true runs a missed backup shortly
+# after the next boot instead of silently skipping the night.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

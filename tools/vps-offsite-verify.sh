@@ -15,7 +15,7 @@ log "borg check (repository + archives, no data verify — that is what readback
 borg check --show-rc || die "borg check failed"
 
 tmp=$(mktemp -d -t offsite-verify-XXXXXX); trap 'rm -rf "$tmp"' EXIT
-for prefix in forgejo anki; do
+for prefix in forgejo anki couchdb; do
     newest=$(borg list --glob-archives "$prefix-*" --short --last 1)
     [ -n "$newest" ] || { log "$prefix: no archive yet — skipped"; continue; }
     log "$prefix: extracting ::$newest"
@@ -26,6 +26,7 @@ for prefix in forgejo anki; do
     case $prefix in
         forgejo) /usr/local/bin/forgejo-backup.sh --verify "$tarball" ;;
         anki)    /usr/local/bin/anki-sync-backup.sh --verify "$tarball" ;;
+        couchdb) /usr/local/bin/couchdb-backup.sh --verify "$tarball" ;;
     esac || die "$prefix: restore test failed"
     rm -rf "${tmp:?}"/*
 done

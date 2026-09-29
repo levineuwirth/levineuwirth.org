@@ -1,0 +1,15 @@
+# Weekly trigger for couchdb-backup-verify.service. See that unit's header
+# for the reasoning and couchdb-backup.service for the install commands.
+
+[Unit]
+Description=Weekly CouchDB backup verification
+
+[Timer]
+# Sunday 04:45 UTC: after Forgejo's verify (04:30) so the two don't overlap
+# their docker-heavy restore tests.
+OnCalendar=Sun *-*-* 04:45
+RandomizedDelaySec=10min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
