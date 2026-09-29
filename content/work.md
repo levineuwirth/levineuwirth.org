@@ -59,15 +59,19 @@ split, whose partitioned proofs are byte-identical to ordinary ones, built and
 measured weight caches, and integrated a collaborator's expert-weight bridge. That
 integration exposed two verification gaps, which I fixed: an expert-weight root
 the verifier never compared against policy, and a sumcheck verifier that did not
-enforce its round count. My current work is on multi-GPU proving, which is the
-ceiling on model scale, context length, and mixture-of-experts breadth.
+enforce its round count. A later verifier review strengthened the enrollment
+identity and made main-proof Merkle openings follow the challenged index rather
+than path directions supplied by the proof. My current work is on multi-GPU
+proving, which is the ceiling on model scale, context length, and
+mixture-of-experts breadth.
 
 ::: {.work-limit}
 **Ongoing.** The profiler, calibration tooling, and accounting corrections are
 merged upstream; the weight split, caches, and bridge hardening are on the
 public `weight-split-model` branch. The multi-GPU figures are projections from a
-validated cost model rather than measurements at that scale. Technical write-up expected Q4 2026, for review and
-publication.
+validated cost model rather than measurements at that scale. The verifier fixes
+are targeted review, not a full construction audit. Technical write-up expected
+Q4 2026, for review and publication.
 :::
 
 ::: {.work-entry-links}
@@ -100,10 +104,11 @@ certificate-gated tactics, and one explicitly reported oracle-tier case.
 Integrating the unmodified downstream file also exposed three defects that the
 broker's own test suite had missed.
 
-The next work pushes the same boundary into richer theories — beginning with
-finite-field certificates for VerInf's uniqueness queries — while strengthening
-certificate reconstruction, bringing the Rocq bridge to parity, and testing the
-abstraction against additional independent consumers.
+Since R4, R5 consolidated the specification, and R6 has put the boundary under
+more systematic evaluation: kernel-validated deterministic episodes, a frozen
+15-site VerInf call-site census, representability checks, and an audited
+comparison protocol for learned proposals. That evaluation is still in progress;
+finite-field certificates and broader independent consumers remain open.
 
 ::: {.work-entry-links}
 [Technical write-up](/essays/proof-broker/) ·
@@ -173,11 +178,14 @@ for readmission against 0.655 for the Charlson index. The calculator is deployed
 ## The question
 
 ::: {.work-thesis}
-Those four are one problem approached from different sides. Cryptography works
-from below, certifying properties of a computation without trusting the party
-that ran it. Evaluations work from above, measuring what a model actually does
-under conditions you control. Formal methods supply the machinery for checking a
-claim without trusting its author.
+The first three are one problem approached from different sides. Cryptography
+works from below, certifying properties of a computation without trusting the
+party that ran it. Evaluations work from above, measuring what a model actually
+does under conditions you control. Formal methods supply the machinery for
+checking a claim without trusting its author.
+
+The clinical study is a separate research-engineering line, built and tested at
+population scale.
 
 The question underneath all of it: how do you establish trustworthy claims about
 an AI system when the system, the operator, and the evaluator may each be

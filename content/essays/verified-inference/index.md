@@ -28,6 +28,8 @@ history:
   - date: "2026-08-30"
   - date: "2026-08-29"
 revised:
+  - date: "2026-09-24"
+    note: "Verifier review: enrollment identity and index-bound Merkle openings."
   - date: "2026-09-22"
     note: "Comprehensive update on the proof guarantee and current research."
 ---

@@ -125,6 +125,48 @@
   "date": "2026-09-19T13:40:09Z",
   "fetched": "2026-09-22"
  },
+ "https://github.com/JamesPetrie/VerInf/commit/76ce501": {
+  "kind": "commit",
+  "host": "github",
+  "owner": "JamesPetrie",
+  "repo": "VerInf",
+  "ref": "76ce501",
+  "sha": "76ce5017e358bbc1dae0dfd429f06bb956397a82",
+  "path": "",
+  "pinned": true,
+  "src": "/code-refs/github/JamesPetrie/VerInf/76ce5017e358bbc1dae0dfd429f06bb956397a82/commit.json",
+  "commit": "/code-refs/github/JamesPetrie/VerInf/76ce5017e358bbc1dae0dfd429f06bb956397a82/commit.json",
+  "date": "2026-09-23T19:02:39Z",
+  "fetched": "2026-09-24"
+ },
+ "https://github.com/JamesPetrie/VerInf/commit/830d6fd": {
+  "kind": "commit",
+  "host": "github",
+  "owner": "JamesPetrie",
+  "repo": "VerInf",
+  "ref": "830d6fd",
+  "sha": "830d6fde02e52031020ac172486782925622b338",
+  "path": "",
+  "pinned": true,
+  "src": "/code-refs/github/JamesPetrie/VerInf/830d6fde02e52031020ac172486782925622b338/commit.json",
+  "commit": "/code-refs/github/JamesPetrie/VerInf/830d6fde02e52031020ac172486782925622b338/commit.json",
+  "date": "2026-09-23T20:47:35Z",
+  "fetched": "2026-09-24"
+ },
+ "https://github.com/JamesPetrie/VerInf/commit/84dcc67": {
+  "kind": "commit",
+  "host": "github",
+  "owner": "JamesPetrie",
+  "repo": "VerInf",
+  "ref": "84dcc67",
+  "sha": "84dcc6796773322a7a5777644a52ba06d2391a09",
+  "path": "",
+  "pinned": true,
+  "src": "/code-refs/github/JamesPetrie/VerInf/84dcc6796773322a7a5777644a52ba06d2391a09/commit.json",
+  "commit": "/code-refs/github/JamesPetrie/VerInf/84dcc6796773322a7a5777644a52ba06d2391a09/commit.json",
+  "date": "2026-09-23T18:58:02Z",
+  "fetched": "2026-09-24"
+ },
  "https://github.com/JamesPetrie/VerInf/commit/f426f97": {
   "kind": "commit",
   "host": "github",
@@ -138,6 +180,20 @@
   "commit": "/code-refs/github/JamesPetrie/VerInf/f426f976ace5feb656afec088854de332999d61a/commit.json",
   "date": "2026-09-19T13:40:09Z",
   "fetched": "2026-09-22"
+ },
+ "https://github.com/JamesPetrie/VerInf/commit/fd92b5e": {
+  "kind": "commit",
+  "host": "github",
+  "owner": "JamesPetrie",
+  "repo": "VerInf",
+  "ref": "fd92b5e",
+  "sha": "fd92b5eac4da6ed74b57744e9b945cb4bc06ccb8",
+  "path": "",
+  "pinned": true,
+  "src": "/code-refs/github/JamesPetrie/VerInf/fd92b5eac4da6ed74b57744e9b945cb4bc06ccb8/commit.json",
+  "commit": "/code-refs/github/JamesPetrie/VerInf/fd92b5eac4da6ed74b57744e9b945cb4bc06ccb8/commit.json",
+  "date": "2026-09-23T19:08:45Z",
+  "fetched": "2026-09-24"
  },
  "https://github.com/JamesPetrie/VerInf/tree/2bdf823b08ea012cf5d26eeaac1c65698bb51e20": {
   "kind": "tree",
@@ -173,12 +229,12 @@
   "owner": "JamesPetrie",
   "repo": "VerInf",
   "ref": "weight-split-model",
-  "sha": "5a9ea529e451ae307651c51a515435764b7f36c1",
+  "sha": "910b0e6b611d5f012215fe28e8bdc4db79fdb725",
   "path": "",
   "pinned": false,
-  "src": "/code-refs/github/JamesPetrie/VerInf/5a9ea529e451ae307651c51a515435764b7f36c1/tree/_root.json",
-  "commit": "/code-refs/github/JamesPetrie/VerInf/5a9ea529e451ae307651c51a515435764b7f36c1/commit.json",
-  "date": "2026-09-21T11:18:59Z",
-  "fetched": "2026-09-22"
+  "src": "/code-refs/github/JamesPetrie/VerInf/910b0e6b611d5f012215fe28e8bdc4db79fdb725/tree/_root.json",
+  "commit": "/code-refs/github/JamesPetrie/VerInf/910b0e6b611d5f012215fe28e8bdc4db79fdb725/commit.json",
+  "date": "2026-09-24T09:24:14Z",
+  "fetched": "2026-09-24"
  }
 }

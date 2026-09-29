@@ -1,0 +1,83 @@
+{
+ "sha": "fd92b5eac4da6ed74b57744e9b945cb4bc06ccb8",
+ "message": "wc_bridge: the trusted anchor is the enrollment's identity, not its root\n\nA versioned, domain-separated digest of the root, the manifest digest,\nthe geometry, the claim set's ordered row layout and the padding rule,\nencoded identically in Python and Rust (shared vectors). A proof that\nmoves the boundary between weights and masks under the same root names\nanother identity. The q_w floor and the dense-weight anchor are\nunchanged; the resident and streaming builds share one manifest digest.",
+ "author": "Levi Neuwirth",
+ "date": "2026-09-23T19:08:45Z",
+ "parents": [
+  "76ce5017e358bbc1dae0dfd429f06bb956397a82"
+ ],
+ "stats": {
+  "total": 493,
+  "additions": 416,
+  "deletions": 77
+ },
+ "files_total": 11,
+ "files": [
+  {
+   "filename": "analysis/bench/wc_bench.py",
+   "status": "modified",
+   "additions": 2,
+   "deletions": 1
+  },
+  {
+   "filename": "demo/demo_maverick_full.py",
+   "status": "modified",
+   "additions": 3,
+   "deletions": 0
+  },
+  {
+   "filename": "profiler/instrumented_prove.py",
+   "status": "modified",
+   "additions": 1,
+   "deletions": 1
+  },
+  {
+   "filename": "prover/core.py",
+   "status": "modified",
+   "additions": 7,
+   "deletions": 0
+  },
+  {
+   "filename": "prover/tests/_rust_verify.py",
+   "status": "modified",
+   "additions": 7,
+   "deletions": 6
+  },
+  {
+   "filename": "prover/tests/test_wc_bridge.py",
+   "status": "modified",
+   "additions": 35,
+   "deletions": 11
+  },
+  {
+   "filename": "prover/tests/test_wc_bridge_rust_negatives.py",
+   "status": "modified",
+   "additions": 42,
+   "deletions": 22
+  },
+  {
+   "filename": "prover/tests/test_wc_identity.py",
+   "status": "added",
+   "additions": 71,
+   "deletions": 0
+  },
+  {
+   "filename": "prover/tests/test_wc_streaming_flag.py",
+   "status": "modified",
+   "additions": 19,
+   "deletions": 4
+  },
+  {
+   "filename": "prover/wc_bridge.py",
+   "status": "modified",
+   "additions": 107,
+   "deletions": 11
+  },
+  {
+   "filename": "verifier/src/bin/verify_proof.rs",
+   "status": "modified",
+   "additions": 122,
+   "deletions": 21
+  }
+ ]
+}

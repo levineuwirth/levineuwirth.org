@@ -1,0 +1,29 @@
+{
+ "sha": "830d6fde02e52031020ac172486782925622b338",
+ "message": "verifier/spec: the policy slot is the enrollment identity; its encoding stated exactly",
+ "author": "Levi Neuwirth",
+ "date": "2026-09-23T20:47:35Z",
+ "parents": [
+  "715235a730f43c15769774092849da399d66607e"
+ ],
+ "stats": {
+  "total": 8,
+  "additions": 5,
+  "deletions": 3
+ },
+ "files_total": 2,
+ "files": [
+  {
+   "filename": "analysis/wc-lcrl-stc-spec.md",
+   "status": "modified",
+   "additions": 3,
+   "deletions": 1
+  },
+  {
+   "filename": "verifier/src/bin/verify_proof.rs",
+   "status": "modified",
+   "additions": 2,
+   "deletions": 2
+  }
+ ]
+}

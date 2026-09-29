@@ -1,0 +1,101 @@
+{
+ "sha": "84dcc6796773322a7a5777644a52ba06d2391a09",
+ "message": "verifier/prover: a Merkle opening is checked at its queried index\n\nThe ordering at every level comes from the index, the path has exactly\nthe tree's depth and the index is in range; a valid path for another\ncolumn no longer answers a query. Every Python twin and caller takes the\nindex and the tree width.",
+ "author": "Levi Neuwirth",
+ "date": "2026-09-23T18:58:02Z",
+ "parents": [
+  "5a9ea529e451ae307651c51a515435764b7f36c1"
+ ],
+ "stats": {
+  "total": 280,
+  "additions": 250,
+  "deletions": 30
+ },
+ "files_total": 14,
+ "files": [
+  {
+   "filename": "analysis/bench/sampled_rs_window_bench.py",
+   "status": "modified",
+   "additions": 2,
+   "deletions": 1
+  },
+  {
+   "filename": "layergkr/projection.py",
+   "status": "modified",
+   "additions": 4,
+   "deletions": 2
+  },
+  {
+   "filename": "layergkr/rs.py",
+   "status": "modified",
+   "additions": 2,
+   "deletions": 1
+  },
+  {
+   "filename": "layergkr/sampled_audit.py",
+   "status": "modified",
+   "additions": 2,
+   "deletions": 1
+  },
+  {
+   "filename": "prover/core.py",
+   "status": "modified",
+   "additions": 3,
+   "deletions": 6
+  },
+  {
+   "filename": "prover/deprecated/difftest_foundation_py.py",
+   "status": "modified",
+   "additions": 1,
+   "deletions": 1
+  },
+  {
+   "filename": "prover/deprecated/verify.py",
+   "status": "modified",
+   "additions": 3,
+   "deletions": 3
+  },
+  {
+   "filename": "prover/protocol.py",
+   "status": "modified",
+   "additions": 28,
+   "deletions": 4
+  },
+  {
+   "filename": "prover/sampled_claim_runtime.py",
+   "status": "modified",
+   "additions": 2,
+   "deletions": 1
+  },
+  {
+   "filename": "prover/tests/test_merkle_index.py",
+   "status": "added",
+   "additions": 86,
+   "deletions": 0
+  },
+  {
+   "filename": "prover/tests/test_sampled_claim_runtime.py",
+   "status": "modified",
+   "additions": 1,
+   "deletions": 1
+  },
+  {
+   "filename": "verifier/src/bin/difftest_foundation.rs",
+   "status": "modified",
+   "additions": 1,
+   "deletions": 1
+  },
+  {
+   "filename": "verifier/src/protocol.rs",
+   "status": "modified",
+   "additions": 108,
+   "deletions": 4
+  },
+  {
+   "filename": "verifier/src/verify.rs",
+   "status": "modified",
+   "additions": 7,
+   "deletions": 4
+  }
+ ]
+}

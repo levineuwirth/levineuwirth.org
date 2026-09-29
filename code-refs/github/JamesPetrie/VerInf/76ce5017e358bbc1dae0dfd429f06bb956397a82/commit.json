@@ -1,0 +1,41 @@
+{
+ "sha": "76ce5017e358bbc1dae0dfd429f06bb956397a82",
+ "message": "wc_bridge: an enrollment opening is checked at its eta index\n\nThe same binding as the main tree, in the bridge's own side-bit\nconvention: the ordering comes from the index, the path has exactly the\ntree's depth, the index is in range. A relabeled column no longer\nauthenticates a changed projection (F(-X) answered at i + N/2).",
+ "author": "Levi Neuwirth",
+ "date": "2026-09-23T19:02:39Z",
+ "parents": [
+  "84dcc6796773322a7a5777644a52ba06d2391a09"
+ ],
+ "stats": {
+  "total": 261,
+  "additions": 252,
+  "deletions": 9
+ },
+ "files_total": 4,
+ "files": [
+  {
+   "filename": "prover/tests/test_merkle_index.py",
+   "status": "modified",
+   "additions": 17,
+   "deletions": 0
+  },
+  {
+   "filename": "prover/tests/test_wc_bridge.py",
+   "status": "modified",
+   "additions": 49,
+   "deletions": 0
+  },
+  {
+   "filename": "prover/wc_bridge.py",
+   "status": "modified",
+   "additions": 19,
+   "deletions": 4
+  },
+  {
+   "filename": "verifier/src/bin/verify_proof.rs",
+   "status": "modified",
+   "additions": 167,
+   "deletions": 5
+  }
+ ]
+}
