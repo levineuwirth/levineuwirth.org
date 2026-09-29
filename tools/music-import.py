@@ -25,6 +25,13 @@ refresh  Re-exports pieces from their manifests (all of them by default):
          and its timing stop at its first downbeat. The choice is recorded in
          the manifest, and `--movements all` publishes the whole work again.
          List the withheld movements in index.md with `status: in revision`.
+--engraver mscore3
+         Engraves with MuseScore 3.6.2 (`mscore3`) instead of 4, for a score
+         saved in MuseScore 3: 4 reflows such a score and drops what was
+         placed by hand. Pages and bar positions come from 3; a realization
+         still comes from 4 (Muse Sounds needs it), its timing matched to
+         the MuseScore 3 layout bar by bar. MuseScore 3's bundled Qt has no
+         headless platform, so it runs against the desktop's X display.
 --audio  Also renders a MIDI realization with Muse Sounds, and writes
          scores/timing.json: when each bar sounds, and where it stands on
          its page. The reader uses the two to follow the score while it
@@ -72,11 +79,12 @@ AUDIO = "realization.mp3"
 TIMING = "timing.json"
 AUDIO_LABEL = "MIDI realization (Muse Sounds)"
 
-# MuseScore 4 writes .mpos boxes in units of 1/14400 inch, whatever
-# resolution it gives the SVG pages (4.7 uses 1200 units per inch, 4.5
-# used 360), so boxes are converted to fractions of the page through its
-# size in inches rather than through any one SVG's viewBox.
-MPOS_PER_INCH = 14400
+# The engravers the importer can drive. MuseScore 3's AppImage bundles a Qt
+# with only the xcb platform, so it needs a display where 4 runs offscreen.
+ENGRAVERS = {
+    "mscore":  {"bin": "mscore",  "platform": "offscreen", "name": "MuseScore 4"},
+    "mscore3": {"bin": "mscore3", "platform": "xcb",       "name": "MuseScore 3"},
+}
 
 # MuseScore writes note values into tempo text as SMuFL symbols, either as
 # <sym> elements or as private-use characters. The frontmatter gets the
@@ -114,54 +122,68 @@ def warn(msg: str) -> None:
 # MuseScore
 # ---------------------------------------------------------------------------
 
-def mscore(*args: str, timeout: int = 600) -> subprocess.CompletedProcess:
-    env = dict(os.environ, QT_QPA_PLATFORM="offscreen")
+def mscore(*args: str, timeout: int = 600, engraver: str = "mscore") -> subprocess.CompletedProcess:
+    e = ENGRAVERS[engraver]
+    env = dict(os.environ, QT_QPA_PLATFORM=e["platform"])
+    if e["platform"] == "xcb" and not env.get("DISPLAY"):
+        die(f"{e['name']} needs an X display (its Qt has no headless platform); "
+            f"run this from the desktop session")
     try:
-        return subprocess.run(["mscore", *args], capture_output=True, text=True,
+        return subprocess.run([e["bin"], *args], capture_output=True, text=True,
                               timeout=timeout, env=env, check=False)
     except FileNotFoundError:
-        die("`mscore` (MuseScore 4) is not on PATH")
+        die(f"`{e['bin']}` ({e['name']}) is not on PATH")
 
 
-def mscore_version() -> str:
-    out = mscore("--version").stdout.strip().splitlines()
-    # "MuseScore4 4.7.5" → "MuseScore 4.7.5"
+def mscore_version(engraver: str = "mscore") -> str:
+    out = mscore("--version", engraver=engraver).stdout.strip().splitlines()
+    # "MuseScore4 4.7.5" → "MuseScore 4.7.5"; "MuseScore3 3.6.2" likewise
     ver = out[-1].split()[-1] if out else "unknown"
     return f"MuseScore {ver}"
 
 
-def export_one(source: Path, target: Path, *extra: str, timeout: int = 600) -> None:
+def export_one(source: Path, target: Path, *extra: str, timeout: int = 600,
+               engraver: str = "mscore") -> None:
     """One MuseScore export, checked on both counts: the exit status, and a
     non-empty file where it was asked for. Either alone can be fooled —
-    an existing file satisfies a presence check after a failed export."""
-    r = mscore(*extra, "-o", str(target), str(source), timeout=timeout)
-    made = target if target.suffix != ".svg" else \
-        target.with_name(f"{target.stem}-1{target.suffix}")
-    if r.returncode != 0 or not made.exists() or made.stat().st_size == 0:
+    an existing file satisfies a presence check after a failed export.
+    Page exports are numbered page-1.svg by MuseScore 4, page-01.svg by 3."""
+    r = mscore(*extra, "-o", str(target), str(source), timeout=timeout, engraver=engraver)
+    made = [target] if target.suffix != ".svg" else \
+        sorted(target.parent.glob(f"{target.stem}-*{target.suffix}"))
+    if r.returncode != 0 or not made or made[0].stat().st_size == 0:
         die(f"MuseScore could not export {target.suffix} from {source} "
             f"(exit {r.returncode}):\n{r.stderr[-2000:]}")
 
 
-def export(source: Path, outdir: Path, pdf_name: str | None, audio: bool) -> dict:
+def export(source: Path, outdir: Path, pdf_name: str | None, audio: bool,
+           engraver: str = "mscore") -> dict:
     """Export everything a piece needs into outdir, a scratch directory.
-    Nothing published is touched until all of it has succeeded."""
-    export_one(source, outdir / "page.svg")
+    Nothing published is touched until all of it has succeeded.
+
+    The layout — pages, PDF, bar boxes — comes from the engraver. The sound
+    always comes from MuseScore 4, and so, for an older engraver, does a
+    second .mpos whose event times match that sound."""
+    export_one(source, outdir / "page.svg", engraver=engraver)
     pages = sorted(outdir.glob("page-*.svg"),
                    key=lambda p: int(p.stem.rsplit("-", 1)[1]))
-    export_one(source, outdir / "score.mpos")
+    export_one(source, outdir / "score.mpos", engraver=engraver)
     pdf = None
     if pdf_name:
         pdf = outdir / pdf_name
-        export_one(source, pdf)
-    realization = None
+        export_one(source, pdf, engraver=engraver)
+    realization, playback = None, outdir / "score.mpos"
     if audio:
         # Muse Sounds renders at roughly six times real time: a fifty-minute
         # symphony takes the better part of ten minutes.
         realization = outdir / AUDIO
         export_one(source, realization, "--sound-profile", "MuseSounds",
                    "-b", "128", timeout=3 * 3600)
+        if engraver != "mscore":
+            playback = outdir / "playback.mpos"
+            export_one(source, playback)
     return {"pages": pages, "mpos": outdir / "score.mpos", "pdf": pdf,
-            "audio": realization}
+            "audio": realization, "playback": playback}
 
 
 def score_meta(source: Path) -> dict:
@@ -243,25 +265,37 @@ def movements(root: ET.Element, mpos: Path, total_seconds: float) -> list[dict]:
     return out
 
 
-def page_inches(svg: Path) -> tuple[float, float]:
-    """A page's size in inches, from the root element's width and height."""
-    head = svg.read_text()[:2048]
-    per_inch = {"in": 1.0, "mm": 25.4, "cm": 2.54, "pt": 72.0, "px": 96.0}
-    dims = []
-    for attr in ("width", "height"):
-        m = re.search(attr + r'="([\d.]+)(in|mm|cm|pt|px)"', head)
-        if not m:
-            die(f"{svg.name}: no {attr} with a unit on the root element")
-        dims.append(float(m.group(1)) / per_inch[m.group(2)])
-    return dims[0], dims[1]
+def mpos_scale(mpos_text: str, pages: list[Path]) -> tuple[float, float, float]:
+    """How .mpos units map onto the SVG pages: (units per SVG unit, viewBox
+    width, viewBox height).
+
+    Measured, not assumed. MuseScore 4.7 writes pages at 1200 units per
+    inch and 3.6 at 360, and neither documents the .mpos unit; but on any
+    page the rightmost bar box ends where the rightmost barline stands, so
+    their ratio is the scale. Taken from the first page that has both."""
+    boxes = {}
+    for bx, bw, pg in re.findall(r'<element id="\d+" x="([\d.]+)" y="[\d.]+" '
+                                 r'sx="([\d.]+)" sy="[\d.]+" page="(\d+)"', mpos_text):
+        boxes[int(pg)] = max(boxes.get(int(pg), 0.0), float(bx) + float(bw))
+    for i, svg in enumerate(pages):
+        text = svg.read_text()
+        vb = re.search(r'viewBox="[\d.\-]+ [\d.\-]+ ([\d.]+) ([\d.]+)"', text[:4096])
+        xs = [float(x) for pts in re.findall(r'class="BarLine"[^>]*?points="([^"]+)"', text)
+              for x in re.findall(r'([\d.]+),[\d.]+', pts)]
+        if vb and xs and boxes.get(i):
+            return boxes[i] / max(xs), float(vb.group(1)), float(vb.group(2))
+    die("could not relate the bar boxes to the pages: no page has both a "
+        "barline and a bar box")
 
 
-def timing(mpos: Path, page1: Path, mvts: list[dict], seconds: float) -> dict:
-    """The follow-along map: every bar's box as fractions of its page, the
-    bars in the order they sound, and where each movement begins."""
+def timing(mpos: Path, playback: Path, pages: list[Path], mvts: list[dict],
+           seconds: float) -> dict:
+    """The follow-along map: every bar's box as fractions of its page (from
+    the layout's .mpos), the bars in the order they sound (from the .mpos of
+    the playback that made the audio), and where each movement begins."""
     x = mpos.read_text()
-    w_in, h_in = page_inches(page1)
-    w, h = w_in * MPOS_PER_INCH, h_in * MPOS_PER_INCH
+    k, vbw, vbh = mpos_scale(x, pages)
+    w, h = k * vbw, k * vbh
     boxes = {}
     for i, bx, by, bw, bh, pg in re.findall(
             r'<element id="(\d+)" x="([\d.]+)" y="([\d.]+)" sx="([\d.]+)" '
@@ -270,10 +304,13 @@ def timing(mpos: Path, page1: Path, mvts: list[dict], seconds: float) -> dict:
                          round(float(bw) / w, 4), round(float(bh) / h, 4)]
     stray = [i for i, b in boxes.items() if b[1] + b[3] > 1.02 or b[2] + b[4] > 1.02]
     if stray:
-        warn(f"{len(stray)} bar boxes fall outside their page — the .mpos "
-             f"units may not be 1/{MPOS_PER_INCH} inch for this engraver")
+        warn(f"{len(stray)} bar boxes fall outside their page — the measured "
+             f".mpos scale ({k:.3f}) looks wrong for this engraver")
     events = sorted((int(t), int(i)) for i, t in
-                    re.findall(r'<event elid="(\d+)" position="(\d+)"', x))
+                    re.findall(r'<event elid="(\d+)" position="(\d+)"', playback.read_text()))
+    if boxes and any(i not in boxes for _, i in events):
+        die("the playback's bars do not match the layout's — was the score "
+            "changed between the two exports?")
     return {
         "version": 1,
         "label": AUDIO_LABEL,
@@ -430,7 +467,11 @@ def scaffold(slug: str, meta: dict, mvts: list[dict], pdf: bool, created: str,
                 "choral" if voices >= 3 else
                 "vocal" if voices else
                 "solo" if len(parts) == 1 else "chamber")
-    forces = ("orchestra" if category == "orchestral" else
+    # A concerto's soloist has a part named "Solo …": forces read
+    # "bassoon and orchestra" rather than "orchestra".
+    solo = [p[5:].strip() for p in parts if p.lower().startswith("solo ")]
+    forces = ((f"{solo[0].lower()} and orchestra" if solo else "orchestra")
+              if category == "orchestral" else
               " and ".join(re.sub(r"\s+\d+$", "", p).lower() for p in parts))
     # A partial work's duration is what is published, not the whole.
     heard = (sum(m["seconds"] for m in mvts[:published]) if published
@@ -502,7 +543,7 @@ def compare_movements(slug: str, mvts: list[dict], published: int | None = None)
 # ---------------------------------------------------------------------------
 
 def install(slug: str, source: Path, pdf: bool, audio: bool, force: bool, new: bool,
-            movements_spec: str | None = None) -> None:
+            movements_spec: str | None = None, engraver: str = "mscore") -> None:
     if not source.exists():
         die(f"no such score: {source}")
     dest = MUSIC / slug / PAGES
@@ -510,16 +551,16 @@ def install(slug: str, source: Path, pdf: bool, audio: bool, force: bool, new: b
     meta = score_meta(source)
     with tempfile.TemporaryDirectory(prefix="music-import-") as tmp:
         tmpdir = Path(tmp)
-        got = export(source, tmpdir, f"{slug}.pdf" if pdf else None, audio)
+        got = export(source, tmpdir, f"{slug}.pdf" if pdf else None, audio, engraver)
         root = read_mscx(source)
         mvts = movements(root, got["mpos"], float(meta.get("duration", 0)))
         k = selection(movements_spec, len(mvts) if len(mvts) > 1 else 0)
         cut = None
         if k is not None:
-            cut = cut_point(got["mpos"], mvts, k)
+            cut = cut_point(got["mpos"], mvts, k, got["playback"])
             got["pages"] = got["pages"][:cut["page"] - 1]
         n = len(got["pages"])
-        version = mscore_version()
+        version = mscore_version(engraver)
         if old and old.get("pages") != n and not force:
             die(f"{slug}: this export has {n} pages, the manifest records "
                 f"{old.get('pages')} ({old.get('engraver')} → {version}). Every "
@@ -534,7 +575,7 @@ def install(slug: str, source: Path, pdf: bool, audio: bool, force: bool, new: b
                  f"(fix in MuseScore: File → Project properties)")
         follow = None
         if got["audio"]:
-            follow = timing(got["mpos"], got["pages"][0], mvts,
+            follow = timing(got["mpos"], got["playback"], got["pages"], mvts,
                             float(meta.get("duration", 0)))
             if cut:
                 follow["measures"] = follow["measures"][:cut["measure"]]
@@ -563,6 +604,7 @@ def install(slug: str, source: Path, pdf: bool, audio: bool, force: bool, new: b
     write_manifest(slug, {
         "source": source_key(source),
         "engraver": version,
+        **({"engraver-cli": engraver} if engraver != "mscore" else {}),
         "pages": n,
         "pdf": pdf,
         "audio": "Muse Sounds" if audio else False,
@@ -582,7 +624,7 @@ def install(slug: str, source: Path, pdf: bool, audio: bool, force: bool, new: b
         compare_movements(slug, mvts, k)
 
 
-def cut_point(mpos: Path, mvts: list[dict], k: int) -> dict:
+def cut_point(mpos: Path, mvts: list[dict], k: int, playback: Path | None = None) -> dict:
     """Where a partial work stops: the page, bar and moment at which its
     first withheld movement begins — which must be the top of a page, or
     the last published page would show the start of unpublished music."""
@@ -590,7 +632,8 @@ def cut_point(mpos: Path, mvts: list[dict], k: int) -> dict:
     page = {int(i): int(p) + 1 for i, p in
             re.findall(r'<element id="(\d+)"[^>]*page="(\d+)"', x)}
     first = {}
-    for i, t in re.findall(r'<event elid="(\d+)" position="(\d+)"', x):
+    for i, t in re.findall(r'<event elid="(\d+)" position="(\d+)"',
+                           (playback or mpos).read_text()):
         first.setdefault(int(i), int(t))
     held = mvts[k]
     bar = held["measure"]
@@ -607,7 +650,7 @@ def cmd_import(a: argparse.Namespace) -> None:
     if not re.fullmatch(r"[a-z0-9-]+", a.slug):
         die(f"invalid slug {a.slug!r} (lowercase a-z, 0-9, hyphens)")
     install(a.slug, Path(a.score).expanduser(), a.pdf, a.audio, a.force, new=True,
-            movements_spec=a.movements)
+            movements_spec=a.movements, engraver=a.engraver or "mscore")
 
 
 def pieces() -> list[str]:
@@ -622,7 +665,8 @@ def cmd_refresh(a: argparse.Namespace) -> None:
             continue
         install(slug, source_path(m["source"]), bool(m.get("pdf")),
                 a.audio or bool(m.get("audio")), a.force, new=False,
-                movements_spec=a.movements if a.movements is not None else m.get("movements"))
+                movements_spec=a.movements if a.movements is not None else m.get("movements"),
+                engraver=a.engraver or m.get("engraver-cli", "mscore"))
 
 
 def cmd_check(_: argparse.Namespace) -> None:
@@ -663,12 +707,14 @@ def main() -> None:
     p.add_argument("--pdf", action="store_true", help="also export a downloadable PDF")
     p.add_argument("--audio", action="store_true", help="also render a Muse Sounds realization")
     p.add_argument("--movements", help="publish only the leading movements, e.g. 1-2")
+    p.add_argument("--engraver", choices=sorted(ENGRAVERS), help="mscore3 for a MuseScore 3 score")
     p.add_argument("--force", action="store_true", help="accept a changed page count")
     p.set_defaults(fn=cmd_import)
     p = sub.add_parser("refresh", help="re-export pieces from their manifests")
     p.add_argument("slugs", nargs="*")
     p.add_argument("--audio", action="store_true", help="add a Muse Sounds realization")
     p.add_argument("--movements", help="publish only the leading movements (1-2), or all")
+    p.add_argument("--engraver", choices=sorted(ENGRAVERS), help="override the manifest's engraver")
     p.add_argument("--force", action="store_true", help="accept a changed page count")
     p.set_defaults(fn=cmd_refresh)
     p = sub.add_parser("check", help="report missing or stale score pages")

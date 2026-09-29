@@ -859,6 +859,22 @@ a cursor moving through it, or page turns alone). Turning a page by hand steps
 out of following until *Follow the music* is pressed; clicking a bar plays
 from it; `K` plays and pauses. The movement buttons move the music too.
 
+**Scores saved in MuseScore 3.** MuseScore 4 reflows a 3.x score — titles
+overlap, hand-placed marks land in the wrong staff — so such a score is
+engraved by MuseScore 3.6.2 instead:
+
+```bash
+tools/music-import.py import "~/Documents/Scores/Violin Sonata.mscz" violin-sonata --engraver mscore3 [--audio]
+```
+
+`mscore3` is the official 3.6.2 AppImage, unpacked under
+`~/.local/opt/musescore-3.6.2/` (this machine has no FUSE 2 to mount it) with
+a launcher in `~/.local/bin`. Its bundled Qt has no headless platform, so it
+runs against the desktop's X display; the importer says so if there is none.
+The pages and bar positions come from 3.6.2; a realization still comes from
+MuseScore 4 and Muse Sounds, and its timing is matched to the 3.6.2 layout
+bar by bar. The manifest records the engraver, so refreshes keep using it.
+
 **Partial works.** A work whose later movements are in revision can be
 published without them:
 
