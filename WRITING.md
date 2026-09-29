@@ -838,6 +838,27 @@ movement (numeral, tempo, reader page, duration) read from the score.
 Movements are the score's sections, so put a section break between them.
 It cannot see divisi, so write `scoring:` yourself.
 
+**Realizations: listening while reading.** Where there is no recording, the
+importer can render one with Muse Sounds and let the reader follow it:
+
+```bash
+tools/music-import.py refresh symphony-no-6 --audio   # or import … --audio
+```
+
+Rendering runs at about six times real time (a 35-minute symphony takes six
+minutes). It writes `scores/realization.mp3` and `scores/timing.json` — when
+each bar sounds and where it stands on its page — and records the realization
+in `score-source.yaml`, so later refreshes keep rendering it. Both come from
+one MuseScore playback of one layout, so the audio and the page positions
+agree by construction, repeats included.
+
+In the reader a play button appears in the bar, labelled *MIDI realization
+(Muse Sounds)*. While it plays the reader turns its own pages and marks the
+bar being played; Settings → Following chooses the mark (a band over the bar,
+a cursor moving through it, or page turns alone). Turning a page by hand steps
+out of following until *Follow the music* is pressed; clicking a bar plays
+from it; `K` plays and pauses. The movement buttons move the music too.
+
 **Score pages are not versioned** — the same policy as photography's
 delivery JPEGs (see `.gitignore`). The deploy carries them in `_site/`; a
 fresh clone runs `tools/music-import.py refresh` to regenerate every piece

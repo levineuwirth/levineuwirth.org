@@ -287,6 +287,7 @@
            instrument names where later ones abbreviate. */
         applySize();
         buildGutter(node);
+        renderListeners.forEach(function (fn) { fn(index, node); });
     }
 
     /* ------------------------------------------------------------------
@@ -400,9 +401,16 @@
         if (window.console) console.error('[score-reader]', err);
     }
 
+    /* Listeners for score-follow.js (see the API at the foot of this
+       file): a turn made by the reader — key, button, swipe, movement —
+       and each page once it is on screen. */
+    var turnListeners   = [];
+    var renderListeners = [];
+
     function navigate(page) {
         if (page < 1 || page > pageCount || page === currentPage) return;
         show(page);
+        turnListeners.forEach(function (fn) { fn(page); });
     }
 
     function show(page) {
@@ -542,4 +550,22 @@
     applySize();
     poke();
     syncUrl = true;   /* every later navigate() is a user action */
+
+    /* What score-follow.js needs to drive the reader during playback. A
+       turn through turnTo() is the music's, not the reader's, so it does
+       not notify the turn listeners — which is how follow mode tells a
+       reader who has leafed ahead from the page turning on its own. */
+    window.scoreReader = {
+        pageCount: pageCount,
+        page:      function () { return currentPage; },
+        turnTo:    function (page) {
+            if (page >= 1 && page <= pageCount && page !== currentPage) show(page);
+        },
+        onTurn:    function (fn) { turnListeners.push(fn); },
+        onRender:  function (fn) { renderListeners.push(fn); },
+        sheet:     pageEl,
+        viewport:  viewport,
+        bar:       bar,
+        poke:      poke
+    };
 }());

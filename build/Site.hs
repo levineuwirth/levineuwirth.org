@@ -791,13 +791,22 @@ rules = do
         route   $ stripPrefixRoute "content/"
         compile copyFileCompiler
 
+    -- A realization's timing map (tools/music-import.py --audio): when each
+    -- bar sounds and where it stands on its page, read by score-follow.js.
+    match "content/music/**/*.json" $ do
+        route   $ stripPrefixRoute "content/"
+        compile copyFileCompiler
+
     -- Landing page — full essay pipeline.
     --
     -- Same unsafeCompiler blind spot as the me/ and memento-mori score
     -- fragments (B11): Filters.Score reads content/music/<slug>/scores/*.svg
     -- relative to the source file. The SVG copy rule above claims them, so
-    -- the dependency can fire.
-    musicScoreDep <- makePatternDependency "content/music/**/*.svg"
+    -- the dependency can fire. The timing map is in the pattern too: the
+    -- reader's 'realization' field only asks whether it exists, so adding or
+    -- removing a realization would otherwise leave the reader stale.
+    musicScoreDep <- makePatternDependency $
+                         "content/music/**/*.svg" .||. "content/music/**/*.json"
 
     rulesExtraDependencies [musicScoreDep] $ match "content/music/*/index.md" $ do
         route   $ stripPrefixRoute "content/"
@@ -818,7 +827,8 @@ rules = do
     -- runs before the Compiler monad exists — a 'score-dir' naming an
     -- empty directory still routes a page, which 'scorePageList' then
     -- reports honestly as zero pages.
-    matchMetadata "content/music/*/index.md" declaresScore $
+    rulesExtraDependencies [musicScoreDep] $
+      matchMetadata "content/music/*/index.md" declaresScore $
         version "score-reader" $ do
             route $ customRoute $ \ident ->
                 let slug = takeFileName . takeDirectory . toFilePath $ ident

@@ -1565,6 +1565,7 @@ compositionCtx =
     <> scoringField
     <> scoreStackField
     <> hasNotesField
+    <> realizationField
     <> scoreUrlField
     <> hasScoreField
     <> scorePageCountField
@@ -1601,6 +1602,20 @@ compositionCtx =
     -- otherwise stand over nothing.
     hasNotesField = field "has-notes" $ \item ->
         if all isSpace (itemBody item) then noResult "no notes" else return "true"
+
+    -- A realization is present when the importer has left its timing map
+    -- beside the pages; the map names its own audio file. Present only
+    -- with pages too, since following needs a score to follow.
+    realizationField = field "realization" $ \item -> do
+        meta  <- getMetadata (itemIdentifier item)
+        pages <- scorePageList item
+        let dir    = maybe "scores" (reverse . dropWhile (== '/') . reverse . trim)
+                           (lookupString "score-dir" meta)
+            srcDir = takeDirectory (toFilePath (itemIdentifier item))
+        exists <- unsafeCompiler (doesFileExist (srcDir </> dir </> "timing.json"))
+        if exists && not (null pages)
+            then return ("/music/" ++ compSlug item ++ "/" ++ dir ++ "/timing.json")
+            else noResult "no realization"
 
     -- How many sheets show beneath the frontispiece: a sonata is a thin
     -- sheaf, a symphony a thick one. Logarithmic, so the stack stays a

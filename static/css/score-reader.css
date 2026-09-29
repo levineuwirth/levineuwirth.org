@@ -453,3 +453,150 @@
 .score-page-missing a:hover {
     text-decoration-color: var(--text);
 }
+
+/* ------------------------------------------------------------------
+   Realization (score-follow.js): play the music and follow it.
+   The controls are built by the script, so a reader without it never
+   sees a play button that cannot play.
+------------------------------------------------------------------ */
+
+.score-follow {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-right: 0.5rem;
+}
+
+.score-follow-play {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.score-follow-play:hover {
+    background: var(--bg-subtle);
+    border-color: var(--text-muted);
+}
+
+.score-follow-play svg {
+    width: 0.9rem;
+    height: 0.9rem;
+    fill: currentColor;
+}
+
+.score-follow-icon-pause,
+.score-follow-play.is-playing .score-follow-icon-play {
+    display: none;
+}
+
+.score-follow-play.is-playing .score-follow-icon-pause {
+    display: block;
+}
+
+.score-follow-seek {
+    width: 10rem;
+    accent-color: var(--text-muted);
+}
+
+.score-follow-time {
+    font-family: var(--font-sans);
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.score-follow-label {
+    font-family: var(--font-serif);
+    font-size: 0.88rem;
+    font-style: italic;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.score-follow.is-failed {
+    opacity: 0.5;
+}
+
+@media (max-width: 1100px) {
+    .score-follow-label { display: none; }
+}
+
+@media (max-width: 760px) {
+    .score-follow-seek { display: none; }
+}
+
+@media (max-width: 540px) {
+    .score-follow-time { display: none; }
+}
+
+/* The mark on the page. Its box is the bar's box from timing.json, in
+   percentages of the sheet, so it holds its place at any zoom. */
+/* Under the instrument-name gutter (z-index 2), so a mark near the left
+   edge of a zoomed page never draws over the pinned names. */
+.score-follow-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.score-follow-mark {
+    position: absolute;
+}
+
+.score-follow-layer[data-style="bar"] .score-follow-mark {
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--text) 7%, transparent);
+    box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--text) 40%, transparent);
+    transition: left 0.12s ease, top 0.12s ease, width 0.12s ease, height 0.12s ease;
+}
+
+/* The cursor moves every frame; a transition would only make it lag. */
+.score-follow-layer[data-style="cursor"] .score-follow-mark {
+    width: 0;
+    margin-left: -1px;
+    border-left: 2px solid color-mix(in srgb, var(--text) 55%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .score-follow-layer[data-style="bar"] .score-follow-mark {
+        transition: none;
+    }
+}
+
+/* Shown when the reader has turned away while the music plays. */
+.score-follow-return {
+    position: fixed;
+    left: 50%;
+    bottom: 3.2rem;
+    z-index: 120;
+    padding: 0.45rem 1.1rem;
+    border: 1px solid var(--text);
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transform: translateX(-50%);
+    box-shadow: 0 2px 10px color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+.score-follow-return:hover,
+.score-follow-return:focus-visible {
+    background: var(--text);
+    color: var(--bg);
+}
+
+.score-follow-return[hidden] {
+    display: none;
+}

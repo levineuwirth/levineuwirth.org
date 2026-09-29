@@ -6,8 +6,8 @@ git carries each composition's index.md and a small score-source.yaml
 manifest, and the pages themselves are regenerated from the engraver's
 source and deployed through _site/. (See the note in .gitignore.)
 
-    tools/music-import.py import <score.mscz> <slug> [--pdf]
-    tools/music-import.py refresh [<slug> ...] [--force]
+    tools/music-import.py import <score.mscz> <slug> [--pdf] [--audio]
+    tools/music-import.py refresh [<slug> ...] [--force] [--audio]
     tools/music-import.py check
 
 import   Exports one SVG per page into content/music/<slug>/scores/,
@@ -18,6 +18,12 @@ import   Exports one SVG per page into content/music/<slug>/scores/,
          computed movements are compared against it instead.
 refresh  Re-exports pieces from their manifests (all of them by default):
          the fresh-clone path, and the re-engrave path.
+--audio  Also renders a MIDI realization with Muse Sounds, and writes
+         scores/timing.json: when each bar sounds, and where it stands on
+         its page. The reader uses the two to follow the score while it
+         plays. Both come from one playback of one layout, so they agree
+         by construction — repeats included, since the timing lists bars
+         in the order they are played.
 check    Reports every composition whose score is missing or stale.
 
 Why refresh refuses to change the page count without --force: unlike a
@@ -37,6 +43,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import json
 import os
 import re
 import shutil
@@ -54,6 +61,15 @@ MUSIC = ROOT / "content" / "music"
 SCORES_DIR = Path(os.environ.get("MUSIC_SCORES_DIR", "~/Documents/Scores")).expanduser()
 MANIFEST = "score-source.yaml"
 PAGES = "scores"
+AUDIO = "realization.mp3"
+TIMING = "timing.json"
+AUDIO_LABEL = "MIDI realization (Muse Sounds)"
+
+# MuseScore 4 writes .mpos boxes in units of 1/14400 inch, whatever
+# resolution it gives the SVG pages (4.7 uses 1200 units per inch, 4.5
+# used 360), so boxes are converted to fractions of the page through its
+# size in inches rather than through any one SVG's viewBox.
+MPOS_PER_INCH = 14400
 
 # MuseScore writes note values into tempo text as SMuFL symbols, either as
 # <sym> elements or as private-use characters. The frontmatter gets the
@@ -107,11 +123,11 @@ def mscore_version() -> str:
     return f"MuseScore {ver}"
 
 
-def export_one(source: Path, target: Path) -> None:
+def export_one(source: Path, target: Path, *extra: str, timeout: int = 600) -> None:
     """One MuseScore export, checked on both counts: the exit status, and a
     non-empty file where it was asked for. Either alone can be fooled —
     an existing file satisfies a presence check after a failed export."""
-    r = mscore("-o", str(target), str(source))
+    r = mscore(*extra, "-o", str(target), str(source), timeout=timeout)
     made = target if target.suffix != ".svg" else \
         target.with_name(f"{target.stem}-1{target.suffix}")
     if r.returncode != 0 or not made.exists() or made.stat().st_size == 0:
@@ -119,7 +135,7 @@ def export_one(source: Path, target: Path) -> None:
             f"(exit {r.returncode}):\n{r.stderr[-2000:]}")
 
 
-def export(source: Path, outdir: Path, pdf_name: str | None) -> dict:
+def export(source: Path, outdir: Path, pdf_name: str | None, audio: bool) -> dict:
     """Export everything a piece needs into outdir, a scratch directory.
     Nothing published is touched until all of it has succeeded."""
     export_one(source, outdir / "page.svg")
@@ -130,11 +146,18 @@ def export(source: Path, outdir: Path, pdf_name: str | None) -> dict:
     if pdf_name:
         pdf = outdir / pdf_name
         export_one(source, pdf)
-    return {"pages": pages, "mpos": outdir / "score.mpos", "pdf": pdf}
+    realization = None
+    if audio:
+        # Muse Sounds renders at roughly six times real time: a fifty-minute
+        # symphony takes the better part of ten minutes.
+        realization = outdir / AUDIO
+        export_one(source, realization, "--sound-profile", "MuseSounds",
+                   "-b", "128", timeout=3 * 3600)
+    return {"pages": pages, "mpos": outdir / "score.mpos", "pdf": pdf,
+            "audio": realization}
 
 
 def score_meta(source: Path) -> dict:
-    import json
     r = mscore("--score-meta", str(source))
     try:
         m = json.loads(r.stdout)
@@ -208,9 +231,51 @@ def movements(root: ET.Element, mpos: Path, total_seconds: float) -> list[dict]:
         m = ROMAN.match(tempo)
         if m:
             numeral, tempo = m.group(1) + ".", m.group(2).strip()
-        out.append({"numeral": numeral, "tempo": tempo,
+        out.append({"numeral": numeral, "tempo": tempo, "measure": s,
                     "page": page.get(s, 0) + 1, "seconds": max(t1 - t0, 0)})
     return out
+
+
+def page_inches(svg: Path) -> tuple[float, float]:
+    """A page's size in inches, from the root element's width and height."""
+    head = svg.read_text()[:2048]
+    per_inch = {"in": 1.0, "mm": 25.4, "cm": 2.54, "pt": 72.0, "px": 96.0}
+    dims = []
+    for attr in ("width", "height"):
+        m = re.search(attr + r'="([\d.]+)(in|mm|cm|pt|px)"', head)
+        if not m:
+            die(f"{svg.name}: no {attr} with a unit on the root element")
+        dims.append(float(m.group(1)) / per_inch[m.group(2)])
+    return dims[0], dims[1]
+
+
+def timing(mpos: Path, page1: Path, mvts: list[dict], seconds: float) -> dict:
+    """The follow-along map: every bar's box as fractions of its page, the
+    bars in the order they sound, and where each movement begins."""
+    x = mpos.read_text()
+    w_in, h_in = page_inches(page1)
+    w, h = w_in * MPOS_PER_INCH, h_in * MPOS_PER_INCH
+    boxes = {}
+    for i, bx, by, bw, bh, pg in re.findall(
+            r'<element id="(\d+)" x="([\d.]+)" y="([\d.]+)" sx="([\d.]+)" '
+            r'sy="([\d.]+)" page="(\d+)"', x):
+        boxes[int(i)] = [int(pg) + 1, round(float(bx) / w, 4), round(float(by) / h, 4),
+                         round(float(bw) / w, 4), round(float(bh) / h, 4)]
+    stray = [i for i, b in boxes.items() if b[1] + b[3] > 1.02 or b[2] + b[4] > 1.02]
+    if stray:
+        warn(f"{len(stray)} bar boxes fall outside their page — the .mpos "
+             f"units may not be 1/{MPOS_PER_INCH} inch for this engraver")
+    events = sorted((int(t), int(i)) for i, t in
+                    re.findall(r'<event elid="(\d+)" position="(\d+)"', x))
+    return {
+        "version": 1,
+        "label": AUDIO_LABEL,
+        "audio": AUDIO,
+        "duration": round(seconds, 2),
+        "measures": [boxes.get(i) for i in range(max(boxes) + 1)] if boxes else [],
+        "events": [[t, i] for t, i in events],
+        "movements": [m["measure"] for m in mvts] if len(mvts) > 1 else [],
+    }
 
 
 def roman(n: int) -> str:
@@ -322,6 +387,7 @@ def scaffold(slug: str, meta: dict, mvts: list[dict], pdf: bool, created: str) -
                 "solo" if len(parts) == 1 else "chamber")
     forces = ("orchestra" if category == "orchestral" else
               " and ".join(re.sub(r"\s+\d+$", "", p).lower() for p in parts))
+    heard = float(meta.get("duration", 0))
     fm = {"title": title}
     # `date` is the page's publication date — the feed, the New page and
     # the footer's version history all read it — so a new page is dated
@@ -336,7 +402,7 @@ def scaffold(slug: str, meta: dict, mvts: list[dict], pdf: bool, created: str) -
     if subtitle and DEDICATION.match(subtitle):
         fm["dedication"] = subtitle
     fm |= {"tags": ["music"], "instrumentation": forces,
-           "duration": f"ca. {max(round(meta.get('duration', 0) / 60), 1)}'",
+           "duration": f"ca. {max(round(heard / 60), 1)}'",
            "category": category, "score-dir": f"{PAGES}/"}
     if pdf:
         fm["pdf"] = f"{PAGES}/{slug}.pdf"
@@ -381,7 +447,7 @@ def compare_movements(slug: str, mvts: list[dict]) -> None:
 # Commands
 # ---------------------------------------------------------------------------
 
-def install(slug: str, source: Path, pdf: bool, force: bool, new: bool) -> None:
+def install(slug: str, source: Path, pdf: bool, audio: bool, force: bool, new: bool) -> None:
     if not source.exists():
         die(f"no such score: {source}")
     dest = MUSIC / slug / PAGES
@@ -389,7 +455,9 @@ def install(slug: str, source: Path, pdf: bool, force: bool, new: bool) -> None:
     meta = score_meta(source)
     with tempfile.TemporaryDirectory(prefix="music-import-") as tmp:
         tmpdir = Path(tmp)
-        got = export(source, tmpdir, f"{slug}.pdf" if pdf else None)
+        got = export(source, tmpdir, f"{slug}.pdf" if pdf else None, audio)
+        root = read_mscx(source)
+        mvts = movements(root, got["mpos"], float(meta.get("duration", 0)))
         n = len(got["pages"])
         version = mscore_version()
         if old and old.get("pages") != n and not force:
@@ -399,13 +467,15 @@ def install(slug: str, source: Path, pdf: bool, force: bool, new: bool) -> None:
         if old and old.get("engraver") != version:
             warn(f"{slug}: engraver changed, {old.get('engraver')} → {version}; "
                  f"page count unchanged, but look the pages over")
-        root = read_mscx(source)
-        mvts = movements(root, got["mpos"], float(meta.get("duration", 0)))
         created = next((t.text or "" for t in root.iter("metaTag")
                         if t.get("name") == "creationDate"), "")
         for problem in stale_properties(root, meta):
             warn(f"{slug}: {source.name} project properties: {problem} "
                  f"(fix in MuseScore: File → Project properties)")
+        follow = None
+        if got["audio"]:
+            follow = timing(got["mpos"], got["pages"][0], mvts,
+                            float(meta.get("duration", 0)))
 
         # Every export has succeeded; only now replace the published files.
         dest.mkdir(parents=True, exist_ok=True)
@@ -415,15 +485,25 @@ def install(slug: str, source: Path, pdf: bool, force: bool, new: bool) -> None:
             shutil.move(str(f), dest / f.name)
         if got["pdf"]:
             shutil.move(str(got["pdf"]), dest / got["pdf"].name)
+        # A realization and its timing stand or fall together; a piece
+        # re-exported without --audio drops both rather than keep a timing
+        # map for a layout that may have moved.
+        for f in (dest / AUDIO, dest / TIMING):
+            f.unlink(missing_ok=True)
+        if got["audio"]:
+            shutil.move(str(got["audio"]), dest / AUDIO)
+            (dest / TIMING).write_text(json.dumps(follow, separators=(",", ":")))
 
     write_manifest(slug, {
         "source": source_key(source),
         "engraver": version,
         "pages": n,
         "pdf": pdf,
+        "audio": "Muse Sounds" if audio else False,
         "exported": dt.datetime.now().isoformat(timespec="seconds"),
     })
-    print(f"{slug}: {n} pages from {source.name} ({version})")
+    print(f"{slug}: {n} pages from {source.name} ({version})"
+          + (f", with a Muse Sounds realization" if audio else ""))
     for m in mvts if len(mvts) > 1 else []:
         print(f"  {m['numeral'] or '·':5} page {m['page']:>4}  {minutes(m['seconds']):>5}  {m['tempo']}")
     if new and not (MUSIC / slug / "index.md").exists():
@@ -435,7 +515,7 @@ def install(slug: str, source: Path, pdf: bool, force: bool, new: bool) -> None:
 def cmd_import(a: argparse.Namespace) -> None:
     if not re.fullmatch(r"[a-z0-9-]+", a.slug):
         die(f"invalid slug {a.slug!r} (lowercase a-z, 0-9, hyphens)")
-    install(a.slug, Path(a.score).expanduser(), a.pdf, a.force, new=True)
+    install(a.slug, Path(a.score).expanduser(), a.pdf, a.audio, a.force, new=True)
 
 
 def pieces() -> list[str]:
@@ -448,7 +528,8 @@ def cmd_refresh(a: argparse.Namespace) -> None:
         if not m:
             warn(f"{slug}: no {MANIFEST}; import it first")
             continue
-        install(slug, source_path(m["source"]), bool(m.get("pdf")), a.force, new=False)
+        install(slug, source_path(m["source"]), bool(m.get("pdf")),
+                a.audio or bool(m.get("audio")), a.force, new=False)
 
 
 def cmd_check(_: argparse.Namespace) -> None:
@@ -467,6 +548,11 @@ def cmd_check(_: argparse.Namespace) -> None:
             print(f"{slug}: {have} pages on disk, manifest records {m.get('pages')} "
                   f"— tools/music-import.py refresh {slug}")
             problems += 1
+        elif m.get("audio") and not all((MUSIC / slug / PAGES / f).exists()
+                                        for f in (AUDIO, TIMING)):
+            print(f"{slug}: the manifest records a realization, but it is missing "
+                  f"— tools/music-import.py refresh {slug}")
+            problems += 1
         elif not source_path(m["source"]).exists():
             print(f"{slug}: source {m['source']} is missing (pages present)")
         elif source_path(m["source"]).stat().st_mtime > \
@@ -482,10 +568,12 @@ def main() -> None:
     p = sub.add_parser("import", help="export a score and scaffold its page")
     p.add_argument("score"); p.add_argument("slug")
     p.add_argument("--pdf", action="store_true", help="also export a downloadable PDF")
+    p.add_argument("--audio", action="store_true", help="also render a Muse Sounds realization")
     p.add_argument("--force", action="store_true", help="accept a changed page count")
     p.set_defaults(fn=cmd_import)
     p = sub.add_parser("refresh", help="re-export pieces from their manifests")
     p.add_argument("slugs", nargs="*")
+    p.add_argument("--audio", action="store_true", help="add a Muse Sounds realization")
     p.add_argument("--force", action="store_true", help="accept a changed page count")
     p.set_defaults(fn=cmd_refresh)
     p = sub.add_parser("check", help="report missing or stale score pages")

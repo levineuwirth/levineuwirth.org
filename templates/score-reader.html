@@ -34,7 +34,8 @@
     </div>
 </header>
 <main class="score-reader-stage" id="score-reader-stage"
-      data-page-count="$score-page-count$"
+      data-page-count="$score-page-count$"$if(realization)$
+      data-timing="$realization$"$endif$
       data-pages="$for(score-pages)$$score-page-url$$sep$,$endfor$">
     <div class="score-reader-viewport" id="score-reader-viewport">
         <!-- The SVG for the current page is fetched and inlined here, so the
