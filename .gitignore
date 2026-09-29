@@ -209,3 +209,8 @@ content/photography/**/*.psd
 # stays local. Anchored so it matches only the file at the repository root,
 # and named explicitly because `*.local.md` above does not cover it.
 /local.md
+
+# Local agent instructions (AGENTS.md, and CLAUDE.md, which mirrors it).
+# They describe the author's machines and vaults, not the site.
+/AGENTS.md
+/CLAUDE.md
