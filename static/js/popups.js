@@ -107,6 +107,11 @@
                gets the normal popup. */
             if (el.closest('.photography-grid')) return;
 
+            /* The music shelf is its own preview, for the same reason:
+               pointing at a spine turns that score face-out beside it,
+               and a popup would cover the page it has just shown. */
+            if (el.closest('.shelf')) return;
+
             /* Author links, backlink source links, and Related items always get popups */
             var inAuthors  = el.closest('.meta-authors');
             var isBacklink = el.classList.contains('backlink-source');

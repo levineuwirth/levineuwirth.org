@@ -1,20 +1,12 @@
-<main id="markdownBody" data-pagefind-body>
-    <h1 class="page-title">$title$</h1>
-    $if(abstract)$
-    <p class="catalog-abstract">$abstract$</p>
-    $endif$
-    $if(body)$
-    <div class="catalog-prose">
-        $body$
-    </div>
-    $endif$
-    $if(has-featured)$
-    <section class="catalog-featured">
-        <h2 class="catalog-section-title catalog-featured-title">Featured</h2>
-        $featured-works$
-    </section>
-    $endif$
-    <div class="catalog-page">
+<main id="markdownBody" class="music-index" data-pagefind-body>
+    <header class="music-head">
+        <h1 class="page-title music-title">$title$</h1>
+        $if(abstract)$<div class="music-abstract">$abstract$</div>$endif$
+    </header>
+    $if(music-shelf)$$music-shelf$$endif$
+    <div class="music-prose">$body$</div>
+    <div class="cat">
         $catalog-by-category$
     </div>
 </main>
+<script src="/js/music-shelf.js" defer></script>

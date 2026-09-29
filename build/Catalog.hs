@@ -1,22 +1,30 @@
 {-# LANGUAGE GHC2021 #-}
 {-# LANGUAGE OverloadedStrings #-}
--- | Music catalog: featured works + grouped-by-category listing.
+-- | Music catalog: a shelf of the works, then the catalogue proper.
+--
+-- The shelf holds every work as the spine of a bound score, oldest to
+-- newest, each as thick as its score is long; one work stands face-out,
+-- showing its first page. Below it, the catalogue lists the works by genre,
+-- newest first, as a programme would set them.
+--
 -- Renders HTML directly (same pattern as Backlinks.hs) to avoid the
 -- complexity of nested listFieldWith.
 module Catalog
     ( musicCatalogCtx
     ) where
 
-import Data.Char     (isSpace, toLower)
-import Data.List     (groupBy, isPrefixOf, sortBy)
-import Data.Maybe    (fromMaybe)
-import Data.Ord      (comparing)
-import Data.Aeson    (Value (..))
+import Data.Char       (isSpace, toLower)
+import Data.List       (groupBy, isPrefixOf, sortBy, stripPrefix)
+import Data.Maybe      (fromMaybe, listToMaybe)
+import Data.Ord        (Down (..), comparing)
+import Data.Aeson      (Value (..))
+import qualified Data.Aeson.Key    as AK
 import qualified Data.Aeson.KeyMap as KM
 import qualified Data.Vector       as V
 import qualified Data.Text         as T
+import System.FilePath (takeDirectory, (</>))
 import Hakyll
-import Contexts (scorePageList, siteCtx)
+import Contexts (durationPrimes, scorePageList, siteCtx, svgAspect)
 
 -- ---------------------------------------------------------------------------
 -- Entry type
@@ -26,12 +34,16 @@ data CatalogEntry = CatalogEntry
     { ceTitle           :: String
     , ceUrl             :: String
     , ceYear            :: Maybe String
+    , ceOpus            :: Maybe String
     , ceDuration        :: Maybe String
     , ceInstrumentation :: Maybe String
     , ceCategory        :: String      -- defaults to "other"
     , ceFeatured        :: Bool
-    , ceHasScore        :: Bool
     , ceHasRecording    :: Bool
+    , cePages           :: Int
+    , ceFirstPage       :: Maybe String   -- absolute URL of page 1
+    , ceAspect          :: Maybe String   -- page 1's width / height
+    , ceSortKey         :: String         -- year, then date: chronological
     }
 
 -- ---------------------------------------------------------------------------
@@ -79,10 +91,11 @@ hasRecordingMeta meta =
     movHasAudio (Object o) = KM.member "audio" o
     movHasAudio _          = False
 
--- | Parse a year: accepts Number (e.g. @year: 2019@) or String.
-parseYear :: Metadata -> Maybe String
-parseYear meta =
-    case KM.lookup "year" meta of
+-- | A scalar that YAML may hand over as a number or a string:
+--   @year: 2019@ and @opus: '17'@ alike.
+parseScalar :: String -> Metadata -> Maybe String
+parseScalar key meta =
+    case KM.lookup (AK.fromString key) meta of
         Just (Number n) -> Just $ show (floor (fromRational (toRational n) :: Double) :: Int)
         Just (String t) -> Just (T.unpack t)
         _               -> Nothing
@@ -92,18 +105,19 @@ parseCatalogEntry item = do
     meta   <- getMetadata (itemIdentifier item)
     mRoute <- getRoute (itemIdentifier item)
     -- Through 'scorePageList' rather than reading @score-pages@ here, so the
-    -- catalog's score indicator cannot disagree with what the reader shows:
-    -- a composition that declares its pages with @score-dir@ has no
-    -- @score-pages@ key to find.
+    -- shelf cannot disagree with what the reader shows: a composition that
+    -- declares its pages with @score-dir@ has no @score-pages@ key to find.
     pages  <- scorePageList item
+    let srcDir = takeDirectory (toFilePath (itemIdentifier item))
+    aspect <- case pages of
+        (p : _) -> unsafeCompiler (svgAspect (srcDir </> p))
+        []      -> return Nothing
     case mRoute of
         Nothing -> return Nothing
         Just r  -> do
-            let title  = fromMaybe "(untitled)" (lookupString "title" meta)
-                url    = "/" ++ r
-                year   = parseYear meta
-                dur    = lookupString "duration" meta
-                instr  = lookupString "instrumentation" meta
+            let url    = "/" ++ r
+                slugDir = takeDirectory url
+                year   = parseScalar "year" meta
                 -- Fold unknown categories into the canonical "other"
                 -- bucket here: two distinct unknown values share a rank
                 -- but would groupBy into separate groups, rendering as
@@ -111,15 +125,20 @@ parseCatalogEntry item = do
                 rawCat = fromMaybe "other" (lookupString "category" meta)
                 cat    = if rawCat `elem` categoryOrder then rawCat else "other"
             return $ Just CatalogEntry
-                { ceTitle           = title
+                { ceTitle           = fromMaybe "(untitled)" (lookupString "title" meta)
                 , ceUrl             = url
                 , ceYear            = year
-                , ceDuration        = dur
-                , ceInstrumentation = instr
+                , ceOpus            = parseScalar "opus" meta
+                , ceDuration        = lookupString "duration" meta
+                , ceInstrumentation = lookupString "instrumentation" meta
                 , ceCategory        = cat
                 , ceFeatured        = isFeatured meta
-                , ceHasScore        = not (null pages)
                 , ceHasRecording    = hasRecordingMeta meta
+                , cePages           = length pages
+                , ceFirstPage       = (\p -> slugDir ++ "/" ++ p) <$> listToMaybe pages
+                , ceAspect          = aspect
+                , ceSortKey         = fromMaybe "0000" year ++ "|"
+                                      ++ fromMaybe "" (lookupString "date" meta)
                 }
 
 -- ---------------------------------------------------------------------------
@@ -130,7 +149,7 @@ parseCatalogEntry item = do
 -- frontmatter @title@ values are author-controlled trusted HTML and may
 -- contain inline markup such as @<em>...</em>@. They are emitted
 -- pre-escaped — but we still escape every other interpolated frontmatter
--- value (year, duration, instrumentation) and sanitize hrefs through
+-- value (year, opus, duration, instrumentation) and sanitize hrefs through
 -- 'safeHref', so a stray @<@ in those fields cannot break the markup.
 
 -- | Defense-in-depth href sanitiser. Mirrors 'Stats.isSafeUrl'.
@@ -160,37 +179,122 @@ escText = concatMap esc
     esc '>' = "&gt;"
     esc c   = [c]
 
-renderIndicators :: CatalogEntry -> String
-renderIndicators e = concatMap render
-    [ (ceHasScore e,     "<span class=\"catalog-ind\" title=\"Score available\">&#9724;</span>")
-    , (ceHasRecording e, "<span class=\"catalog-ind\" title=\"Recording available\">&#9834;</span>")
+-- | "Symphony No. 5" and ", op. 17" as one title: the opus is part of how
+--   a work is named in a catalogue.
+titleHtml :: CatalogEntry -> String
+titleHtml e = ceTitle e ++ maybe ""
+    (\o -> "<span class=\"cat-opus\">, op.&nbsp;" ++ escText o ++ "</span>") (ceOpus e)
+
+-- | "for orchestra", "for alto and piano" — the catalogue's second line.
+forcesText :: CatalogEntry -> String
+forcesText e = maybe "" (\i -> "for " ++ i) (ceInstrumentation e)
+
+-- | Sheets drawn beneath a face-out score: the same thresholds as the
+--   composition page's frontispiece ('Contexts.compositionCtx').
+stackOf :: Int -> Int
+stackOf n
+    | n < 2     = 0
+    | n < 16    = 1
+    | n < 64    = 2
+    | otherwise = 3
+
+-- | The shelf. Spines run oldest to newest; the featured work — else the
+--   newest — stands face-out at the end, and music-shelf.js turns any
+--   spine a reader points at face-out in its place. Without scripting
+--   the face-out simply stays put and every spine is still a link.
+renderShelf :: [CatalogEntry] -> String
+renderShelf entries = concat
+    [ "<div class=\"shelf\" data-shelf>"
+    ,   "<div class=\"shelf-row\">"
+    ,     "<ol class=\"shelf-spines\" aria-label=\"The works, oldest first\">"
+    ,       concatMap spine chron
+    ,     "</ol>"
+    ,     maybe "" faceOut shown
+    ,   "</div>"
+    , "</div>"
     ]
   where
-    render (True,  s) = s
-    render (False, _) = ""
+    chron = sortBy (comparing ceSortKey) entries
+    -- Only a work whose pages are in this build can stand face-out: a
+    -- featured or newest work without them would leave no face-out at
+    -- all, and with it no shelf previews for any other work.
+    shown = listToMaybe
+        [ e | e <- filter ceFeatured (reverse chron) ++ reverse chron
+            , Just _ <- [ceFirstPage e] ]
 
+    spine e = concat
+        [ "<li><a class=\"shelf-spine\" href=\"", safeHref (ceUrl e), "\""
+        , " style=\"--pages: ", show (cePages e), "\""
+        , maybe "" (\p -> " data-page=\"" ++ safeHref p ++ "\"") (ceFirstPage e)
+        , maybe "" (\a -> " data-aspect=\"" ++ escAttr a ++ "\"") (ceAspect e)
+        , " data-stack=\"", show (stackOf (cePages e)), "\""
+        , " data-meta=\"", escAttr (metaLine e), "\">"
+        , "<span class=\"shelf-spine-title\">", titleHtml e, "</span>"
+        , maybe "" (\y -> "<span class=\"shelf-spine-year\">" ++ escText y ++ "</span>") (ceYear e)
+        , "</a></li>"
+        ]
+
+    -- A preview of a spine that is itself a link, so it stays out of the
+    -- tab order and the accessibility tree: the spines carry the names.
+    faceOut e = case ceFirstPage e of
+        Nothing -> ""
+        Just p  -> concat
+            [ "<a class=\"shelf-faceout\" href=\"", safeHref (ceUrl e), "\""
+            , " tabindex=\"-1\" aria-hidden=\"true\""
+            , " data-stack=\"", show (stackOf (cePages e)), "\""
+            , maybe "" (\a -> " style=\"--aspect: " ++ escAttr a ++ "\"") (ceAspect e)
+            , ">"
+            , "<img src=\"", safeHref p, "\" alt=\"\" decoding=\"async\">"
+            , caption e
+            , "</a>"
+            ]
+
+    -- The shelf label under the face-out score, on the board's edge. Inside
+    -- the face-out link so it moves with it; spans rather than a <p>,
+    -- which an <a> may not hold here.
+    caption e = concat
+        [ "<span class=\"shelf-caption\">"
+        , "<span class=\"shelf-caption-title\">", titleHtml e, "</span>"
+        , "<span class=\"shelf-caption-meta\">", escText (metaLine e), "</span>"
+        , "</span>"
+        ]
+
+    metaLine e = case (forcesText e, ceYear e) of
+        ("", Just y) -> y
+        (f, Just y)  -> f ++ ", " ++ y
+        (f, Nothing) -> f
+
+-- | One work in the catalogue: the year hangs in the margin, a dotted
+--   leader runs from the title to the duration, and the forces follow on
+--   a second line — the composition page's movement list, one level up.
+--   "ca." is dropped here; every duration in a catalogue is approximate,
+--   and the work's own page says so.
 renderEntry :: CatalogEntry -> String
 renderEntry e = concat
-    [ "<li class=\"catalog-entry\">"
-    ,   "<div class=\"catalog-entry-main\">"
-    ,     "<a class=\"catalog-title\" href=\"", safeHref (ceUrl e), "\">"
-    ,       ceTitle e
-    ,     "</a>"
-    ,     renderIndicators e
-    ,     maybe "" (\y -> "<span class=\"catalog-year\">" ++ escText y ++ "</span>") (ceYear e)
-    ,     maybe "" (\d -> "<span class=\"catalog-duration\">" ++ escText d ++ "</span>") (ceDuration e)
-    ,   "</div>"
-    ,   maybe "" (\i -> "<div class=\"catalog-instrumentation\">" ++ escText i ++ "</div>") (ceInstrumentation e)
+    [ "<li class=\"cat-work\">"
+    ,   "<a class=\"cat-work-row\" href=\"", safeHref (ceUrl e), "\">"
+    ,     "<span class=\"cat-work-year\">", maybe "" escText (ceYear e), "</span>"
+    ,     "<span class=\"cat-work-title\">", titleHtml e, "</span>"
+    ,     "<span class=\"cat-work-leader\" aria-hidden=\"true\"></span>"
+    ,     "<span class=\"cat-work-dur\">"
+    ,       maybe "" (escText . durationPrimes . dropCa) (ceDuration e)
+    ,     "</span>"
+    ,     "<span class=\"cat-work-forces\">", escText (forcesText e)
+    ,       if ceHasRecording e then "<span class=\"cat-work-rec\">with recording</span>" else ""
+    ,     "</span>"
+    ,   "</a>"
     , "</li>"
     ]
+  where
+    dropCa d = fromMaybe d (stripPrefix "ca. " d)
 
 renderCategorySection :: String -> [CatalogEntry] -> String
 renderCategorySection cat entries = concat
-    [ "<section class=\"catalog-section\">"
-    ,   "<h2 class=\"catalog-section-title\">", escText (categoryLabel cat), "</h2>"
-    ,   "<ul class=\"catalog-list\">"
-    ,   concatMap renderEntry entries
-    ,   "</ul>"
+    [ "<section class=\"cat-section\">"
+    ,   "<h2 class=\"cat-section-title\">", escText (categoryLabel cat), "</h2>"
+    ,   "<ol class=\"cat-list\">"
+    ,   concatMap renderEntry (sortBy (comparing (Down . ceSortKey)) entries)
+    ,   "</ol>"
     , "</section>"
     ]
 
@@ -208,23 +312,11 @@ loadEntries = do
 -- Context fields
 -- ---------------------------------------------------------------------------
 
--- | @$featured-works$@: HTML list of featured entries; noResult when none.
-featuredWorksField :: Context String
-featuredWorksField = field "featured-works" $ \_ -> do
+-- | @$music-shelf$@: the shelf of works; noResult when there are none.
+musicShelfField :: Context String
+musicShelfField = field "music-shelf" $ \_ -> do
     entries <- loadEntries
-    let featured = filter ceFeatured entries
-    if null featured
-        then fail "no featured works"
-        else return $
-               "<ul class=\"catalog-list catalog-featured-list\">"
-            ++ concatMap renderEntry featured
-            ++ "</ul>"
-
--- | @$has-featured$@: present when at least one composition is featured.
-hasFeaturedField :: Context String
-hasFeaturedField = field "has-featured" $ \_ -> do
-    entries <- loadEntries
-    if any ceFeatured entries then return "true" else fail "no featured works"
+    if null entries then noResult "no works" else return (renderShelf entries)
 
 -- | @$catalog-by-category$@: HTML for all category sections.
 -- Sorted by canonical category order; if no compositions exist yet,
@@ -233,7 +325,7 @@ catalogByCategoryField :: Context String
 catalogByCategoryField = field "catalog-by-category" $ \_ -> do
     entries <- loadEntries
     if null entries
-        then return "<p class=\"catalog-empty\">Works forthcoming.</p>"
+        then return "<p class=\"cat-empty\">Works forthcoming.</p>"
         else do
             let sorted  = sortBy (comparing (categoryRank . ceCategory)) entries
                 grouped = groupBy (\a b -> ceCategory a == ceCategory b) sorted
@@ -247,7 +339,6 @@ catalogByCategoryField = field "catalog-by-category" $ \_ -> do
 musicCatalogCtx :: Context String
 musicCatalogCtx =
     constField "catalog" "true"
-    <> hasFeaturedField
-    <> featuredWorksField
+    <> musicShelfField
     <> catalogByCategoryField
     <> siteCtx
