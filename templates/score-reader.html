@@ -5,7 +5,7 @@
     $if(has-score)$
     <nav class="score-reader-movements" aria-label="Movements">
         $for(movements)$
-        <button class="score-reader-mvt" data-page="$movement-page$"$if(movement-time)$ data-time="$movement-time$"$endif$>$movement-name$</button>
+        $if(movement-status)$$else$<button class="score-reader-mvt" data-page="$movement-page$"$if(movement-time)$ data-time="$movement-time$"$endif$>$movement-name$</button>$endif$
         $endfor$
     </nav>
     $endif$

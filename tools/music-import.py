@@ -18,6 +18,13 @@ import   Exports one SVG per page into content/music/<slug>/scores/,
          computed movements are compared against it instead.
 refresh  Re-exports pieces from their manifests (all of them by default):
          the fresh-clone path, and the re-engrave path.
+--movements 1-2
+         Publishes only the leading movements — for a work whose later
+         movements are in revision. The pages stop before the first withheld
+         movement, which must therefore begin on a new page; the realization
+         and its timing stop at its first downbeat. The choice is recorded in
+         the manifest, and `--movements all` publishes the whole work again.
+         List the withheld movements in index.md with `status: in revision`.
 --audio  Also renders a MIDI realization with Muse Sounds, and writes
          scores/timing.json: when each bar sounds, and where it stands on
          its page. The reader uses the two to follow the score while it
@@ -278,6 +285,43 @@ def timing(mpos: Path, page1: Path, mvts: list[dict], seconds: float) -> dict:
     }
 
 
+def selection(spec: str | None, sections: int) -> int | None:
+    """How many leading movements to publish: None for all of them.
+
+    Only a leading run can be published: a gap would leave the reader's
+    pages, the realization and the timing with a hole in the middle."""
+    if spec is None or str(spec).strip().lower() == "all":
+        return None
+    nums = set()
+    for part in str(spec).replace(" ", "").split(","):
+        lo, _, hi = part.partition("-")
+        if not lo.isdigit() or (hi and not hi.isdigit()):
+            die(f"--movements {spec!r}: expected something like 1-2 or 1,2")
+        nums.update(range(int(lo), int(hi or lo) + 1))
+    k = len(nums)
+    if nums != set(range(1, k + 1)):
+        die(f"--movements {spec!r}: only the leading movements can be published (1-{k}, say)")
+    if sections < 2:
+        die("--movements needs a score whose movements are separated by section breaks")
+    if k > sections:
+        die(f"--movements {spec!r}: the score has only {sections} movements")
+    return None if k == sections else k
+
+
+def trim_audio(path: Path, seconds: float) -> None:
+    """Cut the realization at `seconds` with a short fade, in place."""
+    out = path.with_name("trimmed-" + path.name)
+    fade = min(2.0, seconds / 4)
+    r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(path),
+                        "-t", f"{seconds:.3f}",
+                        "-af", f"afade=t=out:st={max(0.0, seconds - fade):.3f}:d={fade:.3f}",
+                        "-codec:a", "libmp3lame", "-b:a", "128k", str(out)],
+                       capture_output=True, text=True)
+    if r.returncode != 0 or not out.exists() or out.stat().st_size == 0:
+        die(f"could not trim the realization (ffmpeg exit {r.returncode}):\n{r.stderr[-2000:]}")
+    out.replace(path)
+
+
 def roman(n: int) -> str:
     out = ""
     for value, sym in ((10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I")):
@@ -360,7 +404,8 @@ def frontmatter(slug: str) -> dict | None:
     return yaml.safe_load(parts[1]) if len(parts) >= 3 else {}
 
 
-def scaffold(slug: str, meta: dict, mvts: list[dict], pdf: bool, created: str) -> None:
+def scaffold(slug: str, meta: dict, mvts: list[dict], pdf: bool, created: str,
+             published: int | None = None) -> None:
     title = (meta.get("textFramesData", {}).get("titles") or [meta.get("title")])[0] or slug
     composer = " ".join(meta.get("textFramesData", {}).get("composers") or [meta.get("composer", "")])
     # "L. Neuwirth (2025)" or "(2022-2023)" on the title page — possibly
@@ -387,7 +432,9 @@ def scaffold(slug: str, meta: dict, mvts: list[dict], pdf: bool, created: str) -
                 "solo" if len(parts) == 1 else "chamber")
     forces = ("orchestra" if category == "orchestral" else
               " and ".join(re.sub(r"\s+\d+$", "", p).lower() for p in parts))
-    heard = float(meta.get("duration", 0))
+    # A partial work's duration is what is published, not the whole.
+    heard = (sum(m["seconds"] for m in mvts[:published]) if published
+             else float(meta.get("duration", 0)))
     fm = {"title": title}
     # `date` is the page's publication date — the feed, the New page and
     # the footer's version history all read it — so a new page is dated
@@ -408,6 +455,8 @@ def scaffold(slug: str, meta: dict, mvts: list[dict], pdf: bool, created: str) -
         fm["pdf"] = f"{PAGES}/{slug}.pdf"
     if len(mvts) > 1:
         fm["movements"] = [
+            {"name": m["numeral"] or f"{roman(i + 1)}.", "status": "in revision"}
+            if published is not None and i >= published else
             {"name": m["numeral"] or f"{roman(i + 1)}.", **({"tempo": m["tempo"]} if m["tempo"] else {}),
              "page": m["page"], "duration": minutes(m["seconds"])}
             for i, m in enumerate(mvts)]
@@ -421,7 +470,7 @@ def scaffold(slug: str, meta: dict, mvts: list[dict], pdf: bool, created: str) -
         print(f"  the score sets a text but credits no poet — add `text:` for the author")
 
 
-def compare_movements(slug: str, mvts: list[dict]) -> None:
+def compare_movements(slug: str, mvts: list[dict], published: int | None = None) -> None:
     """Check index.md's movements against the sections of this export.
 
     Counts are compared before anything else, and a score that has
@@ -437,7 +486,12 @@ def compare_movements(slug: str, mvts: list[dict]) -> None:
              f"has {have} — update `movements:`")
     if not declared or not sections:
         return
-    for d, m in zip(declared, mvts):
+    for i, (d, m) in enumerate(zip(declared, mvts)):
+        if published is not None and i >= published:
+            if not d.get("status"):
+                warn(f"{slug}: movement {d.get('name')!r} is withheld from this export — "
+                     f"give it `status: in revision` in index.md")
+            continue
         if d.get("page") != m["page"]:
             warn(f"{slug}: movement {d.get('name')!r} is at page {m['page']} "
                  f"in this export, index.md says {d.get('page')} — update `page:`")
@@ -447,7 +501,8 @@ def compare_movements(slug: str, mvts: list[dict]) -> None:
 # Commands
 # ---------------------------------------------------------------------------
 
-def install(slug: str, source: Path, pdf: bool, audio: bool, force: bool, new: bool) -> None:
+def install(slug: str, source: Path, pdf: bool, audio: bool, force: bool, new: bool,
+            movements_spec: str | None = None) -> None:
     if not source.exists():
         die(f"no such score: {source}")
     dest = MUSIC / slug / PAGES
@@ -458,6 +513,11 @@ def install(slug: str, source: Path, pdf: bool, audio: bool, force: bool, new: b
         got = export(source, tmpdir, f"{slug}.pdf" if pdf else None, audio)
         root = read_mscx(source)
         mvts = movements(root, got["mpos"], float(meta.get("duration", 0)))
+        k = selection(movements_spec, len(mvts) if len(mvts) > 1 else 0)
+        cut = None
+        if k is not None:
+            cut = cut_point(got["mpos"], mvts, k)
+            got["pages"] = got["pages"][:cut["page"] - 1]
         n = len(got["pages"])
         version = mscore_version()
         if old and old.get("pages") != n and not force:
@@ -476,6 +536,12 @@ def install(slug: str, source: Path, pdf: bool, audio: bool, force: bool, new: b
         if got["audio"]:
             follow = timing(got["mpos"], got["pages"][0], mvts,
                             float(meta.get("duration", 0)))
+            if cut:
+                follow["measures"] = follow["measures"][:cut["measure"]]
+                follow["events"] = [e for e in follow["events"] if e[0] < cut["ms"]]
+                follow["movements"] = follow["movements"][:k]
+                follow["duration"] = round(cut["ms"] / 1000, 2)
+                trim_audio(got["audio"], cut["ms"] / 1000)
 
         # Every export has succeeded; only now replace the published files.
         dest.mkdir(parents=True, exist_ok=True)
@@ -500,22 +566,48 @@ def install(slug: str, source: Path, pdf: bool, audio: bool, force: bool, new: b
         "pages": n,
         "pdf": pdf,
         "audio": "Muse Sounds" if audio else False,
+        **({"movements": f"1-{k}"} if k else {}),
         "exported": dt.datetime.now().isoformat(timespec="seconds"),
     })
     print(f"{slug}: {n} pages from {source.name} ({version})"
           + (f", with a Muse Sounds realization" if audio else ""))
-    for m in mvts if len(mvts) > 1 else []:
-        print(f"  {m['numeral'] or '·':5} page {m['page']:>4}  {minutes(m['seconds']):>5}  {m['tempo']}")
+    for i, m in enumerate(mvts if len(mvts) > 1 else []):
+        held = k is not None and i >= k
+        print(f"  {m['numeral'] or '·':5} "
+              + ("withheld" if held else
+                 f"page {m['page']:>4}  {minutes(m['seconds']):>5}  {m['tempo']}"))
     if new and not (MUSIC / slug / "index.md").exists():
-        scaffold(slug, meta, mvts, pdf, created)
+        scaffold(slug, meta, mvts, pdf, created, k)
     else:
-        compare_movements(slug, mvts)
+        compare_movements(slug, mvts, k)
+
+
+def cut_point(mpos: Path, mvts: list[dict], k: int) -> dict:
+    """Where a partial work stops: the page, bar and moment at which its
+    first withheld movement begins — which must be the top of a page, or
+    the last published page would show the start of unpublished music."""
+    x = mpos.read_text()
+    page = {int(i): int(p) + 1 for i, p in
+            re.findall(r'<element id="(\d+)"[^>]*page="(\d+)"', x)}
+    first = {}
+    for i, t in re.findall(r'<event elid="(\d+)" position="(\d+)"', x):
+        first.setdefault(int(i), int(t))
+    held = mvts[k]
+    bar = held["measure"]
+    name = (held["numeral"] or roman(k + 1)).rstrip(".")
+    before = (mvts[k - 1]["numeral"] or roman(k)).rstrip(".")
+    if page.get(bar - 1) == held["page"]:
+        die(f"movement {name} begins partway down page {held['page']}, which would "
+            f"publish its opening. In MuseScore, put a page break at the end of "
+            f"movement {before} and try again.")
+    return {"page": held["page"], "measure": bar, "ms": first.get(bar, 0)}
 
 
 def cmd_import(a: argparse.Namespace) -> None:
     if not re.fullmatch(r"[a-z0-9-]+", a.slug):
         die(f"invalid slug {a.slug!r} (lowercase a-z, 0-9, hyphens)")
-    install(a.slug, Path(a.score).expanduser(), a.pdf, a.audio, a.force, new=True)
+    install(a.slug, Path(a.score).expanduser(), a.pdf, a.audio, a.force, new=True,
+            movements_spec=a.movements)
 
 
 def pieces() -> list[str]:
@@ -529,7 +621,8 @@ def cmd_refresh(a: argparse.Namespace) -> None:
             warn(f"{slug}: no {MANIFEST}; import it first")
             continue
         install(slug, source_path(m["source"]), bool(m.get("pdf")),
-                a.audio or bool(m.get("audio")), a.force, new=False)
+                a.audio or bool(m.get("audio")), a.force, new=False,
+                movements_spec=a.movements if a.movements is not None else m.get("movements"))
 
 
 def cmd_check(_: argparse.Namespace) -> None:
@@ -569,11 +662,13 @@ def main() -> None:
     p.add_argument("score"); p.add_argument("slug")
     p.add_argument("--pdf", action="store_true", help="also export a downloadable PDF")
     p.add_argument("--audio", action="store_true", help="also render a Muse Sounds realization")
+    p.add_argument("--movements", help="publish only the leading movements, e.g. 1-2")
     p.add_argument("--force", action="store_true", help="accept a changed page count")
     p.set_defaults(fn=cmd_import)
     p = sub.add_parser("refresh", help="re-export pieces from their manifests")
     p.add_argument("slugs", nargs="*")
     p.add_argument("--audio", action="store_true", help="add a Muse Sounds realization")
+    p.add_argument("--movements", help="publish only the leading movements (1-2), or all")
     p.add_argument("--force", action="store_true", help="accept a changed page count")
     p.set_defaults(fn=cmd_refresh)
     p = sub.add_parser("check", help="report missing or stale score pages")

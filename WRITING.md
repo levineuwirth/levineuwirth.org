@@ -859,6 +859,34 @@ a cursor moving through it, or page turns alone). Turning a page by hand steps
 out of following until *Follow the music* is pressed; clicking a bar plays
 from it; `K` plays and pauses. The movement buttons move the music too.
 
+**Partial works.** A work whose later movements are in revision can be
+published without them:
+
+```bash
+tools/music-import.py import <score.mscz> <slug> --movements 1-2 [--audio]
+```
+
+Only a leading run of movements can be published. The pages stop before the
+first withheld movement, so it must begin on a new page — the importer stops
+and says so if it begins partway down one (add a page break at the end of the
+last published movement). A realization and its timing stop at that
+movement's first downbeat, with a short fade. The selection is recorded in
+`score-source.yaml`, so refreshes keep it; `refresh <slug> --movements all`
+publishes the whole work again.
+
+In `index.md` the withheld movements stay in the list with a status instead
+of a page and a duration — the landing page shows them quietly, and the reader
+gives them no button:
+
+```yaml
+movements:
+  - name: "I."
+    page: 1
+    duration: "8'"
+  - name: "III."
+    status: "in revision"
+```
+
 **Score pages are not versioned** — the same policy as photography's
 delivery JPEGs (see `.gitignore`). The deploy carries them in `_site/`; a
 fresh clone runs `tools/music-import.py refresh` to regenerate every piece

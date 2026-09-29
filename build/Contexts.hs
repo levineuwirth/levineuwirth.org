@@ -1306,6 +1306,10 @@ data Movement = Movement
       -- | A tempo or character marking shown beside the movement's name
       --   (@♩ = 80@, @Molto rubato@) — optional, for the landing page.
     , movTempo    :: Maybe String
+      -- | A movement listed but not published — @status: in revision@.
+      --   It keeps its place in the list, without a page, a duration, or a
+      --   button in the reader.
+    , movStatus   :: Maybe String
       -- | Offset of this movement into the composition's full @recording@,
       --   normalised to whole seconds. Parsed and carried through the
       --   context now so the schema is settled before any composition
@@ -1358,20 +1362,26 @@ parseMovementsWithWarnings meta =
 
     missingRequired i =
         "movement #" ++ show i ++ " is missing a required field "
-        ++ "(name, page, or duration) — entry skipped"
+        ++ "(name, page, or duration — or name and status) — entry skipped"
 
     badTime i =
         "movement #" ++ show i ++ " has an unparseable time: — expected "
         ++ "H:MM:SS, M:SS, or a plain second count; offset ignored"
 
     -- Every field but the time offset, which 'parseIndexed' applies so a
-    -- bad timecode can warn without discarding the movement.
-    mkMovement o = Movement
-        <$> (getString =<< KM.lookup "name"     o)
-        <*> (getInt    =<< KM.lookup "page"     o)
-        <*> (getString =<< KM.lookup "duration" o)
-        <*> pure (getString =<< KM.lookup "audio" o)
-        <*> pure (getString =<< KM.lookup "tempo" o)
+    -- bad timecode can warn without discarding the movement. A movement
+    -- with a status is listed, not published: it needs only a name.
+    mkMovement o =
+        let status = getString =<< KM.lookup "status" o
+            page   = getInt    =<< KM.lookup "page" o
+            dur    = getString =<< KM.lookup "duration" o
+        in  Movement
+                <$> (getString =<< KM.lookup "name" o)
+                <*> maybe (0  <$ status) Just page    -- optional only with a status
+                <*> maybe ("" <$ status) Just dur
+                <*> pure (getString =<< KM.lookup "audio" o)
+                <*> pure (getString =<< KM.lookup "tempo" o)
+                <*> pure status
 
     getString (String t) = Just (T.unpack t)
     getString _          = Nothing
@@ -1712,6 +1722,7 @@ compositionCtx =
                   ++ show pageCount ++ " page(s) — `page:` is the reader's "
                   ++ "1-based index, not the printed page number"
                 | pageCount > 0, mv <- mvs
+                , movStatus mv == Nothing
                 , movPage mv < 1 || movPage mv > pageCount
                 ]
         unsafeCompiler $ mapM_
@@ -1721,7 +1732,7 @@ compositionCtx =
             viewOf m = MovementView
                 { mvMovement = m
                 , mvScoreUrl =
-                    if pageCount > 0
+                    if pageCount > 0 && movStatus m == Nothing
                         then Just $ "/music/" ++ slug ++ "/score/?p="
                                      ++ show (movPage m)
                         else Nothing
@@ -1744,6 +1755,8 @@ compositionCtx =
                           t  -> return t)
             <> field "movement-tempo"
                 (\i -> maybe (noResult "no tempo") return (movTempo (mvOf i)))
+            <> field "movement-status"
+                (\i -> maybe (noResult "published") return (movStatus (mvOf i)))
             <> field "movement-page"     (return . show . movPage . mvOf)
             <> field "movement-duration" (return . durationPrimes . movDuration . mvOf)
             <> field "movement-time"

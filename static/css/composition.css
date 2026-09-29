@@ -381,6 +381,24 @@ a.comp-mvt-row:visited {
     transition: border-color var(--transition-fast);
 }
 
+/* A movement listed but not published: the row stays, quieter, with its
+   status in the duration's place and no leader running to it. */
+.comp-mvt--listed .comp-mvt-name,
+.comp-mvt--listed .comp-mvt-num {
+    color: var(--text-muted);
+}
+
+.comp-mvt--listed .comp-mvt-leader {
+    border-bottom-color: transparent;
+}
+
+.comp-mvt-status {
+    font-size: 1rem;
+    font-style: italic;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
 .comp-mvt-dur {
     font-size: 1.1rem;
     font-variant-numeric: lining-nums;

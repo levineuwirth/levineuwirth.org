@@ -46,12 +46,12 @@
     $if(has-movements)$
     <ol class="comp-movements" data-pagefind-ignore="all">
         $for(movements)$
-        <li class="comp-mvt">
+        <li class="comp-mvt$if(movement-status)$ comp-mvt--listed$endif$">
             $if(movement-score-url)$<a class="comp-mvt-row" href="$movement-score-url$" aria-label="$movement-name$, from page $movement-page$ of the score">$else$<span class="comp-mvt-row">$endif$
                 <span class="comp-mvt-num">$if(movement-numeral)$$movement-numeral$$endif$</span>
                 <span class="comp-mvt-name">$if(movement-title)$<span class="comp-mvt-title">$movement-title$</span>$endif$$if(movement-tempo)$<span class="comp-mvt-tempo">$movement-tempo$</span>$endif$</span>
                 <span class="comp-mvt-leader" aria-hidden="true"></span>
-                <span class="comp-mvt-dur">$movement-duration$</span>
+                $if(movement-status)$<span class="comp-mvt-status">$movement-status$</span>$else$<span class="comp-mvt-dur">$movement-duration$</span>$endif$
             $if(movement-score-url)$</a>$else$</span>$endif$
             $if(has-audio)$
             <audio class="movement-audio" controls preload="metadata">
