@@ -1,6 +1,6 @@
 /* links.css — /links.html only.
    Mirrors library.css's fine-press section + ornament treatment so the page
-   reads as a sibling to /library.html, but with a cooler "indigo" accent.
+   reads as a sibling to /library.html, in the library's warm accent.
    Loaded via $if(links)$ in templates/partials/head.html, so the palette is
    effectively page-scoped.
 
@@ -10,29 +10,28 @@
    a new brand: drop /static/images/link-icons/<name>.svg and add a
    `domain → name` entry to Filters/Links.hs's `domainIcon` table. */
 
+/* Accent values copied from library.css's palette (not loaded here); keep
+   the two in step. The intro stays in the body ink. */
 :root {
-    --links-accent:        #3a4258;
-    --links-accent-muted:  #6f7790;
-    --links-intro-ink:     #2d3344;
+    --links-accent:        #524638;
+    --links-accent-muted:  #726758;
+    --links-intro-ink:     var(--text);
 }
 
 [data-theme="dark"] {
-    --links-accent:        #a9b3cc;
-    --links-accent-muted:  #7d8499;
-    --links-intro-ink:     #bcc3d6;
+    --links-accent:        #b5a890;
+    --links-accent-muted:  #8d8373;
 }
 
 [data-theme="cappuccino"] {
-    --links-accent:        #c0c8e0;
-    --links-accent-muted:  #8e95ad;
-    --links-intro-ink:     #cdd4e8;
+    --links-accent:        #d0b888;
+    --links-accent-muted:  #c5a880;
 }
 
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme]) {
-        --links-accent:        #a9b3cc;
-        --links-accent-muted:  #7d8499;
-        --links-intro-ink:     #bcc3d6;
+        --links-accent:        #b5a890;
+        --links-accent-muted:  #8d8373;
     }
 }
 
@@ -47,12 +46,22 @@
     color: var(--links-intro-ink);
 }
 
-/* Section frame + heading — same chapter-marker rhythm as the library. */
+/* typography.css inks the site-wide dropcap and small-caps lead-in with
+   --text; keep them in the intro's ink so the paragraph stays one colour
+   if --links-intro-ink ever departs from --text. */
+#markdownBody > p:first-of-type::first-letter,
+#markdownBody > p:first-of-type::first-line {
+    color: var(--links-intro-ink);
+}
+
+/* Section frame + heading — same chapter-marker rhythm as the library.
+   The heading and list rules carry #markdownBody to outrank typography.css's
+   #markdownBody heading and list defaults. */
 .links-section {
     margin-bottom: 3rem;
 }
 
-.links-section h2 {
+#markdownBody .links-section h2 {
     font-family: var(--font-serif);
     font-size: 1.2rem;
     font-variant: all-small-caps;
@@ -124,7 +133,7 @@
    suppressed; the brand icon stamped by typography.css's
    a[data-link-icon-type="svg"]::after rule already reads as the row's
    ornament. */
-.links-section ul {
+#markdownBody .links-section ul {
     list-style: none;
     padding: 0;
     margin: 0;
@@ -133,7 +142,7 @@
     gap: 0.3rem;
 }
 
-.links-section li {
+#markdownBody .links-section li {
     margin: 0;
     font-family: var(--font-serif);
     font-size: 0.95rem;
