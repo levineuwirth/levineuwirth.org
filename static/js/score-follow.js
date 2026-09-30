@@ -45,6 +45,7 @@
     var following  = true;
     var frame      = 0;
     var lastBar    = -1;
+    var lastSystem = null;   /* page and top of the system last scrolled to */
     var layer      = null;
     var mark       = null;
     var dragging   = false;   /* the seek slider is under the pointer */
@@ -119,13 +120,16 @@
         if (audio && !audio.paused) audio.pause(); else play();
     }
 
-    function seekTo(ms, andPlay) {
+    /* keepView: the jump was made by clicking a bar the reader can see, so
+       the view stays where it is; any other jump brings the music into view. */
+    function seekTo(ms, andPlay, keepView) {
         ensureAudio();
         following = true;
         hideReturn();
         audio.currentTime = ms / 1000;
         if (andPlay && audio.paused) play();
         lastBar = -1;
+        if (!keepView) lastSystem = null;
         tick();
     }
 
@@ -183,23 +187,28 @@
                 mark.style.width  = style === 'cursor' ? '' : (box[3] * 100) + '%';
             }
         }
-        if (onPage && newBar && following) keepInView(box);
+        var system = box[0] + ':' + box[2];
+        if (onPage && following && system !== lastSystem) {
+            lastSystem = system;
+            keepInView(box);
+        }
     }
 
-    /* A portrait page at fit-width is taller than the window, so the bar
-       being played can be below the fold. Scroll only when it has left
-       the comfortable middle of the view, and only at a new bar, so a
-       reader who scrolls to look ahead is not wrenched back each frame. */
+    /* A portrait page at fit-width is taller than the window, so the music
+       can move below the fold. The view follows it one system at a time:
+       when the music reaches a new system whose top is out of view, the
+       view scrolls to it — and never within a system. An orchestral system
+       is itself taller than the window, and a reader scrolling down to the
+       strings must be left there until the music moves on. (Following each
+       bar instead pulled the view back to the system's top every bar.) */
     function keepInView(box) {
         var sheet = reader.sheet.getBoundingClientRect();
         var view  = reader.viewport.getBoundingClientRect();
         var top    = sheet.top + box[2] * sheet.height;
-        var bottom = top + box[4] * sheet.height;
         var margin = Math.min(80, view.height * 0.12);
-        if (top >= view.top + margin && bottom <= view.bottom - margin) return;
-        var room = view.height - (bottom - top);
+        if (top >= view.top && top <= view.top + view.height * 0.6) return;
         reader.viewport.scrollBy({
-            top: top - view.top - Math.max(margin, room * 0.25),
+            top: top - view.top - margin,
             behavior: reduceMotion ? 'auto' : 'smooth'
         });
     }
@@ -304,6 +313,7 @@
             following = true;
             hideReturn();
             lastBar = -1;
+            lastSystem = null;
             tick();
         });
         updateTime();
@@ -393,7 +403,9 @@
             if (window.getSelection && String(window.getSelection())) return;
             var b = barAt(e);
             if (b < 0 || firstTime[b] === undefined) return;
-            seekTo(firstTime[b], true);
+            var box = timing.measures[b];
+            lastSystem = box[0] + ':' + box[2];
+            seekTo(firstTime[b], true, true);
         });
 
         document.addEventListener('keydown', function (e) {

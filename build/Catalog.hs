@@ -23,6 +23,8 @@ import qualified Data.Aeson.KeyMap as KM
 import qualified Data.Vector       as V
 import qualified Data.Text         as T
 import System.FilePath (takeDirectory, (</>))
+import Data.Time.Calendar (Day)
+import Data.Time.Format   (defaultTimeLocale, formatTime, parseTimeM)
 import Hakyll
 import Contexts (durationPrimes, scorePageList, siteCtx, svgAspect)
 
@@ -44,7 +46,7 @@ data CatalogEntry = CatalogEntry
     , cePages           :: Int
     , ceFirstPage       :: Maybe String   -- absolute URL of page 1
     , ceAspect          :: Maybe String   -- page 1's width / height
-    , ceSortKey         :: String         -- year, then date: chronological
+    , ceSortKey         :: String         -- year, completion, then date: chronological
     }
 
 -- ---------------------------------------------------------------------------
@@ -104,6 +106,18 @@ withheldMovements meta =
             , Just (String n) <- [KM.lookup "name" o] ]
         _ -> []
 
+-- | A @completed:@ date as sortable text, when it parses: "30 December
+--   2024", "March 2026" and "2026-03-15" all order correctly; anything
+--   else (or nothing) sorts before the dated works of its year.
+completedKey :: Metadata -> String
+completedKey meta = case lookupString "completed" meta of
+    Nothing -> ""
+    Just raw ->
+        let formats = ["%-d %B %Y", "%B %Y", "%Y-%m-%d"]
+            parsed  = listToMaybe [ d | f <- formats
+                                      , Just d <- [parseTimeM True defaultTimeLocale f raw :: Maybe Day] ]
+        in  maybe "" (formatTime defaultTimeLocale "%Y-%m-%d") parsed
+
 -- | A scalar that YAML may hand over as a number or a string:
 --   @year: 2019@ and @opus: '17'@ alike.
 parseScalar :: String -> Metadata -> Maybe String
@@ -152,6 +166,7 @@ parseCatalogEntry item = do
                 , ceFirstPage       = (\p -> slugDir ++ "/" ++ p) <$> listToMaybe pages
                 , ceAspect          = aspect
                 , ceSortKey         = fromMaybe "0000" year ++ "|"
+                                      ++ completedKey meta ++ "|"
                                       ++ fromMaybe "" (lookupString "date" meta)
                 }
 
