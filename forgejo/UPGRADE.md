@@ -2,8 +2,12 @@
 
 A runbook, executed by hand. Written 2026-09-06 against a live instance
 reporting `1.21.11+0` at <https://git.levineuwirth.org/api/v1/version>, a
-release line that left support in 2024. Nothing here has been run against
-the production box; every command below is for the operator to run.
+release line that left support in 2024. Every command below is for the
+operator to run.
+
+**Part A was executed on 2026-10-01 and production runs `15.0.9`** — see
+"Executed 2026-10-01" below for what differed from this runbook. Part B
+(§ 9) was not done that night.
 
 **Target: `15.0.7`** — the current LTS, supported until 2027-07-15.
 
@@ -12,6 +16,51 @@ Not `16.0.x`: it is the newer stable, but its support window closes
 An instance that gets touched twice a year belongs on the LTS line. The
 route to 16 is the same as the route to 15 plus one hop, and § 6 records
 that it was rehearsed too.
+
+## Executed 2026-10-01
+
+`1.21.11-0 → 15.0.9`, the § 3 chain, between 19:24 and 19:45 UTC. Every
+hop was green the first time: ready 4–5 s after `up -d`, migration counts as
+in the rehearsal, no `[E]`/`[F]`, `integrity_check` ok, memory 103–140 MiB.
+No rollback. Login survived 15.0 (cookie name pinned, § 4.2); an SSH push
+after 15.0.9 ran the hooks end to end. `doctor` after: 28 checks, warnings
+only for orphaned repo archives (19 MiB) and three orphaned avatars.
+
+What differed, and is now folded into the sections named:
+
+* **Runbook bugs, fixed before the run.** The tag `sed` also rewrote the
+  `  forgejo:` service key and would have broken the compose file at hop 1
+  (§ 2.3, § 5, § 5.1). A hand-run `--verify` extracted into the 1.9 GB `/tmp`
+  tmpfs (§ 1.6). The doctor logs were written inside the container and read
+  on the host (§ 1.4). The `authorized_keys` filter flagged every Forgejo
+  line (§ 1.5). `REVERSE_PROXY_TRUSTED_PROXIES: "127.0.0.1"` would have
+  distrusted nginx, whose requests arrive from proxy-net's gateway
+  `172.18.0.1` (§ 4.2). `integrity_check` without a busy timeout fails with
+  `database is locked` while Forgejo writes (§ 2.2, § 5).
+* **`authorized_keys` and the CLI name** (§ 1.5). `doctor` run as `forgejo`
+  called the file out of date; regenerating it through `forgejo` wrote
+  `/usr/local/bin/forgejo` into the key line, and the rehearsal's 14.0.5
+  refused to start on it. The server-written original was restored from
+  `authorized_keys.bak-2026-10-01` and hop 8 passed.
+* **The `repo-archive` backlog** (§ 1.3). 2,464 crawler archive jobs, unworked
+  under 1.21, made `flush-queues` time out. Removed from the queue page;
+  `flush-queues` then printed `Flushed` at every hop.
+* **A real-data rehearsal** (§ 2) on that night's archive, through the whole
+  chain plus a push at every stop. It found both of the previous two items.
+* **The § 4.2 variables** were applied on their own on `1.21.11-0` before
+  hop 1, and the client IP was confirmed in the router log afterwards.
+* **Tooling.** Each hop ran as one script (backup, verify, flush, tag swap,
+  wait, migrations, `[E]`/`[F]`, integrity), with a public health check from
+  the laptop after it. The pre-hop archive of every hop is recorded in
+  `/root/forgejo-upgrade-2026-10-01.log` on the VPS.
+
+Left open: Part B (§ 9); whether to disable source-archive downloads (the
+`DISABLE_DOWNLOAD_SOURCE_ARCHIVES` setting 404s the web routes but not
+`/api/v1/repos/*/*/archive/`, which needs an nginx rule); excluding
+`gitea/repo-archive` from the backups; § 7.4's subscriptions and the
+2027 LTS reminder; § 7.5 if `forgejo-sync.sh --create-missing` returns 403;
+the truncated `forgejo-20260911T034741Z.tar.gz` on the VPS, which is no
+backup and is never pruned.
 
 ## Tonight, in order (revised 2026-10-01)
 
@@ -125,6 +174,20 @@ Stop and free space if `/` is above ~80 % or if free space is less than
 Forgejo's documented pre-upgrade step. It drains work that would otherwise
 be re-run or lost across the restart.
 
+**Empty the `repo-archive` queue first** (found 2026-10-01). Crawlers
+requesting `/<owner>/<repo>/archive/<sha>.zip` for commit after commit had
+left 2,464 archive jobs in it. Under 1.21 nothing worked the queue (0
+workers on the queue page), so `flush-queues` timed out with a 408 however
+long its deadline. From 7.0 on, eight workers pick the backlog up: in the
+real-data rehearsal it pinned the container's one CPU, wrote
+over 1.4 GB of archive cache in minutes, drove 15.0.7 to its 512 MiB limit,
+and logged three `[E] Recovered from panic in queue "repo-archive"` at every
+15.x start. In the browser: Site Administration → Monitoring → Queues
+(`/admin/monitor/queue` — every version on this route, not `/-/admin`) →
+`repo-archive` → **Remove all**. In the lab the count went to 0, the CPU
+settled once the in-flight jobs finished, and `flush-queues` then printed
+`Flushed`. On production (2,464 items) the same, first time.
+
 ```bash
 ssh root@<vps> 'docker exec -u git forgejo forgejo manager flush-queues'
 # if it times out, repeat with a larger deadline:
@@ -137,9 +200,13 @@ Establish that the instance is healthy *before* the upgrade, so that
 anything `doctor` says afterwards is attributable to the upgrade.
 
 ```bash
-ssh root@<vps> 'docker exec -u git forgejo forgejo doctor check --all --log-file /tmp/doctor-before.log'
-ssh root@<vps> 'tail -40 /tmp/doctor-before.log'
+ssh root@<vps> 'docker exec -u git forgejo gitea doctor check --all --log-file /data/gitea/doctor-before.log'
+ssh root@<vps> 'tail -40 /root/forgejo-server/forgejo-data/gitea/doctor-before.log'
 ```
+
+The log goes under `/data`, the bind mount, on purpose: the container's
+own `/tmp` is not the host's, and it is discarded when hop 1 recreates the
+container, taking the "before" that § 7.1 compares against with it.
 
 Do **not** pass `--fix`, and do not run `doctor` at all on 7.0.0 — that
 release had an LFS-corrupting bug in `doctor check --fix`, fixed in 7.0.1.
@@ -154,25 +221,56 @@ chain in § 3 to stop dead at hop 8 on a box that has been touched by hand.
 
 ```bash
 ssh root@<vps> 'docker exec forgejo sh -c "cat /data/git/.ssh/authorized_keys" | grep -c .'
-ssh root@<vps> 'docker exec forgejo sh -c "grep -vc \"forgejo-\" /data/git/.ssh/authorized_keys"'
+ssh root@<vps> 'docker exec forgejo grep -v -e "^#" -e "serv key-" /data/git/.ssh/authorized_keys | grep .'
 ```
 
-Every line Forgejo wrote carries a `command=".../forgejo serv key-N"`
-prefix. Any line without one is a hand-added key. If there are none, this
+Every key line Forgejo wrote carries a `command=".../forgejo serv key-N"`
+prefix, under a `# gitea public key` comment. The second command prints
+every line that is neither, so it must print nothing; each line it does
+print is a hand-added key. If there are none, this
 step costs nothing. If there are, decide before you start:
 
 * delete the file and let Forgejo regenerate it from the keys in the
   database (the keys users actually registered), or
-* set `FORGEJO__security__SSH_ALLOW_UNEXPECTED_AUTHORIZED_KEYS: "true"` in
-  the compose file, which keeps the old permissive behaviour.
+* set `FORGEJO__server__SSH_ALLOW_UNEXPECTED_AUTHORIZED_KEYS: "true"` in
+  the compose file, which keeps the old permissive behaviour. The section
+  is `[server]`, as 14.0's own error message names it.
+
+**The check compares whole lines, binary path included** — found on
+2026-10-01 by the real-data rehearsal, which stopped dead at 14.0.5:
+
+```
+[F] An unexpected ssh public key was discovered. Forgejo will shutdown …
+    Key on line 2 of /data/git/.ssh/authorized_keys does not exist in database
+```
+
+The key was the one in the database. Its line ran `/usr/local/bin/forgejo`,
+and 14.0 expects `/usr/local/bin/gitea`. The image's CLI wrapper does
+`exec -a "$0"`, so Forgejo takes its own path from the name it was
+*invoked* by: the server runs as `gitea` and writes `/usr/local/bin/gitea`;
+`docker exec … forgejo admin regenerate keys` writes `/usr/local/bin/forgejo`.
+So:
+
+* **Never regenerate keys or hooks through the `forgejo` name.** Use
+  `gitea admin regenerate keys` if you must; 1.21 through 15.0 all write
+  `/usr/local/bin/gitea` that way.
+* **Run `doctor` as `gitea` too.** Run as `forgejo`, it reports a correct
+  `authorized_keys` as out of date and every repository's hooks as stale,
+  because it compares them against its own invoked path. That is how this
+  was found: § 1.4's doctor, run as `forgejo`, flagged the file, and
+  "fixing" it is what broke hop 8.
 
 ### 1.6 Take the backup, and prove it
 
 ```bash
 ssh root@<vps> 'systemctl start forgejo-backup.service && systemctl status --no-pager forgejo-backup.service'
 ssh root@<vps> 'ls -l /root/forgejo-backups/ && readlink -f /root/forgejo-backups/LATEST'
-ssh root@<vps> '/usr/local/bin/forgejo-backup.sh --verify'
+ssh root@<vps> 'TMPDIR=/var/tmp /usr/local/bin/forgejo-backup.sh --verify'
 ```
+
+`TMPDIR=/var/tmp` is not optional by hand: the units set it, a shell does
+not, and `/tmp` here is a 1.9 GB tmpfs that the extracted archive may not
+fit in.
 
 `--verify` extracts the newest archive to a temporary directory, checks its
 `sha256`, and runs `PRAGMA integrity_check` on the snapshot inside. It is
@@ -195,6 +293,8 @@ Since 2026-09-15 the backup in § 1.6 is already in the storage box's borg
 repository; its journal says `off-host: copying to … with borg`. This step
 is still worth the minute: a copy on the laptop is the one you can restore
 without the storage box.
+
+The laptop shell is fish too; run `bash` first.
 
 ```bash
 A=$(ssh root@<vps> 'readlink -f /root/forgejo-backups/LATEST')
@@ -291,7 +391,7 @@ And watch the migrations actually run, rather than assuming they did:
 ```bash
 docker compose -p forgejo-lab logs --tail 200 | grep -E 'Migration\[|\[E\]|\[F\]'
 docker compose -p forgejo-lab exec -u git forgejo \
-    sqlite3 /data/gitea/gitea.db 'PRAGMA integrity_check;'
+    sqlite3 -cmd '.timeout 15000' /data/gitea/gitea.db 'PRAGMA integrity_check;'
 ```
 
 The last line must print `ok` at every stop. A migration that half-applied
@@ -303,7 +403,7 @@ For each tag in the table in § 3, in order:
 
 ```bash
 TAG=7.0.16                                  # then 8.0.3, 9.0.3, ...
-sed -i "s|forgejo:.*|forgejo:$TAG|" docker-compose.yml
+sed -i "s|\(image: codeberg.org/forgejo/forgejo:\).*|\1$TAG|" docker-compose.yml
 docker compose -p forgejo-lab pull
 docker compose -p forgejo-lab up -d
 # wait for the version endpoint to answer with the new tag, then run § 2.2
@@ -384,7 +484,10 @@ forces rather than a rename it requires.
       # install, so the "*" written by the 1.21 image is still sitting in
       # forgejo-data/gitea/conf/app.ini and survives every hop below.
       # nginx is on the same host, so name it and stop trusting the world.
-      FORGEJO__security__REVERSE_PROXY_TRUSTED_PROXIES: "127.0.0.1"
+      # Not 127.0.0.1 alone: nginx's connection to 127.0.0.1:3000 reaches the
+      # container through Docker, from proxy-net's gateway address. Find it:
+      #   docker network inspect proxy-net -f '{{range .IPAM.Config}}{{.Gateway}}{{end}}'
+      FORGEJO__security__REVERSE_PROXY_TRUSTED_PROXIES: "127.0.0.0/8,::1/128,172.18.0.1/32"   # gateway as of 2026-10-01
       FORGEJO__security__REVERSE_PROXY_LIMIT: "1"
 
       # 15.0 made session cookie names brand-independent, which logs every
@@ -394,11 +497,16 @@ forces rather than a rename it requires.
 
       # Only if § 1.5 found hand-added keys you intend to keep. Leaving it
       # unset is the safer default; 14.0 refusing to start is the feature.
-      # FORGEJO__security__SSH_ALLOW_UNEXPECTED_AUTHORIZED_KEYS: "true"
+      # FORGEJO__server__SSH_ALLOW_UNEXPECTED_AUTHORIZED_KEYS: "true"
 ```
 
-Verify after the upgrade that the value actually landed, since `app.ini`
-already had a conflicting line:
+Apply them on their own, before hop 1, still on `1.21.11-0`: every key
+exists there, and the cookie name is already 1.21's default, so the only
+change is the proxy trust. A config change made in the same `up -d` as a
+version change cannot be told apart from it when something breaks.
+
+Verify that the value actually landed, since `app.ini` already had a
+conflicting line:
 
 ```bash
 ssh root@<vps> 'grep -A4 "^\[security\]" /root/forgejo-server/forgejo-data/gitea/conf/app.ini'
@@ -433,21 +541,25 @@ TAG=7.0.16          # then 8.0.3, 9.0.3, 10.0.3, 11.0.16, 12.0.4, 13.0.5, 14.0.5
 # --- 1. a backup per hop. This is the rollback point for THIS hop. ---------
 systemctl start forgejo-backup.service
 systemctl status --no-pager forgejo-backup.service      # must be inactive/success
-/usr/local/bin/forgejo-backup.sh --verify               # must print verify: OK
+TMPDIR=/var/tmp /usr/local/bin/forgejo-backup.sh --verify   # must print verify: OK
 PREHOP=$(readlink -f /root/forgejo-backups/LATEST)
 echo "rollback for $TAG is $PREHOP"
 
 # --- 2. flush, then swap the image ----------------------------------------
 docker exec -u git forgejo forgejo manager flush-queues
-sed -i "s|forgejo:.*|forgejo:$TAG|" docker-compose.yml
+sed -i "s|\(image: codeberg.org/forgejo/forgejo:\).*|\1$TAG|" docker-compose.yml
 docker compose pull
 docker compose up -d
 
 # --- 3. watch the migration finish before touching anything ----------------
 docker compose logs -f --tail 100        # Ctrl-C once "Listen: http://" appears
 docker compose logs --tail 300 | grep -E 'Migration\[|\[E\]|\[F\]'
-docker exec forgejo sqlite3 /data/gitea/gitea.db 'PRAGMA integrity_check;'   # ok
+docker exec -u git forgejo sqlite3 -cmd '.timeout 15000' /data/gitea/gitea.db 'PRAGMA integrity_check;'   # ok; the timeout waits out Forgejo's own writes
+```
 
+Then step 4, from the laptop, in a second terminal:
+
+```bash
 # --- 4. health check, from a machine that is not the VPS -------------------
 curl -s https://git.levineuwirth.org/api/v1/version
 # then, by hand in a browser: log in, open a repository page, read a file
@@ -492,7 +604,7 @@ rm -f forgejo-data/gitea/hot-*.db
 chown -R 1000:1000 forgejo-data
 
 # 2. revert the pin to the tag you came from
-sed -i "s|forgejo:.*|forgejo:<previous-tag>|" docker-compose.yml
+sed -i "s|\(image: codeberg.org/forgejo/forgejo:\).*|\1<previous-tag>|" docker-compose.yml
 
 # 3. bring it back
 docker compose up -d
@@ -574,12 +686,13 @@ for the upgrade and put it back afterwards.
 ### 7.1 Verify, then commit
 
 ```bash
-ssh root@<vps> 'docker exec -u git forgejo forgejo doctor check --all --log-file /tmp/doctor-after.log'
-ssh root@<vps> 'tail -40 /tmp/doctor-after.log'
-ssh root@<vps> 'systemctl start forgejo-backup.service && /usr/local/bin/forgejo-backup.sh --verify'
+ssh root@<vps> 'docker exec -u git forgejo gitea doctor check --all --log-file /data/gitea/doctor-after.log'
+ssh root@<vps> 'cd /root/forgejo-server/forgejo-data/gitea && tail -40 doctor-after.log'
+ssh root@<vps> 'systemctl start forgejo-backup.service && TMPDIR=/var/tmp /usr/local/bin/forgejo-backup.sh --verify'
 ```
 
-Compare against `/tmp/doctor-before.log` from § 1.4. Then commit, in this
+Compare against `doctor-before.log` from § 1.4, beside it in the same
+directory. Then commit, in this
 repo, the change that is now true:
 
 * `forgejo/docker-compose.yml` — image tag `15.0.9`, the `[security]`
@@ -610,7 +723,7 @@ while you are already in there:
 
 Confirm the real client IP still reaches Forgejo after the § 4.2
 `REVERSE_PROXY_TRUSTED_PROXIES` change — the admin panel's user list shows
-last-login addresses, and `127.0.0.1` everywhere means nginx's
+last-login addresses, and proxy-net's gateway (or `127.0.0.1`) everywhere means nginx's
 `X-Forwarded-For` is not being set or not being trusted.
 
 ### 7.3 Close the backup gaps
