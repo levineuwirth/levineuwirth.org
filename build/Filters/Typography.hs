@@ -9,13 +9,14 @@
 module Filters.Typography (apply) where
 
 import           Data.Text    (Text)
+import qualified Data.Text    as T
 import           Text.Pandoc.Definition
 import           Text.Pandoc.Walk (walk)
 import           Utils            (escapeHtmlText)
 
 -- | Apply all typographic transformations to the document.
 apply :: Pandoc -> Pandoc
-apply = walk expandAbbrev
+apply = walk (concatMap expandAbbrev)
 
 -- ---------------------------------------------------------------------------
 -- Abbreviation expansion
@@ -36,19 +37,36 @@ abbrevMap =
     , ("NB:",     "nota bene")
     ]
 
--- | If the Str token exactly matches a known abbreviation, replace it with
---   a @RawInline "html"@ @<abbr>@ element; otherwise leave it unchanged.
+-- | Wrap a known abbreviation in a @RawInline "html"@ @<abbr>@ element.
+--
+--   Pandoc's @smart@ extension binds an abbreviation it recognises to the
+--   following word with a no-break space, so "e.g. this" arrives as the
+--   single token @Str "e.g.\\160this"@. Matching whole tokens therefore
+--   caught only an abbreviation that ended a source line, and most of the
+--   site's went unmarked. A token is now split: any opening bracket, the
+--   abbreviation, then the rest, no-break space included.
 --
 --   Both the @title@ attribute and the visible body pass through
 --   'escapeHtmlText' for consistency with every other raw-HTML emitter
 --   in the filter pipeline. The abbreviations themselves are ASCII-safe
 --   so this is defense-in-depth rather than a live hazard.
-expandAbbrev :: Inline -> Inline
-expandAbbrev (Str t) =
-    case lookup t abbrevMap of
-        Just title ->
-            RawInline "html" $
-                "<abbr title=\"" <> escapeHtmlText title <> "\">"
-                    <> escapeHtmlText t <> "</abbr>"
-        Nothing -> Str t
-expandAbbrev x = x
+expandAbbrev :: Inline -> [Inline]
+expandAbbrev (Str t)
+    | (opening, rest) <- T.span (`elem` ("([" :: String)) t
+    , ((abbrev, title, after) : _) <-
+        [ (a, ti, r) | (a, ti) <- abbrevMap, Just r <- [splitAbbrev a rest] ]
+    = [ Str opening | not (T.null opening) ]
+      ++ [ RawInline "html" $
+             "<abbr title=\"" <> escapeHtmlText title <> "\">"
+                 <> escapeHtmlText abbrev <> "</abbr>" ]
+      ++ [ Str after | not (T.null after) ]
+  where
+    -- The whole token, or the abbreviation followed by a no-break space or
+    -- closing punctuation ("e.g.," and "(i.e.)" are both common).
+    splitAbbrev a s
+        | s == a    = Just ""
+        | otherwise = case T.stripPrefix a s of
+            Just r | Just (c, _) <- T.uncons r
+                   , c == '\x00A0' || c `elem` (",;:)]" :: String) -> Just r
+            _ -> Nothing
+expandAbbrev x = [x]
