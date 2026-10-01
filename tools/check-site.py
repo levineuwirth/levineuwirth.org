@@ -155,6 +155,16 @@ ANCHOR_NAME_RE = re.compile(
     r"""<a\b[^>]*?(?<![\w-])name\s*=\s*["']([^"']+)["']""", re.IGNORECASE
 )
 
+# img-alt: every <img> a reader's browser parses must carry alt. Markdown
+# writes `![](x.png)` with none, and a screen reader then reads the file
+# name; `{.decorative}` (build/Filters/Images.hs) writes alt="" instead.
+# Comments and script/style bodies are not markup a browser renders, and a
+# template comment inside a loop repeats its literal "<img>" once per item.
+NON_MARKUP_RE = re.compile(
+    r"<!--.*?-->|<(script|style)\b[^>]*>.*?</\1\s*>", re.IGNORECASE | re.DOTALL
+)
+IMG_ALT_RE = re.compile(r"(?<![\w-])alt(?:\s*=|\s|/?>|$)", re.IGNORECASE)
+
 # Answered by nginx locations, not by files in _site (nginx/*.conf).
 SERVER_ROUTES = ("/proxy/", "/csp-report")
 
@@ -310,6 +320,7 @@ def check_html_corpus(
     report.check("image-targets")
     report.check("link-targets")
     report.check("link-fragments")
+    report.check("img-alt")
 
     anchors = AnchorIndex(site_dir)
 
@@ -337,6 +348,26 @@ def check_html_corpus(
             report.error("image-targets", f"{rel}: missing {missing}")
 
         check_links(site_dir, rel, text, anchors, report)
+
+        unlabelled = images_without_alt(text)
+        if unlabelled:
+            more = f" (+{len(unlabelled) - 1} more)" if len(unlabelled) > 1 else ""
+            report.error(
+                "img-alt",
+                f"{rel}: <img src={unlabelled[0]!r}> has no alt{more} — describe "
+                f"it, or mark it {{.decorative}} for alt=\"\"",
+            )
+
+
+def images_without_alt(text: str) -> list[str]:
+    """The src of every rendered <img> that has no alt attribute."""
+    markup = NON_MARKUP_RE.sub("", text)
+    missing = []
+    for _tag, attrs in IMG_TAG_RE.findall(markup):
+        if _tag.lower() == "img" and not IMG_ALT_RE.search(attrs):
+            src = ATTR_SRC_RE.search(attrs)
+            missing.append(src.group(1) if src else "")
+    return missing
 
 
 class AnchorIndex:

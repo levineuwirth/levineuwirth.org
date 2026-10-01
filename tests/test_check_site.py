@@ -395,6 +395,38 @@ class CheckSiteTestCase(unittest.TestCase):
         code, output = self.run_gate()
         self.assertEqual(code, 0, output)
 
+    # -- alt text ---------------------------------------------------------
+
+    def test_img_without_alt_fails(self):
+        # What Pandoc writes for ![](x.png): a screen reader reads the
+        # file name.
+        self.link_page('<p><img src="/images/a.jpg" loading="lazy" /></p>')
+        code, output = self.run_gate()
+        self.assertEqual(code, 1)
+        self.assertIn("img-alt", output)
+        self.assertIn("{.decorative}", output)
+
+    def test_empty_bare_and_described_alt_pass(self):
+        self.link_page(
+            '<img src="/images/a.jpg" alt="">'
+            '<img src="/images/a.jpg" alt decoding="async">'
+            '<img src="/images/a.jpg" alt="A described image">'
+            '<picture><source srcset="/images/a.webp" type="image/webp">'
+            '<img src="/images/a.jpg" alt=""></picture>'
+        )
+        code, output = self.run_gate()
+        self.assertEqual(code, 0, output)
+
+    def test_img_in_a_comment_or_script_is_not_an_image(self):
+        # A template comment inside a loop ships its literal "<img>" once
+        # per item; a script may build markup in a string.
+        self.link_page(
+            '<!-- one <img> serves all three grid modes -->'
+            '<script>const t = "<img src=x>";</script>'
+        )
+        code, output = self.run_gate()
+        self.assertEqual(code, 0, output)
+
     # -- feeds and sitemap -------------------------------------------------
 
     def test_non_rfc3339_feed_updated_fails(self):
