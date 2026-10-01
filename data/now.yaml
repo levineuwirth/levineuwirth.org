@@ -36,7 +36,7 @@
 # Sorted newest-first at render time. Curate by hand — items don't
 # auto-prune. Move things off the list when they stop earning the slot.
 
-last-updated: 2026-09-29
+last-updated: 2026-10-01
 
 entries:
   - title: "VerInf: Verified Inference and Scale-Out (MARS V)"
@@ -50,10 +50,10 @@ entries:
   - title: "Proof Broker"
     section: research
     status: building
-    updated: 2026-09-28
+    updated: 2026-10-01
     priority: 1
     link: /essays/proof-broker/
-    note: "Proof Broker routes Lean 4 and Rocq goals to untrusted solvers and LLMs, checking evidence before kernel-verified closure. R4 closed 19/19 targeted VerInf obligations; R5 consolidated spec v1.1. R6 has frozen a 15-site VerInf call-site census, checked representability, and run kernel-validated deterministic baselines. An audited learned-proposal comparison is in progress; the evidence remains bounded to these sites and the reported runs."
+    note: "Proof Broker routes Lean 4 and Rocq goals to untrusted solvers and LLMs, checking evidence before kernel-verified closure. R4 closed 19/19 targeted VerInf obligations; R5 consolidated spec v1.1. R6, an audited live-model evaluation on 15 VerInf obligations, is closed: all 80 certificate-feasible slots returned a verified witness, and proofs covered 6 of 15 obligations (48 of 88 slots), unchanged across eight draws and two more than the deterministic baseline. Posing goals and turning certificates into proofs, not finding them, was the constraint. The evaluation ran under two post-collection amendments, both published with it."
 
   - title: "Timed Guarding in Degree-Reduction Clouds"
     section: research
@@ -124,6 +124,11 @@ entries:
     note: "A Python-successor language designed adversarially: statically inferred without annotations, no GIL, no MRO. Spec, reference machine, language server, and debugger exist, .levo files run, and 1061 tests across 182 suites hold the line — but with no I/O and no standard library it is still a conformance machine, not a runtime."
 
 shipped:
+  - title: "Proof Broker R6"
+    completed: 2026-09-29
+    link: /essays/eighty-witnesses-six-proofs/
+    note: "An audited live-model evaluation behind the fixed acceptance boundary: 80 of 80 certificate-feasible slots verified, and 6 of 15 obligations proved (48 of 88 slots); posing goals and turning certificates into proofs, not finding them, was the constraint."
+
   - title: "Proof Broker R4"
     completed: 2026-09-05
     link: /essays/proof-broker/

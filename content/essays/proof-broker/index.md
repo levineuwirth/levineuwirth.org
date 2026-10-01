@@ -16,7 +16,7 @@ tags:
   - research
   - tech
   - ai
-status: "Working system"
+status: "Working model"
 confidence: 87
 importance: 4
 evidence: 4
@@ -25,6 +25,11 @@ novelty: idiosyncratic
 practicality: moderate
 history:
   - date: "2026-09-05"
+  - date: "2026-10-01"
+    note: "R6: the live-model claim updated; companion essay"
+revised:
+  - date: "2026-10-01"
+    note: "R6: the live-model claim updated; companion essay"
 ---
 
 The beauty of the proof assistant is the simplicity of the kernel.
@@ -167,9 +172,12 @@ if the replayed term's axioms fall inside the same ceiling every other
 closer uses. A hallucinated `sorry` or `native_decide` is a tactic
 failure with the goal left open. The adapter and its replay closer
 exist in both bridges and are tested in CI without a network; the
-downstream demonstration below does not use them, and no live model
-has yet been run against a real consumer's goals. The model may be
-arbitrarily clever, but it receives no trust for being so.
+downstream demonstration below does not use them. A live model has
+since met a real consumer's goals through a narrower route, proposing
+arithmetic certificates rather than scripts; the
+[companion essay](/essays/eighty-witnesses-six-proofs/) reports it.
+The model may be arbitrarily clever, but it receives no trust for
+being so.
 
 ## One proof, end to end
 
@@ -329,9 +337,11 @@ question.
 - **Finite fields.** What does the certificate boundary look like for
   the first theory whose native proof object is not a
   linear-arithmetic witness?
-- **Learned search.** The adapter has not yet met a real consumer.
-  What becomes useful when a model may propose arbitrarily clever
-  proofs and receives no trust for proposing them?
+- **Learned search.** On R6's sites, proposals were never the
+  bottleneck. Can a suitable closer build proofs from the verified
+  witnesses the ℕ closer refused? A route that re-proves the goal
+  does not answer that. And what does learned proposal buy where
+  proposals actually fail?
 
 ## The prover does not have to be trustworthy
 
@@ -365,5 +375,7 @@ MARS V stream working on VerInf.
 ::: {.work-entry-links}
 [Demo: 19/19 downstream obligations, full evidence](https://github.com/levineuwirth/proof-broker-demo) ·
 [Code](https://github.com/levineuwirth/proof-broker) ·
-[Release: R4](https://github.com/levineuwirth/proof-broker/releases/tag/r4)
+[Release: R4](https://github.com/levineuwirth/proof-broker/releases/tag/r4) ·
+[Release: R6](https://github.com/levineuwirth/proof-broker/releases/tag/r6) ·
+[Companion: R6](/essays/eighty-witnesses-six-proofs/)
 :::

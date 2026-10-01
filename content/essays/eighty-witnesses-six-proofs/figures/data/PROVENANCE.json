@@ -1,0 +1,35 @@
+{
+  "files": {
+    "ladder.csv": {
+      "bytes": 198,
+      "rows": 8,
+      "sha256": "d7f864204a2377616c3ed86859fdccd9a64161d89c298c7d7f12e43d2fcb2f09",
+      "source": "proof-broker tag r6 (1f694b65), experiments/r6/reviews/2026-09-29/R6-014-BLOCK2-ANALYSIS.json, sha256 7322b996fb69843680f51e678fac87baa44c6f231f1b4b2bcd6cdd5405f725e8, strata.posed.stages_over_sent and populations; extracted by figures/extract_r6_data.py, which asserts the published totals"
+    },
+    "runs.csv": {
+      "bytes": 4490,
+      "rows": 89,
+      "sha256": "1bd4a45370b9fdafbfaeb8ea9e6d809e2cfd198c44e3a889dae92f9ac40899fb",
+      "source": "proof-broker tag r6 (1f694b65), experiments/r6/cohort-live-v9/*/campaign-reconciliation.json (reconciled_at_unix, kind); extracted by figures/extract_r6_data.py, which asserts the published totals"
+    },
+    "sites.csv": {
+      "bytes": 1226,
+      "rows": 15,
+      "sha256": "d4849e1f25b439940cca0e5e6871c2a5a37642e02308fc9a70626cef2694bc74",
+      "source": "proof-broker tag r6 (1f694b65), experiments/r6/reviews/2026-09-29/R6-014-BLOCK2-ANALYSIS.json, sha256 7322b996fb69843680f51e678fac87baa44c6f231f1b4b2bcd6cdd5405f725e8, arms.learned/deterministic/deterministic_reference.by_site; families from REVIEWED_FAMILIES in experiments/r6/analysis_r6.py; extracted by figures/extract_r6_data.py, which asserts the published totals"
+    },
+    "slots.csv": {
+      "bytes": 5638,
+      "rows": 120,
+      "sha256": "bdeedc514477c8b4dc670780bcd60ab2a6f1a6f024811ca900f8c6bce764cfda",
+      "source": "proof-broker tag r6 (1f694b65), experiments/r6/reviews/2026-09-29/R6-014-BLOCK2-ANALYSIS.json, sha256 7322b996fb69843680f51e678fac87baa44c6f231f1b4b2bcd6cdd5405f725e8, per_slot and populations.not_posed; families from REVIEWED_FAMILIES in experiments/r6/analysis_r6.py; extracted by figures/extract_r6_data.py, which asserts the published totals"
+    },
+    "timeline.csv": {
+      "bytes": 1320,
+      "rows": 18,
+      "sha256": "0c74e5764937f424f18b6a23f0aad7234de63fb09dd0de8207a3e03d1f33a9ff",
+      "source": "compiled by hand from proof-broker tag r6 (1f694b65): each row's source column names the commit or record behind it; times in UTC"
+    }
+  },
+  "generated_by": "tools/viz-provenance.py"
+}

@@ -104,11 +104,16 @@ certificate-gated tactics, and one explicitly reported oracle-tier case.
 Integrating the unmodified downstream file also exposed three defects that the
 broker's own test suite had missed.
 
-Since R4, R5 consolidated the specification, and R6 has put the boundary under
-more systematic evaluation: kernel-validated deterministic episodes, a frozen
-15-site VerInf call-site census, representability checks, and an audited
-comparison protocol for learned proposals. That evaluation is still in progress;
-finite-field certificates and broader independent consumers remain open.
+Since R4, R5 consolidated the specification, and R6 evaluated a live language
+model proposing Farkas certificates behind the unchanged boundary, on a frozen
+15-obligation VerInf census with an audited harness. Every certificate-feasible
+slot returned a verified witness (80 of 80), but proofs covered 6 of 15
+obligations (48 of 88 slots), the same at each of eight draws and two more than
+the deterministic baseline: posing goals and turning certificates into proofs,
+not finding them, was the constraint.
+The [companion essay](/essays/eighty-witnesses-six-proofs/) reports the result
+and its two post-collection amendments. Finite-field certificates and broader
+independent consumers remain open.
 
 ::: {.work-entry-links}
 [Technical write-up](/essays/proof-broker/) ·

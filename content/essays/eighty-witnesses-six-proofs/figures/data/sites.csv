@@ -1,0 +1,16 @@
+site,family,role,learned_whole_slots,distinct_verified_witnesses,matching_classification,deterministic,reference
+l069,lift_cell,feasible,8,1,8,proof,closed_and_validated
+l070,lift_cell,feasible,8,4,3,proof,closed_and_validated
+l071,lift_cell,feasible,8,2,0,proof,closed_and_validated
+l078,lift_cell,feasible,8,1,8,proof,closed_and_validated
+l096,threshold_unique,feasible,8,1,8,backend_not_invoked,backend_not_invoked
+l098,threshold_unique,not_posed,,,,backend_not_invoked,backend_not_invoked
+l099,threshold_unique,feasible,8,1,8,backend_not_invoked,backend_not_invoked
+l101,threshold_unique,not_posed,,,,backend_not_invoked,backend_not_invoked
+l158,cell_value_neutral,not_posed,,,,reconstruction_refused,witness_not_recovered
+l166,cell_value_neutral,feasible,0,1,8,reconstruction_refused,closed_and_validated
+l170,cell_value_neutral,negative_control,0,0,0,witness_not_recovered,witness_not_recovered
+l175,cell_value_neutral,feasible,0,1,8,reconstruction_refused,closed_and_validated
+l178,cell_value_neutral,feasible,0,1,8,reconstruction_refused,closed_and_validated
+l180,cell_value_neutral,not_posed,,,,witness_not_recovered,witness_not_recovered
+l204,Row.s1_noninc,feasible,0,1,8,reconstruction_refused,closed_and_validated

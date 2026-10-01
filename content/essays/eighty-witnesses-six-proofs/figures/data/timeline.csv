@@ -1,0 +1,19 @@
+utc,lane,label,source
+2026-09-24T08:56:40Z,collection,block 1 signed,commit c00247ed
+2026-09-24T09:12:00Z,review,audit rejects block 1: layout,R6-014-AMENDMENT-1.md
+2026-09-24T09:36:35Z,review,amendment 1 prepared,commit 10c53c34
+2026-09-24T11:02:59Z,review,approved; lock v2,commit 482bc5a9
+2026-09-24T11:03:57Z,review,block 1 accepted (550 cases),commit db20792e
+2026-09-25T13:19:48Z,collection,block 2 authorized,commit 64e6f9e6
+2026-09-28T20:14:28Z,collection,pricing revision,commit ea5aa024
+2026-09-28T20:31:13Z,collection,run 1 interrupted; nothing reserved,R6-014-BLOCK2-INCIDENT-1.md
+2026-09-28T23:00:49Z,collection,run 2 begins,R6-014-AMENDMENT-2.md
+2026-09-28T23:34:30Z,collection,pause 1: connection failed before sending,R6-014-BLOCK2-PAUSE-1.md
+2026-09-29T08:43:00Z,review,"decision: amendment 2, then resume",commit c8aa54b6
+2026-09-29T10:32:00Z,review,amendment 2 for review,commit 536f66c8
+2026-09-29T12:26:00Z,review,review finds two defects,commit b0ce18ae
+2026-09-29T14:44:00Z,review,revision 2,commit 8fc2cab8
+2026-09-29T15:20:45Z,review,approved; lock v3,commit 89871839
+2026-09-29T15:25:00Z,collection,"run 3: preflight, retry, 23 slots",R6-014-BLOCK2.md
+2026-09-29T19:10:00Z,review,"collection accepted (4,327 cases)",commit d6114e28
+2026-09-29T22:55:16Z,review,tag r6; release,GitHub release r6
