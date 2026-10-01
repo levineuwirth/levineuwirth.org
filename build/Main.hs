@@ -2,7 +2,9 @@ module Main where
 
 import Data.Time.Clock.POSIX (getPOSIXTime)
 import System.Directory      (createDirectoryIfMissing)
+import System.Environment    (getArgs)
 import Hakyll                (hakyllWith)
+import Golden                (renderFixture)
 import Site                  (rules, siteConfiguration)
 
 -- | Stamp the start of this build into @data/build-stamp.txt@ before
@@ -22,7 +24,15 @@ writeBuildStamp = do
 -- notes, key material, and editor/interpreter junk never become
 -- identifiers, and therefore can never be routed into @_site/@. See
 -- build/Site.hs.
+--
+-- @site render-fixture <file.md>@ is the one command Hakyll does not see:
+-- it renders a test fixture through the essay pipeline and writes nothing
+-- (build/Golden.hs).
 main :: IO ()
 main = do
-    writeBuildStamp
-    hakyllWith siteConfiguration rules
+    args <- getArgs
+    case args of
+        ["render-fixture", path] -> renderFixture path
+        _ -> do
+            writeBuildStamp
+            hakyllWith siteConfiguration rules

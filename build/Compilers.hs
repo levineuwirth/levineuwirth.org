@@ -11,6 +11,9 @@ module Compilers
     , sidecarCompiler
     , readerOpts
     , writerOpts
+    , transformDocument
+    , buildTOC
+    , parseBool
     ) where
 
 import           Hakyll
@@ -204,29 +207,16 @@ essayCompilerWith rOpts = do
     -- (see build/Site.hs).
     trackBibliographyInputs (fromFilePath (T.unpack bibPath))
 
-    -- Run citeproc, transform citation spans → superscripts, extract bibliography.
-    (pandocWithCites, bibHtml, furtherHtml) <- unsafeCompiler $
-        Citations.applyCitations frKeys bibPath (itemBody pandocItem)
-
-    -- Inline SVG score fragments and data visualizations (both read files
-    -- relative to the source file's directory).
     filePath <- getResourceFilePath
     let srcDir = takeDirectory filePath
-    pandocWithScores <- unsafeCompiler $
-        Score.inlineScores srcDir pandocWithCites
-    pandocWithViz <- unsafeCompiler $
-        Viz.inlineViz srcDir pandocWithScores
-
-    -- Apply remaining AST-level filters (sidenotes, smallcaps, links, etc.).
-    -- applyAll touches the filesystem via Images.apply (webp existence
-    -- check), so it runs through unsafeCompiler.
     -- Opt-in figure numbering. Off unless the page asks for it: three
     -- essays already number by hand in three different conventions, and
     -- numbering them automatically would double up.
     let numberFigures =
             fromMaybe False (lookupString "figure-numbering" meta >>= parseBool)
 
-    pandocFiltered <- unsafeCompiler $ applyAll numberFigures srcDir pandocWithViz
+    (pandocFiltered, bibHtml, furtherHtml) <- unsafeCompiler $
+        transformDocument frKeys bibPath numberFigures srcDir (itemBody pandocItem)
     let pandocItem'    = itemSetBody pandocFiltered pandocItem
 
     -- Build TOC from the filtered AST.
@@ -243,6 +233,27 @@ essayCompilerWith rOpts = do
     _ <- saveSnapshot "further-reading-refs" (itemSetBody (T.unpack furtherHtml)         htmlItem)
 
     return htmlItem
+
+-- | Everything 'essayCompilerWith' does between the parsed document and the
+--   filtered one, outside Hakyll, so that @site render-fixture@ (build/Golden.hs,
+--   tests/test_golden.py) runs the same code a page does.
+--
+--   Citeproc first: it turns citations into numbered markers and pulls the
+--   bibliography out. Then score fragments and visualizations, which read
+--   files relative to @srcDir@. Then the remaining AST filters (sidenotes,
+--   smallcaps, links, …); 'applyAll' probes the filesystem for @.webp@
+--   companions, so it is IO too.
+--
+--   Returns the filtered document, the bibliography HTML and the
+--   further-reading HTML.
+transformDocument :: [T.Text] -> T.Text -> Bool -> FilePath -> Pandoc
+                  -> IO (Pandoc, T.Text, T.Text)
+transformDocument frKeys bibPath numberFigures srcDir doc = do
+    (withCites, bibHtml, furtherHtml) <- Citations.applyCitations frKeys bibPath doc
+    withScores <- Score.inlineScores srcDir withCites
+    withViz    <- Viz.inlineViz srcDir withScores
+    filtered   <- applyAll numberFigures srcDir withViz
+    return (filtered, bibHtml, furtherHtml)
 
 -- | Compiler for essays.
 essayCompiler :: Compiler (Item String)

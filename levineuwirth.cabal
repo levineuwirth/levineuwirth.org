@@ -24,6 +24,7 @@ executable site
         Dingbat
         SimilarLinks
         Compilers
+        Golden
         Contexts
         Marks
         MarkdownSections
