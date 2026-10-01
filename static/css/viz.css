@@ -39,12 +39,20 @@
 }
 
 
-/* Theme default-coloured text.
-   Matplotlib writes no fill at all for ordinary text — it leans on SVG's
-   initial `fill: black` — so there is nothing for Filters.Viz.processColors
-   to rewrite and the colour has to come from CSS. An inherited value is
-   enough: `fill` inherits, and the glyph <use> elements pick it up from the
-   text group.
+/* Theme every default-black fill: text, and any shape with a black face.
+   Matplotlib writes no fill at all when the colour is black — for ordinary
+   text, and equally for a black bar, marker or arrowhead — and leans on
+   SVG's initial `fill: black`. There is then nothing for
+   Filters.Viz.processColors to rewrite, so the colour has to come from CSS.
+   An inherited value is enough: `fill` inherits, and every element that
+   declares none of its own, glyph <use> elements included, picks it up.
+
+   This rule once reached only the text groups (g[id^="text_"]). Black
+   shapes then stayed black, near-invisible on the dark and cappuccino
+   pages: the Proof Broker figure's arrowheads drew hollow. Setting it on
+   the root matches .score-page in score-reader.css, and
+   tests/test_viz.py (ImplicitFillTests) now fails on any shape left
+   without a fill it can inherit.
 
    Inheriting rather than forcing is the point. These rules used to carry
    !important, which also overrode fills a script had chosen deliberately:
@@ -58,7 +66,7 @@
    inherited fallback could not help anyway — an inline style would beat it —
    and an !important one would trample deliberate stroke colours the same way
    it trampled the fills. tests/test_viz.py asserts nothing black survives. */
-.viz-figure svg g[id^="text_"] {
+.viz-figure svg {
     fill: currentColor;
 }
 

@@ -187,6 +187,19 @@
                                        - 2 * var(--score-gutter))
                                 * var(--ar)));
     width: var(--score-fit-width);
+
+    /* The ink colour every inlined score inherits. It is set on every
+       sheet, not only portrait ones: a landscape page would otherwise draw
+       its undeclared fills in SVG's initial black (tests/test_viz.py,
+       DefaultFillRuleTests). */
+    color: var(--text);
+
+    /* `fill` is an inherited SVG property, and it crosses the HTML→SVG
+       boundary — so any element that never declares a fill of its own
+       (the common case for glyph outlines) draws in the theme's ink.
+       `stroke` is deliberately NOT set here: its initial value is `none`,
+       and inheriting a stroke would outline every filled notehead. */
+    fill: currentColor;
 }
 
 /* A portrait sheet fills the width instead and scrolls, matching what the
@@ -197,16 +210,6 @@
     border: 1px solid var(--border);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05),
                 0 10px 28px rgba(0, 0, 0, 0.06);
-
-    /* The ink colour every inlined score inherits. */
-    color: var(--text);
-
-    /* `fill` is an inherited SVG property, and it crosses the HTML→SVG
-       boundary — so any element that never declares a fill of its own
-       (the common case for glyph outlines) draws in the theme's ink.
-       `stroke` is deliberately NOT set here: its initial value is `none`,
-       and inheriting a stroke would outline every filled notehead. */
-    fill: currentColor;
 }
 
 /* Once the reader is live, zoom owns the sheet's width and the fit caps

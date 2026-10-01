@@ -35,6 +35,7 @@ import re
 import subprocess
 import sys
 import unittest
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -439,6 +440,155 @@ class FigureNumberingTests(unittest.TestCase):
                     p.read_text(encoding="utf-8"),
                     "numbering leaked into a page that did not opt in",
                 )
+
+
+# ---------------------------------------------------------------------------
+# Default fills
+# ---------------------------------------------------------------------------
+#
+# Matplotlib and MuseScore write no fill at all for a black face: the text of
+# a figure, a black bar or arrowhead, every MuseScore notehead. They lean on
+# SVG's initial `fill: black`, so there is no declaration for processColors to
+# rewrite, and on the dark and cappuccino pages those shapes draw black on
+# near-black. Each surface that shows such SVG therefore sets an inherited
+# `fill: currentColor` on its container, and these tests keep it that way.
+
+SVG_NS = "{http://www.w3.org/2000/svg}"
+XLINK_HREF = "{http://www.w3.org/1999/xlink}href"
+CSS_DIR = REPO_ROOT / "static" / "css"
+
+# Surface: the selector whose rule must carry an inherited fill.
+THEMED_SURFACES = {
+    "viz-figure": ".viz-figure svg",
+    "score-fragment-inner": ".score-fragment-inner svg",
+    "score-page": ".score-page",
+}
+
+SHAPES = {"path", "rect", "circle", "ellipse", "polygon", "polyline", "use"}
+UNRENDERED = {"defs", "clipPath", "mask", "marker", "pattern", "symbol"}
+
+
+def css_fill_selectors() -> set[str]:
+    """Selectors whose rule sets `fill: currentColor`, without !important."""
+    found: set[str] = set()
+    for css in CSS_DIR.glob("*.css"):
+        text = re.sub(r"/\*.*?\*/", "", css.read_text(encoding="utf-8"), flags=re.S)
+        for selectors, body in re.findall(r"([^{}]+)\{([^{}]*)\}", text):
+            if re.search(r"(?<![\w-])fill\s*:\s*currentColor\s*(;|$)", body, re.I):
+                found.update(" ".join(s.split()) for s in selectors.split(","))
+    return found
+
+
+def own_fill(node) -> str | None:
+    m = re.search(r"(?<![\w-])fill\s*:\s*([^;]+)", node.get("style") or "")
+    return m.group(1).strip() if m else node.get("fill")
+
+
+def paints_area(node, ids) -> bool:
+    """Whether a fill on this element could paint anything at all."""
+    tag = node.tag.replace(SVG_NS, "")
+    if tag == "use":
+        ref = ids.get((node.get(XLINK_HREF) or node.get("href") or "").lstrip("#"))
+        return ref is not None and paints_area(ref, ids)
+    if tag == "path":
+        # A tick mark or a single segment encloses nothing.
+        return len(re.findall(r"-?[\d.]+(?:e-?\d+)?", node.get("d") or "")) >= 6
+    return True
+
+
+def unthemed_shapes(svg: str, container_fill: str | None) -> int:
+    """Shapes that would paint in SVG's initial black.
+
+    `container_fill` is what the page's CSS hands the <svg> root by
+    inheritance: "currentColor" when the surface's rule is in place.
+    """
+    root = ET.fromstring(svg)
+    parent = {c: p for p in root.iter() for c in p}
+    ids = {n.get("id"): n for n in root.iter() if n.get("id")}
+    count = 0
+    for node in root.iter():
+        if node.tag.replace(SVG_NS, "") not in SHAPES or not paints_area(node, ids):
+            continue
+        chain, x = [node], node
+        while x in parent:
+            x = parent[x]
+            chain.append(x)
+        if any(a.tag.replace(SVG_NS, "") in UNRENDERED for a in chain[1:]):
+            continue
+        if node.tag == f"{SVG_NS}use":
+            ref = ids.get((node.get(XLINK_HREF) or node.get("href") or "").lstrip("#"))
+            if ref is not None and own_fill(ref) is not None:
+                continue
+        fill = next((f for f in map(own_fill, chain) if f is not None), container_fill)
+        if fill is None or fill.lower() in BLACK_VALUES:
+            count += 1
+    return count
+
+
+class DefaultFillRuleTests(unittest.TestCase):
+    """Each SVG surface inherits the theme's ink for undeclared fills."""
+
+    def test_every_surface_sets_an_inherited_fill(self) -> None:
+        selectors = css_fill_selectors()
+        for surface, selector in THEMED_SURFACES.items():
+            with self.subTest(surface=surface):
+                self.assertIn(
+                    selector, selectors,
+                    f"no `{selector} {{ fill: currentColor }}` rule in "
+                    f"static/css/ — shapes with no fill of their own draw in "
+                    f"SVG's initial black, invisible on the dark themes",
+                )
+
+
+@unittest.skipUnless(SITE_DIR.is_dir(), "no _site — run `cabal run site -- build`")
+class DefaultFillPageTests(unittest.TestCase):
+    """What a browser paints: no shape on a built page falls back to black."""
+
+    SURFACE_SVG = re.compile(
+        r'class="(viz-figure|score-fragment-inner)".*?(<svg\b.*?</svg>)', re.S
+    )
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        selectors = css_fill_selectors()
+        cls.inherited = {
+            surface: "currentColor" if selector in selectors else None
+            for surface, selector in THEMED_SURFACES.items()
+        }
+
+    def assert_themed(self, svg: str, surface: str, where: str) -> None:
+        try:
+            bad = unthemed_shapes(svg, self.inherited[surface])
+        except ET.ParseError as e:
+            self.fail(f"{where}: SVG does not parse ({e})")
+        self.assertEqual(
+            bad, 0,
+            f"{where}: {bad} shape(s) paint in SVG's initial black; the "
+            f"{THEMED_SURFACES[surface]} rule must set fill: currentColor",
+        )
+
+    def test_figures_and_fragments(self) -> None:
+        checked = 0
+        for page in SITE_DIR.rglob("*.html"):
+            html = page.read_text(encoding="utf-8")
+            if "viz-figure" not in html and "score-fragment-inner" not in html:
+                continue
+            for i, (surface, svg) in enumerate(self.SURFACE_SVG.findall(html)):
+                checked += 1
+                where = f"{page.relative_to(SITE_DIR)} ({surface} {i + 1})"
+                with self.subTest(where=where):
+                    self.assert_themed(svg, surface, where)
+        self.assertGreater(checked, 0, "no figure or score fragment found in _site")
+
+    def test_score_reader_pages(self) -> None:
+        # The reader inlines each page into .score-page; one page per work
+        # shows what its engraver writes.
+        for work in sorted({p.parent for p in SITE_DIR.glob("music/*/scores/page-1.svg")}):
+            svg = (work / "page-1.svg").read_text(encoding="utf-8")
+            svg = re.sub(r"^<\?xml[^>]*\?>\s*", "", svg)
+            where = str((work / "page-1.svg").relative_to(SITE_DIR))
+            with self.subTest(where=where):
+                self.assert_themed(svg, "score-page", where)
 
 
 if __name__ == "__main__":

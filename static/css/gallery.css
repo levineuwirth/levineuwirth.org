@@ -364,15 +364,24 @@
     line-height: 0; /* collapse inline gap below the SVG block */
 }
 
-/* Make the LilyPond SVG responsive and theme-aware.
+/* Make the score SVG responsive and theme-aware.
    CSS width/height override the SVG's own width/height presentation
    attributes. color: var(--text) is inherited by currentColor fills/strokes
-   (set by Filters.Score at build time). */
+   (set by Filters.Score at build time).
+
+   fill: currentColor covers what Filters.Score cannot rewrite: a glyph that
+   declares no fill at all and leans on SVG's initial black. MuseScore
+   writes its notation that way (noteheads, clefs, accidentals, beams), so
+   without this a MuseScore fragment drew near-invisible on the dark and
+   cappuccino pages. It is inherited, not forced, so any fill an engraver
+   wrote explicitly still wins. Same rule as .score-page in
+   score-reader.css. */
 .score-fragment-inner svg {
     width: 100%;
     height: auto;
     display: block;
     color: var(--text);
+    fill: currentColor;
 }
 
 /* Remove LilyPond's white background rectangle */
