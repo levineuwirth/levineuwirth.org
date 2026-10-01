@@ -1,4 +1,4 @@
-.PHONY: test validate audit-viz viz-provenance viz-provenance-check build build-locked deploy deploy-locked deploy-preflight deploy-rsync-inplace deploy-rsync-atomic deploy-clean sign download-model download-pdfjs download-leaflet compress-assets convert-images thumbnails pdf-thumbs pdfs watch watch-locked clean dev dev-locked audit-marks archive-gc archive-wayback archive-check archive-suggest
+.PHONY: test validate audit-viz viz-provenance viz-provenance-check build build-locked deploy deploy-locked deploy-preflight deploy-recheck deploy-rsync-inplace deploy-rsync-atomic deploy-clean sign download-model download-pdfjs download-leaflet compress-assets convert-images thumbnails pdf-thumbs pdfs watch watch-locked clean dev dev-locked audit-marks archive-gc archive-wayback archive-check archive-suggest
 
 # Prerequisite orders (deploy: build -> sign; deploy-clean: clean ->
 # deploy) are only correct serially; under `make -j` they could
@@ -377,6 +377,21 @@ pdfs:
 # costs a second, not a full compile. (B05)
 DIRTY_PATHS := build templates static data yaml-source tools nginx Makefile levineuwirth.cabal
 
+# The build inputs under $(1) that differ from HEAD, one per line: tracked
+# modifications, plus untracked files everywhere but data/ (see below).
+dirty_inputs = { git status --porcelain --untracked-files=no -- $(1); \
+	  git status --porcelain --untracked-files=normal -- $(filter-out data,$(1)) | grep '^??'; } | grep . || true
+
+# deploy-preflight checks the tree before the build; deploy-recheck checks it
+# again just before the push, because the build runs for minutes and reads
+# its inputs as it goes — it compiles the generator twice (Stages 1 and 3)
+# and validate discovers tests/ afresh. On 2026-10-01 a build/ edit made in
+# that window was compiled into a published site that the pushed commit did
+# not contain. content/ and tests/ are checked here too: the build's
+# snapshot committed content/ before it started, so any change there since
+# is also one the push would not carry.
+RECHECK_PATHS := $(DIRTY_PATHS) content tests
+
 deploy-preflight:
 	@branch=$$(git rev-parse --abbrev-ref HEAD); \
 	 if [ "$$branch" != "main" ]; then \
@@ -392,9 +407,7 @@ deploy-preflight:
 	# gitignored or generated, and none of it is a source input a reader
 	# could be missing.
 	@mkdir -p data; \
-	 tracked=$$(git status --porcelain --untracked-files=no -- $(DIRTY_PATHS)); \
-	 untracked=$$(git status --porcelain --untracked-files=normal -- $(filter-out data,$(DIRTY_PATHS)) | grep '^??' || true); \
-	 dirty=$$(printf '%s\n%s\n' "$$tracked" "$$untracked" | grep . || true); \
+	 dirty=$$($(call dirty_inputs,$(DIRTY_PATHS))); \
 	 if [ -n "$$dirty" ]; then \
 	   if [ "$(ALLOW_DIRTY_DEPLOY)" = "1" ]; then \
 	     echo "deploy: ALLOW_DIRTY_DEPLOY=1 — publishing a tree that differs from HEAD:"; \
@@ -424,6 +437,23 @@ deploy-preflight:
 	else \
 	  python3 tools/music-import.py check; \
 	fi
+
+deploy-recheck:
+	@dirty=$$($(call dirty_inputs,$(RECHECK_PATHS))); \
+	 if [ -z "$$dirty" ]; then \
+	   echo "deploy: build inputs still match $$(git rev-parse --short HEAD)"; \
+	 elif [ "$(ALLOW_DIRTY_DEPLOY)" = "1" ]; then \
+	   echo "deploy: ALLOW_DIRTY_DEPLOY=1 — inputs that differ from HEAD at push time:"; \
+	   printf '%s\n' "$$dirty" | sed 's/^/    /'; \
+	 else \
+	   echo "deploy: build inputs changed while the build ran. The site was compiled" >&2; \
+	   echo "        from a tree the push would not describe. Nothing was pushed or" >&2; \
+	   echo "        published:" >&2; \
+	   printf '%s\n' "$$dirty" | sed 's/^/    /' >&2; \
+	   echo "" >&2; \
+	   echo "        Commit or revert them, then re-run 'make deploy'." >&2; \
+	   exit 1; \
+	 fi
 
 deploy:
 	@$(WITH_LOCK) $(MAKE) --no-print-directory deploy-locked
@@ -456,6 +486,7 @@ deploy-locked: deploy-preflight build-locked validate sign
 	# Defense-in-depth: refuse rsync --delete to obviously dangerous
 	# parents in case VPS_PATH was typo'd (e.g. trailing-slash mistake).
 	@case "$(VPS_PATH)" in /|/srv|/srv/http|/var|/var/www|/home|/root|"") echo "deploy: VPS_PATH=$(VPS_PATH) looks unsafe — refusing" >&2; exit 1 ;; esac
+	@$(MAKE) --no-print-directory deploy-recheck
 	@command -v notify-send >/dev/null 2>&1 && notify-send "make deploy" "Ready to push & rsync — waiting for auth" || true
 	# Push first: a successful push is cheap to roll back, while a
 	# half-completed rsync is harder to recover from. If the push
