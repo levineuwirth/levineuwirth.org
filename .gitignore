@@ -219,3 +219,6 @@ content/photography/**/*.psd
 # They describe the author's machines and vaults, not the site.
 /AGENTS.md
 /CLAUDE.md
+
+# Build profiles from tools/profile-build.py: local measurements, never published.
+.build-profiles/
