@@ -195,11 +195,18 @@ transformAndExtract extras frKeys doc@(Pandoc meta _) =
         -- is stateful because each *occurrence* needs its own id (see
         -- 'MarkerState'); it also records where each key was first cited
         -- so the bibliography can link back to that occurrence.
-        (doc', st) = runState (walkM (transformInline keyNums) doc) emptyMarkerState
+        --
+        -- Blocks only, like 'collectCiteOrder'. The further-reading keys
+        -- sit in the metadata as nocite Cite nodes, and a walk over the
+        -- whole document visits them first: a key both cited and listed
+        -- spent its cite-back-<n> id on a node that is never rendered, so
+        -- the bibliography's back-link led nowhere.
+        (blocks', st) = runState (walkM (transformInline keyNums) (pandocBlocks doc))
+                                 emptyMarkerState
         backMap    = msFirstOccurrence st
         -- Pull bibliography div out of body and render to HTML
         (bodyBlocks, citedHtml, furtherHtml) = extractBibliography extras backMap citeOrder frKeys
-                                                 (pandocBlocks doc')
+                                                 blocks'
     in (Pandoc meta bodyBlocks, citedHtml, furtherHtml)
   where
     pandocBlocks (Pandoc _ bs) = bs
