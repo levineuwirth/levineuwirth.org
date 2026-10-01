@@ -418,11 +418,37 @@ toSourcePairs item = do
                 Just entries ->
                     return [ ( targetKey (leUrl e)
                              , BacklinkSource srcUrl title abstract
-                                              (leSentence  e)
-                                              (leParagraph e)
+                                              (rebaseFragmentLinks srcUrl (leSentence  e))
+                                              (rebaseFragmentLinks srcUrl (leParagraph e))
                                               (archiveFragment (leUrl e))
                              )
                            | e <- entries ]
+
+-- | Point an excerpt's same-page links at the page it was quoted from.
+--
+-- The excerpt is rendered in its source file's terms, so a cross-reference
+-- written there as @[(H1)](#cloud-h1)@ arrives as @href="#cloud-h1"@ — which,
+-- quoted in another page's Backlinks footer, names an anchor that page does
+-- not have. 'isPageLink' already keeps such links out of the backlinks
+-- graph; this keeps them working inside the quote. tools/check-site.py
+-- (link-fragments) fails the build on any that slip through.
+--
+-- A fragment the excerpt defines itself stays put: a quoted footnote is
+-- rendered into the excerpt with its own @#fn1@ and @#fnref1@, and the
+-- source page has neither, because its notes become sidenotes.
+rebaseFragmentLinks :: String -> String -> String
+rebaseFragmentLinks srcUrl html
+    | null srcUrl = html
+    | otherwise   = case T.splitOn marker (T.pack html) of
+        []             -> html
+        (lead : hrefs) -> T.unpack (T.concat (lead : concatMap rebase hrefs))
+  where
+    marker   = "href=\"#"
+    rebased  = T.pack ("href=\"" ++ escapeHtml srcUrl ++ "#")
+    localIds = map (T.takeWhile (/= '"')) (drop 1 (T.splitOn " id=\"" (T.pack html)))
+    rebase chunk
+        | T.takeWhile (/= '"') chunk `elem` localIds = [marker, chunk]
+        | otherwise                                   = [rebased, chunk]
 
 -- ---------------------------------------------------------------------------
 -- Context field
