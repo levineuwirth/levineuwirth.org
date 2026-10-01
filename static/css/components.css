@@ -28,24 +28,35 @@
    (collapsed by default, expanded via nav.js + localStorage).
    ============================================================ */
 
+/* The nav is a size container so its layout can switch on its own width
+   in rem. A media query's rem is the browser default and ignores the
+   Text size setting; a container query's rem follows the root, so the
+   wrap points below scale with the text. */
 nav.site-nav {
+    container: site-nav / inline-size;
     display: flex;
     flex-direction: column;
     align-items: stretch;
     font-family: var(--font-sans);
 }
 
-/* Row 1: centered primary links + right-side controls */
+/* Row 1: centered primary links + right-side controls.
+   The side padding reserves room for the absolutely positioned logo
+   (left) and controls (right): the controls are about 4.9rem wide plus
+   their 1.25rem offset. Equal on both sides, so the links stay centred
+   on the page. */
 .nav-row-primary {
     position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 0.65rem 1.5rem;
+    padding: 0.65rem 6.75rem;
 }
 
 .nav-primary {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     align-items: center;
     gap: 0;
     font-size: 0.8rem;
@@ -392,13 +403,35 @@ nav.site-nav {
     }
 }
 
-/* ── Mobile nav (≤540px) ─────────────────────────────────────────────
-   Controls are position:absolute on desktop (out of flex flow, pinned
-   right). On narrow viewports they collide with the primary links.
-   Fix: bring them into flow, wrap the row, add a separator line.
+/* ── Middle widths: the links wrap between logo and controls ─────────
+   One row of links is about 33.3rem; with the 2 × 6.75rem reserve it
+   needs a 47rem nav. Below that the links wrap into two centred rows.
+   The separators come off, since a wrapped row would start with one,
+   and the logo keeps its one-row size instead of growing with the row.
    ──────────────────────────────────────────────────────────────────── */
 
-@media (max-width: 540px) {
+@container site-nav (width < 47.5rem) {
+    .nav-primary {
+        row-gap: 0.2rem;
+    }
+
+    .nav-primary a + a {
+        border-left: none;
+    }
+
+    .nav-logo {
+        max-width: 2.92rem; /* the one-row bar height: 2 × 0.65 + 0.8 × 1.65 + 0.3 */
+    }
+}
+
+/* ── Narrow nav ──────────────────────────────────────────────────────
+   Below 32rem two rows of links no longer fit between the logo and the
+   controls (the first four links are about 18.3rem). Bring the controls
+   into flow, wrap the row, add a separator line. 32rem is 640px at the
+   default text size and grows with the Text size setting.
+   ──────────────────────────────────────────────────────────────────── */
+
+@container site-nav (width <= 32rem) {
     .nav-logo {
         display: none;
     }
@@ -413,6 +446,7 @@ nav.site-nav {
     .nav-primary {
         flex-wrap: wrap;
         justify-content: center;
+        row-gap: 0;
         font-size: 0.72rem;
     }
 
