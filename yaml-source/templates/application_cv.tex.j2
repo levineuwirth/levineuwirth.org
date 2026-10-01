@@ -104,7 +104,7 @@
 ((* macro publication(record) *))
 \noindent
 ((* if record.title *))
-\textbf{(((record.authors))).} \textit{(((record.title))).}
+\textbf{(((record.authors))).} \textit{((* if record.links *))\href{(((record.links[0].href)))}{(((record.title)))}((* else *))(((record.title)))((* endif *)).}
 (((record.venue))), (((record.year)))((* if record.month *)), (((record.month)))((* endif *)).
 ((* else *))
 \textbf{(((record.authors))).} (((record.venue))) (((record.year))).

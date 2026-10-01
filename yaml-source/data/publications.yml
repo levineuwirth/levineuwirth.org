@@ -2,6 +2,30 @@
 # with equal_contrib: true; the template renders the appropriate footnote.
 
 publications:
+  # Public research writing, distinct from papers/preprints. Selected by
+  # research-application variants; omitted from the legacy academic record.
+  - id: verified-inference-between-adversaries
+    authors: "Neuwirth L"
+    title: "Verified Inference Between Adversaries"
+    venue: "Technical research write-up; ongoing work"
+    year: 2026
+    links:
+      - label: Full text
+        href: https://levineuwirth.org/essays/verified-inference/
+    cv_visible: false
+    resume_visible: false
+
+  - id: proof-broker-search-and-trust
+    authors: "Neuwirth L"
+    title: "Proof Broker: Separating Proof Search from Trust"
+    venue: "Technical research write-up; ongoing work"
+    year: 2026
+    links:
+      - label: Full text
+        href: https://levineuwirth.org/essays/proof-broker/
+    cv_visible: false
+    resume_visible: false
+
   - id: icd-embeddings-jamia
     authors: "Shu L, Neuwirth L†, Wang X†, Zheng H†"
     title: "Beyond Comorbidity Indices: An Order-Invariant ICD-10-CM Embedding for Readmission and Mortality Prediction"
