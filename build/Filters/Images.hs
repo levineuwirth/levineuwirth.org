@@ -19,6 +19,14 @@
 --   SVG files and external URLs are passed through with only lazy loading
 --   (and lightbox markers for standalone images).
 --
+--   Decorative images. Markdown cannot tell an image whose author meant it
+--   to have no description from one whose author forgot: @![](x.png)@ is
+--   both, and Pandoc writes it with no @alt@ at all, so a screen reader
+--   reads out the file name. tools/check-site.py therefore refuses any
+--   @<img>@ without @alt@, and an image that carries nothing a reader
+--   needs says so: @![](x.png){.decorative}@ is written with @alt=""@ on
+--   every path, which assistive technology skips.
+--
 --   Width / height attrs are looked up from @{image}.dims.yaml@ sidecars
 --   produced by @tools/extract-dimensions.py@ at build time, on the same
 --   path-resolution rules as the WebP companion check (absolute paths
@@ -144,7 +152,7 @@ wrapLinkedImg _ x = pure x
 --   @<img>@. The sidecar lookup is skipped for non-local sources
 --   (HTTP URLs, data URIs) since there's no local file to measure.
 renderImg :: FilePath -> Attr -> [Inline] -> Target -> Bool -> IO Inline
-renderImg srcDir attr alt target@(src, _) lightbox = do
+renderImg srcDir attr0 alt0 target@(src, _) lightbox = do
     let s        = T.unpack src
         isRaster = isLocalRaster s
         local    = not (isUrl s)
@@ -159,6 +167,13 @@ renderImg srcDir attr alt target@(src, _) lightbox = do
         else
             pure $ Image (commonAttrs dims) alt target
   where
+    -- A decorative image drops any description and carries alt="" as an
+    -- attribute, which Pandoc's writer emits where it would omit an empty
+    -- description. renderPicture reads the class itself.
+    (attr, alt)
+        | isDecorative attr0 = (addAttr "alt" "" attr0, [])
+        | otherwise          = (attr0, alt0)
+
     commonAttrs dims =
         withDims dims
         $ addAttr "decoding" "async"
@@ -237,7 +252,7 @@ renderPicture (ident, classes, kvs) alt (src, title) lightbox dims =
         , attrId ident
         , attrClasses classes
         , " src=\"",     esc src,                "\""
-        , attrAlt alt
+        , if "decorative" `elem` classes then " alt=\"\"" else attrAlt alt
         , attrTitle title
         , dimsAttrs dims
         , " loading=\"lazy\""
@@ -368,6 +383,10 @@ lowerExt :: FilePath -> String
 lowerExt = map toLower . takeExtension
 
 -- | Prepend a key=value pair if not already present.
+-- | @{.decorative}@: the image carries nothing a reader needs.
+isDecorative :: Attr -> Bool
+isDecorative (_, classes, _) = "decorative" `elem` classes
+
 addAttr :: Text -> Text -> Attr -> Attr
 addAttr k v (i, cs, kvs)
     | any ((== k) . fst) kvs = (i, cs, kvs)

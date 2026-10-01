@@ -60,6 +60,8 @@ $$\sum_{k=1}^{n} k = \frac{n(n+1)}{2}$$
 
 An inline image ![a small square](plain.png) without a WebP companion.
 
+A decorative one, ![](plain.png){.decorative}, and one in a picture, ![](plate.png){.decorative}.
+
 As [](#fig-plate) shows, and as [the plate](#fig-plate) says in other words.
 
 ::: {.score-fragment score-name="Motif" score-caption="A two-bar motif."}

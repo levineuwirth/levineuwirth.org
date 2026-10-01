@@ -141,6 +141,16 @@ class InvariantTests(unittest.TestCase):
             with self.subTest(fixture=name):
                 self.assertEqual(sorted({i for i in ids if ids.count(i) > 1}), [])
 
+    def test_every_image_has_alt(self) -> None:
+        # An image without a description must say {.decorative}
+        # (build/Filters/Images.hs); check-site refuses a bare <img>.
+        for name, out in self.rendered.items():
+            prose = CODE_RE.sub("", out)
+            with self.subTest(fixture=name):
+                bare = [tag for tag in re.findall(r"<img\b[^>]*>", prose)
+                        if not re.search(r"(?<![\w-])alt(?:\s*=|\s|/?>)", tag)]
+                self.assertEqual(bare, [], "an <img> with no alt")
+
     def test_nothing_is_left_unprocessed(self) -> None:
         for name, out in self.rendered.items():
             prose = CODE_RE.sub("", out)
