@@ -1,4 +1,4 @@
-# Upgrading git.levineuwirth.org
+# VPS session: upgrading git.levineuwirth.org, then the site's security headers
 
 A runbook, executed by hand. Written 2026-09-06 against a live instance
 reporting `1.21.11+0` at <https://git.levineuwirth.org/api/v1/version>, a
@@ -12,6 +12,38 @@ Not `16.0.x`: it is the newer stable, but its support window closes
 An instance that gets touched twice a year belongs on the LTS line. The
 route to 16 is the same as the route to 15 plus one hop, and § 6 records
 that it was rehearsed too.
+
+## Tonight, in order (revised 2026-10-01)
+
+Two jobs on the VPS, each with its own checks and its own rollback:
+
+| part | what | sections | budget |
+|---|---|---|---|
+| A | Forgejo `1.21.11-0` → `15.0.9`, stepwise | § 1 – § 8 | 1–2 h; hop 1 is the slow one (§ 6) |
+| B | the website's security headers: the CSP report collector, and the other site snippets changed on 2026-09-06 | § 9 | 20–30 min |
+
+Do A first and finish it green: it is the part with real risk, and its
+rollback wants a clear head. B touches only the website's server block and
+ends in one `nginx -t` and a reload, separate from the forge.
+
+What changed after this was written on 2026-09-06, folded in below:
+
+* **15.0.8 and 15.0.9 are out** (2026-09-10, 2026-09-17). The rehearsed
+  chain still ends at 15.0.7; one patch step on the same line then takes it
+  to 15.0.9 (§ 3, row 10). A patch on an LTS line carries no schema
+  migration to rehearse (§ 7.4) — read its release notes before the step.
+* **The VPS root shell is fish.** The `ssh root@<vps> '…'` one-liners are
+  plain enough for it, but § 5's loop and § 5.1's rollback are bash
+  (`TAG=…`, `PREHOP=$(…)`): run `bash` first. `<vps>` is the `vps` alias.
+* **Backups changed on 2026-09-15.** Every run of `forgejo-backup.sh` now
+  also lands off-host in the storage box's borg repository
+  (`OFFHOST_TOOL=borg`), which closes § 7.3's first gap, and local
+  retention is `KEEP=3`. That is enough here (§ 5): a hop's rollback only
+  ever needs the newest archive, and every per-hop archive is in borg.
+* **`/tmp` is a 1.9 GB tmpfs.** The backup units use `TMPDIR=/var/tmp`, and
+  § 5.1 extracts under `/root`. Keep any ad-hoc extraction off `/tmp`.
+* **16.0 still leaves support on 2026-10-29, and 17.0 lands 2026-10-15**, so
+  the LTS target stands.
 
 ---
 
@@ -159,7 +191,10 @@ ssh root@<vps> 'tar tzf "$(readlink -f /root/forgejo-backups/LATEST)" | grep "ho
 
 ### 1.7 Copy the archive off the host, with a verified checksum
 
-Until this step the backup lives on the disk it is backing up.
+Since 2026-09-15 the backup in § 1.6 is already in the storage box's borg
+repository; its journal says `off-host: copying to … with borg`. This step
+is still worth the minute: a copy on the laptop is the one you can restore
+without the storage box.
 
 ```bash
 A=$(ssh root@<vps> 'readlink -f /root/forgejo-backups/LATEST')
@@ -171,8 +206,7 @@ cd ~/backups/forgejo && sha256sum -c "$(basename "$A").sha256"
 That last line must print `OK`. If it does not, the transfer is bad; do it
 again and do not proceed on a checksum you have not seen pass.
 
-To make this automatic from here on, configure `OFFHOST_DEST` — see
-`systemd/forgejo-backup.env.example` and § 7.3.
+(The automatic off-host copy this used to point at is configured: § 7.3.)
 
 ---
 
@@ -289,8 +323,8 @@ cd ~ && rm -rf ~/tmp/forgejo-lab
 
 ## 3. The hop sequence, with exact tags
 
-Latest patch of each major as of 2026-09-06. Use these exact tags — a
-floating `:15` tag makes the rollback in § 5 ambiguous.
+Latest patch of each major as of 2026-09-06, plus row 10 (2026-10-01). Use
+these exact tags — a floating `:15` tag makes the rollback in § 5 ambiguous.
 
 | # | image tag | what happens |
 |---|---|---|
@@ -303,7 +337,8 @@ floating `:15` tag makes the rollback in § 5 ambiguous.
 | 6 | `codeberg.org/forgejo/forgejo:12.0.4` | Forgejo 28→35. The bleve issue index is detected as stale and rebuilt |
 | 7 | `codeberg.org/forgejo/forgejo:13.0.5` | Forgejo 36→39 |
 | 8 | `codeberg.org/forgejo/forgejo:14.0.5` | named migrations begin (`v14a_*`, `v14b_*`); the numeric `forgejo_version` stops advancing and `forgejo_migration` takes over. **This is the hop that refuses to start on unexpected `authorized_keys` — see § 1.5** |
-| 9 | `codeberg.org/forgejo/forgejo:15.0.7` | **target.** `v15a_*`–`v15c_*`; bleve index rebuilt again. **Everyone is logged out — see § 4.2** |
+| 9 | `codeberg.org/forgejo/forgejo:15.0.7` | the rehearsed end of the chain. `v15a_*`–`v15c_*`; bleve index rebuilt again. **Everyone is logged out — see § 4.2** |
+| 10 | `codeberg.org/forgejo/forgejo:15.0.9` | **target.** Two patch releases on the same LTS line (2026-09-10, 2026-09-17); not rehearsed, and needs no rehearsal (§ 7.4). Read both release notes first |
 
 Shorter routes, both documented as supported and both rehearsed here:
 
@@ -374,7 +409,7 @@ ssh root@<vps> 'grep -A4 "^\[security\]" /root/forgejo-server/forgejo-data/gitea
 Only after production is running it:
 
 ```yaml
-    image: codeberg.org/forgejo/forgejo:15.0.7
+    image: codeberg.org/forgejo/forgejo:15.0.9
 ```
 
 Also update the header comment in `forgejo/docker-compose.yml`, which still
@@ -390,9 +425,10 @@ one is green.
 
 ```bash
 ssh root@<vps>
+bash                # the root shell is fish; everything below is bash
 cd /root/forgejo-server
 
-TAG=7.0.16          # then 8.0.3, 9.0.3, 10.0.3, 11.0.16, 12.0.4, 13.0.5, 14.0.5, 15.0.7
+TAG=7.0.16          # then 8.0.3, 9.0.3, 10.0.3, 11.0.16, 12.0.4, 13.0.5, 14.0.5, 15.0.7, 15.0.9
 
 # --- 1. a backup per hop. This is the rollback point for THIS hop. ---------
 systemctl start forgejo-backup.service
@@ -419,9 +455,20 @@ git clone https://git.levineuwirth.org/neuwirth/levineuwirth.org.git /tmp/cc && 
   git -C /tmp/cc log --oneline | head -3 && rm -rf /tmp/cc
 ```
 
-`KEEP=14` on the backup script means nine per-hop backups plus a week of
-nightlies fits without pruning anything you still want. If you would rather
-be certain, run the chain with `KEEP=30` exported for the day.
+Retention is `KEEP=3` locally (`/etc/default/forgejo-backup`), and that is
+enough: a hop's rollback only ever needs `PREHOP`, the newest archive, and
+every per-hop archive also lands in borg, so the pre-upgrade `1.21.11-0`
+archive stays restorable after the local copy is pruned:
+
+```bash
+BORG_RSH='ssh -i /root/.ssh/id_storagebox -o BatchMode=yes' \
+BORG_PASSCOMMAND='cat /etc/borg/passphrase' \
+  borg list --glob-archives 'forgejo-*' ssh://storagebox/./backup/vps
+```
+
+Do not raise `KEEP` for the day. At about 1.1 GB an archive, ten more on
+local disk is what § 1.2 budgets against. Exporting it in the shell would
+not reach the systemd unit anyway.
 
 ### 5.1 Rollback, per hop
 
@@ -535,7 +582,7 @@ ssh root@<vps> 'systemctl start forgejo-backup.service && /usr/local/bin/forgejo
 Compare against `/tmp/doctor-before.log` from § 1.4. Then commit, in this
 repo, the change that is now true:
 
-* `forgejo/docker-compose.yml` — image tag `15.0.7`, the `[security]`
+* `forgejo/docker-compose.yml` — image tag `15.0.9`, the `[security]`
   variables from § 4.2, and a header comment that no longer describes 1.21.
 * `forgejo/UPGRADE.md` — the date this was executed and anything that
   differed from this runbook. A runbook that is not corrected after use is
@@ -568,15 +615,11 @@ last-login addresses, and `127.0.0.1` everywhere means nginx's
 
 ### 7.3 Close the backup gaps
 
-Two of the three are already code; they need configuring:
-
-1. **Off-host copies.** Copy `systemd/forgejo-backup.env.example` to
-   `/etc/default/forgejo-backup`, set `OFFHOST_DEST`, `chmod 600`. Until you
-   do, every nightly run logs `OFFHOST_DEST is unset — this backup exists
-   ONLY on the host it backs up`. `id_storagebox` already exists on the
-   laptop, so a destination probably already does too.
-2. **Weekly verification.** Install and enable
-   `systemd/forgejo-backup-verify.{service,timer}`; it runs
+1. **Off-host copies — done 2026-09-15.** borg to the storage box on every
+   run, and `vps-offsite-verify.timer` restores from it monthly.
+2. **Weekly verification.** Confirm it is installed, and install it if not:
+   `systemctl list-timers forgejo-backup-verify.timer`. The units are
+   `systemd/forgejo-backup-verify.{service,timer}`; they run
    `forgejo-backup.sh --verify` every Sunday.
 3. **A real restore rehearsal**, § 2, at least once a year. `--verify`
    proves the archive is readable and the database inside it is intact; only
@@ -673,3 +716,124 @@ entries with a plausible bearing here are listed; the full notes are at
 Nothing in the chain requires a SQLite-specific intervention. SQLite's
 supported-version requirements did not change at any hop; only the MySQL and
 PostgreSQL minimums did, at 7.0.
+
+---
+
+## 9. Part B: the website's security headers
+
+Added 2026-10-01. Independent of the forge; do it after § 7 is green.
+
+### 9.1 Where it stands
+
+The live site still sends the security headers as they were before
+2026-09-06. Its `Content-Security-Policy-Report-Only` names no `report-uri`,
+so violations are reported nowhere, and it still carries
+`upgrade-insecure-requests`, which browsers ignore in report-only mode,
+logging a warning. The fix has been in this repo since 2026-09-06 and never
+reached the server:
+
+| snippet | change |
+|---|---|
+| `nginx/security-headers.conf` | `report-uri /csp-report`; `upgrade-insecure-requests` dropped; framing moved out |
+| `nginx/security-framing.conf` | **new**: `X-Frame-Options` and `frame-ancestors`, now kept apart from the other headers |
+| `nginx/csp-report.conf` | **new**: the collector at `/csp-report`, written to `/var/log/nginx/csp-report.log` |
+| `nginx/archive.conf`, `static-assets.conf`, `popup-proxy.conf`, `vhost.conf.example` | other 2026-09-06 changes; some may already be live |
+
+**Deploy `security-headers.conf` and `security-framing.conf` together.**
+The new `security-headers.conf` no longer sets `X-Frame-Options`, so
+installing it alone would drop the framing protection the site has now.
+
+A static scan of the built site found it already ready for enforcement:
+497 pages with no inline scripts, no `on…=` handlers and no `javascript:`
+URLs, and the only external scripts and stylesheets come from
+`cdn.jsdelivr.net`, which the policy allows. Only runtime behaviour is
+unmeasured: semantic search's workers and wasm, Pagefind's wasm, KaTeX
+fonts, the link-popup fetches and their images, the PDF viewer, the map
+tiles, and Vega. Collecting reports is how to measure them.
+
+### 9.2 Stage and diff
+
+From the laptop, in this repo:
+
+```bash
+ssh root@<vps> 'mkdir -p /root/nginx-staging'
+scp nginx/*.conf root@<vps>:/root/nginx-staging/
+```
+
+On the VPS (`bash` first):
+
+```bash
+cp -a /etc/nginx/snippets "/root/nginx-snippets.bak-$(date +%F)"    # the rollback
+for f in security-headers security-framing csp-report archive static-assets popup-proxy; do
+  echo "== $f"; diff -q "/etc/nginx/snippets/$f.conf" "/root/nginx-staging/$f.conf"
+done
+nginx -T 2>/dev/null | grep -n 'server_name levineuwirth.org'         # find the site's server block
+```
+
+Install the three security snippets **and `archive.conf`** in one step.
+`archive.conf` was written for the split: its `/archive/` location declares
+headers of its own, so it re-includes `security-headers.conf` and sets
+its own framing (`SAMEORIGIN` and `frame-ancestors 'self'`, so the site can
+show snapshots in a frame), deliberately without `security-framing.conf`.
+An older `archive.conf` beside the new `security-headers.conf` may leave
+`/archive/` with no framing header at all. For `static-assets.conf` and
+`popup-proxy.conf`, read each diff and install them once reviewed; they are
+independent of the CSP.
+
+### 9.3 Install
+
+1. Add the report log format to `http { }`, for example as
+   `/etc/nginx/conf.d/csp-report-format.conf`. `nginx -t` fails with
+   "unknown log format" without it:
+
+   ```nginx
+   log_format csp_report escape=json
+       '{"time":"$time_iso8601","ua":"$http_user_agent",'
+       '"referer":"$http_referer","report":"$request_body"}';
+   ```
+
+2. `install -m 0644 /root/nginx-staging/{security-headers,security-framing,csp-report,archive}.conf /etc/nginx/snippets/`
+3. In the site's `server { }`, beside the existing
+   `include snippets/security-headers.conf;`, add
+   `include snippets/security-framing.conf;` and
+   `include snippets/csp-report.conf;` (once, at server level; see
+   `nginx/vhost.conf.example`).
+4. `nginx -t && systemctl reload nginx`. If `-t` fails, nothing has changed
+   yet; fix it or restore the backup directory.
+
+### 9.4 Verify
+
+From the laptop:
+
+```bash
+curl -sI https://levineuwirth.org/ | grep -iE 'content-security|x-frame|report'
+#   …-Report-Only: … report-uri /csp-report   and   X-Frame-Options: DENY
+curl -s -o /dev/null -w '%{http_code}\n' -X POST \
+  -H 'Content-Type: application/csp-report' -d '{"csp-report":{"test":1}}' \
+  https://levineuwirth.org/csp-report                                   # 204
+curl -sI https://levineuwirth.org/archive/ | grep -iE 'x-frame|frame-ancestors'   # SAMEORIGIN, 'self'
+ssh root@<vps> 'tail -1 /var/log/nginx/csp-report.log'                 # the test report
+```
+
+Then make the reports come in sooner by visiting every runtime path in a
+browser: a page with math, both search tabs, the photography map, a link
+popup of each provider (Wikipedia, arXiv, GitHub, DOI, Open Library,
+YouTube, the forge), the PDF viewer, an archive snapshot, and the score
+reader with playback.
+
+Rollback: restore `/root/nginx-snippets.bak-<date>`, remove the two
+`include` lines and the `conf.d` file, then run
+`nginx -t && systemctl reload nginx`.
+
+### 9.5 A week later: enforce
+
+```bash
+ssh root@<vps> 'jq -r .report /var/log/nginx/csp-report.log | jq -c "{d: .\"csp-report\".\"violated-directive\", u: .\"csp-report\".\"blocked-uri\", s: .\"csp-report\".\"source-file\"}" | sort | uniq -c | sort -rn | head -30'
+```
+
+Ignore reports whose `source-file` is a browser extension
+(`moz-extension:`, `chrome-extension:`). Allow anything else the site
+really uses, in the repo's `security-headers.conf` first. Then swap the
+commented enforcing line for the Report-Only line (its comment block
+explains why it adds `worker-src 'self' blob:`), deploy, and repeat § 9.4's
+browser pass. Record the date here.
