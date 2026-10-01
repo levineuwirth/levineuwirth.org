@@ -20,6 +20,7 @@ scope: broad
 novelty: moderate
 practicality: moderate
 history:
+  - date: "2026-10-01"
   - date: "2026-09-24"
     note: "Verification section updated for the enrollment-identity anchor and the index-bound Merkle opening in pull request 21."
   - date: "2026-09-22"
@@ -38,9 +39,7 @@ A datacenter asserts that it ran a particular model on your prompt. It might hav
 
 Consider an agreement between two mutually distrustful states concerning permitted AI models or workloads. Neither party can be expected to accept the other's execution logs as evidence that the agreement was followed. Nor can either be expected to trust the other's hardware or execution environment. Both may also require their weights, prompts, and outputs to remain confidential. Evaluating a model beforehand leaves the central question unanswered: what can either party establish about the computation the other subsequently performed?
 
-VerInf takes this mutual distrust as a design requirement. Hardware attestation would introduce a hardware root of trust; the intended arrangement here requires no trust in the other party's hardware, including the hardware that generates the proof. Each party runs an independent verifier on its own cluster and checks the proof produced on the other's. The proving cluster is outside the verifier's trusted base. The aim is to make a computational claim checkable across that boundary without requiring either party to disclose its private data.
-
-[VerInf](https://github.com/JamesPetrie/VerInf), led by James Petrie at the Future of Life Institute, investigates this question through proofs of language-model inference. I work on it through the [MARS V fellowship](https://caish.org/mars). My responsibility began with the profiler and the path to multi-GPU proving, and has grown to include hardware measurement, prover optimization, and the integration and hardening of new proof mechanisms.
+[VerInf](https://github.com/JamesPetrie/VerInf), led by James Petrie at the Future of Life Institute, takes this mutual distrust as a design requirement. Hardware attestation would introduce a hardware root of trust; the intended arrangement here requires no trust in the other party's hardware, including the hardware that generates the proof. Each party runs an independent verifier on its own cluster and checks the proof produced on the other's. The proving cluster is outside the verifier's trusted base. The aim is to make a computational claim checkable across that boundary without requiring either party to disclose its private data. I work on it through the [MARS V fellowship](https://caish.org/mars). My responsibility began with the profiler and the path to multi-GPU proving, and has grown to include hardware measurement, prover optimization, and the integration and hardening of new proof mechanisms.
 
 Work on VerInf remains ongoing. Our current results have produced a weight-splitting decomposition and measured improvements on individual-GPU workflows, and work on a multi-device executor is well underway. The engineering questions at the heart of the system have evolved just as the system has.
 
