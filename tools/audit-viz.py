@@ -27,7 +27,7 @@ constant-image   An <image> mark (imshow, pcolormesh) whose pixels barely
                  vary. A heatmap with no gradient is a bug in the data, the
                  normalisation, or the choice of figure.
 text-contrast    Every text run against whatever is painted behind it, using
-                 the WCAG relative-luminance ratio, in both site themes.
+                 the WCAG relative-luminance ratio, in every site theme.
 crowding         Text runs whose rendered size falls below the legible floor
                  once the figure is scaled to the body column.
 metadata         Missing alt / <title> / <desc>, which tests also check but
@@ -52,9 +52,14 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SVG_NS = "{http://www.w3.org/2000/svg}"
 XLINK_HREF = "{http://www.w3.org/1999/xlink}href"
 
-# Site theme foregrounds, from static/css/base.css. currentColor resolves to
-# these, so a figure has to stay legible against both.
-THEMES = {"light": ("#faf8f4", "#1a1a1a"), "dark": ("#121212", "#d4d0c8")}
+# Site theme backgrounds and foregrounds (--bg, --text), from
+# static/css/base.css. currentColor resolves to these, so a figure has to
+# stay legible against every one.
+THEMES = {
+    "light": ("#faf8f4", "#1a1a1a"),
+    "dark": ("#121212", "#d4d0c8"),
+    "cappuccino": ("#553a28", "#ead0a0"),
+}
 
 BODY_MAX_WIDTH = 800     # --body-max-width in base.css
 MIN_LABEL_PX = 9.0       # below this, axis labels stop being readable
@@ -186,7 +191,7 @@ def check_constant_image(svg: str) -> list[str]:
 
 
 def check_text_contrast(svg: str) -> list[str]:
-    """Text against whatever is painted behind it, in both themes.
+    """Text against whatever is painted behind it, in every theme.
 
     Only explicit fills are checked. Text with no fill inherits currentColor
     from the page, which is the themed path and correct by construction.
