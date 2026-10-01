@@ -96,8 +96,6 @@ projects:
         href: /essays/levcs.html
       - label: Artifact
         href: https://git.levineuwirth.org/neuwirth/levcs
-      - label: Instance
-        href: https://levcs.levineuwirth.org
     cv_visible: false
     resume_visible: false
     web_visible: true
