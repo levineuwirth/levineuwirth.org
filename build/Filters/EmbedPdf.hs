@@ -43,7 +43,11 @@ parseDirective s
     | not ("{{pdf:" `isPrefixOf` s) = Nothing
     | not ("}}"     `isSuffixOf` s) = Nothing
     | otherwise =
-        let inner        = take (length s - 2) (drop 6 s)  -- strip "{{pdf:" and "}}"
+        -- Strip "{{pdf:", then "}}". The second count is of what the first
+        -- left: taking (length s - 2) of it kept the closing braces, so
+        -- every embed's path or page number ended in "}}" and broke.
+        let body         = drop 6 s
+            inner        = take (length body - 2) body
             (path, frag) = break (== '#') inner
         in  if null path
                 then Nothing
