@@ -7,7 +7,7 @@ operator to run.
 
 **Part A was executed on 2026-10-01 and production runs `15.0.9`** — see
 "Executed 2026-10-01" below for what differed from this runbook. Part B
-(§ 9) was not done that night.
+(§ 9) was done the same night; § 9.5 (enforcement) is due a week later.
 
 **Target: `15.0.7`** — the current LTS, supported until 2027-07-15.
 
@@ -54,9 +54,26 @@ What differed, and is now folded into the sections named:
   the laptop after it. The pre-hop archive of every hop is recorded in
   `/root/forgejo-upgrade-2026-10-01.log` on the VPS.
 
-Left open: Part B (§ 9); whether to disable source-archive downloads (the
-`DISABLE_DOWNLOAD_SOURCE_ARCHIVES` setting 404s the web routes but not
-`/api/v1/repos/*/*/archive/`, which needs an nginx rule); excluding
+Part B (§ 9) followed at 19:55 UTC. All six snippets went in together
+rather than four first: they are one set from `9d4f31a`, the new
+`static-assets.conf` and `popup-proxy.conf` include `security-framing.conf`
+and fail `nginx -t` without it, and the old ones beside the new
+`security-headers.conf` would have left their locations without framing
+headers. The live `popups.js` matched the repository byte for byte, and its
+four proxy URL shapes match the narrowed `popup-proxy.conf` routes. One
+script added the `conf.d` log format, installed the snippets and the two
+`include` lines (writing through any symlink), and would have restored all
+three on a failed `nginx -t`; it passed and reloaded. § 9.4 green: framing
+`DENY` site-wide and `SAMEORIGIN` on `/archive/` and `/pdfjs/`,
+`report-uri /csp-report` with `upgrade-insecure-requests` gone, the
+collector 204 with the report body in the log (a GET to it logs a line
+with an empty `report`, which § 9.5's `jq` skips), the popup proxies 200
+on their real shapes and 404 on anything else.
+
+Left open: § 9.4's browser pass and § 9.5, about 2026-10-08; whether to
+disable source-archive downloads (the `DISABLE_DOWNLOAD_SOURCE_ARCHIVES`
+setting 404s the web routes but not `/api/v1/repos/*/*/archive/`, which
+needs an nginx rule); excluding
 `gitea/repo-archive` from the backups; § 7.4's subscriptions and the
 2027 LTS reminder; § 7.5 if `forgejo-sync.sh --create-missing` returns 403;
 the truncated `forgejo-20260911T034741Z.tar.gz` on the VPS, which is no
@@ -940,9 +957,31 @@ Rollback: restore `/root/nginx-snippets.bak-<date>`, remove the two
 
 ### 9.5 A week later: enforce
 
+From the laptop, grouped by directive and blocked host (a blocked URI
+carries its full path and query, so grouping on it groups nothing); `jq`
+runs locally, and the empty `report` of a GET is skipped:
+
 ```bash
-ssh root@<vps> 'jq -r .report /var/log/nginx/csp-report.log | jq -c "{d: .\"csp-report\".\"violated-directive\", u: .\"csp-report\".\"blocked-uri\", s: .\"csp-report\".\"source-file\"}" | sort | uniq -c | sort -rn | head -30'
+ssh root@<vps> cat /var/log/nginx/csp-report.log \
+  | jq -r 'select(.report != "") | .report | fromjson | ."csp-report"
+           | [."violated-directive", ((."blocked-uri" // "-") | sub("^(?<o>[a-z-]+://[^/?#]+).*"; "\(.o)"))]
+           | @tsv' \
+  | sort | uniq -c | sort -rn | head -30
 ```
+
+Already known on 2026-10-01, from the browser pass: Wikipedia popup
+images now come from `https://thumb.wikimedia.org`, which `img-src` does
+not allow (it names `upload.wikimedia.org`). Two things about that pass
+worth keeping:
+
+* **A hardened browser reports nothing.** LibreWolf showed the
+  `[Report Only]` warnings in its console and sent no report; a stock
+  Firefox profile sent the same one at once. Do the pass in a stock
+  browser, or read the blocked URIs off the console.
+* **Hard-reload first.** The HTML has no `Cache-Control`, so browsers
+  reuse a page under its old headers for a heuristic while (about a tenth
+  of its age). Until `location /` sends `Cache-Control: no-cache`,
+  enforcement also reaches returning visitors only as their copies expire.
 
 Ignore reports whose `source-file` is a browser extension
 (`moz-extension:`, `chrome-extension:`). Allow anything else the site
