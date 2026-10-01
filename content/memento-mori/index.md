@@ -8,6 +8,7 @@ description: >-
   website is for.
 js: scripts/memento-mori.js
 history:
+  - date: "2026-10-01"
   - date: "2026-04-22"
   - date: "2026-03-19"
   - date: "2026-03-17"
@@ -53,3 +54,27 @@ MANY ARTISTS AND THINKERS ALIKE HAVE, OVER CENTURIES, TRIED [TO]{.smallcaps} ENC
 ::: {.score-fragment score-name="Bassoon Concerto, II (2025-2026)" score-caption="A solo bassoon excerpt from my 2025-2026 Bassoon Concerto."}
 ![](scores/bsn.svg)
 :::
+
+<figure class="prose-excerpt">
+<blockquote>
+<p>A painter paints his pictures on canvas. But musicians paint their pictures on silence. We provide the music, and you provide the silence.</p>
+</blockquote>
+<figcaption>[Leopold Stokowski](https://en.wikipedia.org/wiki/Leopold_Stokowski)</figcaption>
+</figure>
+
+I believe that all of my creative works, though especially my [Music Compositions](/music) encompass some dense relationship with time. Is it merely a continuing practice of reflection on the fact that time passes? I do not think that this is the case. Rather, I tend to embrace a process that I discovered in my senior year of high school, as a young composer at the age of 17, and write what I refer to as "time capsules." I initially embraced this practice deliberately and explicitly, in the hopes of catalyzing myself to write my composition portfolio pieces for conservatory applications faster, but it has since become a core part of how I work, and one that has transcended into something predominantly subconscious in origin.
+
+Perhaps, then, the notion of passing time and the seemingly inevitable end destination of that time is responsible for all variation between individual works in this view. For if I were to write a time capsule of the same moment in iteration for the rest of my life, the pieces would certainly turn out different, of this I have no doubt — but they would fundamentally be more similar to each other than discrete in the sense of being truly different. They would be perhaps like episodes, variations on the same underlying substance, or have some other fundamental relation beyond what we can categorize with words.
+
+The quote from Stokowski above, though it was delivered to an unruly audience (hence the need for *silence* to be provided), is quite telling. I have said it above: time passes regardless of our wishes, our intentions, our apprehensions. Yet is this something that we tend to stop and think about, to pause and reflect on? The act of making art, of inviting creativity and aspiring to create something in the name of expressing that which we all share, this is an act of reflection. It is an act of refusing to accept without question the notion that time simply passes and that we are all here for it. **All art is Vanitas, in some way.** There cannot be art which does not fundamentally interact with the nature of passing time, the nature of memories past and future times to come, which themselves will pass all the same. There would not be individualized art without an environment that allows for the silence — the reflection and deep creative thought — that fosters and cultivates its identity.
+
+## Amor Fati
+
+<figure class="prose-excerpt">
+<blockquote>
+<p>The universe is change; our life is what our thoughts make it. </p>
+</blockquote>
+<figcaption>Marcus Aurelius — <em>Meditations</em></figcaption>
+</figure>
+
+It is that beautifully transcendent nature of time, that which eludes the boundaries of physics and mathematics through which we ascertain to understand and invoke the cosmos, that allows for us to make of change and the universe that substance of which our lives are. This page is my simple personal reminder of this fact.
