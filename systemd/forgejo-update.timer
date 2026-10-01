@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Forgejo LTS patch update
+
+[Timer]
+# 05:00 UTC: after the 03:30 backup and the 04:30 Anki upgrade.
+OnCalendar=*-*-* 05:00
+RandomizedDelaySec=15min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

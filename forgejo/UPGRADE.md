@@ -70,10 +70,17 @@ collector 204 with the report body in the log (a GET to it logs a line
 with an empty `report`, which § 9.5's `jq` skips), the popup proxies 200
 on their real shapes and 404 on anything else.
 
-Left open: § 9.4's browser pass and § 9.5, about 2026-10-08; whether to
-disable source-archive downloads (the `DISABLE_DOWNLOAD_SOURCE_ARCHIVES`
-setting 404s the web routes but not `/api/v1/repos/*/*/archive/`, which
-needs an nginx rule); excluding
+Later that night: source-archive downloads were switched off.
+`DISABLE_DOWNLOAD_SOURCE_ARCHIVES` in the compose file 404s the web routes
+(and drops the download buttons), but 15.0.9 still served
+`/api/v1/repos/*/*/archive/` with it set, so the forge's server block,
+inline in `/etc/nginx/nginx.conf` and not tracked here, gained a
+`location ~ ^/api/v1/repos/[^/]+/[^/]+/archive/ { return 404; }` (copy
+before it: `/root/nginx.conf.bak-2026-10-01`). The rest of the API, raw
+files and clones were checked unaffected. And the instance moved onto the
+floating `:15` tag with `forgejo-update.timer` (§ 7.4).
+
+Left open: § 9.5, about 2026-10-08; excluding
 `gitea/repo-archive` from the backups; § 7.4's subscriptions and the
 2027 LTS reminder; § 7.5 if `forgejo-sync.sh --create-missing` returns 403;
 the truncated `forgejo-20260911T034741Z.tar.gz` on the VPS, which is no
@@ -773,17 +780,24 @@ fixing that leaves the same instance drifting again from a newer number.
 * **Turn on the built-in checker.** Forgejo 7.0 onwards ships a
   privacy-preserving DNS-based update check, enabled by default. Leave it
   on and read the admin dashboard notice it produces.
-* **Diarise a monthly check** — five minutes, mechanical:
+* **Patches apply themselves (since 2026-10-01).** The compose file follows
+  the floating `:15` tag, and `forgejo-update.timer` (daily, 05:00 UTC)
+  pulls it and, when the image changed, backs up, refuses anything off the
+  15.0 line, recreates, waits for the new version and checks the database.
+  A patch that does not come up and ran no migrations is rolled back and
+  held in `/var/lib/forgejo-update/hold`; one that migrated and then failed
+  is left for § 5.1, with the pre-update archive named in the journal. The
+  failed unit shows in `tools/vps-status`. What runs, and when it changed:
 
   ```bash
   curl -s https://git.levineuwirth.org/api/v1/version
-  curl -s "https://codeberg.org/api/v1/repos/forgejo/forgejo/releases?limit=5" \
-    | python3 -c 'import json,sys;[print(r["tag_name"], r["published_at"][:10]) for r in json.load(sys.stdin)]'
+  ssh root@<vps> 'journalctl -u forgejo-update.service --no-pager -n 20 | grep forgejo-update:'
   ```
 
-  A patch bump on the same LTS line (`15.0.7 → 15.0.x`) needs no runbook:
-  edit the tag, `docker compose pull && docker compose up -d`, check
-  `api/v1/version`. Take a backup first regardless; it is eight seconds.
+  The script was tested on 2026-10-01 against a throwaway instance through
+  each path: unchanged, a 14.0 image refused, 15.0.7 → 15.0.9 applied, a
+  broken 15.0 image rolled back and held, the held image refused again,
+  and the hold cleared by the next good one.
 * **Diarise the LTS end date: 2027-07-15.** The next LTS is 19.0
   (2028-07-13), so the move is `15.0.x → 19.0.x` and it should start in
   spring 2027, not in July. Put it in the calendar now — that is the control

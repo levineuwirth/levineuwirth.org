@@ -1,0 +1,26 @@
+# Daily: follow the 15.0 LTS line's floating tag (codeberg.org/forgejo/forgejo:15
+# in forgejo/docker-compose.yml) and apply a new patch release unattended:
+# back up first, refuse anything off 15.0, wait for the new version, check the
+# database, and if it does not come up without having migrated, put the
+# previous image back and hold the failed one. No pins (decided 2026-10-01, as
+# for the Anki server on 2026-09-15). The next major move, 15 -> 19 in 2027,
+# stays a manual forgejo/UPGRADE.md run: migrations only go forward.
+#
+#   scp tools/forgejo-update.sh root@<vps>:/usr/local/bin/ && ssh root@<vps> chmod 755 /usr/local/bin/forgejo-update.sh
+#   scp systemd/forgejo-update.{service,timer} root@<vps>:/etc/systemd/system/
+#   ssh root@<vps> systemctl daemon-reload && systemctl enable --now forgejo-update.timer
+#
+# A failed run is a failed unit, which tools/vps-status reports. Remove
+# /var/lib/forgejo-update/hold to let a held image be tried again.
+
+[Unit]
+Description=Forgejo: apply the latest 15.0 LTS patch release
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+Environment=TMPDIR=/var/tmp
+ExecStart=/usr/local/bin/forgejo-update.sh
+Nice=10

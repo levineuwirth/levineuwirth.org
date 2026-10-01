@@ -31,12 +31,14 @@
 # The database is SQLite at forgejo-data/gitea/gitea.db. Backups are
 # systemd/forgejo-backup.{service,timer} driving tools/forgejo-backup.sh.
 #
-#   VERSION — 15.0.9, on the 15.0 LTS line (supported to 2027-07-15),
-#   upgraded from 1.21.11-0 on 2026-10-01 by forgejo/UPGRADE.md. A patch on
-#   this line is a tag edit, a backup, then `docker compose pull && docker
-#   compose up -d`. The move to the next LTS, 19.0, is due in spring 2027
-#   (UPGRADE.md § 7.4). Change the tag here when production runs it, not
-#   before: this file mirrors what is deployed.
+#   VERSION — the floating `:15` tag: the 15.0 LTS line (supported to
+#   2027-07-15), upgraded from 1.21.11-0 on 2026-10-01 by forgejo/UPGRADE.md.
+#   systemd/forgejo-update.timer applies each new 15.0.x patch unattended
+#   (backup first, rollback and hold if it does not come up), so this file
+#   names the line, not the patch; `curl -s https://git.levineuwirth.org/api/v1/version`
+#   names the patch, and the unit's journal records every change. The move
+#   to the next LTS, 19.0, is due in spring 2027 and is a manual run
+#   (UPGRADE.md § 7.4): change this tag as part of it, not before.
 #
 #   CLI — inside the container, call it `gitea`, never `forgejo`. The image's
 #   wrapper takes its own path from the name it was invoked by, so `forgejo
@@ -46,7 +48,7 @@
 
 services:
   forgejo:
-    image: codeberg.org/forgejo/forgejo:15.0.9
+    image: codeberg.org/forgejo/forgejo:15
     container_name: forgejo
     restart: unless-stopped
     environment:
@@ -60,6 +62,11 @@ services:
       FORGEJO__service__DISABLE_REGISTRATION: "true"
       FORGEJO__service__NO_REPLY_ADDRESS: noreply.git.levineuwirth.org
       FORGEJO__actions__ENABLED: "false"
+      # No zip/tar.gz/bundle downloads: crawlers fetched them commit by commit
+      # and left 2,464 jobs queued (UPGRADE.md § 1.3). Clone instead. This 404s
+      # the web routes only; the forge vhost's nginx 404s the API route,
+      # /api/v1/repos/*/*/archive/, which 15.0 still serves with this set.
+      FORGEJO__repository__DISABLE_DOWNLOAD_SOURCE_ARCHIVES: "true"
       # nginx reaches 127.0.0.1:3000 through Docker, so its requests arrive
       # from proxy-net's gateway; the 1.21 app.ini trusted "*".
       FORGEJO__security__REVERSE_PROXY_TRUSTED_PROXIES: "127.0.0.0/8,::1/128,172.18.0.1/32"
