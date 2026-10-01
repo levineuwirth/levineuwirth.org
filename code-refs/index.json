@@ -229,12 +229,26 @@
   "owner": "JamesPetrie",
   "repo": "VerInf",
   "ref": "weight-split-model",
-  "sha": "910b0e6b611d5f012215fe28e8bdc4db79fdb725",
+  "sha": "c5d72e5d4efe802ddb06641662e88b37498653a6",
   "path": "",
   "pinned": false,
-  "src": "/code-refs/github/JamesPetrie/VerInf/910b0e6b611d5f012215fe28e8bdc4db79fdb725/tree/_root.json",
-  "commit": "/code-refs/github/JamesPetrie/VerInf/910b0e6b611d5f012215fe28e8bdc4db79fdb725/commit.json",
-  "date": "2026-09-24T09:24:14Z",
-  "fetched": "2026-09-30"
+  "src": "/code-refs/github/JamesPetrie/VerInf/c5d72e5d4efe802ddb06641662e88b37498653a6/tree/_root.json",
+  "commit": "/code-refs/github/JamesPetrie/VerInf/c5d72e5d4efe802ddb06641662e88b37498653a6/commit.json",
+  "date": "2026-09-30T19:20:11Z",
+  "fetched": "2026-10-01"
+ },
+ "https://github.com/levineuwirth/proof-broker/blob/main/experiments/r6/R6-SYNTHESIS.md": {
+  "kind": "blob",
+  "host": "github",
+  "owner": "levineuwirth",
+  "repo": "proof-broker",
+  "ref": "main",
+  "sha": "1f694b652d5ea945f9a97be6f9a29ad0a5a56e94",
+  "path": "experiments/r6/R6-SYNTHESIS.md",
+  "pinned": false,
+  "src": "/code-refs/github/levineuwirth/proof-broker/1f694b652d5ea945f9a97be6f9a29ad0a5a56e94/blob/experiments/r6/R6-SYNTHESIS.md.txt",
+  "commit": "/code-refs/github/levineuwirth/proof-broker/1f694b652d5ea945f9a97be6f9a29ad0a5a56e94/commit.json",
+  "date": "2026-09-29T22:54:44Z",
+  "fetched": "2026-10-01"
  }
 }

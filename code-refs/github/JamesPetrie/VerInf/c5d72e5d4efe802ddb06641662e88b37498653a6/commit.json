@@ -1,0 +1,29 @@
+{
+ "sha": "c5d72e5d4efe802ddb06641662e88b37498653a6",
+ "message": "check_dumped_proof: the receipt keeps the prover's and the verifier's revisions apart, and the verifier's hash",
+ "author": "Levi Neuwirth",
+ "date": "2026-09-30T19:20:11Z",
+ "parents": [
+  "6939c2a14b1b5572d5ec7347cd04bc37b9ae0c52"
+ ],
+ "stats": {
+  "total": 45,
+  "additions": 41,
+  "deletions": 4
+ },
+ "files_total": 2,
+ "files": [
+  {
+   "filename": "profiler/test_saved_proof_check.py",
+   "status": "modified",
+   "additions": 17,
+   "deletions": 0
+  },
+  {
+   "filename": "tools/check_dumped_proof.py",
+   "status": "modified",
+   "additions": 24,
+   "deletions": 4
+  }
+ ]
+}
