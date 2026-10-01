@@ -67,6 +67,7 @@ class SiteFixture:
     def __init__(self, root: Path) -> None:
         self.root = root
         self.write("index.html", PAGE)
+        self.write("essays/one/index.html", "<!doctype html><title>One</title>")
         self.write("404.html", "<!doctype html><title>Not found</title>")
         self.write("feed.xml", FEED)
         self.write("music/feed.xml", FEED)
@@ -212,8 +213,8 @@ class CheckSiteTestCase(unittest.TestCase):
     def test_resolved_figure_reference_passes(self):
         self.site.write(
             "essays/refs.html",
-            '<html><body><p>See <a href="#fig-1">Figure 1</a>.</p>'
-            "</body></html>",
+            '<html><body><figure id="fig-1"></figure>'
+            '<p>See <a href="#fig-1">Figure 1</a>.</p></body></html>',
         )
         code, output = self.run_gate()
         self.assertEqual(code, 0, output)
@@ -259,6 +260,137 @@ class CheckSiteTestCase(unittest.TestCase):
         self.site.write(
             "essays/enc.html",
             '<html><body><img src="/images/a%20b.jpg" alt=""></body></html>',
+        )
+        code, output = self.run_gate()
+        self.assertEqual(code, 0, output)
+
+    # -- links and anchors -------------------------------------------------
+
+    def link_page(self, body: str, rel: str = "essays/links.html") -> None:
+        self.site.write(rel, f"<html><body>{body}</body></html>")
+
+    def test_link_to_a_missing_page_fails(self):
+        # The 2026-10-01 near miss: a published page linking to an essay
+        # still in drafts.
+        self.link_page('<a href="/essays/eighty-witnesses/">companion</a>')
+        code, output = self.run_gate()
+        self.assertEqual(code, 1)
+        self.assertIn("link-targets", output)
+        self.assertIn("/essays/eighty-witnesses/", output)
+
+    def test_links_resolve_the_way_nginx_try_files_does(self):
+        self.site.write("about.html", "<html></html>")
+        self.link_page(
+            '<a href="/essays/one/">dir</a>'
+            '<a href="/essays/one">dir without slash</a>'
+            '<a href="/essays/one/index.html">explicit</a>'
+            '<a href="/about">extensionless</a>'
+            '<a href="../essays/one/">relative</a>'
+            '<a href="/">root</a>'
+        )
+        code, output = self.run_gate()
+        self.assertEqual(code, 0, output)
+
+    def test_missing_stylesheet_and_script_fail(self):
+        self.link_page(
+            '<link rel="stylesheet" href="/css/gone.css">'
+            '<script src="/js/gone.js"></script>'
+        )
+        code, output = self.run_gate()
+        self.assertEqual(code, 1)
+        self.assertIn("<link> /css/gone.css", output)
+        self.assertIn("<script> /js/gone.js", output)
+
+    def test_external_pseudo_scheme_and_server_routes_are_skipped(self):
+        self.link_page(
+            '<a href="https://example.org/x">ext</a>'
+            '<a href="//cdn.example.org/x.js">protocol-relative</a>'
+            '<a href="mailto:a@example.org">mail</a>'
+            '<a href="javascript:void(0)">js</a>'
+            '<link rel="icon" href="data:image/svg+xml,%3Csvg%3E">'
+            '<a href="/proxy/arxiv/abs/2401.00001">proxied</a>'
+            '<a href="#">empty fragment</a><a href="#top">top</a>'
+        )
+        code, output = self.run_gate()
+        self.assertEqual(code, 0, output)
+
+    def test_query_entities_and_percent_encoding_resolve(self):
+        self.site.write("files/a b.pdf", "pdf")
+        self.link_page(
+            '<a href="/essays/one/?x=1&amp;y=2">query</a>'
+            '<a href="/files/a%20b.pdf">encoded</a>'
+        )
+        code, output = self.run_gate()
+        self.assertEqual(code, 0, output)
+
+    def test_signature_links_pass_before_signing(self):
+        # The gate runs before sign-site.sh writes any .sig.
+        self.link_page('<a href="./links.html.sig">sig</a>'
+                       '<a href="/essays/one/index.html.sig">sig</a>')
+        code, output = self.run_gate()
+        self.assertEqual(code, 0, output)
+
+    def test_signature_of_a_missing_file_fails(self):
+        self.link_page('<a href="/essays/gone.html.sig">sig</a>')
+        code, output = self.run_gate()
+        self.assertEqual(code, 1)
+        self.assertIn("/essays/gone.html.sig", output)
+
+    def test_link_climbing_out_of_the_site_fails(self):
+        self.link_page('<a href="../../../etc/passwd">out</a>')
+        code, output = self.run_gate()
+        self.assertEqual(code, 1)
+        self.assertIn("../../../etc/passwd", output)
+
+    def test_data_attributes_are_not_links(self):
+        self.link_page('<a href="/essays/one/" data-href="#nothing" '
+                       'data-src="/not/a/file">x</a>')
+        code, output = self.run_gate()
+        self.assertEqual(code, 0, output)
+
+    def test_missing_same_page_fragment_fails(self):
+        # The citation defect: a bibliography back-link to the first
+        # citation's anchor, which the page never emitted.
+        self.link_page(
+            '<sup id="cite-back-1-2">[1]</sup>'
+            '<a class="ref-num" href="#cite-back-1">↩</a>'
+        )
+        code, output = self.run_gate()
+        self.assertEqual(code, 1)
+        self.assertIn("no #cite-back-1 on this page", output)
+
+    def test_missing_fragment_on_another_page_fails(self):
+        self.link_page('<a href="/essays/one/#thm-1">Theorem 1</a>')
+        code, output = self.run_gate()
+        self.assertEqual(code, 1)
+        self.assertIn("no #thm-1 on essays/one/index.html", output)
+
+    def test_fragments_match_ids_and_named_anchors(self):
+        self.site.write(
+            "essays/one/index.html",
+            '<html><body><div id="thm-1"></div><a name="legacy"></a>'
+            '<span id="caf&#233;"></span></body></html>',
+        )
+        self.link_page(
+            '<a href="/essays/one/#thm-1">id</a>'
+            '<a href="/essays/one/#legacy">name</a>'
+            '<a href="/essays/one/#caf%C3%A9">encoded</a>'
+            '<a href="/essays/one/#:~:text=One">text fragment</a>'
+        )
+        code, output = self.run_gate()
+        self.assertEqual(code, 0, output)
+
+    def test_fragment_on_a_non_html_target_is_not_checked(self):
+        self.site.write("papers/p.pdf", "pdf")
+        self.link_page('<a href="/papers/p.pdf#page=3">page 3</a>')
+        code, output = self.run_gate()
+        self.assertEqual(code, 0, output)
+
+    def test_source_mirror_templates_are_not_link_checked(self):
+        self.site.write(
+            "source/templates/essay.html",
+            '<html><body><a href="$url$">$title$</a>'
+            '<a href="#cite-back-1">x</a></body></html>',
         )
         code, output = self.run_gate()
         self.assertEqual(code, 0, output)

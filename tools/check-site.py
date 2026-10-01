@@ -42,6 +42,7 @@ from __future__ import annotations
 
 import argparse
 import fnmatch
+import html
 import os
 import re
 import sys
@@ -125,6 +126,46 @@ IMG_TAG_RE = re.compile(r"<(img|source)\b([^>]*)>", re.IGNORECASE)
 ATTR_SRC_RE = re.compile(r"""\bsrc\s*=\s*["']([^"']*)["']""", re.IGNORECASE)
 ATTR_SRCSET_RE = re.compile(r"""\bsrcset\s*=\s*["']([^"']*)["']""", re.IGNORECASE)
 ID_ATTR_RE = re.compile(r"""\bid\s*=\s*["']([^"']+)["']""")
+
+# ---------------------------------------------------------------------------
+# Links and anchors
+# ---------------------------------------------------------------------------
+#
+# image-targets covers <img> and <source>; these cover everything else a page
+# loads or a reader follows. A local URL resolves the way nginx's try_files
+# does ($uri, $uri/index.html, $uri.html), and a fragment on an HTML target
+# must name an id, or an <a name>, on that page.
+#
+# Neither check existed until 2026-10-01, when three links to an essay still
+# in content/drafts/ would have deployed as 404s with every gate green. The
+# first run found two live defects: citation back-links whose first anchor
+# was never emitted, and backlink excerpts whose same-page links named
+# anchors only their source page had.
+LINK_TAG_RE = re.compile(
+    r"<(a|area|link|script|iframe|embed|object|video|audio|track)\b([^>]*)>",
+    re.IGNORECASE,
+)
+# The lookbehind keeps data-href= and friends out: they hold values for
+# scripts, not URLs the browser fetches.
+LINK_ATTR_RE = re.compile(
+    r"""(?<![\w-])(?:href|src|data)\s*=\s*["']([^"']*)["']""", re.IGNORECASE
+)
+ANCHOR_ID_RE = re.compile(r"""(?<![\w-])id\s*=\s*["']([^"']+)["']""")
+ANCHOR_NAME_RE = re.compile(
+    r"""<a\b[^>]*?(?<![\w-])name\s*=\s*["']([^"']+)["']""", re.IGNORECASE
+)
+
+# Answered by nginx locations, not by files in _site (nginx/*.conf).
+SERVER_ROUTES = ("/proxy/", "/csp-report")
+
+# Every page's footer links its detached signature, which sign-site.sh writes
+# only after this gate has passed (deploy: build, validate, then sign). Such a
+# link is sound when the file it signs exists.
+SIGNATURE_SUFFIX = ".sig"
+
+# Fragments a browser honours with no matching element: an empty one, the
+# HTML spec's "top", and text fragments.
+IMPLICIT_FRAGMENTS = ("", "top")
 
 # RFC 3339 date-time, which is the Atom `updated` contract.
 RFC3339_RE = re.compile(
@@ -261,14 +302,20 @@ def check_html_corpus(
     html_files: list[tuple[str, str]],
     report: Report,
 ) -> None:
-    """B03 render failures, B08 draft links, and duplicate ids, in one pass."""
+    """B03 render failures, B08 draft links, duplicate ids, and every local
+    image, link and anchor, in one pass."""
     report.check("render-failures")
     report.check("draft-links")
     report.check("duplicate-ids")
     report.check("image-targets")
+    report.check("link-targets")
+    report.check("link-fragments")
+
+    anchors = AnchorIndex(site_dir)
 
     for full, rel in html_files:
         text = read_text(full)
+        anchors.add(rel, text)
 
         for marker, description in RENDER_FAILURE_MARKERS:
             if marker in text:
@@ -288,6 +335,92 @@ def check_html_corpus(
 
         for missing in missing_image_targets(site_dir, rel, text):
             report.error("image-targets", f"{rel}: missing {missing}")
+
+        check_links(site_dir, rel, text, anchors, report)
+
+
+class AnchorIndex:
+    """The ids and <a name>s of each HTML page, read once and on demand."""
+
+    def __init__(self, site_dir: str) -> None:
+        self.site_dir = site_dir
+        self._anchors: dict[str, set[str]] = {}
+
+    def add(self, rel: str, text: str) -> None:
+        if rel not in self._anchors:
+            found = ANCHOR_ID_RE.findall(text) + ANCHOR_NAME_RE.findall(text)
+            self._anchors[rel] = {html.unescape(a) for a in found}
+
+    def has(self, rel: str, fragment: str) -> bool:
+        if rel not in self._anchors:
+            self.add(rel, read_text(os.path.join(self.site_dir, rel)))
+        return fragment in self._anchors[rel]
+
+
+def resolve_target(site_dir: str, page_dir: str, path: str) -> str | None:
+    """The site-relative file nginx would serve for a local path, or None.
+
+    Mirrors ``try_files $uri $uri/index.html $uri.html``. A path that climbs
+    out of the site resolves to nothing.
+    """
+    if path.startswith("/"):
+        joined = path.lstrip("/")
+    else:
+        joined = os.path.join(page_dir, path)
+    base = os.path.normpath(joined)
+    if base == ".":
+        base = ""
+    if base.startswith(".."):
+        return None
+    for candidate in (base, os.path.join(base, "index.html"), base + ".html"):
+        if candidate and os.path.isfile(os.path.join(site_dir, candidate)):
+            return candidate
+    return None
+
+
+def check_links(
+    site_dir: str, rel: str, text: str, anchors: AnchorIndex, report: Report
+) -> None:
+    """Every local href/src/data a page carries resolves, and so does its
+    fragment when the target is a page."""
+    page_dir = os.path.dirname(rel)
+    seen: set[str] = set()
+    for tag, attrs in LINK_TAG_RE.findall(text):
+        for raw in LINK_ATTR_RE.findall(attrs):
+            url = html.unescape(raw).strip()
+            if url in seen:
+                continue
+            seen.add(url)
+            parts = urlsplit(url)
+            if parts.scheme or parts.netloc or url.startswith("//"):
+                continue  # external, mailto:, data:, javascript:
+            path = unquote(parts.path)
+            if path.startswith(SERVER_ROUTES):
+                continue
+
+            target = resolve_target(site_dir, page_dir, path) if path else rel
+            if target is None and path.endswith(SIGNATURE_SUFFIX):
+                signed = path[: -len(SIGNATURE_SUFFIX)]
+                if resolve_target(site_dir, page_dir, signed) is not None:
+                    continue
+            if target is None:
+                report.error(
+                    "link-targets", f"{rel}: <{tag.lower()}> {url} resolves to nothing"
+                )
+                continue
+
+            fragment = unquote(parts.fragment)
+            if (
+                fragment in IMPLICIT_FRAGMENTS
+                or fragment.startswith(":~:")
+                or not target.endswith(".html")
+            ):
+                continue
+            if not anchors.has(target, fragment):
+                where = "this page" if target == rel else target
+                report.error(
+                    "link-fragments", f"{rel}: {url} — no #{fragment} on {where}"
+                )
 
 
 def missing_image_targets(site_dir: str, rel: str, text: str) -> list[str]:
