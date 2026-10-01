@@ -176,14 +176,6 @@
     display: none !important;
 }
 
-/* Search page filter controls — just the toggle, no sort buttons */
-
-.search-filter-controls {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 0.5rem;
-}
-
 /* ============================================================
    PORTAL SECTIONS
    Shared by the Library and by /bibliography/<keyword>/ pages

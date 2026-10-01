@@ -1667,6 +1667,13 @@ the epistemic filters. Verified in headless Chrome against a harness with a
 simulated `rotted` entry: exclude / only / rotted-only / rotted+draft all
 behave per the table above.
 
+**Pagefind filter attribute removed (2026-10-01).** Once the panel rows
+existed, `data-pagefind-filter` on `archive.html` only fed Pagefind UI's own
+filter sidebar — and Pagefind 1.5 read the comma-joined pair as a single
+`type` value, so the search page showed a "Type" facet listing
+`archive, status:live (0)` beside every result list. The attribute is gone;
+the "archive" and "link status" panel rows are the one archive filter.
+
 ---
 
 ## Open / deferred questions

@@ -1587,6 +1587,19 @@ h3:hover .section-toggle,
     --pagefind-ui-font: var(--font-sans);
 }
 
+/* Pagefind renders results as an <ol> of <p>s inside #markdownBody, where
+   typography.css's prose rules reach them: the list margin and indent
+   pushed every result in under the count, and p + p gave each excerpt a
+   paragraph indent. The #markdownBody prefix outranks those rules. */
+#markdownBody #search ol {
+    margin: 0;
+    padding-left: 0;
+}
+
+#markdownBody #search p {
+    text-indent: 0;
+}
+
 #search-timing {
     font-family: var(--font-mono);
     font-size: var(--text-size-small);
@@ -1595,12 +1608,24 @@ h3:hover .section-toggle,
     min-height: 1.2em; /* reserve space to prevent layout shift */
 }
 
-/* Search tabs (Keyword / Semantic toggle) */
+/* Search bar: the Keyword / Semantic tabs, with the Filters toggle
+   (shared by both tabs) at the right end of the same rule. */
+.search-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.1rem;
+    border-bottom: 1px solid var(--border);
+}
+
 .search-tabs {
     display: flex;
     gap: 0;
-    margin-bottom: 0.1rem;
-    border-bottom: 1px solid var(--border);
+}
+
+/* The bar's rule already sits directly above the panel. */
+#search-filters {
+    border-top: none;
 }
 
 .search-tab {
