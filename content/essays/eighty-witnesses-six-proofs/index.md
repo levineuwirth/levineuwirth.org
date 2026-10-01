@@ -13,7 +13,8 @@ abstract: >
   from the first draw to the eighth, because posing goals and turning
   certificates into proofs, not finding certificates, was the constraint.
   This essay reports that result, what an outside reader can verify about
-  it, and the two amendments made after collection.
+  it, the two amendments made after collection, and what "consumed"
+  turned out to mean.
 tags:
   - research
   - ai
@@ -28,6 +29,8 @@ novelty: moderate
 practicality: moderate
 result-shape: mixed
 history:
+  - date: "2026-10-01"
+    note: "Added what “consumed” meant in R6, and the audit of the 48 proofs' final step (R6 qualification 1 and its addendum)"
   - date: "2026-10-01"
 ---
 
@@ -68,7 +71,10 @@ network connection that failed before anything was sent. In both instances, the
 frozen machinery stopped rather than guess. Each fix changed only what
 the auditor, and once the runner, would accept, and neither touched the
 analysis, a recorded outcome, or a run. [Two amendments](#two-amendments)
-describes what happened in more detail. 
+describes what happened in more detail. A second qualification came
+later, from reading the closer itself: in R6, "consumed" meant less than
+I first wrote. [What "consumed" means](#what-consumed-means) gives it,
+with the audit that followed.
 
 ## The experiment on one page
 
@@ -78,7 +84,8 @@ chosen so that the weighted sum of the hypotheses and
 the negated goal cancels every variable and leaves a false statement
 about constants (such as $1 \le 0$). An independent checker verifies the
 witness. A **closer**, the step that builds a proof term from the
-certificate, consumes it. Then the **kernel**, the small trusted checker
+certificate, folds the certificate's multipliers into that term; [what
+that guaranteed](#what-consumed-means) is a section of its own. Then the **kernel**, the small trusted checker
 at Lean's core, checks the local proof and the whole declaration that
 contains it, and the axioms that declaration uses must be unchanged. The
 [architecture essay](/essays/proof-broker/) tells the full boundary
@@ -159,7 +166,7 @@ are what is independent; draws are repetitions. "48 of 88" reads like a
 8 times. So the obligations go beside the slots every time a number
 appears, and [](#fig-ladder) follows both units from start to finish.
 
-::: {.figure #fig-ladder script="figures/ladder.py" caption="Where R6's slots and obligations fell away, each panel on its own scale. No drop is a proposal that failed on an obligation where a certificate existed."}
+::: {.figure #fig-ladder script="figures/ladder.py" caption="Where R6's slots and obligations fell away, each panel on its own scale. No drop is a proposal that failed on an obligation where a certificate existed. “Consumed” has R6's meaning: the closer folded a verified certificate and the kernel accepted the result (see [what that means](#what-consumed-means))."}
 :::
 
 Nothing in either ladder was lost to a missing or invalid proposal on a
@@ -210,10 +217,53 @@ all ten feasible obligations.
 
 **R6 leaves one sharp question.** The 32 verified certificates at l166,
 l175, l178 and l204 are retained. Can a closer suited to their ℤ goals
-build proofs from them? R6-015, proposed and not yet run, would test
-that offline, preregistered separately, with no provider, no credential
-and no spending. It would not revise R6's result, which stands as
-recorded under its frozen route.
+build proofs from them, consuming the certificate in the strong sense of
+the next section? R6-015 tests that offline, preregistered separately and
+locked before its replay, with no provider, no credential and no
+spending. It does not revise R6's result, which
+stands as recorded under its frozen route, and it is reported on its own.
+
+## What "consumed" means {#what-consumed-means}
+
+**After collection, reading the closer, I found that "consumed" claimed
+more than the code enforced.** The closer builds the weighted sum $s$
+of the certificate's hypotheses and a proof that $s \le 0$. It then
+proves $0 < s$ by calling `omega` in the goal's full context, with every
+hypothesis in scope. When the multipliers cancel, that call only checks
+a positive constant. When they do not, `omega` can supply the missing
+argument from the context: a synthetic probe written in review closed a
+combination that does not cancel. R6's checker verified every
+certificate it passed on by exact cancellation, so every R6 proof is
+sound and every combination valid. What the closer did not establish is
+that the certificate alone discharged the contradiction.
+
+**So in R6, "consumed" means that the closer folded a verified
+certificate and the kernel accepted the result.** I recorded that as a
+dated qualification beside the synthesis, rather than rewording the
+result.
+
+**Then I audited the 48 proofs themselves.** A separate tool, reviewed,
+tested against controls and locked before the audit ran, inspected each
+proof's final step (the record discloses the one proof I read while
+building it): which hypotheses it refers to, and
+whether the certificate's sum alone proves $0 < s$, kernel-checked.
+
+- **l069, l071 and l078, 24 slots:** the final step refers to no
+  hypothesis, and the sum alone suffices. These are consumed in the
+  strong sense.
+- **l070, 8 slots:** the final step drew on context at every draw. At
+  seven draws the sum would have sufficed on its own; at the fifth,
+  sufficiency could not be established.
+- **l096 and l099, 16 slots:** not classified. The run's record names a
+  variable that preparation had renamed (`c_` for `c'`), so the audit
+  could not bind the record to the proof, and made no classification.
+
+**R6's numbers do not change; their reading does.** There are still 48
+proofs on six obligations. The strong sense of "consumed" is established
+for 24 of them, on three obligations. The two obligations that carry the
+gain over the deterministic arm, l096 and l099, are exactly the two the
+audit could not classify: that gain stands in R6's sense of the word, not
+yet in the stronger one.
 
 ## What an outside reader can check
 
@@ -229,6 +279,7 @@ mechanism that bounds it, and where to look.
 | the harness leaks the credential | scans of the published records with the real credential as the canary; each run bound by a credential commitment and a seal | the scan report: 132,450 files, no disclosures, 89 runs bound |
 | a failure is quietly retried or papered over | fail-closed pauses; a retry only under a reviewed rule; a preflight over every existing run before resuming | the pause and incident records |
 | the auditor is bent to fit the data | amendments built on synthetic evidence without reading the collected outcomes, reviewed, then locked; every lock retained | the amendment records; locks v1, v2 and v3 |
+| a closer's success is read as more than it shows | a dated qualification of "consumed", and an audit of the 48 proofs' final step, locked before it ran | qualification 1 and its addendum: the strong sense established for 24 of 48 |
 
 **The analysis is an empirically replicable experiment rather than a judgment.** Anyone with the
 repository at the `r6` tag can rerun it on the recorded input and
@@ -343,6 +394,9 @@ bounded.
   whole repository.
 - **Amendments.** The evaluation was amended twice after collection, as
   described.
+- **Consumption.** "Consumed" carries R6's meaning, which is weaker than
+  "the certificate alone closed it". The stronger meaning is established
+  for 24 of the 48 proofs, [as above](#what-consumed-means).
 
 ## Proposal is not the hard part
 
@@ -366,6 +420,8 @@ its author, and say plainly what you changed along the way.
 
 ::: {.work-entry-links}
 [R6 synthesis](https://github.com/levineuwirth/proof-broker/blob/main/experiments/r6/R6-SYNTHESIS.md) ·
+[Qualification 1](https://github.com/levineuwirth/proof-broker/blob/fc9c011c2379c8656ecb4f034d58e8a1d586d8c1/experiments/r6/R6-QUALIFICATION-1.md) ·
+[Its addendum: the audit](https://github.com/levineuwirth/proof-broker/blob/fc9c011c2379c8656ecb4f034d58e8a1d586d8c1/experiments/r6/R6-QUALIFICATION-1-ADDENDUM-1.md) ·
 [Release: R6](https://github.com/levineuwirth/proof-broker/releases/tag/r6) ·
 [Code](https://github.com/levineuwirth/proof-broker) ·
 [Architecture essay](/essays/proof-broker/)
