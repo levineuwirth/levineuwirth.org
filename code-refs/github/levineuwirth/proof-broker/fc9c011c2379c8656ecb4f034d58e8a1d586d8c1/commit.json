@@ -1,0 +1,29 @@
+{
+ "sha": "fc9c011c2379c8656ecb4f034d58e8a1d586d8c1",
+ "message": "experiments: R6 qualification 1 addendum 1: environment counts vary by export (the review's correction); classifications unchanged",
+ "author": "Levi Neuwirth",
+ "date": "2026-10-01T08:36:03Z",
+ "parents": [
+  "5fd27955f2d981eb5edfa1be453d486a5adcfc7c"
+ ],
+ "stats": {
+  "total": 23,
+  "additions": 21,
+  "deletions": 2
+ },
+ "files_total": 2,
+ "files": [
+  {
+   "filename": "experiments/r6/R6-QUALIFICATION-1-ADDENDUM-1.md",
+   "status": "modified",
+   "additions": 2,
+   "deletions": 2
+  },
+  {
+   "filename": "experiments/r6/reviews/2026-10-01/R6-QUALIFICATION-1-ADDENDUM-1-REVIEW.md",
+   "status": "added",
+   "additions": 19,
+   "deletions": 0
+  }
+ ]
+}

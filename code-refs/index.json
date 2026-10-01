@@ -237,6 +237,34 @@
   "date": "2026-09-30T19:20:11Z",
   "fetched": "2026-10-01"
  },
+ "https://github.com/levineuwirth/proof-broker/blob/fc9c011c2379c8656ecb4f034d58e8a1d586d8c1/experiments/r6/R6-QUALIFICATION-1-ADDENDUM-1.md": {
+  "kind": "blob",
+  "host": "github",
+  "owner": "levineuwirth",
+  "repo": "proof-broker",
+  "ref": "fc9c011c2379c8656ecb4f034d58e8a1d586d8c1",
+  "sha": "fc9c011c2379c8656ecb4f034d58e8a1d586d8c1",
+  "path": "experiments/r6/R6-QUALIFICATION-1-ADDENDUM-1.md",
+  "pinned": true,
+  "src": "/code-refs/github/levineuwirth/proof-broker/fc9c011c2379c8656ecb4f034d58e8a1d586d8c1/blob/experiments/r6/R6-QUALIFICATION-1-ADDENDUM-1.md.txt",
+  "commit": "/code-refs/github/levineuwirth/proof-broker/fc9c011c2379c8656ecb4f034d58e8a1d586d8c1/commit.json",
+  "date": "2026-10-01T08:36:03Z",
+  "fetched": "2026-10-01"
+ },
+ "https://github.com/levineuwirth/proof-broker/blob/fc9c011c2379c8656ecb4f034d58e8a1d586d8c1/experiments/r6/R6-QUALIFICATION-1.md": {
+  "kind": "blob",
+  "host": "github",
+  "owner": "levineuwirth",
+  "repo": "proof-broker",
+  "ref": "fc9c011c2379c8656ecb4f034d58e8a1d586d8c1",
+  "sha": "fc9c011c2379c8656ecb4f034d58e8a1d586d8c1",
+  "path": "experiments/r6/R6-QUALIFICATION-1.md",
+  "pinned": true,
+  "src": "/code-refs/github/levineuwirth/proof-broker/fc9c011c2379c8656ecb4f034d58e8a1d586d8c1/blob/experiments/r6/R6-QUALIFICATION-1.md.txt",
+  "commit": "/code-refs/github/levineuwirth/proof-broker/fc9c011c2379c8656ecb4f034d58e8a1d586d8c1/commit.json",
+  "date": "2026-10-01T08:36:03Z",
+  "fetched": "2026-10-01"
+ },
  "https://github.com/levineuwirth/proof-broker/blob/main/experiments/r6/R6-SYNTHESIS.md": {
   "kind": "blob",
   "host": "github",
