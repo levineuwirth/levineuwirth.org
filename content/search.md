@@ -18,10 +18,17 @@ history:
 
 <!-- Tab buttons must stay unindented: Pandoc parses indented lines inside a
      raw <div> as Markdown and wraps them in a <p>, which would break the
-     tablist → tab ownership the ARIA tabs pattern requires. -->
+     tablist → tab ownership the ARIA tabs pattern requires.
+     The Filters toggle shares the tab row because the filters apply to
+     both tabs; it sits outside the tablist, which may own only tabs. -->
+<div class="search-bar">
 <div class="search-tabs" role="tablist" aria-label="Search mode">
 <button type="button" id="search-tab-keyword" class="search-tab is-active" data-tab="keyword" role="tab" aria-selected="true" aria-controls="search" tabindex="0">Keyword</button>
 <button type="button" id="search-tab-semantic" class="search-tab" data-tab="semantic" role="tab" aria-selected="false" aria-controls="search-panel-semantic" tabindex="-1">Semantic</button>
+</div>
+<button class="library-filter-toggle" aria-expanded="false" aria-controls="search-filters">
+Filters<span class="filter-toggle-badge"></span>
+</button>
 </div>
 
 <noscript>
@@ -40,11 +47,6 @@ instead: <a href="/library.html">Library</a> (everything, filterable),
 scripting.</p>
 </noscript>
 
-<div class="search-filter-controls">
-<button class="library-filter-toggle" aria-expanded="false" aria-controls="search-filters">
-Filters<span class="filter-toggle-badge"></span>
-</button>
-</div>
 <div id="search-filters" class="library-filters" hidden>
 <div class="filter-row">
 <span class="filter-label" data-ep-term="status">status</span>
@@ -157,7 +159,9 @@ Filters<span class="filter-toggle-badge"></span>
 </div>
 
 <div id="search" class="search-panel is-active" data-panel="keyword" role="tabpanel" aria-labelledby="search-tab-keyword"></div>
-<p id="search-timing" aria-live="polite"></p>
+<!-- A <div>, not a <p>: the first <p> child of #markdownBody takes the
+     site-wide drop cap, which turned "0 ms" into a giant numeral. -->
+<div id="search-timing" aria-live="polite"></div>
 
 <div id="search-panel-semantic" class="search-panel" data-panel="semantic" role="tabpanel" aria-labelledby="search-tab-semantic" hidden>
 <input id="semantic-query" class="semantic-query-input" type="search" placeholder="Describe what you're looking for…" aria-label="Semantic search query" autocomplete="off" spellcheck="false">
