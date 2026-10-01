@@ -31,7 +31,7 @@ import           Text.Pandoc.Class          (runPure)
 import           Text.Pandoc.Definition
 import           Text.Pandoc.Options        (WriterOptions (..),
                                              HTMLMathMethod (KaTeX))
-import           Text.Pandoc.Walk           (walkM)
+import           Text.Pandoc.Walk           (walk, walkM)
 import           Text.Pandoc.Writers.HTML   (writeHtml5String)
 
 -- | Accumulator: next label counter plus collected notes
@@ -74,12 +74,42 @@ footnotesSection notes = RawBlock "html" $ T.concat $
     item (lbl, blocks) = T.concat
         [ "<li id=\"fn-", lbl, "\" class=\"footnote-item\">"
         , "<span class=\"footnote-label\" aria-hidden=\"true\">", lbl, "</span>"
-        , blocksToHtml blocks
+        , blocksToHtml (withoutIds blocks)
         , "<a href=\"#snref-", lbl
         , "\" class=\"footnote-back\" role=\"doc-backlink\""
         , " aria-label=\"Back to reference ", lbl, "\">\x21a9\xfe0e</a>"
         , "</li>"
         ]
+
+-- | A note's blocks for the fallback copy, with every id removed.
+--
+--   The sidenote span renders the same blocks first, so any id inside a
+--   note — a citation marker's @cite-back-\<n\>-\<k\>@, an explicit
+--   @[text]{#id}@ — would otherwise appear twice on the page, and a link
+--   to it would land on whichever copy came first anyway. The sidenote
+--   keeps the ids; this copy carries none. Citation markers arrive as raw
+--   HTML from "Citations", so raw HTML loses its @id@ attributes too.
+withoutIds :: [Block] -> [Block]
+withoutIds = walk inline . walk block
+  where
+    inline (Span  (_, c, kv) xs)   = Span  ("", c, kv) xs
+    inline (Link  (_, c, kv) xs t) = Link  ("", c, kv) xs t
+    inline (Image (_, c, kv) xs t) = Image ("", c, kv) xs t
+    inline (Code  (_, c, kv) t)    = Code  ("", c, kv) t
+    inline (RawInline f t)         = RawInline f (dropIdAttrs t)
+    inline x                       = x
+    block (Div       (_, c, kv) bs) = Div ("", c, kv) bs
+    block (Header n  (_, c, kv) xs) = Header n ("", c, kv) xs
+    block (CodeBlock (_, c, kv) t)  = CodeBlock ("", c, kv) t
+    block (RawBlock f t)            = RawBlock f (dropIdAttrs t)
+    block x                         = x
+
+-- | Remove every @ id="…"@ attribute from an HTML fragment.
+dropIdAttrs :: Text -> Text
+dropIdAttrs t = case T.breakOn " id=\"" t of
+    (before, rest)
+        | T.null rest -> before
+        | otherwise   -> before <> dropIdAttrs (T.drop 1 (T.dropWhile (/= '"') (T.drop 5 rest)))
 
 -- | Convert a 1-based counter to a letter label using base-26 expansion
 --   (Excel-column style): 1→a, 2→b, … 26→z, 27→aa, 28→ab, … 52→az,
