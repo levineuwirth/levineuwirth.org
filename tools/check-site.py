@@ -632,6 +632,32 @@ def jpeg_gps(path: str) -> bool:
         return False
 
 
+DATA_PAGES_RE = re.compile(r'''data-pages="([^"]*)"''')
+
+
+def check_score_pages(site_dir: str, report: Report) -> None:
+    """M02 — a score reader and its published pages agree. A page file the
+    reader does not list is left over from an earlier engraving (or a
+    movement withheld since); a listed page with no file is a hole."""
+    report.check("score-pages")
+    music = os.path.join(site_dir, "music")
+    if not os.path.isdir(music):
+        return
+    for slug in sorted(os.listdir(music)):
+        reader = os.path.join(music, slug, "score", "index.html")
+        scores = os.path.join(music, slug, "scores")
+        if not os.path.isfile(reader):
+            continue
+        m = DATA_PAGES_RE.search(read_text(reader))
+        listed = {p.rsplit("/", 1)[-1] for p in m.group(1).split(",") if p} if m else set()
+        present = {f for f in os.listdir(scores)
+                   if f.startswith("page-") and f.endswith(".svg")} if os.path.isdir(scores) else set()
+        for f in sorted(present - listed):
+            report.error("score-pages", f"music/{slug}/scores/{f} is published but not in the reader")
+        for f in sorted(listed - present):
+            report.error("score-pages", f"music/{slug}/score/ lists {f}, which is missing")
+
+
 def check_photo_gps(site_dir: str, report: Report) -> None:
     """T03 — a JPEG published with the camera's GPS position. The importers
     strip EXIF, but a failed or interrupted import used to leave the
@@ -727,6 +753,7 @@ def main(argv: list[str] | None = None) -> int:
     check_webp(site_dir, report, as_error=args.require_webp)
     check_search_model(site_dir, report)
     check_photo_gps(site_dir, report)
+    check_score_pages(site_dir, report)
 
     status = report.summarise(site_dir)
     if status and args.warn_only:

@@ -452,6 +452,34 @@ class CheckSiteTestCase(unittest.TestCase):
         code, output = self.run_gate()
         self.assertEqual(code, 0, output)
 
+    # -- score pages ------------------------------------------------------
+
+    def score_reader(self, *pages: int) -> None:
+        listed = ",".join(f"/music/w/scores/page-{i}.svg" for i in pages)
+        self.site.write("music/w/score/index.html", f'<div data-pages="{listed}"></div>')
+
+    def test_published_page_the_reader_does_not_list_fails(self):
+        self.score_reader(1, 2)
+        for i in (1, 2, 3):
+            self.site.write(f"music/w/scores/page-{i}.svg", "<svg/>")
+        code, output = self.run_gate()
+        self.assertEqual(code, 1)
+        self.assertIn("page-3.svg is published but not in the reader", output)
+
+    def test_listed_page_that_is_missing_fails(self):
+        self.score_reader(1, 2)
+        self.site.write("music/w/scores/page-1.svg", "<svg/>")
+        code, output = self.run_gate()
+        self.assertEqual(code, 1)
+        self.assertIn("lists page-2.svg, which is missing", output)
+
+    def test_reader_and_pages_agree(self):
+        self.score_reader(1, 2)
+        for i in (1, 2):
+            self.site.write(f"music/w/scores/page-{i}.svg", "<svg/>")
+        code, output = self.run_gate()
+        self.assertEqual(code, 0, output)
+
     # -- photo GPS --------------------------------------------------------
 
     @staticmethod

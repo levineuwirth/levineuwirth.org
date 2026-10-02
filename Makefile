@@ -198,6 +198,10 @@ build-locked:
 	  echo "build: removing _site/drafts (post-compile)"; \
 	  rm -rf _site/drafts; \
 	fi
+	# Hakyll never deletes an output whose source is gone, and the score
+	# pages are gitignored, so build-freshness never sees them go: remove
+	# published score files that no longer have a source (audit M02).
+	@python3 tools/prune-site.py _site
 	# ---- Stage 4: index --------------------------------------------------
 	# pagefind never clears its output dir (verified: files it did not
 	# write survive a run), so without this rm stale content-hashed
