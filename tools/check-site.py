@@ -165,6 +165,14 @@ NON_MARKUP_RE = re.compile(
 )
 IMG_ALT_RE = re.compile(r"(?<![\w-])alt(?:\s*=|\s|/?>|$)", re.IGNORECASE)
 
+# plugin-embeds: no <embed> or <object> in a page. Pandoc writes one for a
+# PDF used as an image (`![](x.pdf)`). The site's framing headers blank it
+# today, since every PDF carries X-Frame-Options: DENY, and the CSP's
+# object-src 'none' blocks it outright once enforced (audit W01/A02).
+# Publish such a figure as SVG; embed a whole PDF with {{pdf:…}}, which
+# uses the PDF.js viewer in an iframe.
+PLUGIN_EMBED_RE = re.compile(r"<(embed|object)\b([^>]*)>", re.IGNORECASE)
+
 # Answered by nginx locations, not by files in _site (nginx/*.conf).
 SERVER_ROUTES = ("/proxy/", "/csp-report")
 
@@ -321,6 +329,7 @@ def check_html_corpus(
     report.check("link-targets")
     report.check("link-fragments")
     report.check("img-alt")
+    report.check("plugin-embeds")
 
     anchors = AnchorIndex(site_dir)
 
@@ -358,6 +367,15 @@ def check_html_corpus(
                 f"it, or mark it {{.decorative}} for alt=\"\"",
             )
 
+        embeds = plugin_embeds(text)
+        if embeds:
+            more = f" (+{len(embeds) - 1} more)" if len(embeds) > 1 else ""
+            report.error(
+                "plugin-embeds",
+                f"{rel}: {embeds[0]}{more} — object-src 'none' blocks it; publish "
+                f"a figure as SVG, or embed a PDF with {{{{pdf:…}}}}",
+            )
+
 
 def images_without_alt(text: str) -> list[str]:
     """The src of every rendered <img> that has no alt attribute."""
@@ -368,6 +386,16 @@ def images_without_alt(text: str) -> list[str]:
             src = ATTR_SRC_RE.search(attrs)
             missing.append(src.group(1) if src else "")
     return missing
+
+
+def plugin_embeds(text: str) -> list[str]:
+    """Each rendered <embed>/<object>, as `<tag src>` for the report."""
+    markup = NON_MARKUP_RE.sub("", text)
+    found = []
+    for tag, attrs in PLUGIN_EMBED_RE.findall(markup):
+        src = re.search(r"""(?<![\w-])(?:src|data)\s*=\s*["']([^"']*)["']""", attrs)
+        found.append(f"<{tag.lower()} {src.group(1) if src else ''}>".replace(" >", ">"))
+    return found
 
 
 class AnchorIndex:

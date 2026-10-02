@@ -427,6 +427,31 @@ class CheckSiteTestCase(unittest.TestCase):
         code, output = self.run_gate()
         self.assertEqual(code, 0, output)
 
+    # -- plugin embeds ----------------------------------------------------
+
+    def test_pdf_used_as_image_fails(self):
+        # What Pandoc writes for ![caption](figures/x.pdf).
+        self.site.write("essays/one/figures/x.pdf", "%PDF-1.4")
+        self.link_page('<figure><embed src="/essays/one/figures/x.pdf" /></figure>')
+        code, output = self.run_gate()
+        self.assertEqual(code, 1)
+        self.assertIn("plugin-embeds", output)
+        self.assertIn("/essays/one/figures/x.pdf", output)
+
+    def test_object_fails(self):
+        self.link_page('<object data="/images/a.jpg" type="image/jpeg"></object>')
+        code, output = self.run_gate()
+        self.assertEqual(code, 1)
+        self.assertIn("plugin-embeds", output)
+
+    def test_embed_in_a_comment_or_script_is_not_an_embed(self):
+        self.link_page(
+            '<!-- no <embed> here -->'
+            '<script>const t = "<object data=x>";</script>'
+        )
+        code, output = self.run_gate()
+        self.assertEqual(code, 0, output)
+
     # -- feeds and sitemap -------------------------------------------------
 
     def test_non_rfc3339_feed_updated_fails(self):
