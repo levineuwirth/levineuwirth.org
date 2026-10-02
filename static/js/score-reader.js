@@ -33,7 +33,9 @@
     var currentPage = 1;
     var ratio       = null;   /* page width / height, learned from page 1 */
     var naturalW    = null;   /* page width in CSS px at 100 % */
-    var cache       = new Map();
+    var cache       = new Map();   /* index -> { promise, controller } */
+    var KEEP        = 2;           /* pages kept either side of the current one */
+    var landing     = null;        /* 'top' | 'bottom': where a turn by the reader opens */
 
     /* ------------------------------------------------------------------
        Fetching and inlining
@@ -87,9 +89,14 @@
 
     function fetchPage(index) {
         if (index < 1 || index > pageCount) return Promise.resolve(null);
-        if (cache.has(index)) return Promise.resolve(cache.get(index));
+        if (cache.has(index)) return cache.get(index).promise;
 
-        var p = fetch(pages[index - 1], { credentials: 'same-origin' })
+        var controller = typeof AbortController === 'function' ? new AbortController() : null;
+        var entry = { controller: controller };
+        entry.promise = fetch(pages[index - 1], {
+                credentials: 'same-origin',
+                signal: controller ? controller.signal : undefined
+            })
             .then(function (r) {
                 if (!r.ok) throw new Error('HTTP ' + r.status);
                 return r.text();
@@ -102,12 +109,27 @@
                 return sanitize(svg);
             })
             .catch(function (err) {
-                cache.delete(index);   /* a failure must not be cached */
+                /* A failure must not be cached; an entry evicted and
+                   requested again since is not this one. */
+                if (cache.get(index) === entry) cache.delete(index);
                 throw err;
             });
 
-        cache.set(index, p);
-        return p;
+        cache.set(index, entry);
+        return entry.promise;
+    }
+
+    /* Only the pages around the one on screen are kept. Following a
+       symphony end to end otherwise kept all 151 parsed pages — about
+       315,000 elements — and a reader leafing quickly through the score
+       would fetch every page passed. A fetch still in flight for a page
+       that is no longer near is abandoned. */
+    function trimCache() {
+        cache.forEach(function (entry, index) {
+            if (Math.abs(index - currentPage) <= KEEP) return;
+            if (entry.controller) entry.controller.abort();
+            cache.delete(index);
+        });
     }
 
     /* ------------------------------------------------------------------
@@ -287,6 +309,18 @@
            instrument names where later ones abbreviate. */
         applySize();
         buildGutter(node);
+
+        /* A turn the reader made opens the new page at the edge it continues
+           from — the top going forward, the foot when ↑ or PageUp read back
+           past the top. Otherwise a reader at the foot of a tall page landed
+           at the foot of the next. A turn the music made is left to
+           score-follow.js, which scrolls to the bar. The horizontal pan
+           stays, so a zoomed reader keeps the part of the system they were
+           reading. */
+        if (landing) {
+            viewport.scrollTop = landing === 'bottom' ? viewport.scrollHeight : 0;
+            landing = null;
+        }
         renderListeners.forEach(function (fn) { fn(index, node); });
     }
 
@@ -407,14 +441,32 @@
     var turnListeners   = [];
     var renderListeners = [];
 
-    function navigate(page) {
+    function navigate(page, edge) {
         if (page < 1 || page > pageCount || page === currentPage) return;
+        landing = edge || 'top';
         show(page);
         turnListeners.forEach(function (fn) { fn(page); });
     }
 
+    /* PageDown, Space and the vertical arrows read down a page before they
+       turn it, as a PDF viewer does. The portrait scores open at fit-width,
+       so a page is often twice the window's height, and turning at once
+       left a keyboard reader the top of every page and nothing else. */
+    function scrollOrTurn(dir, unit) {
+        var max = viewport.scrollHeight - viewport.clientHeight;
+        var top = viewport.scrollTop;
+        if (dir > 0 ? top < max - 1 : top > 1) {
+            var by = unit === 'page' ? viewport.clientHeight * 0.85
+                                     : Math.max(40, viewport.clientHeight * 0.1);
+            viewport.scrollBy({ top: dir * by });
+            return;
+        }
+        navigate(currentPage + dir, dir > 0 ? 'top' : 'bottom');
+    }
+
     function show(page) {
         currentPage = page;
+        trimCache();
 
         folio.textContent = page + ' / ' + pageCount;
         pageEl.setAttribute('aria-label',
@@ -472,11 +524,31 @@
         if (panel && panel.classList.contains('is-open')) return;
         if (e.metaKey || e.ctrlKey || e.altKey) return;
 
+        /* A control keeps the keys it uses: a field or the seek slider its
+           arrows, Home and End; a button or link its Space. Taking them
+           made keyboard seeking impossible, and Space on a focused Play
+           button turned the page instead of pressing it. */
+        var t = e.target;
+        if (t && t.closest) {
+            if (t.closest('input, select, textarea, [contenteditable]')) return;
+            if (e.key === ' ' && t.closest('button, a[href], summary')) return;
+        }
+
         switch (e.key) {
-        case 'ArrowRight': case 'ArrowDown': case 'PageDown': case ' ':
+        case 'ArrowRight':
             navigate(currentPage + 1); e.preventDefault(); break;
-        case 'ArrowLeft': case 'ArrowUp': case 'PageUp':
+        case 'ArrowLeft':
             navigate(currentPage - 1); e.preventDefault(); break;
+        case 'ArrowDown':
+            scrollOrTurn(1, 'line'); e.preventDefault(); break;
+        case 'ArrowUp':
+            scrollOrTurn(-1, 'line'); e.preventDefault(); break;
+        case 'PageDown':
+            scrollOrTurn(1, 'page'); e.preventDefault(); break;
+        case 'PageUp':
+            scrollOrTurn(-1, 'page'); e.preventDefault(); break;
+        case ' ':
+            scrollOrTurn(e.shiftKey ? -1 : 1, 'page'); e.preventDefault(); break;
         case 'Home':
             navigate(1); e.preventDefault(); break;
         case 'End':

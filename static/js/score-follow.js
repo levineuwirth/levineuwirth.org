@@ -49,6 +49,9 @@
     var layer      = null;
     var mark       = null;
     var dragging   = false;   /* the seek slider is under the pointer */
+    var dragTo     = null;    /* where a drag will seek to when it ends (s) */
+    var startAt    = null;    /* where the first Play starts (ms), if not page 1 */
+    var wakeTap    = false;   /* the pointer went down on a sleeping reader */
     var ui         = {};
 
     fetch(stage.dataset.timing, { credentials: 'same-origin' })
@@ -108,8 +111,29 @@
         return audio;
     }
 
+    /* When the music on a page begins: the first sounding of its earliest
+       bar. */
+    function pageStart(page) {
+        var best = null;
+        for (var b = 0; b < timing.measures.length; b++) {
+            var m = timing.measures[b];
+            if (!m || m[0] !== page || firstTime[b] === undefined) continue;
+            if (best === null || firstTime[b] < best) best = firstTime[b];
+        }
+        return best;
+    }
+
+    /* The first Play starts where the reader is: at the movement chosen
+       before it, or else at the music of the page on screen. Starting at
+       0:00 pulled a reader who had arrived through a movement link back to
+       page 1 on the first frame. Later presses resume. */
     function play() {
-        ensureAudio();
+        if (!audio) {
+            var from = startAt !== null ? startAt : pageStart(reader.page());
+            startAt = null;
+            ensureAudio();
+            if (from) audio.currentTime = from / 1000;
+        }
         following = true;
         hideReturn();
         var p = audio.play();
@@ -123,6 +147,7 @@
     /* keepView: the jump was made by clicking a bar the reader can see, so
        the view stays where it is; any other jump brings the music into view. */
     function seekTo(ms, andPlay, keepView) {
+        startAt = null;
         ensureAudio();
         following = true;
         hideReturn();
@@ -150,12 +175,21 @@
        Following
     ------------------------------------------------------------------ */
 
+    /* One frame loop while the music plays. tick() is also called directly
+       — on a seek, a page render, a style change — and used to reschedule
+       itself as well, which started a second loop each time: after 150
+       page turns, 150 ticks a frame. */
     function schedule() {
-        if (!frame) frame = requestAnimationFrame(tick);
+        if (!frame) frame = requestAnimationFrame(loop);
+    }
+
+    function loop() {
+        frame = 0;
+        tick();
+        if (audio && !audio.paused) schedule();
     }
 
     function tick() {
-        frame = 0;
         if (!timing || !audio) return;
         var ms  = audio.currentTime * 1000;
         var i   = eventAt(ms);
@@ -172,7 +206,6 @@
             place(box, frac, bar !== lastBar);
         }
         lastBar = bar;
-        if (!audio.paused) schedule();
     }
 
     function place(box, frac, newBar) {
@@ -299,15 +332,42 @@
         stage.appendChild(ui.back);
 
         ui.play.addEventListener('click', toggle);
+        /* A drag seeks once, where it ends. Seeking on every step turned,
+           fetched and rendered every page the thumb passed — 85 of a
+           symphony's 151 in one sweep. Keyboard steps seek at once. */
         ui.seek.addEventListener('input', function () {
+            if (dragging) {
+                dragTo = parseFloat(ui.seek.value);
+                updateTime();
+                return;
+            }
             seekTo(parseFloat(ui.seek.value) * 1000, false);
+        });
+        /* An arrow moves five seconds and Page Up or Down a minute. The
+           native step is the slider's resolution, 0.1 s, which made seeking
+           by keyboard a matter of hundreds of presses. */
+        ui.seek.addEventListener('keydown', function (e) {
+            var by = { ArrowRight: 5, ArrowUp: 5, ArrowLeft: -5, ArrowDown: -5,
+                       PageUp: 60, PageDown: -60 }[e.key];
+            if (!by || e.metaKey || e.ctrlKey || e.altKey) return;
+            e.preventDefault();
+            var now = audio ? audio.currentTime : parseFloat(ui.seek.value) || 0;
+            var to  = Math.min(parseFloat(ui.seek.max) || 0, Math.max(0, now + by));
+            ui.seek.value = String(to);
+            seekTo(to * 1000, false);
         });
         /* The slider follows the music except while it is being dragged.
            Not "while focused": a slider keeps focus after a drag, and would
            freeze where it was let go. */
         ui.seek.addEventListener('pointerdown', function () { dragging = true; });
         ['pointerup', 'pointercancel', 'change'].forEach(function (evt) {
-            ui.seek.addEventListener(evt, function () { dragging = false; });
+            ui.seek.addEventListener(evt, function () {
+                dragging = false;
+                if (dragTo === null) return;
+                var to = dragTo;
+                dragTo = null;
+                seekTo(to * 1000, false);
+            });
         });
         ui.back.addEventListener('click', function () {
             following = true;
@@ -320,9 +380,10 @@
     }
 
     function updateTime() {
-        var now = audio ? audio.currentTime : 0;
+        var now = dragTo !== null ? dragTo : audio ? audio.currentTime : 0;
         var total = timing.duration || (audio && audio.duration) || 0;
         ui.time.textContent = clock(now) + ' / ' + clock(total);
+        ui.seek.setAttribute('aria-valuetext', clock(now) + ' of ' + clock(total));
         if (!dragging) ui.seek.value = String(now);
     }
 
@@ -375,13 +436,16 @@
         attachLayer();
         reader.onRender(attachLayer);
 
-        /* A turn the reader makes while the music plays steps out of
-           following; the music keeps its place, and one press returns. */
+        /* A turn the reader makes steps out of following; the music keeps
+           its place, and one press returns (or Play, once paused). Paused
+           too: a paused reader still following was pulled back to the
+           music's page as soon as the turned page rendered. Before the
+           first Play, the turn replaces any movement chosen earlier. */
         reader.onTurn(function () {
-            if (audio && !audio.paused) {
-                following = false;
-                showReturn();
-            }
+            startAt = null;
+            if (!audio) return;
+            following = false;
+            if (!audio.paused) showReturn();
         });
 
         /* A movement button also moves the music, when the realization's
@@ -391,14 +455,26 @@
         if (t.movements && t.movements.length === buttons.length) {
             Array.prototype.forEach.call(buttons, function (btn, i) {
                 btn.addEventListener('click', function () {
-                    if (!audio) return;   /* before the first play, just turn */
                     var ms = firstTime[t.movements[i]];
-                    if (ms !== undefined) seekTo(ms, !audio.paused);
+                    if (ms === undefined) return;
+                    /* Before the first Play, just turn, and start there. */
+                    if (!audio) { startAt = ms; return; }
+                    seekTo(ms, !audio.paused);
                 });
             });
         }
 
+        /* On a touch screen the toolbar sleeps during playback, and the
+           only way to wake it is to touch the page — which is also a bar.
+           A touch that lands on a sleeping reader only wakes it; otherwise
+           reaching Pause jumped the music to wherever the finger fell. */
+        reader.sheet.addEventListener('pointerdown', function (e) {
+            wakeTap = e.pointerType !== 'mouse' &&
+                document.body.classList.contains('is-idle');
+        }, true);
+
         reader.sheet.addEventListener('click', function (e) {
+            if (wakeTap) { wakeTap = false; return; }
             if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
             if (window.getSelection && String(window.getSelection())) return;
             var b = barAt(e);
