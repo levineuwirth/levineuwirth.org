@@ -47,7 +47,7 @@ Yes and no, if you ask me. I believe in the power of transparency and honesty. I
 Time passes regardless of our wishes, our intentions, our apprehensions. That is perhaps the most beautifully profound fact of our existence, and one that therefore I view with gratitude. 
 :::
 
-MANY ARTISTS AND THINKERS ALIKE HAVE, OVER CENTURIES, TRIED [TO]{.smallcaps} ENCAPSULATE THIS BEAUTIFUL PROFUNDITY THROUGH [*Vanitas*](https://en.wikipedia.org/wiki/Vanitas)^[Spanish Wikipedia has a far more detailed and preferable entry concerning *Vanitas*. For those who speak Spanish, [see here](https://es.wikipedia.org/wiki/Vanitas)] I do not think that my words can do this subject terrible justice, so rather than trying to encapsulate the potent nature of the subject myself, I will only speak here about what it means to me, interspersing my remarks with art of various forms for us to appreciate.
+MANY ARTISTS AND THINKERS ALIKE HAVE, OVER CENTURIES, TRIED [TO]{.smallcaps} ENCAPSULATE THIS BEAUTIFUL PROFUNDITY THROUGH [*Vanitas*](https://en.wikipedia.org/wiki/Vanitas)^[Spanish Wikipedia has a far more detailed and preferable entry concerning *Vanitas*. For those who read Spanish, [see here](https://es.wikipedia.org/wiki/Vanitas)] I do not think that my words can do this subject terrible justice, so rather than trying to encapsulate the potent nature of the subject myself, I will only speak here about what it means to me, interspersing my remarks with art of various forms for us to appreciate.
 
 ### My Creative Works
 
