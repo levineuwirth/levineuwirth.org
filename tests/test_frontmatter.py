@@ -258,6 +258,17 @@ class FrontMatterTests(unittest.TestCase):
                     bad.append(f"{rel}: revised entry {entry!r}")
         self.assertNoViolations(bad, "revisions the build drops")
 
+    def test_draft_flag_only_where_the_build_honours_it(self) -> None:
+        # build/Site.hs honours `draft:` only on a poetry or fiction
+        # collection's index.md (isPublishedCollection). On any other page it
+        # is silently ignored and the page publishes, with its feed, sitemap
+        # and search entries (audit C06). Until drafts are excluded at every
+        # match and loadAll, an unpublished piece belongs in content/drafts/.
+        collection = re.compile(r"^content/(poetry|fiction)/[^/]+/index\.md$")
+        bad = [f"{rel}: draft: {value!r} would not keep this page unpublished — move it under content/drafts/"
+               for rel, value in self.values("draft") if not collection.match(rel)]
+        self.assertNoViolations(bad, "a draft flag the build ignores")
+
 
 if __name__ == "__main__":
     unittest.main()
