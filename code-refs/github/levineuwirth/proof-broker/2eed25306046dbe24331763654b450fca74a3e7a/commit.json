@@ -1,0 +1,618 @@
+{
+ "sha": "2eed25306046dbe24331763654b450fca74a3e7a",
+ "message": "Merge pull request #100 from levineuwirth/r6/r6-016-proposal\n\nR6: axiom-preserving final step and amended qualification audit (complete result)",
+ "author": "Levi Neuwirth",
+ "date": "2026-10-02T15:11:14Z",
+ "parents": [
+  "3eb438a526992a676368fbf1654802c126520997",
+  "400409532344ab81a25566fbf051cc1cfc9a4329"
+ ],
+ "stats": {
+  "total": 426625,
+  "additions": 426490,
+  "deletions": 135
+ },
+ "files_total": 100,
+ "files": [
+  {
+   "filename": "experiments/r6/R6-015-L175-AUDIT-V2.md",
+   "status": "added",
+   "additions": 42,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/R6-015.md",
+   "status": "modified",
+   "additions": 18,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/R6-016-BUILD.md",
+   "status": "added",
+   "additions": 95,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/R6-016-HARNESS.md",
+   "status": "added",
+   "additions": 224,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/R6-016-PROPOSAL.md",
+   "status": "added",
+   "additions": 241,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/R6-016.md",
+   "status": "added",
+   "additions": 163,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/R6-QUALIFICATION-1-ADDENDUM-2.md",
+   "status": "added",
+   "additions": 77,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/R6-QUALIFICATION-1-AUDIT-AMENDMENT-1-BUILD.md",
+   "status": "added",
+   "additions": 189,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/R6-QUALIFICATION-1-AUDIT-AMENDMENT-1-PROPOSAL.md",
+   "status": "added",
+   "additions": 160,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/policies/qualification-audit-v2.sha256.json",
+   "status": "added",
+   "additions": 2374,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/policies/r6-016-replay-v1.sha256.json",
+   "status": "added",
+   "additions": 628,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/qualification-audit-v2/Audit.lean",
+   "status": "added",
+   "additions": 568,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/qualification-audit-v2/R6AuditControlsV2.lean",
+   "status": "added",
+   "additions": 432,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/qualification-audit-v2/R6AuditControlsV2.provenance.json",
+   "status": "added",
+   "additions": 22,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/qualification-audit-v2/make_controls.py",
+   "status": "added",
+   "additions": 110,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/qualification-audit-v2/qualification_audit_v2.py",
+   "status": "added",
+   "additions": 438,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/qualification-audit-v2/test_gates.py",
+   "status": "added",
+   "additions": 214,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/index.json",
+   "status": "added",
+   "additions": 4263,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/certificate-verdict.json",
+   "status": "added",
+   "additions": 8,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/events.ndjson",
+   "status": "added",
+   "additions": 29,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/evidence.json",
+   "status": "added",
+   "additions": 1699,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/input/Frozen.lean",
+   "status": "added",
+   "additions": 225,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/input/ProposalCapture.lean",
+   "status": "added",
+   "additions": 76,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/input/source.patch",
+   "status": "added",
+   "additions": 17,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/provenance/binaries.json",
+   "status": "added",
+   "additions": 15,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/provenance/instrumentation.patch",
+   "status": "added",
+   "additions": 266,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/provenance/r6-016/replay_bridge.py",
+   "status": "added",
+   "additions": 203,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/provenance/r6-016/replay_episode.py",
+   "status": "added",
+   "additions": 271,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/provenance/r6-016/replay_lock.py",
+   "status": "added",
+   "additions": 157,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/provenance/sources.json",
+   "status": "added",
+   "additions": 267,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/residual.txt",
+   "status": "added",
+   "additions": 1,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/residual/command.json",
+   "status": "added",
+   "additions": 24,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/residual/report.json",
+   "status": "added",
+   "additions": 33,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/residual/stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/residual/stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/runtime.json",
+   "status": "added",
+   "additions": 21,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/seal.json",
+   "status": "added",
+   "additions": 83,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/solution.ndjson.gz",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/spec.json",
+   "status": "added",
+   "additions": 11,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/capture-build/capture-build.process.json",
+   "status": "added",
+   "additions": 23,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/capture-build/capture-build.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/capture-build/capture-build.stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/capture-build/command.json",
+   "status": "added",
+   "additions": 133,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/capture-build/scope-command.json",
+   "status": "added",
+   "additions": 18,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/capture-build/supervisor.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/capture-build/supervisor.stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/certificate-check/certificate-check.process.json",
+   "status": "added",
+   "additions": 23,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/certificate-check/certificate-check.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/certificate-check/certificate-check.stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/certificate-check/command.json",
+   "status": "added",
+   "additions": 65,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/certificate-check/scope-command.json",
+   "status": "added",
+   "additions": 18,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/certificate-check/supervisor.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/certificate-check/supervisor.stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/export/command.json",
+   "status": "added",
+   "additions": 160,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/export/export.process.json",
+   "status": "added",
+   "additions": 23,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/export/export.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/export/scope-command.json",
+   "status": "added",
+   "additions": 18,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/export/supervisor.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/export/supervisor.stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/reconstruct/command.json",
+   "status": "added",
+   "additions": 148,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/reconstruct/output/context.json",
+   "status": "added",
+   "additions": 164,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/reconstruct/reconstruct.process.json",
+   "status": "added",
+   "additions": 23,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/reconstruct/reconstruct.stderr",
+   "status": "added",
+   "additions": 10,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/reconstruct/reconstruct.stdout",
+   "status": "added",
+   "additions": 5,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/reconstruct/scope-command.json",
+   "status": "added",
+   "additions": 18,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/reconstruct/supervisor.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/reconstruct/supervisor.stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/validation-local/command.json",
+   "status": "added",
+   "additions": 79,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/validation-local/scope-command.json",
+   "status": "added",
+   "additions": 18,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/validation-local/supervisor.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/validation-local/supervisor.stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/validation-local/validation-local.process.json",
+   "status": "added",
+   "additions": 23,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/validation-local/validation-local.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/validation-local/validation-local.stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/validation-whole/command.json",
+   "status": "added",
+   "additions": 79,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/validation-whole/scope-command.json",
+   "status": "added",
+   "additions": 18,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/validation-whole/supervisor.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/validation-whole/supervisor.stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/validation-whole/validation-whole.process.json",
+   "status": "added",
+   "additions": 23,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/validation-whole/validation-whole.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/stages/validation-whole/validation-whole.stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/validation-input/local/policy.json",
+   "status": "added",
+   "additions": 42,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/validation-input/whole/policy.json",
+   "status": "added",
+   "additions": 42,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/validation-local.raw.json.gz",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/validation-whole.raw.json.gz",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-deterministic/verdict.json",
+   "status": "added",
+   "additions": 34,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-learned-draw1/certificate-verdict.json",
+   "status": "added",
+   "additions": 8,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-learned-draw1/events.ndjson",
+   "status": "added",
+   "additions": 29,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-learned-draw1/evidence.json",
+   "status": "added",
+   "additions": 1696,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-learned-draw1/input/Frozen.lean",
+   "status": "added",
+   "additions": 225,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-learned-draw1/input/ProposalCapture.lean",
+   "status": "added",
+   "additions": 76,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-learned-draw1/input/source.patch",
+   "status": "added",
+   "additions": 17,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-learned-draw1/provenance/binaries.json",
+   "status": "added",
+   "additions": 15,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-learned-draw1/provenance/instrumentation.patch",
+   "status": "added",
+   "additions": 266,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-learned-draw1/provenance/r6-016/replay_bridge.py",
+   "status": "added",
+   "additions": 203,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-learned-draw1/provenance/r6-016/replay_episode.py",
+   "status": "added",
+   "additions": 271,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-learned-draw1/provenance/r6-016/replay_lock.py",
+   "status": "added",
+   "additions": 157,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-learned-draw1/provenance/sources.json",
+   "status": "added",
+   "additions": 267,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-learned-draw1/residual.txt",
+   "status": "added",
+   "additions": 1,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-016-runs/l069-control5-learned-draw1/residual/command.json",
+   "status": "added",
+   "additions": 24,
+   "deletions": 0
+  }
+ ]
+}

@@ -271,12 +271,12 @@
   "owner": "levineuwirth",
   "repo": "proof-broker",
   "ref": "main",
-  "sha": "3eb438a526992a676368fbf1654802c126520997",
+  "sha": "2eed25306046dbe24331763654b450fca74a3e7a",
   "path": "experiments/r6/R6-SYNTHESIS.md",
   "pinned": false,
-  "src": "/code-refs/github/levineuwirth/proof-broker/3eb438a526992a676368fbf1654802c126520997/blob/experiments/r6/R6-SYNTHESIS.md.txt",
-  "commit": "/code-refs/github/levineuwirth/proof-broker/3eb438a526992a676368fbf1654802c126520997/commit.json",
-  "date": "2026-10-01T21:20:48Z",
+  "src": "/code-refs/github/levineuwirth/proof-broker/2eed25306046dbe24331763654b450fca74a3e7a/blob/experiments/r6/R6-SYNTHESIS.md.txt",
+  "commit": "/code-refs/github/levineuwirth/proof-broker/2eed25306046dbe24331763654b450fca74a3e7a/commit.json",
+  "date": "2026-10-02T15:11:14Z",
   "fetched": "2026-10-02"
  }
 }
