@@ -48,9 +48,10 @@ ssh root@vps 'chmod 755 /usr/local/bin/*.sh && systemctl daemon-reload'
 
 Then, in each `/etc/default/{forgejo,anki-sync,couchdb}-backup` that sets
 `BORG_RSH`, add the keepalive the examples now carry
-(`-o ServerAliveInterval=30 -o ServerAliveCountMax=4`), and leave
-`OFFHOST_PRUNE` unset unless it already is (the new default starts with
-`--keep-within 7d`). Check:
+(`-o ServerAliveInterval=30 -o ServerAliveCountMax=4`). Leave `OFFHOST_PRUNE`
+unset when it is absent, so the new default applies. If it is already set,
+add `--keep-within 7d` while retaining the existing daily, weekly and monthly
+rules; an explicit old value overrides the new default. Check:
 
 ```bash
 ssh root@vps 'systemd-analyze verify /etc/systemd/system/{forgejo,anki-sync,couchdb}-backup.service; systemctl list-timers --all | grep -E "backup|verify|update|upgrade"'
@@ -77,10 +78,12 @@ Then:
 
 ```bash
 # install the VPS key on the sub-account (asks for the sub-account password once)
-ssh root@vps 'cat /root/.ssh/id_storagebox.pub | ssh -p23 <box>-subN@<box>.your-storagebox.de install-ssh-key'
-# point the VPS's ssh alias at the sub-account: in /root/.ssh/config, Host storagebox → User <box>-subN
+ssh root@vps 'cat /root/.ssh/id_storagebox.pub | ssh -p23 <box>-subN@<box>-subN.your-storagebox.de install-ssh-key'
+# point the VPS's ssh alias at the sub-account: in /root/.ssh/config,
+# Host storagebox → User <box>-subN and HostName <box>-subN.your-storagebox.de
 # the repository is now the sub-account's home directory:
-#   BORG_REPO=ssh://storagebox/./   in /etc/default/{forgejo,anki-sync,couchdb}-backup
+#   BORG_REPO=ssh://storagebox/./   in /etc/default/{anki-sync,couchdb}-backup
+#   OFFHOST_DEST=ssh://storagebox/./   in /etc/default/forgejo-backup
 ssh root@vps 'BORG_RELOCATED_REPO_ACCESS_IS_OK=yes BORG_PASSCOMMAND="cat /etc/borg/passphrase" borg list ssh://storagebox/./ | tail -3'
 # confirm the sub-account cannot see the laptop's repository (this must fail):
 ssh root@vps 'ssh storagebox ls ../thissystem'
