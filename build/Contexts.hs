@@ -65,6 +65,7 @@ import Backlinks    (backlinksField)
 import Dingbat      (dingbatField)
 import Marks        (monogramSvgField, hasMonogramField, epistemicSvgField)
 import SimilarLinks (similarLinksField)
+import FooterData   (footerDepsField)
 import Stability    (stabilityField, lastReviewedField, lastReviewedIsoField,
                      versionHistoryField,
                      versionHistoryPrimaryField, versionHistoryRestField,
@@ -1221,6 +1222,7 @@ essayCtx =
     <> furtherReadingField
     <> backlinksField
     <> similarLinksField
+    <> footerDepsField
     <> epistemicCtx
     <> versionHistoryField
     <> versionHistoryPrimaryField
@@ -1248,6 +1250,7 @@ postCtx =
     <> affiliationField
     <> backlinksField
     <> similarLinksField
+    <> footerDepsField
     <> dateField "date"     "%-d %B %Y"
     <> dateField "date-iso" "%Y-%m-%d"
     <> constField "math" "true"
@@ -2105,9 +2108,10 @@ photographyCtx =
     -- Backlinks. A photograph is a link *target* like any other page: a
     -- poem or essay that references the frame produces an entry keyed to
     -- this page's URL, and the join is symmetric because both sides go
-    -- through 'Backlinks.normaliseUrl'. Photography stays out of
+    -- through 'FooterData.normaliseUrl'. Photography stays out of
     -- 'Patterns.allContent' — that governs link *sources*, and
     -- caption-scale entries have no outbound prose to contribute.
+    <> footerDepsField
     <> backlinksField
     <> tagLinksField "photography-tags"
     <> authorLinksField

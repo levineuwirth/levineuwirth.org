@@ -144,15 +144,6 @@ build-locked:
 	# Stdlib only, so not gated on .venv. Network failures are warnings;
 	# the link keeps its previous snapshot or gets no code popup.
 	@python3 tools/code-refs.py fetch
-	# Seed an empty similar-links map on a first-ever build so the
-	# identifier data/similar-links.json EXISTS during pass 1. build/
-	# SimilarLinks.hs reaches it with `load`, and Hakyll only records a
-	# dependency on an item it could actually load — without this seed the
-	# pass-1 pages would record no dependency and pass 2 would not know to
-	# recompile them. `{}` parses to an empty map, so every page simply
-	# gets no Related section on the first pass. (B01)
-	@[ -f data/similar-links.json ] || { echo '{}' > data/similar-links.json; \
-	  echo "build: seeded empty data/similar-links.json (first build)"; }
 	# ---- Stage 1: compile (produces the HTML that embed.py reads) --------
 	cabal run site -- build
 	# Purge dev/watch leftovers BEFORE embedding or indexing: drafts under
@@ -167,9 +158,12 @@ build-locked:
 	# ---- Stage 2: embed --------------------------------------------------
 	#
 	# embed.py reads _site/**/*.html and writes three files back into
-	# data/: similar-links.json (consumed at Hakyll compile time by
-	# SimilarLinks.hs) and the semantic-index.bin / semantic-meta.json
-	# pair (copied into _site/data/ by a Hakyll match rule).
+	# data/: similar-links.json and the semantic-index.bin /
+	# semantic-meta.json pair (copied into _site/data/ by a Hakyll match
+	# rule). Then `site footer-data` splits similar-links.json and stage 1's
+	# _site/data/backlinks.json into one file per page under data/footer/,
+	# rewriting only the files whose entries changed (build/FooterData.hs,
+	# audit H01). It runs whether or not embed.py did: backlinks need it too.
 	#
 	# It used to run AFTER the only compile pass, which meant every one of
 	# those three outputs reached the VPS exactly one build late: the
@@ -182,22 +176,23 @@ build-locked:
 	else \
 	  echo "Embedding skipped: run 'uv sync' to enable similar-links (build continues)"; \
 	fi
+	cabal run site -- footer-data
 	# ---- Stage 3: recompile the consumers of what stage 2 produced -------
 	#
-	# data/similar-links.json and the semantic pair are matched Hakyll
-	# resources: when embed.py changed one, exactly its consumers recompile,
-	# and the semantic pair is copied into _site/data/ — including on a
-	# first-ever build, where these files did not exist as identifiers during
-	# stage 1. embed.py leaves identical bytes alone, so when none of the
-	# three is newer than the start of stage 2 there is nothing for this pass
-	# to do, and it is skipped rather than paying a second Hakyll start-up and
-	# dependency check (audit D16).
-	@if [ data/similar-links.json -nt data/.embed-start ] \
+	# The footer files and the semantic pair are matched Hakyll resources:
+	# a page whose Backlinks or Related changed recompiles, and the semantic
+	# pair is copied into _site/data/ — including on a first-ever build,
+	# where none of these existed as identifiers during stage 1. Stage 2
+	# leaves identical bytes alone, so when nothing it writes is newer than
+	# its start there is nothing for this pass to do, and it is skipped
+	# rather than paying a second Hakyll start-up and dependency check
+	# (audit D16).
+	@if [ -n "$$(find data/footer -newer data/.embed-start -print -quit)" ] \
 	   || [ data/semantic-index.bin -nt data/.embed-start ] \
 	   || [ data/semantic-meta.json -nt data/.embed-start ]; then \
 	  echo "cabal run site -- build"; cabal run site -- build; \
 	else \
-	  echo "build: embed.py changed nothing — the second compile pass is skipped"; \
+	  echo "build: stage 2 changed nothing — the second compile pass is skipped"; \
 	fi
 	@./tools/build-freshness.sh stamp
 	# Defense in depth: stage 3 runs with SITE_ENV=production and cannot

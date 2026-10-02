@@ -3,29 +3,25 @@
 -- | Similar-links field: injects a "Related" list into essay/page contexts.
 --
 -- @data/similar-links.json@ is produced by @tools/embed.py@ at build time
--- (called from the Makefile after pagefind, before sign).  It is a plain
+-- (stage 2 of @make build@, between the two compile passes). It is a plain
 -- JSON object mapping root-relative URL paths to lists of similar pages:
 --
 --   { "/essays/my-essay/": [{"url": "...", "title": "...", "score": 0.87}] }
 --
--- This module loads that file with dependency tracking (so pages recompile
--- when embeddings change) and provides @similarLinksField@, which resolves
--- to an HTML list for the current page's URL.
+-- @site footer-data@ splits it into one file per page (build/FooterData.hs),
+-- keeping each page's top 'maxRelated' entries without their scores, and
+-- 'similarLinksField' renders the current page's.
 --
--- If the file is absent (e.g. @.venv@ not set up, or first build) the field
--- returns @noResult@ — the @$if(similar-links)$@ guard in the template is
--- false and no "Related" section is rendered.
+-- If the file is absent (e.g. @.venv@ not set up, or first build) no page
+-- has entries, and no "Related" section is rendered.
 module SimilarLinks (similarLinksField) where
 
-import           Data.Maybe                 (fromMaybe)
 import qualified Data.ByteString            as BS
-import qualified Data.Map.Strict            as Map
-import           Data.Map.Strict            (Map)
 import qualified Data.Text                  as T
 import qualified Data.Text.Encoding         as TE
-import qualified Data.Text.Encoding.Error   as TE
 import qualified Data.Aeson                 as Aeson
 import           Hakyll
+import           FooterData                 (footerEntries, maxRelated)
 
 -- ---------------------------------------------------------------------------
 -- JSON schema
@@ -34,7 +30,6 @@ import           Hakyll
 data SimilarEntry = SimilarEntry
     { seUrl   :: String
     , seTitle :: String
-    , seScore :: Double
     } deriving (Show)
 
 instance Aeson.FromJSON SimilarEntry where
@@ -42,85 +37,22 @@ instance Aeson.FromJSON SimilarEntry where
         SimilarEntry
             <$> o Aeson..: "url"
             <*> o Aeson..: "title"
-            <*> o Aeson..: "score"
 
 -- ---------------------------------------------------------------------------
 -- Context field
 -- ---------------------------------------------------------------------------
 
--- | Maximum entries rendered in the "Related" block. The on-disk JSON may
--- contain more (embed.py's TOP_N); 'similarLinksField' caps the list
--- (@take maxSimilar@) before rendering.
-maxSimilar :: Int
-maxSimilar = 3
-
--- | Provides @$similar-links$@ (HTML list) and @$has-similar-links$@
--- (boolean flag for template guards).
--- Returns @noResult@ when the JSON file is absent, unparseable, or the
--- current page has no similar entries.
---
--- Note on normalisation: 'tools/embed.py' emits map keys using the live
--- site URL (e.g. @/essays/foo.html@ for a flat page, @/essays/foo/@ for a
--- directory-index page), while Hakyll's route gives @essays/foo.html@.
--- 'normaliseUrl' collapses both forms to a canonical stem, and we apply
--- it to every JSON key on load so the lookup cannot miss.
+-- | Provides @$similar-links$@, the page's Related list as HTML. Fails
+-- (so the template's @$if(similar-links)$@ is false) when the page has no
+-- entries in its footer file. The dependency that brings the section back
+-- when entries appear is 'FooterData.footerDepsField'; the URL forms
+-- @tools/embed.py@ emits are normalised when the footer files are written.
 similarLinksField :: Context String
 similarLinksField = field "similar-links" $ \item -> do
-    -- Load with dependency tracking — pages recompile when the JSON changes.
-    slItem <- load (fromFilePath "data/similar-links.json") :: Compiler (Item String)
-    case Aeson.decodeStrict (TE.encodeUtf8 (T.pack (itemBody slItem)))
-            :: Maybe (Map T.Text [SimilarEntry]) of
-        Nothing  -> fail "similar-links: could not parse data/similar-links.json"
-        Just rawMap -> do
-            mRoute <- getRoute (itemIdentifier item)
-            case mRoute of
-                Nothing -> fail "similar-links: item has no route"
-                Just r  ->
-                    let normMap = Map.mapKeys (T.pack . normaliseUrl . T.unpack) rawMap
-                        key     = T.pack (normaliseUrl ("/" ++ r))
-                        entries = take maxSimilar (fromMaybe [] (Map.lookup key normMap))
-                    in  if null entries
-                        then fail "no similar links"
-                        else return (renderSimilarLinks entries)
-
--- ---------------------------------------------------------------------------
--- URL normalisation (mirrors embed.py's URL derivation)
--- ---------------------------------------------------------------------------
-
-normaliseUrl :: String -> String
-normaliseUrl url =
-    let t  = T.pack url
-        -- strip query + fragment
-        t1 = fst (T.breakOn "?" (fst (T.breakOn "#" t)))
-        -- ensure leading slash
-        t2 = if T.isPrefixOf "/" t1 then t1 else "/" `T.append` t1
-        -- strip trailing index.html → keep the directory slash
-        t3 = fromMaybe t2 (T.stripSuffix "index.html" t2)
-        -- strip bare .html extension only for non-index pages
-        t4 = fromMaybe t3 (T.stripSuffix ".html" t3)
-    in  percentDecode (T.unpack t4)
-
--- | Percent-decode @%XX@ escapes (UTF-8) so percent-encoded paths
--- collide with their decoded form on map lookup. Mirrors
--- 'Backlinks.percentDecode' (and 'Backlinks.normaliseUrl' now applies
--- the same strip-@index.html@-then-@.html@ normalisation as this
--- module); the duplication keeps the two modules dependency-free of
--- each other.
-percentDecode :: String -> String
-percentDecode = T.unpack . TE.decodeUtf8With TE.lenientDecode . BS.pack . go
-  where
-    go []                 = []
-    go ('%':a:b:rest)
-        | Just hi <- hexDigit a
-        , Just lo <- hexDigit b
-        = fromIntegral (hi * 16 + lo) : go rest
-    go (c:rest)           = fromIntegral (fromEnum c) : go rest
-
-    hexDigit c
-        | c >= '0' && c <= '9' = Just (fromEnum c - fromEnum '0')
-        | c >= 'a' && c <= 'f' = Just (fromEnum c - fromEnum 'a' + 10)
-        | c >= 'A' && c <= 'F' = Just (fromEnum c - fromEnum 'A' + 10)
-        | otherwise            = Nothing
+    entries <- footerEntries "related" item
+    if null entries
+        then fail "no similar links"
+        else return (renderSimilarLinks (take maxRelated entries))
 
 -- | Percent-encode a string for use as a URI query value: RFC 3986
 -- unreserved characters pass through; everything else — including @&@,

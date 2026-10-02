@@ -51,6 +51,7 @@ import           Hakyll
 import           Contexts               (siteCtx)
 import           Backlinks              (referencedByField, backlinkMathField)
 import           SimilarLinks           (similarLinksField)
+import           FooterData             (footerDepsField)
 import           ArchiveIndex           (ArchiveStatus (..), statusName,
                                          archiveStatusForSlug, normalizeUrl)
 
@@ -478,6 +479,7 @@ archiveEntryCtx ae = mconcat
     -- the field sets it only when some referenced-by context needs it.
     , backlinkMathField
     , similarLinksField
+    , footerDepsField
     , siteCtx
     ]
   where

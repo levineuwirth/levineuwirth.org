@@ -23,6 +23,7 @@ executable site
         Backlinks
         Dingbat
         SimilarLinks
+        FooterData
         Compilers
         Golden
         Contexts

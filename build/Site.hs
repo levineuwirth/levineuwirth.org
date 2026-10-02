@@ -26,6 +26,7 @@ import Hakyll
 import Archive    (archiveRules)
 import Authors    (buildAllAuthors, applyAuthorRules)
 import Backlinks  (backlinkRules)
+import FooterData (footerRules)
 import BibExtras  (BibExtra (..), emptyBibExtra, firstAuthorSurname, parseBibExtras)
 import Citations  (renderBibliographyHtml)
 import Compilers  (essayCompiler, postCompiler, pageCompiler, poetryCompiler, fictionCompiler,
@@ -405,9 +406,10 @@ rules = do
         route   idRoute
         compile copyFileCompiler
 
-    -- Similar links — produced by tools/embed.py; absent on first build or
-    -- when .venv is not set up.  Compiled as a raw string for similarLinksField.
-    match "data/similar-links.json" $ compile getResourceBody
+    -- Each page's Backlinks and Related entries, split out of
+    -- data/backlinks.json and tools/embed.py's data/similar-links.json by
+    -- `site footer-data` between the two compile passes (build/FooterData.hs).
+    footerRules
 
     -- Bibliography inputs — the @.bib@ databases and the CSL style.
     --
@@ -1559,9 +1561,10 @@ rules = do
 --   * Blog, poetry, and fiction entries can in principle carry figures and
 --     score fragments; none currently do, and neither section has a
 --     figures/ directory. Add them to 'figureDep' if that changes.
---   * @tools/embed.py@ output (@data/similar-links.json@) is matched and
---     loaded, but is written *after* Hakyll runs (audit B01) — a build
---     order problem, not a dependency-tracking one.
+--   * Backlinks and Related come from per-page files that the Makefile
+--     writes between the two compile passes (build/FooterData.hs), so the
+--     first pass renders the previous build's, and @make watch@ and dev
+--     builds render the last production build's.
 
 -- ---------------------------------------------------------------------------
 -- Collections (poetry / fiction landing pages)

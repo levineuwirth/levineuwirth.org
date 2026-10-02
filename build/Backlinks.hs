@@ -15,13 +15,17 @@
 --      inverts the map, and serialises
 --      @target → [{url, title, abstract, context}]@ as JSON.
 --
---   3. @backlinksField@ loads that JSON at page render time and injects
---      an HTML list showing each source's title and a quoted sentence of
---      context. The @load@ call establishes a proper Hakyll dependency so
---      pages recompile when backlinks change.
+--   3. Between the two compile passes, @site footer-data@ splits that JSON
+--      into one file per page (build/FooterData.hs). @backlinksField@ reads
+--      the page's file and injects an HTML list showing each source's title
+--      and a quoted sentence of context. A page depends on its own file
+--      only, so it recompiles when its backlinks change and not whenever
+--      any page's links do; @data/backlinks.json@ itself changes on almost
+--      every edit, and Hakyll has no early cutoff (audit H01).
 --
 -- Dependency order (no cycles):
---   content "links" versions → data/backlinks.json → content default versions
+--   content "links" versions → data/backlinks.json
+--   data/footer/<page>.json (written between passes) → content default versions
 module Backlinks
     ( backlinkRules
     , backlinksField
@@ -34,13 +38,10 @@ import           Data.List                  (isInfixOf, nub, nubBy, partition,
 import           Data.Ord                   (comparing)
 import           Data.Maybe                 (fromMaybe)
 import qualified Data.Map.Strict            as Map
-import           Data.Map.Strict            (Map)
-import qualified Data.ByteString            as BS
 import qualified Data.Text                  as T
 import qualified Data.Text.Lazy             as TL
 import qualified Data.Text.Lazy.Encoding    as TLE
 import qualified Data.Text.Encoding         as TE
-import qualified Data.Text.Encoding.Error   as TE
 import qualified Data.Aeson                 as Aeson
 import           Data.Aeson                 ((.=))
 import           Text.Pandoc.Class          (runPure)
@@ -55,6 +56,7 @@ import           Filters                    (preprocessSource)
 import qualified Patterns                   as P
 import           ArchiveIndex               (archiveSlugFor)
 import           Utils                      (canonicalUrlPath)
+import           FooterData                 (footerEntries, normaliseUrl)
 
 -- ---------------------------------------------------------------------------
 -- Link-with-context entry (intermediate, saved by the "links" pass)
@@ -296,58 +298,12 @@ linksCompiler = do
         leParagraph a == leParagraph b
 
 -- ---------------------------------------------------------------------------
--- URL normalisation
--- ---------------------------------------------------------------------------
-
--- | Normalise an internal URL as a map key: strip query string and
--- fragment; ensure a leading slash; strip a trailing @index.html@
--- (keeping the directory slash) before the bare @.html@ extension, so a
--- page routed @essays\/foo\/index.html@ and a body link authored in the
--- canonical directory form @\/essays\/foo\/@ collide on the same key
--- (mirrors 'SimilarLinks.normaliseUrl'); percent-decode the path so that
--- @\/essays\/caf%C3%A9@ and @\/essays\/café@ collide on the same key.
---
--- Both sides of the backlink join go through this function: page keys
--- via 'backlinksFieldWith' (@normaliseUrl ("/" ++ route)@) and link
--- targets via 'targetKey' — so the two always agree.
-normaliseUrl :: String -> String
-normaliseUrl url =
-    let t  = T.pack url
-        t1 = fst (T.breakOn "?" (fst (T.breakOn "#" t)))
-        t2 = if T.isPrefixOf "/" t1 then t1 else "/" `T.append` t1
-        t3 = fromMaybe t2 (T.stripSuffix "index.html" t2)
-        t4 = fromMaybe t3 (T.stripSuffix ".html" t3)
-    in  percentDecode (T.unpack t4)
-
--- | Decode percent-escapes (@%XX@) into raw bytes, then re-interpret the
--- resulting bytestring as UTF-8. Invalid escapes are passed through
--- verbatim so this is safe to call on already-decoded input.
-percentDecode :: String -> String
-percentDecode = T.unpack . TE.decodeUtf8With lenientDecode . pack . go
-  where
-    go []                 = []
-    go ('%':a:b:rest)
-        | Just hi <- hexDigit a
-        , Just lo <- hexDigit b
-        = fromIntegral (hi * 16 + lo) : go rest
-    go (c:rest)           = fromIntegral (fromEnum c) : go rest
-
-    hexDigit c
-        | c >= '0' && c <= '9' = Just (fromEnum c - fromEnum '0')
-        | c >= 'a' && c <= 'f' = Just (fromEnum c - fromEnum 'a' + 10)
-        | c >= 'A' && c <= 'F' = Just (fromEnum c - fromEnum 'A' + 10)
-        | otherwise            = Nothing
-
-    pack = BS.pack
-    lenientDecode = TE.lenientDecode
-
--- ---------------------------------------------------------------------------
 -- Archive-aware target keying
 -- ---------------------------------------------------------------------------
 
 -- | The @data/backlinks.json@ key an outbound URL inverts to. An archived
 -- external URL canonicalises to its @/archive/<slug>/@ page key — computed
--- exactly as 'backlinksFieldWith' computes the archive page's own key (the
+-- exactly as 'FooterData.footerKey' computes the archive page's own key (the
 -- same string fed through 'normaliseUrl'), so the two always agree. Every
 -- other URL is normalised as before.
 targetKey :: T.Text -> T.Text
@@ -481,43 +437,23 @@ referencedByField = backlinksFieldWith renderReferencedBy "referenced-by"
 -- math-free archive page keeps loading no typesetter.
 backlinkMathField :: Context String
 backlinkMathField = field "math" $ \item -> do
-    blItem <- load (fromFilePath "data/backlinks.json") :: Compiler (Item String)
-    case Aeson.decodeStrict (TE.encodeUtf8 (T.pack (itemBody blItem)))
-            :: Maybe (Map T.Text [BacklinkSource]) of
-        Nothing    -> noResult "backlink math: could not parse data/backlinks.json"
-        Just blMap -> do
-            mRoute <- getRoute (itemIdentifier item)
-            case mRoute of
-                Nothing -> noResult "backlink math: item has no route"
-                Just r  ->
-                    let key     = T.pack (normaliseUrl ("/" ++ r))
-                        sources = fromMaybe [] (Map.lookup key blMap)
-                    in  if any hasMath sources
-                        then return "true"
-                        else noResult "no math in any backlink context"
+    sources <- footerEntries "backlinks" item
+    if any hasMath sources
+        then return "true"
+        else noResult "no math in any backlink context"
   where
     hasMath s = any ("class=\"math" `isInfixOf`) [blSentence s, blParagraph s]
 
--- | Shared machinery for 'backlinksField' and 'referencedByField': look the
--- page up in @data/backlinks.json@ by its normalised route, then hand the
--- sorted sources to the given renderer.
+-- | Shared machinery for 'backlinksField' and 'referencedByField': the
+-- page's sources from its footer file (build/FooterData.hs), sorted, handed
+-- to the given renderer. Fails when there are none, so that the template's
+-- @$if(…)$@ hides the section.
 backlinksFieldWith :: ([BacklinkSource] -> String) -> String -> Context String
 backlinksFieldWith renderSources name = field name $ \item -> do
-    blItem <- load (fromFilePath "data/backlinks.json") :: Compiler (Item String)
-    case Aeson.decodeStrict (TE.encodeUtf8 (T.pack (itemBody blItem)))
-            :: Maybe (Map T.Text [BacklinkSource]) of
-        Nothing    -> noResult "backlinks: could not parse data/backlinks.json"
-        Just blMap -> do
-            mRoute <- getRoute (itemIdentifier item)
-            case mRoute of
-                Nothing -> fail "backlinks: item has no route"
-                Just r  ->
-                    let key     = T.pack (normaliseUrl ("/" ++ r))
-                        sources = fromMaybe [] (Map.lookup key blMap)
-                        sorted  = sortBy (comparing blTitle) sources
-                    in  if null sorted
-                        then fail "no backlinks"
-                        else return (renderSources sorted)
+    sources <- footerEntries "backlinks" item
+    if null sources
+        then fail "no backlinks"
+        else return (renderSources (sortBy (comparing blTitle) sources))
 
 -- ---------------------------------------------------------------------------
 -- HTML rendering

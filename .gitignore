@@ -79,6 +79,7 @@ paper/*.log
 # Data files that are generated at build time (not version-controlled)
 data/embeddings.json
 data/similar-links.json
+data/footer/
 data/backlinks.json
 data/build-stats.json
 data/build-start.txt

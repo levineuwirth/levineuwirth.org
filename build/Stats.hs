@@ -224,7 +224,7 @@ stripHtmlTags = go
     skipApos []        = []
 
 -- | Normalise a page URL for backlink map lookup. Must mirror
--- 'Backlinks.normaliseUrl': strip a trailing @index.html@ (keeping the
+-- 'FooterData.normaliseUrl': strip a trailing @index.html@ (keeping the
 -- directory slash) before the bare @.html@ extension, so the keys this
 -- produces match the keys written into @data/backlinks.json@.
 normUrl :: String -> String
