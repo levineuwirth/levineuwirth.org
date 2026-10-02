@@ -2,18 +2,62 @@
 # vps-status — one line about the VPS's units, for the weekly agent log.
 #
 # Run from oneiros (`tools/vps-status`); reads, never writes. Prints one
-# line: failed units, the last result and time of each backup/verify job,
-# the sync server's state, disk use. The weekly pass copies it into
-# Archivum Diarium; nothing here counts or nags. (root's login shell on
-# the box is fish, hence the explicit bash.)
+# line: failed units; for every backup, verify and update job its last
+# result and time and whether its timer is enabled; the age of each
+# backup set's local and off-host stamps; the containers; a held Forgejo
+# image; how long ago the OS was upgraded and whether a reboot is pending;
+# the sync server; disk use. The weekly pass copies it into Archivum
+# Diarium; nothing here counts or nags.
+#
+# Read the stamps, not just the results (audit Y01): a unit that never ran
+# reports Result=success, a failure clears itself the next night, and
+# last-success is written before the upload, so only last-offhost-success
+# (written after the upload is read back) says the off-host copy is fresh.
+#
+#   tools/vps-status           over ssh to the `vps` alias
+#   tools/vps-status --local   run the same probe here (a smoke test)
+#
+# The probe goes to the box on stdin to `bash -s`: root's login shell there
+# is fish, and this avoids quoting it through two shells.
 set -euo pipefail
-ssh -o BatchMode=yes -o ConnectTimeout=10 vps bash -c "'
-    failed=\$(systemctl --failed --no-legend --plain | awk \"{print \\\$1}\" | tr \"\\n\" \" \")
-    printf \"vps %s: failed=[%s]\" \"\$(date -u +%Y-%m-%d)\" \"\${failed:-none}\"
-    for u in forgejo-backup anki-sync-backup forgejo-backup-verify vps-offsite-verify anki-sync-upgrade forgejo-update; do
-        r=\$(systemctl show -p Result --value \$u.service 2>/dev/null)
-        t=\$(systemctl show -p ExecMainExitTimestamp --value \$u.service 2>/dev/null | awk \"{print \\\$2}\")
-        printf \" %s=%s@%s\" \"\$u\" \"\${r:-never}\" \"\${t:-never}\"
-    done
-    printf \" anki-sync=%s disk=%s\\n\" \"\$(systemctl is-active anki-sync 2>/dev/null)\" \"\$(df -h / | awk \"NR==2{print \\\$5}\")\"
-'"
+
+read -r -d '' PROBE <<'PROBE' || true
+set -u
+now=$(date -u +%s)
+age() {   # age <file>: hours since its mtime, or "none"
+    if [ -f "$1" ]; then echo "$(( (now - $(stat -c %Y "$1")) / 3600 ))h"; else echo none; fi
+}
+failed=$(systemctl --failed --no-legend --plain 2>/dev/null | awk '{print $1}' | paste -sd, -)
+printf 'vps %s: failed=[%s]' "$(date -u +%F)" "${failed:-none}"
+for u in forgejo-backup anki-sync-backup couchdb-backup forgejo-backup-verify couchdb-backup-verify \
+         vps-offsite-verify anki-sync-upgrade forgejo-update; do
+    r=$(systemctl show -p Result --value "$u.service" 2>/dev/null || true)
+    t=$(systemctl show -p ExecMainExitTimestamp --value "$u.service" 2>/dev/null | awk '{print $2}')
+    e=$(systemctl is-enabled "$u.timer" 2>/dev/null || true)
+    printf ' %s=%s@%s/%s' "$u" "${r:-?}" "${t:-never}" "${e:-missing}"
+done
+for set in forgejo:/root/forgejo-backups anki:/root/anki-sync-backups couchdb:/root/couchdb-backups; do
+    n=${set%%:*} d=${set#*:}
+    printf ' %s:local=%s,offhost=%s' "$n" "$(age "$d/last-success")" "$(age "$d/last-offhost-success")"
+done
+if command -v docker >/dev/null 2>&1; then
+    printf ' docker=[%s]' "$(docker ps -a --filter name='^forgejo$' --filter name='^couchdb$' \
+        --format '{{.Names}}:{{.Status}}' 2>/dev/null | tr ' ' '_' | paste -sd, -)"
+fi
+[ -e /var/lib/forgejo-update/hold ] && printf ' forgejo-hold=%s' "$(cut -c1-19 /var/lib/forgejo-update/hold)"
+if [ -r /var/log/pacman.log ]; then
+    last=$(grep -a 'starting full system upgrade' /var/log/pacman.log | tail -1 | cut -c2-11)
+    up=none; [ -n "$last" ] && up="$(( (now - $(date -u -d "$last" +%s)) / 86400 ))d"
+    running=$(uname -r)
+    installed=$(pacman -Q linux 2>/dev/null | awk '{print $2}' | sed 's/\.arch/-arch/')
+    reboot=no; [ -n "$installed" ] && [ "$installed" != "$running" ] && reboot="yes($running->$installed)"
+    printf ' os-upgrade=%s reboot=%s' "$up" "$reboot"
+fi
+printf ' anki-sync=%s disk=%s\n' "$(systemctl is-active anki-sync 2>/dev/null || true)" "$(df -h / | awk 'NR==2{print $5}')"
+PROBE
+
+if [ "${1:-}" = --local ]; then
+    bash -s <<<"$PROBE"
+else
+    ssh -o BatchMode=yes -o ConnectTimeout=10 vps bash -s <<<"$PROBE"
+fi
