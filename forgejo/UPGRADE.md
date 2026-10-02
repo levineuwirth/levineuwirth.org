@@ -668,6 +668,12 @@ The journal names everything this needs:
 running image ID before the update, and the one applied), and
 `/var/lib/forgejo-update/needs-operator` repeats both.
 
+The marker is written before replacement begins and cleared only after a
+verified update or a successful rollback without migrations. If the unit
+was interrupted or timed out, it stays in place: inspect the recorded image
+IDs, archive and migration logs before deciding whether a restore is needed.
+An interrupted run must not be retried merely by deleting the marker.
+
 1. Restore the database and data from `PREHOP` exactly as above.
 2. Put the previous image back under the tag the compose file uses, so
    `docker compose up -d` starts it: `docker tag <running-id> codeberg.org/forgejo/forgejo:15`,

@@ -54,7 +54,7 @@ wait_for() {   # wait_for <version> — the API answers with it, and the contain
 hold() { mkdir -p "$(dirname "$HOLD")"; echo "$pulled" > "$HOLD"; }
 needs_operator() {   # needs_operator <why>
     mkdir -p "$(dirname "$ATTENTION")"
-    printf '%s %s (image %s, pre-update archive %s)\n' "$(date -u +%FT%TZ)" "$1" "$pulled" "$archive" > "$ATTENTION"
+    printf '%s %s (image %s, previous image %s, pre-update archive %s)\n' "$(date -u +%FT%TZ)" "$1" "$pulled" "$running" "$archive" > "$ATTENTION"
 }
 decline() {   # decline <message>: leave the running image named by the local tag, and fail
     docker tag "$running" "$IMAGE" 2>/dev/null || true
@@ -106,14 +106,21 @@ log "images: running $running, applying $pulled"
 docker exec -u git "$CONTAINER" gitea manager flush-queues --timeout 60s >/dev/null 2>&1 \
     || log "flush-queues did not complete; continuing"
 since=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+# Persist the recovery state before replacement can run migrations. A unit
+# timeout, signal, or unexpected command failure must not make tomorrow's
+# run mistake a half-finished update for an unchanged, healthy installation.
+hold
+needs_operator "update to forgejo $new started; completion has not been verified"
 docker tag "$pulled" "$IMAGE"           # recreate on exactly the image this run checked
 docker compose up -d 2>&1 | tail -1 || log "compose up reported an error; waiting anyway"
 
 if wait_for "$new"; then
-    integrity=$(docker exec -u git "$CONTAINER" sqlite3 -cmd '.timeout 15000' /data/gitea/gitea.db 'PRAGMA integrity_check;' 2>&1 | head -1)
+    if ! integrity=$(docker exec -u git "$CONTAINER" sqlite3 -cmd '.timeout 15000' /data/gitea/gitea.db 'PRAGMA integrity_check;' 2>&1 | head -1); then
+        integrity="integrity_check command failed: $integrity"
+    fi
     migrations=$(docker logs --since "$since" "$CONTAINER" 2>&1 | grep -c 'Migration\[' || true)
     if [ "$integrity" = ok ]; then
-        rm -f "$HOLD"
+        rm -f "$HOLD" "$ATTENTION"
         [ "$PRUNE" = 1 ] && { docker image prune -f >/dev/null 2>&1 || true; }
         done_ok "forgejo running at $new (migrations: $migrations, integrity ok)"
     fi
@@ -138,6 +145,7 @@ hold
 docker tag "$running" "$IMAGE"
 docker compose up -d 2>&1 | tail -1 || true
 if [ -n "$before" ] && wait_for "$before"; then
+    rm -f "$ATTENTION"
     log "rolled back to $before; $new is on hold"
 else
     log "rollback did not come up either; operator needed"
