@@ -50,8 +50,14 @@
     transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
+/* The title is what gives way when the bar is short of room: it is the
+   one thing in the bar that is also on the page behind it. Rigid, a long
+   one ("Concerto for Bassoon and Orchestra") pushed the movements, Play
+   and Settings off the right edge of a phone, where keyboard focus still
+   reached Settings unseen. */
 .score-reader-bar-left {
-    flex: 0 0 auto;
+    flex: 0 1 auto;
+    min-width: 0;
 }
 
 .score-reader-movements {
@@ -73,6 +79,9 @@
 }
 
 .score-reader-back {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
     color: var(--text-muted);
     text-decoration: none;
     white-space: nowrap;
