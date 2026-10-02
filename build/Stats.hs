@@ -233,6 +233,15 @@ normUrl u
     | ".html" `isSuffixOf` u      = take (length u - 5) u
     | otherwise                   = u
 
+-- | A URL for a backlinks key that matches no page in the corpus: a
+-- directory key, or one whose last segment has an extension, is already
+-- the URL; any other lost its @.html@ to 'normUrl'.
+keyUrl :: String -> String
+keyUrl k
+    | "/" `isSuffixOf` k                         = k
+    | '.' `elem` takeWhile (/= '/') (reverse k) = k
+    | otherwise                                  = k ++ ".html"
+
 pad2 :: (Show a, Integral a) => a -> String
 pad2 n = if n < 10 then "0" ++ show n else show n
 
@@ -1144,9 +1153,13 @@ statsRules tags = do
                     [ p | p <- allPIs
                     , not (Set.member (normUrl (piUrl p)) blSet) ]
                 mostLinked  = listToMaybe (sortBy (comparing (Down . snd)) blPairs)
-                mostLinkedInfo = mostLinked >>= \(url, ct) ->
-                    let mTitle = piTitle <$> find (\p -> normUrl (piUrl p) == url) allPIs
-                    in  Just (url, ct, fromMaybe url mTitle)
+                -- The link is the page's own URL, not the backlinks key: a
+                -- key has lost its .html, so linking it 404s wherever the
+                -- server does not try $uri.html (audit X5).
+                mostLinkedInfo = mostLinked >>= \(key, ct) ->
+                    case find (\p -> normUrl (piUrl p) == key) allPIs of
+                        Just p  -> Just (piUrl p, ct, piTitle p)
+                        Nothing -> Just (keyUrl key, ct, key)
 
             -- ----------------------------------------------------------------
             -- Epistemic coverage (essays + posts)
