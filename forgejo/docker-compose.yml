@@ -87,5 +87,11 @@ services:
     cpus: 1.0
 
 networks:
+  # Created by hand, once, with the addresses REVERSE_PROXY_TRUSTED_PROXIES
+  # names (nginx's requests arrive from the gateway):
+  #   docker network create --subnet 172.18.0.0/16 --gateway 172.18.0.1 proxy-net
+  # Left to Docker, a rebuilt host could number it differently, and Forgejo
+  # would stop trusting nginx's forwarded addresses (audit Y13). The nightly
+  # config backup records the live network in inventory/docker-networks.json.
   proxy-net:
     external: true

@@ -1,6 +1,6 @@
 # Monthly proof that the off-host backups restore: borg check on the
-# repository, then the newest Forgejo, Anki, and CouchDB archives
-# extracted from it and verified — checksum, then the same integrity
+# repository, then the newest Forgejo, Anki, CouchDB and host-configuration
+# archives extracted from it and verified — checksum, then the same integrity
 # checks the local --verify runs (CouchDB's restores into a scratch
 # container, so this unit now depends on docker too). Fails loudly in the
 # journal; tools/vps-status reads it.

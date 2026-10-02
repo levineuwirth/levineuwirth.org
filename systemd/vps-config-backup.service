@@ -1,0 +1,25 @@
+# Nightly archive of the VPS's own configuration (tools/vps-config-backup.sh):
+# /etc, the compose directories without their data, the installed scripts
+# and an inventory of packages, Docker networks and enabled units (audit Y13).
+#
+#   scp tools/vps-config-backup.sh root@<vps>:/usr/local/bin/ && ssh root@<vps> chmod 755 /usr/local/bin/vps-config-backup.sh
+#   scp systemd/vps-config-backup.{service,timer} root@<vps>:/etc/systemd/system/
+#   scp systemd/vps-config-backup.env.example root@<vps>:/etc/default/vps-config-backup   (then chmod 600)
+#   ssh root@<vps> systemctl daemon-reload && systemctl enable --now vps-config-backup.timer
+
+[Unit]
+Description=VPS configuration backup (/etc, compose files, inventory)
+Documentation=https://git.levineuwirth.org/neuwirth/levineuwirth.org
+# network-online: borg reaches the storage box over ssh, and Persistent=
+# fires a missed run right at boot (audit Y07).
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/default/vps-config-backup
+ExecStart=/usr/local/bin/vps-config-backup.sh
+Nice=15
+IOSchedulingClass=idle
+TimeoutStartSec=45min
+Environment=TMPDIR=/var/tmp

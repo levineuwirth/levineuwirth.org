@@ -13,6 +13,7 @@ All times UTC. `+n` is the timer's `RandomizedDelaySec`.
 | `couchdb-backup` | daily 03:15 +10m | CouchDB dump → `/root/couchdb-backups`, borg `couchdb-*` |
 | `forgejo-backup` | daily 03:30 +20m | Forgejo snapshot + tarball → `/root/forgejo-backups`, borg `forgejo-*` |
 | `anki-sync-backup` | daily 03:45 +10m | stops the server, snapshots, restarts → `/root/anki-sync-backups`, borg `anki-*` |
+| `vps-config-backup` | daily 04:00 +10m | `/etc` (not `/etc/borg`), the compose directories without their data, `/usr/local`, update state, an inventory of packages, Docker networks and units → `/root/vps-config-backups`, borg `config-*` |
 | `anki-sync-upgrade` | daily 04:30 +15m | the server's venv (PyPI `anki`); restarts the server |
 | `forgejo-backup-verify` | Sun 04:30 +20m | restores the newest local Forgejo archive into a scratch container |
 | `couchdb-backup-verify` | Sun 04:45 +10m | restores the newest local CouchDB archive into a scratch container on 127.0.0.1:15984 |
@@ -23,7 +24,7 @@ All times UTC. `+n` is the timer's `RandomizedDelaySec`.
 Containers: `forgejo` (127.0.0.1:3000, and :2222 for git over ssh) and
 `couchdb` (127.0.0.1:5984), both behind nginx.
 
-The three backups and the monthly verify share one borg repository on the
+The four backups and the monthly verify share one borg repository on the
 storage box; every borg call waits for its lock (`BORG_LOCK_WAIT`, default
 30 min) rather than failing the job that comes second. `anki-sync-backup`
 and `anki-sync-upgrade` share `/run/lock/anki-sync.lock`.
@@ -31,6 +32,33 @@ and `anki-sync-upgrade` share `/run/lock/anki-sync.lock`.
 Health: `tools/vps-status` (run from the laptop). A backup set is fresh when
 its `offhost` age is under a day: `local` is stamped before the upload,
 `offhost` only after the upload has been read back.
+
+## Rebuilding the host
+
+A new VPS needs the repo, the borg repository and the password manager (the
+borg passphrase and the storage-box key, neither of which is in any backup).
+The newest `config-*` archive holds the rest of the host: restore `/etc/nginx`,
+`/etc/letsencrypt`, `/etc/default/*`, `/etc/anki-sync`, the compose
+directories and `/usr/local` from it, reinstall the packages in
+`inventory/packages.txt`, recreate `proxy-net` before Forgejo's first start
+with the command in `forgejo/docker-compose.yml` (check the subnet against
+`inventory/docker-networks.json`), then restore each service's data from its
+own set (`couchdb/RESTORE.md`, `forgejo/UPGRADE.md`).
+
+## Installing the configuration backup (audit Y13)
+
+```bash
+scp tools/vps-config-backup.sh tools/vps-offsite-verify.sh root@vps:/usr/local/bin/
+scp systemd/vps-config-backup.{service,timer} systemd/vps-offsite-verify.service root@vps:/etc/systemd/system/
+scp systemd/vps-config-backup.env.example root@vps:/etc/default/vps-config-backup
+ssh root@vps 'chmod 600 /etc/default/vps-config-backup && chmod 755 /usr/local/bin/vps-config-backup.sh && systemctl daemon-reload'
+ssh root@vps 'systemctl start vps-config-backup.service && vps-config-backup.sh --verify && ls -l /root/vps-config-backups/'
+ssh root@vps 'systemctl enable --now vps-config-backup.timer'
+ssh root@vps "docker network inspect proxy-net -f '{{json .IPAM.Config}}'"   # 172.18.0.0/16 via 172.18.0.1, as the compose file says
+```
+
+`tools/vps-status` (run from the laptop) now lists the job and the `config`
+set's stamps, and the monthly verify restores the set.
 
 ## Installing the 2026-10-02 changes (audit phase 4)
 

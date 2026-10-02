@@ -1,0 +1,12 @@
+[Unit]
+Description=Nightly VPS configuration backup
+
+[Timer]
+# 04:00 UTC, after the three data backups. They all upload to one borg
+# repository; borg-offhost.sh waits for its lock rather than failing.
+OnCalendar=*-*-* 04:00
+RandomizedDelaySec=10min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

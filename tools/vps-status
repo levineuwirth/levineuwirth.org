@@ -29,14 +29,15 @@ age() {   # age <file>: hours since its mtime, or "none"
 }
 failed=$(systemctl --failed --no-legend --plain 2>/dev/null | awk '{print $1}' | paste -sd, -)
 printf 'vps %s: failed=[%s]' "$(date -u +%F)" "${failed:-none}"
-for u in forgejo-backup anki-sync-backup couchdb-backup forgejo-backup-verify couchdb-backup-verify \
-         vps-offsite-verify anki-sync-upgrade forgejo-update couchdb-update; do
+for u in forgejo-backup anki-sync-backup couchdb-backup vps-config-backup forgejo-backup-verify \
+         couchdb-backup-verify vps-offsite-verify anki-sync-upgrade forgejo-update couchdb-update; do
     r=$(systemctl show -p Result --value "$u.service" 2>/dev/null || true)
     t=$(systemctl show -p ExecMainExitTimestamp --value "$u.service" 2>/dev/null | awk '{print $2}')
     e=$(systemctl is-enabled "$u.timer" 2>/dev/null || true)
     printf ' %s=%s@%s/%s' "$u" "${r:-?}" "${t:-never}" "${e:-missing}"
 done
-for set in forgejo:/root/forgejo-backups anki:/root/anki-sync-backups couchdb:/root/couchdb-backups; do
+for set in forgejo:/root/forgejo-backups anki:/root/anki-sync-backups couchdb:/root/couchdb-backups \
+           config:/root/vps-config-backups; do
     n=${set%%:*} d=${set#*:}
     printf ' %s:local=%s,offhost=%s' "$n" "$(age "$d/last-success")" "$(age "$d/last-offhost-success")"
 done
