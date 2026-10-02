@@ -88,8 +88,21 @@ class GoldenTests(unittest.TestCase):
     def test_fixtures_match_their_golden_html(self) -> None:
         for name, actual in self.rendered.items():
             expected_path = GOLDEN_DIR / f"{name}.html"
-            if UPDATE or not expected_path.exists():
+            if UPDATE:
                 expected_path.write_text(actual, encoding="utf-8")
+                continue
+            # A fixture without its golden page fails rather than writing
+            # one: written during `make deploy`, it would be an untracked
+            # file in tests/ that stops deploy-recheck with a confusing
+            # "inputs changed" (audit T13), and a golden nobody reviewed
+            # asserts nothing.
+            with self.subTest(fixture=name):
+                self.assertTrue(
+                    expected_path.exists(),
+                    f"tests/golden/{name}.html is missing: review the rendering, "
+                    f"then create it with UPDATE_GOLDEN=1",
+                )
+            if not expected_path.exists():
                 continue
             expected = expected_path.read_text(encoding="utf-8")
             with self.subTest(fixture=name):
