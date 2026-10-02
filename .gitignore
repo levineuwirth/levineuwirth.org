@@ -95,6 +95,8 @@ data/.full-rebuild-pending
 data/.site-build.lock
 # Content-addressed compression sidecars (tools/compress-assets.sh).
 data/.compress-cache/
+# Stage 2's start time, for the Stage 3 skip (Makefile).
+data/.embed-start
 # Written only by `make deploy ALLOW_DIRTY_DEPLOY=1`, recording which build
 # inputs differed from HEAD at deploy time. Local forensics; never shipped,
 # and committing it would defeat the point of the clean-tree guard.

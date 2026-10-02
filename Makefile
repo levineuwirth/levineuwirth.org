@@ -176,6 +176,7 @@ build-locked:
 	# published semantic metadata described the previous edit of the site,
 	# and a new essay's Related section did not appear until the build
 	# after the one that created it. (B01)
+	@touch data/.embed-start
 	@if [ -d .venv ]; then \
 	  HF_HUB_DISABLE_IMPLICIT_TOKEN=1 uv run python tools/embed.py || echo "Warning: embedding failed — data/similar-links.json not updated (build continues)"; \
 	else \
@@ -183,14 +184,21 @@ build-locked:
 	fi
 	# ---- Stage 3: recompile the consumers of what stage 2 produced -------
 	#
-	# Incremental and usually near-free: data/similar-links.json and the
-	# semantic pair are matched Hakyll resources, so if embed.py rewrote
-	# none of them (the common case — both passes are content-hash cached)
-	# Hakyll finds no changed dependency and recompiles nothing. When they
-	# did change, exactly their consumers recompile, and the semantic pair
-	# is copied into _site/data/ — including on a first-ever build, where
-	# these files did not exist as identifiers during stage 1.
-	cabal run site -- build
+	# data/similar-links.json and the semantic pair are matched Hakyll
+	# resources: when embed.py changed one, exactly its consumers recompile,
+	# and the semantic pair is copied into _site/data/ — including on a
+	# first-ever build, where these files did not exist as identifiers during
+	# stage 1. embed.py leaves identical bytes alone, so when none of the
+	# three is newer than the start of stage 2 there is nothing for this pass
+	# to do, and it is skipped rather than paying a second Hakyll start-up and
+	# dependency check (audit D16).
+	@if [ data/similar-links.json -nt data/.embed-start ] \
+	   || [ data/semantic-index.bin -nt data/.embed-start ] \
+	   || [ data/semantic-meta.json -nt data/.embed-start ]; then \
+	  echo "cabal run site -- build"; cabal run site -- build; \
+	else \
+	  echo "build: embed.py changed nothing — the second compile pass is skipped"; \
+	fi
 	@./tools/build-freshness.sh stamp
 	# Defense in depth: stage 3 runs with SITE_ENV=production and cannot
 	# create drafts, but an aborted earlier run could have left some.
