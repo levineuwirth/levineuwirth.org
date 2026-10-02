@@ -167,6 +167,13 @@ mkdir -p "$ENTRY_DIR"
 # Step 1: resize + colorspace, EXIF preserved (so the extractor can read it)
 # ---------------------------------------------------------------------------
 
+# From here until the strip in step 3 succeeds, $TARGET carries the camera's
+# full EXIF (GPS, serial numbers) inside content/, which the build publishes
+# whether or not git tracks it. Any exit before then — a failure, or Ctrl-C
+# during extraction — removes it (audit T03); a retry then starts clean
+# instead of refusing an "existing" entry.
+trap 'rm -f -- "$TARGET"' EXIT INT TERM
+
 echo "import-photo: resizing to ≤2400px JPEG q85 sRGB → $TARGET"
 magick "$ORIGINAL" \
     -auto-orient \
@@ -206,6 +213,7 @@ exiftool -q -all= --icc_profile:all -overwrite_original "$TARGET" \
         echo "import-photo: exiftool -all= failed for $TARGET (EXIF NOT stripped); deleted the copied target so the EXIF-laden JPEG cannot be auto-committed" >&2
         exit 1
     }
+trap - EXIT INT TERM
 
 # Stripping rewrites the JPEG, so the delivered file is now NEWER than the
 # sidecar we just extracted from it. extract-exif.py treats

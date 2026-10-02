@@ -452,6 +452,38 @@ class CheckSiteTestCase(unittest.TestCase):
         code, output = self.run_gate()
         self.assertEqual(code, 0, output)
 
+    # -- photo GPS --------------------------------------------------------
+
+    @staticmethod
+    def jpeg(*ifd0_tags: int, endian: str = "<") -> bytes:
+        """SOI, an APP1 Exif segment whose IFD0 holds the given tags, EOI."""
+        import struct
+        order = b"II" if endian == "<" else b"MM"
+        entries = b"".join(struct.pack(endian + "HHII", t, 4, 1, 0) for t in ifd0_tags)
+        tiff = order + struct.pack(endian + "HI", 42, 8) + struct.pack(endian + "H", len(ifd0_tags)) \
+            + entries + struct.pack(endian + "I", 0)
+        body = b"Exif\0\0" + tiff
+        return b"\xff\xd8" + b"\xff\xe1" + struct.pack(">H", len(body) + 2) + body + b"\xff\xd9"
+
+    def write_bytes(self, rel: str, data: bytes) -> None:
+        path = self.root / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+
+    def test_photo_with_gps_fails(self):
+        for endian in ("<", ">"):
+            with self.subTest(endian=endian):
+                self.write_bytes("photography/s/a.jpg", self.jpeg(0x010F, 0x8825, endian=endian))
+                code, output = self.run_gate()
+                self.assertEqual(code, 1)
+                self.assertIn("photo-gps", output)
+
+    def test_photo_without_gps_passes(self):
+        self.write_bytes("photography/s/a.jpg", self.jpeg(0x010F, 0x0112))
+        self.write_bytes("photography/s/b.jpg", b"\xff\xd8\xff\xd9")
+        code, output = self.run_gate()
+        self.assertEqual(code, 0, output)
+
     # -- search model -----------------------------------------------------
 
     def test_semantic_search_without_its_model_fails(self):

@@ -153,6 +153,12 @@ fi
 
 mkdir -p "$(dirname "${TARGETS[0]}")"
 
+# The resized copies keep the camera's EXIF (GPS, serial numbers) until step 3
+# strips it, and content/ is published whether or not git tracks a file. Any
+# exit before the strip succeeds — a failed resize, a failed extraction,
+# Ctrl-C — removes every copy (audit T03).
+trap 'rm -f -- "${TARGETS[@]}"' EXIT INT TERM
+
 # ---------------------------------------------------------------------------
 # 1. Resize, in parallel. The only stage that is real per-image work.
 # ---------------------------------------------------------------------------
@@ -212,6 +218,7 @@ if ! exiftool -q -all= --icc_profile:all -overwrite_original "${TARGETS[@]}"; th
     rm -f -- "${TARGETS[@]}"
     exit 1
 fi
+trap - EXIT INT TERM
 
 # Stripping rewrote each file, making it newer than the sidecar extracted from
 # it; extract-exif.py would then treat those sidecars as stale and overwrite

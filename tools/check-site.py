@@ -600,6 +600,49 @@ def check_webp(site_dir: str, report: Report, *, as_error: bool) -> None:
         )
 
 
+def jpeg_gps(path: str) -> bool:
+    """Whether a JPEG's EXIF (APP1) carries a GPS IFD pointer (tag 0x8825).
+    Reads markers up to the image data only; anything unparseable is
+    treated as no EXIF rather than guessed at."""
+    import struct
+    try:
+        with open(path, "rb") as f:
+            if f.read(2) != b"\xff\xd8":
+                return False
+            while True:
+                marker = f.read(2)
+                if len(marker) < 2 or marker[0] != 0xFF or marker[1] in (0xDA, 0xD9):
+                    return False
+                (length,) = struct.unpack(">H", f.read(2))
+                body = f.read(length - 2)
+                if marker[1] != 0xE1 or not body.startswith(b"Exif\0\0"):
+                    continue
+                tiff = body[6:]
+                endian = {b"II": "<", b"MM": ">"}.get(tiff[:2])
+                if endian is None:
+                    return False
+                (ifd,) = struct.unpack(endian + "I", tiff[4:8])
+                (count,) = struct.unpack(endian + "H", tiff[ifd:ifd + 2])
+                for i in range(count):
+                    (tag,) = struct.unpack(endian + "H", tiff[ifd + 2 + 12 * i: ifd + 4 + 12 * i])
+                    if tag == 0x8825:
+                        return True
+                return False
+    except (OSError, struct.error, IndexError):
+        return False
+
+
+def check_photo_gps(site_dir: str, report: Report) -> None:
+    """T03 — a JPEG published with the camera's GPS position. The importers
+    strip EXIF, but a failed or interrupted import used to leave the
+    unstripped copy in content/, which the build publishes regardless of
+    git."""
+    report.check("photo-gps")
+    for full, rel in walk_files(site_dir):
+        if rel.lower().endswith((".jpg", ".jpeg")) and jpeg_gps(full):
+            report.error("photo-gps", f"{rel}: carries GPS EXIF — strip it (exiftool -all=)")
+
+
 # The files tools/download-model.sh fetches, relative to _site/models/.
 SEARCH_MODEL_FILES = tuple(
     f"all-MiniLM-L6-v2/{name}"
@@ -683,6 +726,7 @@ def main(argv: list[str] | None = None) -> int:
     check_404(site_dir, report, as_error=not args.allow_missing_404)
     check_webp(site_dir, report, as_error=args.require_webp)
     check_search_model(site_dir, report)
+    check_photo_gps(site_dir, report)
 
     status = report.summarise(site_dir)
     if status and args.warn_only:
