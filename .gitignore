@@ -7,8 +7,7 @@ _cache/
 # wholesale. These patterns prevent any stray credential-shaped file
 # (dropped accidentally during writing) from being staged + pushed.
 # To intentionally commit one of these (rare), use `git add -f`.
-**/.env
-**/.env.*
+**/.env*
 **/*.env
 # .env.example is documentation (tracked), not a credential file — the
 # patterns above would otherwise shadow it for status/add purposes.
@@ -24,10 +23,18 @@ _cache/
 **/.netrc
 **/.npmrc
 **/.pypirc
-**/credentials
-**/credentials.json
-**/credentials.yaml
-**/credentials.yml
+**/credentials*
+# The rest of what build/Site.hs `neverPublish` and tools/check-site.py
+# refuse to publish. Without these the content/ snapshot committed (and
+# `make deploy` pushed) what the site itself would never serve: a
+# foo.draft.md beside an essay, credentials-2025.csv, interrupted writes
+# (audit D03). tests/test_gitignore.py keeps the three lists in step.
+**/*.draft.*
+**/*.local.html
+**/*.tmp
+**/*.tmp.*
+**/*.part
+**/*.partial
 
 # Editor backup/swap files
 *~
