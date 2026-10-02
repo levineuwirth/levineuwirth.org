@@ -585,13 +585,18 @@ def check_404(site_dir: str, report: Report, *, as_error: bool) -> None:
 def check_webp(site_dir: str, report: Report, *, as_error: bool) -> None:
     """P02 — the WebP pipeline silently no-ops when cwebp is absent."""
     report.check("webp")
-    webp = jpeg = 0
+    webps: set[str] = set()
+    jpegs: list[str] = []
     for _full, rel in walk_files(site_dir):
         lower = rel.lower()
         if lower.endswith(".webp"):
-            webp += 1
+            webps.add(lower)
         elif lower.endswith((".jpg", ".jpeg")):
-            jpeg += 1
+            jpegs.append(lower)
+    # A companion is the JPEG's own foo.webp. Any .webp at all is not: the
+    # score thumbnails are WebP, and counting them hid this warning.
+    jpeg = len(jpegs)
+    webp = sum(1 for j in jpegs if os.path.splitext(j)[0] + ".webp" in webps)
     if jpeg and not webp:
         report.fail(
             "webp",

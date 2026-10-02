@@ -607,6 +607,15 @@ class CheckSiteTestCase(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("zero .webp companions", output)
 
+    def test_a_webp_that_is_no_jpegs_companion_does_not_count(self):
+        # A score thumbnail is WebP but no photograph's companion; counting
+        # it hid the missing pipeline (2026-10-03).
+        os.unlink(self.root / "images" / "a.webp")
+        self.site.write("music/piece/scores/thumb.webp", "webp-bytes")
+        code, output = self.run_gate()
+        self.assertEqual(code, 0, output)
+        self.assertIn("zero .webp companions", output)
+
     def test_no_jpegs_means_no_webp_complaint(self):
         os.unlink(self.root / "images" / "a.webp")
         os.unlink(self.root / "images" / "a.jpg")
