@@ -8,9 +8,17 @@
 # the server paying it on every request.
 #
 # Only files >= MIN_SIZE bytes are compressed — below that, the compression
-# framing overhead can exceed the savings. A sidecar is reused only when it
-# is strictly newer than its source, so re-runs are cheap but a same-second
-# rewrite is never mistaken for up to date.
+# framing overhead can exceed the savings.
+#
+# Sidecars come from a cache keyed by the SHA-256 of the source's bytes
+# ($COMPRESS_CACHE, data/.compress-cache by default; it survives `site --
+# clean`). A source whose bytes were compressed before, in this build or any
+# earlier one, costs a hash and a reflink copy; only new bytes go through
+# brotli -q 11. Before, reuse was decided by mtimes: the brotli CLI copies its
+# input's mtime to its output, so every .br looked stale and all 342 MB were
+# recompressed on every build (audit X2/D01), and no mtime rule can see
+# changed content behind an unchanged mtime. A hash sees both. Entries unused
+# for 30 days are pruned.
 #
 # Three ways a sidecar can go stale, all handled here because nginx serves
 # it in preference to the source whenever the client sends the matching
@@ -38,6 +46,7 @@ set -euo pipefail
 
 SITE_DIR="${1:-_site}"
 MIN_SIZE="${MIN_SIZE:-1024}"  # bytes
+COMPRESS_CACHE="${COMPRESS_CACHE:-$(dirname "$SITE_DIR")/data/.compress-cache}"
 
 if [[ ! "$MIN_SIZE" =~ ^[0-9]+$ ]]; then
     echo "compress-assets: MIN_SIZE must be a positive integer (got '$MIN_SIZE')" >&2
@@ -60,6 +69,8 @@ fi
 # Export for subshells invoked by xargs.
 export MIN_SIZE
 export have_brotli
+export COMPRESS_CACHE
+mkdir -p "$COMPRESS_CACHE"
 
 compress_one() {
     local src="$1"
@@ -80,32 +91,40 @@ compress_one() {
         return
     fi
 
-    # gzip sidecar — -9 max ratio, -n strips filename/mtime for reproducible output.
-    # Reuse only a sidecar strictly newer than the source: `src -nt sidecar`
-    # is false when the two share an mtime, which is exactly the case a
-    # same-second rewrite produces.
-    if [ ! -f "$src.gz" ] || [ ! "$src.gz" -nt "$src" ]; then
-        gzip -9 -n -c "$src" > "$src.gz.tmp" || { rm -f "$src.gz.tmp"; return 1; }
-        if ! gzip -dc "$src.gz.tmp" | cmp -s - "$src"; then
-            rm -f "$src.gz.tmp"
-            echo "compress-assets: gzip sidecar for $src did not round-trip" >&2
-            return 1
-        fi
-        mv "$src.gz.tmp" "$src.gz"
-    fi
-
-    # brotli sidecar — -Z is the max quality (level 11); slow but cached.
-    if [ "$have_brotli" = "1" ]; then
-        if [ ! -f "$src.br" ] || [ ! "$src.br" -nt "$src" ]; then
-            brotli -Z -f -o "$src.br.tmp" "$src" || { rm -f "$src.br.tmp"; return 1; }
-            if ! brotli -dc "$src.br.tmp" | cmp -s - "$src"; then
-                rm -f "$src.br.tmp"
-                echo "compress-assets: brotli sidecar for $src did not round-trip" >&2
+    # One cache entry per (content, encoding). A miss compresses into the
+    # cache and proves the result round-trips; a hit is trusted, since the
+    # entry was proven against these exact bytes when it was made.
+    local h kind cached tmp
+    h=$(sha256sum "$src" | cut -c1-64)
+    for kind in gz br; do
+        [ "$kind" = br ] && [ "$have_brotli" != 1 ] && continue
+        cached="$COMPRESS_CACHE/${h:0:2}/$h.$kind"
+        if [ -f "$cached" ]; then
+            touch "$cached"                     # recently used: kept by the prune
+        else
+            mkdir -p "${cached%/*}"
+            tmp="$cached.tmp.$BASHPID"
+            case "$kind" in
+                # -n: no name or mtime in the header, so the bytes depend on content alone
+                gz) gzip -9 -n -c "$src" > "$tmp" ;;
+                br) brotli -Z -c "$src" > "$tmp" ;;
+            esac || { rm -f "$tmp"; return 1; }
+            local decode=(gzip -dc)
+            [ "$kind" = br ] && decode=(brotli -dc)
+            if ! "${decode[@]}" "$tmp" | cmp -s - "$src"; then
+                rm -f "$tmp"
+                echo "compress-assets: $kind sidecar for $src did not round-trip" >&2
                 return 1
             fi
-            mv "$src.br.tmp" "$src.br"
+            mv -f "$tmp" "$cached"
         fi
-    fi
+        # Replace the sidecar only when its bytes differ, so an unchanged
+        # sidecar keeps its mtime and rsync leaves it alone.
+        if ! cmp -s "$cached" "$src.$kind"; then
+            cp --reflink=auto "$cached" "$src.$kind.tmp" && mv -f "$src.$kind.tmp" "$src.$kind" \
+                || { rm -f "$src.$kind.tmp"; return 1; }
+        fi
+    done
 }
 export -f compress_one
 
@@ -160,5 +179,9 @@ then
     echo "compress-assets: one or more sidecars failed to verify — aborting" >&2
     exit 1
 fi
+
+# Cache entries no build has used for 30 days, and debris from interrupted runs.
+find "$COMPRESS_CACHE" -type f \( -name '*.gz' -o -name '*.br' \) -mtime +30 -delete 2>/dev/null || true
+find "$COMPRESS_CACHE" -type f -name '*.tmp.*' -mmin +60 -delete 2>/dev/null || true
 
 echo "compress-assets: sidecars written under $SITE_DIR/ ($orphans orphan(s) removed)"
