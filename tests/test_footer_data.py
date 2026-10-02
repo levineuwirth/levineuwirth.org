@@ -86,6 +86,17 @@ class FooterDataTests(unittest.TestCase):
         self.assertIn("0 rewritten", done.stdout)
         self.assertEqual(self.mtimes(), before)
 
+    def test_literal_unicode_and_encoded_urls_share_a_footer(self) -> None:
+        self.backlinks = {"/essays/café": [BACKLINK]}
+        for url in ("/essays/café.html", "/essays/caf%C3%A9.html"):
+            with self.subTest(url=url):
+                self.similar = {url: [entry("/essays/a.html", 0.7)]}
+                done = self.split()
+                self.assertEqual(done.returncode, 0, done.stderr)
+                footer = self.read("%2Fessays%2Fcaf%C3%A9.json")
+                self.assertEqual(footer["backlinks"], [BACKLINK])
+                self.assertEqual(len(footer["related"]), 1)
+
     def test_a_changed_page_rewrites_only_its_file(self) -> None:
         self.split()
         before = self.mtimes()

@@ -110,7 +110,9 @@ percentDecode = T.unpack . TE.decodeUtf8With TE.lenientDecode . BS.pack . go
         | Just hi <- hexDigit a
         , Just lo <- hexDigit b
         = fromIntegral (hi * 16 + lo) : go rest
-    go (c:rest)           = fromIntegral (fromEnum c) : go rest
+    -- Literal Unicode is already decoded text, not one byte per Char.
+    -- Encode it before combining it with any percent-decoded UTF-8 bytes.
+    go (c:rest)           = BS.unpack (TE.encodeUtf8 (T.singleton c)) ++ go rest
 
     hexDigit c
         | c >= '0' && c <= '9' = Just (fromEnum c - fromEnum '0')
