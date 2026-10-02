@@ -370,6 +370,26 @@
         return (frac > 0.02 && frac < 0.4) ? frac : 0;
     }
 
+    /* The gutter's copy of the page holds only what starts left of the
+       staff lines: the names, brackets and braces, and the paper behind
+       them — about 60 of a page's 2,000 elements. Cloning the whole page
+       doubled the live DOM on every turn for the sake of 3 % of it. A
+       <use> in the copy still finds its outline in the page's own <defs>,
+       which stays in the document beside it. */
+    function gutterCopy(node, frac) {
+        var box  = node.getBoundingClientRect();
+        var edge = box.left + box.width * frac - 1;
+        var copy = node.cloneNode(false);
+        Array.prototype.forEach.call(node.children, function (el) {
+            if (el.localName === 'defs') return;
+            var r = el.getBoundingClientRect();
+            /* Either extent: Chromium measures a vertical line without its
+               stroke, so a bracket's spine is 0 wide there. */
+            if ((r.width || r.height) && r.left < edge) copy.appendChild(el.cloneNode(true));
+        });
+        return copy;
+    }
+
     function buildGutter(node) {
         if (gutterEl && gutterEl.parentNode) gutterEl.parentNode.removeChild(gutterEl);
         gutterEl   = null;
@@ -378,7 +398,7 @@
 
         gutterInner = document.createElement('div');
         gutterInner.className = 'score-gutter-inner';
-        gutterInner.appendChild(node.cloneNode(true));
+        gutterInner.appendChild(gutterCopy(node, gutterFrac));
 
         gutterEl = document.createElement('div');
         gutterEl.className = 'score-gutter';
