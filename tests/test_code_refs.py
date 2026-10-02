@@ -116,6 +116,26 @@ class Eligibility(unittest.TestCase):
         })
         self.assertEqual(found, {"a.py"})
 
+    def test_private_provider_names_and_directories_are_not_scanned(self):
+        found = self.discover({
+            "essays/public.md": self.link("public.py"),
+            "essays/credentials-notes.md": self.link("credential.py"),
+            "essays/id_rsa-notes.md": self.link("key.py"),
+            "essays/credentials-private/index.md": self.link("nested.py"),
+            "essays/__pycache__/notes.md": self.link("cache.py"),
+            "essays/notes.local.md/index.md": self.link("private-dir.py"),
+        })
+        self.assertEqual(found, {"public.py"})
+
+    def test_publication_name_lists_also_guard_code_ref_discovery(self):
+        from tests.test_gitignore import samples
+
+        root = Path("/example/content")
+        for rule, name in samples():
+            with self.subTest(rule=rule):
+                self.assertFalse(code_refs.publishable(root / "essays" / name, root))
+                self.assertFalse(code_refs.publishable(root / "essays" / name / "index.md", root))
+
 
 class Fetch(unittest.TestCase):
     """cmd_fetch against a temporary store, with the network stubbed."""
@@ -208,6 +228,28 @@ class Fetch(unittest.TestCase):
         self.assertEqual(list(index), ["https://github.com/o/pub/tree/main"])
         self.assertFalse((self.store / "github/o/secret").exists())
         self.assertIn("private", out)
+
+    def test_cached_private_repositories_are_removed_even_if_another_fetch_fails(self):
+        for ref in ("main", "a" * 40):
+            with self.subTest(ref=ref):
+                code_refs._visibility.clear()
+                self.page(f"[t](https://github.com/o/secret/tree/{ref})\n")
+                with mock.patch.dict(os.environ, {"GITHUB_TOKEN": ""}):
+                    self.fetch(self.fake_snapshot("a" * 40))
+                self.page(f"[t](https://github.com/o/secret/tree/{ref})\n"
+                          "[u](https://github.com/o/offline/tree/main)\n")
+
+                def api(path):
+                    if path.endswith("/secret"):
+                        return {"private": True}
+                    raise code_refs.FetchError("offline")
+
+                with mock.patch.dict(os.environ, {"GITHUB_TOKEN": "t"}), \
+                     mock.patch.object(code_refs, "api_json", api):
+                    self.fetch(self.fake_snapshot("a" * 40))
+                index = code_refs.load_index()
+                self.assertFalse(any(e["repo"] == "secret" for e in index.values()))
+                self.assertFalse((self.store / "github/o/secret").exists())
 
 
 class RepositoryStore(unittest.TestCase):

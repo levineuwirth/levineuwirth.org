@@ -67,6 +67,7 @@ import http.client
 import json
 import os
 import re
+import shutil
 import sys
 import urllib.error
 import urllib.parse
@@ -138,7 +139,12 @@ def parse_link(match: re.Match) -> dict | None:
 
 # File names the build never publishes (build/Site.hs `neverPublish`), and
 # a front-matter `draft:` that is true (the values build/Site.hs accepts).
-PRIVATE_SUFFIXES = (".local.md", ".draft.md")
+PRIVATE_SUFFIXES = (
+    ".local.md", ".local.html", ".draft.md", ".key", ".pem", ".p12", ".pfx", ".env",
+    "~", ".swp", ".swo", ".pyc", ".pyo", ".tmp", ".part",
+)
+PRIVATE_PREFIXES = ("id_rsa", "id_dsa", "id_ecdsa", "id_ed25519", "credentials")
+PRIVATE_NAMES = {"__pycache__", "checklist.md"}
 DRAFT_RE = re.compile(
     r"""^draft:[ \t]*["']?(true|yes|1)["']?[ \t]*(#.*)?$""", re.IGNORECASE | re.MULTILINE
 )
@@ -162,9 +168,12 @@ def publishable(md: Path, content_dir: Path) -> bool:
     """Whether the site can publish this page: only those may give a link a
     (public) snapshot."""
     rel = md.relative_to(content_dir)
-    if rel.parts[0] == "drafts" or any(p.startswith(".") for p in rel.parts):
+    if rel.parts[0] == "drafts":
         return False
-    if md.name.endswith(PRIVATE_SUFFIXES):
+    # Hakyll applies its provider predicate to directory names as well as
+    # files. No link beneath a private directory may enter the public store.
+    if any(p.startswith((".", *PRIVATE_PREFIXES)) or p.endswith(PRIVATE_SUFFIXES)
+           or p in PRIVATE_NAMES or ".draft." in p for p in rel.parts):
         return False
     if is_draft(md):
         return False
@@ -418,15 +427,20 @@ def cmd_fetch(_args) -> int:
     old = load_index()
     new: dict[str, dict] = {}
     fetched = failed = 0
+    private_repositories: set[tuple[str, str]] = set()
     for url, link in sorted(links.items()):
         prev = old.get(url)
-        if prev and prev.get("pinned") and snapshot_present(prev):
-            new[url] = prev
-            continue
         try:
+            # A cached commit is immutable, but its repository's visibility
+            # is not. Check before the pinned-snapshot fast path too.
+            refuse_private(link["owner"], link["repo"])
+            if prev and prev.get("pinned") and snapshot_present(prev):
+                new[url] = prev
+                continue
             entry = snapshot(link)
         except PrivateRepository as e:
             failed += 1
+            private_repositories.add((link["owner"], link["repo"]))
             warn(str(e))
             continue
         except (FetchError, KeyError, ValueError) as e:
@@ -446,6 +460,14 @@ def cmd_fetch(_args) -> int:
     if new != old:
         STORE_DIR.mkdir(exist_ok=True)
         write_json(INDEX_PATH, dict(sorted(new.items())))
+    # Refusing an index entry is insufficient: every file in this store is
+    # published. Remove confirmed-private repositories even when an unrelated
+    # network failure prevents general garbage collection below.
+    for owner, repo in sorted(private_repositories):
+        directory = STORE_DIR / "github" / owner / repo
+        if directory.exists():
+            shutil.rmtree(directory)
+            print(f"code-refs: removed private repository snapshot {owner}/{repo}")
     print(
         f"code-refs: {len(new)} linked snapshots"
         f" ({fetched} fetched, {failed} failed, {len(links) - len(new)} without a snapshot)"
