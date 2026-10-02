@@ -46,6 +46,12 @@ services:
     volumes:
       - ./couchdb-data:/opt/couchdb/data
       - ./local.ini:/opt/couchdb/etc/local.d/10-livesync.ini
+      # This server's uuid and cookie-auth secret (couchdb/RESTORE.md), so a
+      # recreated container — an image update — is still the same server.
+      # Create it BEFORE this file is deployed: if it is missing, docker
+      # creates a directory in its place and CouchDB will not start.
+      #   couchdb-backup.sh --instance-ini > /root/couchdb-server/instance.ini && chmod 600 instance.ini
+      - ./instance.ini:/opt/couchdb/etc/local.d/20-instance.ini
       - /etc/localtime:/etc/localtime:ro
     ports:
       - "127.0.0.1:5984:5984"
@@ -53,3 +59,9 @@ services:
       - no-new-privileges:true
     mem_limit: 512m
     cpus: 1.0
+    # Capped, on the same disk as the backups (audit Y16).
+    logging:
+      driver: local
+      options:
+        max-size: "20m"
+        max-file: "5"
