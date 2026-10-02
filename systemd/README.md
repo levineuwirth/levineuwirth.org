@@ -77,7 +77,8 @@ this order, because the new compose file mounts `instance.ini` and moves to
 scp tools/couchdb-backup.sh tools/couchdb-update.sh root@vps:/usr/local/bin/
 ssh root@vps 'chmod 755 /usr/local/bin/couchdb-{backup,update}.sh && systemctl start couchdb-backup.service && couchdb-backup.sh --verify'
 # 2. pin the server's identity BEFORE the compose file that mounts it
-ssh root@vps 'set -a; . /root/couchdb-server/server.env; set +a; couchdb-backup.sh --instance-ini > /root/couchdb-server/instance.ini && chmod 600 /root/couchdb-server/instance.ini && cat /root/couchdb-server/instance.ini'
+#    (root's shell is fish, so the environment is read inside bash)
+ssh root@vps "bash -c 'set -a; . /etc/default/couchdb-backup; set +a; couchdb-backup.sh --instance-ini > /root/couchdb-server/instance.ini && chmod 600 /root/couchdb-server/instance.ini && cat /root/couchdb-server/instance.ini'"
 # 3. the compose file — do NOT `docker compose up` it by hand: that would
 #    pull couchdb:3 and recreate without a backup, a cold copy or any check
 scp couchdb/docker-compose.yml root@vps:/root/couchdb-server/
