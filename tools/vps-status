@@ -4,9 +4,9 @@
 # Run from oneiros (`tools/vps-status`); reads, never writes. Prints one
 # line: failed units; for every backup, verify and update job its last
 # result and time and whether its timer is enabled; the age of each
-# backup set's local and off-host stamps; the containers; a held Forgejo
-# image; how long ago the OS was upgraded and whether a reboot is pending;
-# the sync server; disk use. The weekly pass copies it into Archivum
+# backup set's local and off-host stamps; the containers; a held or failed
+# Forgejo or CouchDB update; how long ago the OS was upgraded and whether a
+# reboot is pending; the sync server; disk use. The weekly pass copies it into Archivum
 # Diarium; nothing here counts or nags.
 #
 # Read the stamps, not just the results (audit Y01): a unit that never ran
@@ -30,7 +30,7 @@ age() {   # age <file>: hours since its mtime, or "none"
 failed=$(systemctl --failed --no-legend --plain 2>/dev/null | awk '{print $1}' | paste -sd, -)
 printf 'vps %s: failed=[%s]' "$(date -u +%F)" "${failed:-none}"
 for u in forgejo-backup anki-sync-backup couchdb-backup forgejo-backup-verify couchdb-backup-verify \
-         vps-offsite-verify anki-sync-upgrade forgejo-update; do
+         vps-offsite-verify anki-sync-upgrade forgejo-update couchdb-update; do
     r=$(systemctl show -p Result --value "$u.service" 2>/dev/null || true)
     t=$(systemctl show -p ExecMainExitTimestamp --value "$u.service" 2>/dev/null | awk '{print $2}')
     e=$(systemctl is-enabled "$u.timer" 2>/dev/null || true)
@@ -44,7 +44,10 @@ if command -v docker >/dev/null 2>&1; then
     printf ' docker=[%s]' "$(docker ps -a --filter name='^forgejo$' --filter name='^couchdb$' \
         --format '{{.Names}}:{{.Status}}' 2>/dev/null | tr ' ' '_' | paste -sd, -)"
 fi
-[ -e /var/lib/forgejo-update/hold ] && printf ' forgejo-hold=%s' "$(cut -c1-19 /var/lib/forgejo-update/hold)"
+for svc in forgejo couchdb; do
+    [ -e "/var/lib/$svc-update/hold" ] && printf ' %s-hold=%s' "$svc" "$(cut -c1-19 "/var/lib/$svc-update/hold")"
+    [ -e "/var/lib/$svc-update/needs-operator" ] && printf ' %s-NEEDS-OPERATOR' "$svc"
+done
 if [ -r /var/log/pacman.log ]; then
     last=$(grep -a 'starting full system upgrade' /var/log/pacman.log | tail -1 | cut -c2-11)
     up=none; [ -n "$last" ] && up="$(( (now - $(date -u -d "$last" +%s)) / 86400 ))d"

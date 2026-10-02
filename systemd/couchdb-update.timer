@@ -1,0 +1,14 @@
+# Daily trigger for couchdb-update.service. 05:30 UTC: after the nightly
+# CouchDB backup (03:15) and Forgejo's update (05:00 + 15 min), before
+# anyone in Europe is awake to sync.
+
+[Unit]
+Description=Daily CouchDB 3.x update
+
+[Timer]
+OnCalendar=*-*-* 05:30
+RandomizedDelaySec=15min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

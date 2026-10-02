@@ -1,0 +1,31 @@
+# CouchDB: apply the latest 3.x release (tools/couchdb-update.sh).
+#
+# Backs up, copies the data directory cold, recreates on the new image,
+# checks it, and on any failure puts the data and the previous image back
+# and holds the failed image. A new major (4.x) stays a manual upgrade.
+# Needs /root/couchdb-server/instance.ini first (couchdb/RESTORE.md).
+#
+#   scp tools/couchdb-update.sh root@<vps>:/usr/local/bin/ && ssh root@<vps> chmod 755 /usr/local/bin/couchdb-update.sh
+#   scp systemd/couchdb-update.{service,timer} root@<vps>:/etc/systemd/system/
+#   ssh root@<vps> systemctl daemon-reload && systemctl enable --now couchdb-update.timer
+#
+# A failed run is a failed unit, which tools/vps-status reports. Remove
+# /var/lib/couchdb-update/hold to let a held image be tried again; after a
+# rollback that did not come back, every run fails until
+# /var/lib/couchdb-update/needs-operator is removed. Failed runs leave
+# couchdb-data.failed-<TS> and couchdb-data.pre-<TS> in /root/couchdb-server
+# for inspection; remove them by hand once the cause is known.
+
+[Unit]
+Description=CouchDB: apply the latest 3.x release
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+Environment=TMPDIR=/var/tmp
+ExecStart=/usr/local/bin/couchdb-update.sh
+Nice=10
+# A oneshot has no start timeout by default (audit Y07).
+TimeoutStartSec=1h

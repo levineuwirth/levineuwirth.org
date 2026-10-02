@@ -31,14 +31,17 @@
 # host's nginx (nginx/couchdb-sync.conf), never directly — same as
 # forgejo's 3000.
 #
-# VERSION — the pin below is a placeholder. Check current 3.x tags at
-# hub.docker.com/_/couchdb before the first `docker compose up` and put
-# the real one here: this file should describe what is actually running,
-# and "latest" describes nothing (same reasoning as forgejo's pinned tag).
+# VERSION — follows the floating `couchdb:3` tag, applied unattended by
+# tools/couchdb-update.sh (systemd/couchdb-update.*): backup, cold copy of
+# couchdb-data, recreate, check version, document counts, uuid and CORS,
+# and put the data and the previous image back on any failure. What runs
+# is in the journal and in `curl -su admin http://127.0.0.1:5984/`. A new
+# major (4.x) stays a manual upgrade. Until 2026-10-02 this was a pinned
+# placeholder, 3.4.2, with no update path at all (audit Y05).
 
 services:
   couchdb:
-    image: couchdb:3.4.2
+    image: couchdb:3
     container_name: couchdb
     restart: unless-stopped
     env_file:

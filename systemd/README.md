@@ -17,6 +17,7 @@ All times UTC. `+n` is the timer's `RandomizedDelaySec`.
 | `forgejo-backup-verify` | Sun 04:30 +20m | restores the newest local Forgejo archive into a scratch container |
 | `couchdb-backup-verify` | Sun 04:45 +10m | restores the newest local CouchDB archive into a scratch container on 127.0.0.1:15984 |
 | `forgejo-update` | daily 05:00 +15m | pulls `forgejo:15`; backs up, recreates, checks (state in `/var/lib/forgejo-update/`) |
+| `couchdb-update` | daily 05:30 +15m | pulls `couchdb:3`; backs up, copies `couchdb-data` cold, recreates, checks; puts data and image back on failure (state in `/var/lib/couchdb-update/`) |
 | `vps-offsite-verify` | 1st 05:00 +1h | `borg check`, then restores the newest archive of every set from the storage box |
 
 Containers: `forgejo` (127.0.0.1:3000, and :2222 for git over ssh) and
@@ -61,6 +62,37 @@ tools/vps-status
 
 The first nightly runs write `last-offhost-success` for the other two sets;
 until then `vps-status` shows `offhost=none` for them.
+
+## Installing the CouchDB changes (audit phase 2)
+
+Committed and rehearsed locally against real `couchdb:3.4.2` and
+`couchdb:3` (3.5.2.1) images: a backup/verify/restore round trip, a rebuild
+from an archive alone, an update 3.4.2 → 3.5.2, and rollbacks from an
+image that never starts and from one that starts and wipes the data. In
+this order, because the new compose file mounts `instance.ini` and moves to
+`couchdb:3`:
+
+```bash
+# 1. the new backup script, and a backup that carries _security, accounts and identity
+scp tools/couchdb-backup.sh tools/couchdb-update.sh root@vps:/usr/local/bin/
+ssh root@vps 'chmod 755 /usr/local/bin/couchdb-{backup,update}.sh && systemctl start couchdb-backup.service && couchdb-backup.sh --verify'
+# 2. pin the server's identity BEFORE the compose file that mounts it
+ssh root@vps 'set -a; . /root/couchdb-server/server.env; set +a; couchdb-backup.sh --instance-ini > /root/couchdb-server/instance.ini && chmod 600 /root/couchdb-server/instance.ini && cat /root/couchdb-server/instance.ini'
+# 3. the compose file — do NOT `docker compose up` it by hand: that would
+#    pull couchdb:3 and recreate without a backup, a cold copy or any check
+scp couchdb/docker-compose.yml root@vps:/root/couchdb-server/
+# 4. the first update, supervised: 3.4.2 -> 3.5.x through the script's own safety
+ssh root@vps couchdb-update.sh
+# 5. the timer
+scp systemd/couchdb-update.{service,timer} root@vps:/etc/systemd/system/
+ssh root@vps 'systemctl daemon-reload && systemctl enable --now couchdb-update.timer'
+```
+
+Then check what the script already checks, by hand once: `curl -su admin
+http://127.0.0.1:5984/` shows 3.5.x and the uuid in `instance.ini`; a
+foreign `Origin` gets no `Access-Control-Allow-Origin`; desktop and iPad
+sync (still owed for W02). `couchdb/RESTORE.md` is the procedure for
+everything this does not cover.
 
 ## Isolating the VPS's storage-box key (audit Y02)
 
