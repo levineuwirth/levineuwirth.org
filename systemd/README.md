@@ -76,15 +76,19 @@ this order, because the new compose file mounts `instance.ini` and moves to
 # 1. the new backup script, and a backup that carries _security, accounts and identity
 scp tools/couchdb-backup.sh tools/couchdb-update.sh root@vps:/usr/local/bin/
 ssh root@vps 'chmod 755 /usr/local/bin/couchdb-{backup,update}.sh && systemctl start couchdb-backup.service && couchdb-backup.sh --verify'
-# 2. pin the server's identity BEFORE the compose file that mounts it
-#    (root's shell is fish, so the environment is read inside bash)
-ssh root@vps "bash -c 'set -a; . /etc/default/couchdb-backup; set +a; couchdb-backup.sh --instance-ini > /root/couchdb-server/instance.ini && chmod 600 /root/couchdb-server/instance.ini && cat /root/couchdb-server/instance.ini'"
-# 3. the compose file — do NOT `docker compose up` it by hand: that would
+# 2. pin the identity BEFORE the compose mount. Let systemd read its own
+#    EnvironmentFile syntax (unquoted spaces are valid there, not in bash).
+#    The identity contains the cookie secret: never print it to the terminal.
+ssh root@vps "bash -c 'set -e; umask 077; t=\$(mktemp /root/couchdb-server/.instance-XXXXXX); systemd-run --quiet --wait --pipe -p EnvironmentFile=/etc/default/couchdb-backup /usr/local/bin/couchdb-backup.sh --instance-ini > \"\$t\"; test -s \"\$t\"; mv \"\$t\" /root/couchdb-server/instance.ini'"
+# 3. install the sync proxy's maintenance guard before enabling updates
+scp nginx/couchdb-sync.conf root@vps:/etc/nginx/sites-available/couchdb-sync.conf
+ssh root@vps 'nginx -t && systemctl reload nginx'
+# 4. the compose file — do NOT `docker compose up` it by hand: that would
 #    pull couchdb:3 and recreate without a backup, a cold copy or any check
 scp couchdb/docker-compose.yml root@vps:/root/couchdb-server/
-# 4. the first update, supervised: 3.4.2 -> 3.5.x through the script's own safety
+# 5. the first update, supervised: 3.4.2 -> 3.5.x through the script's own safety
 ssh root@vps couchdb-update.sh
-# 5. the timer
+# 6. the timer
 scp systemd/couchdb-update.{service,timer} root@vps:/etc/systemd/system/
 ssh root@vps 'systemctl daemon-reload && systemctl enable --now couchdb-update.timer'
 ```
@@ -94,6 +98,15 @@ http://127.0.0.1:5984/` shows 3.5.x and the uuid in `instance.ini`; a
 foreign `Origin` gets no `Access-Control-Allow-Origin`; desktop and iPad
 sync (still owed for W02). `couchdb/RESTORE.md` is the procedure for
 everything this does not cover.
+
+The proxy returns 503 during candidate validation and rollback, so clients
+cannot receive a successful write that a rollback would discard. Interrupted
+updates retain `needs-operator`, `hold`, and `maintenance` in
+`/var/lib/couchdb-update/`; the recovery marker names the previous image and
+cold copy. Check those files and the journal before recovering. Remove
+`needs-operator` and `maintenance` only after checking the recovered server's
+version, counts, uuid, auth secret and effective CORS. Keep `hold` until the
+failed candidate is understood. See `couchdb/RESTORE.md`.
 
 ## Isolating the VPS's storage-box key (audit Y02)
 

@@ -29,8 +29,9 @@ Create it once from the live server, before deploying a compose file that
 mounts it (a missing file becomes a directory, and CouchDB will not start):
 
 ```bash
-couchdb-backup.sh --instance-ini > /root/couchdb-server/instance.ini
-chmod 600 /root/couchdb-server/instance.ini
+umask 077
+systemd-run --quiet --wait --pipe -p EnvironmentFile=/etc/default/couchdb-backup \
+    /usr/local/bin/couchdb-backup.sh --instance-ini > /root/couchdb-server/instance.ini
 ```
 
 `docker.ini` has a second lesson: CouchDB writes runtime configuration
@@ -47,7 +48,8 @@ cd /root/couchdb-server
 docker compose down
 mv couchdb-data couchdb-data.broken-$(date -u +%Y%m%d)   # keep it until the restore is proven
 docker compose up -d                                     # empty server, same identity (instance.ini)
-couchdb-backup.sh --restore                              # newest archive; or give one explicitly
+systemd-run --quiet --wait --pipe -p EnvironmentFile=/etc/default/couchdb-backup \
+    /usr/local/bin/couchdb-backup.sh --restore             # newest archive; or give one explicitly
 ```
 
 ## B. A rebuilt host
@@ -66,12 +68,26 @@ couchdb-backup.sh --restore                              # newest archive; or gi
 3. Recreate the identity from the archive, then start an empty server:
 
    ```bash
+   umask 077
    couchdb-backup.sh --instance-ini /var/tmp/root/couchdb-backups/couchdb-<TS>.tar.gz > /root/couchdb-server/instance.ini
-   chmod 600 /root/couchdb-server/instance.ini
    cd /root/couchdb-server && docker compose up -d
    ```
 
-4. Restore: `couchdb-backup.sh --restore /var/tmp/root/couchdb-backups/couchdb-<TS>.tar.gz`.
+4. Install `/etc/default/couchdb-backup` with the new host's admin credentials,
+   then restore through its environment:
+
+   ```bash
+   systemd-run --quiet --wait --pipe -p EnvironmentFile=/etc/default/couchdb-backup \
+       /usr/local/bin/couchdb-backup.sh --restore /var/tmp/root/couchdb-backups/couchdb-<TS>.tar.gz
+   ```
+
+An interrupted automatic update leaves `/var/lib/couchdb-update/needs-operator`
+with the previous image ID and cold data copy. It also leaves `maintenance`,
+which makes the public sync proxy return 503 throughout recovery. Preserve
+the failed data directory, stop CouchDB before replacing data, and select the
+previous image before recreating. After verifying counts, uuid, auth secret
+and CORS, remove `needs-operator` and `maintenance` to resume sync; retain
+`hold` until the failed candidate is understood.
 
 ## Either way, then
 

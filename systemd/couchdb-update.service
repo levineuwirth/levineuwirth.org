@@ -11,10 +11,11 @@
 #
 # A failed run is a failed unit, which tools/vps-status reports. Remove
 # /var/lib/couchdb-update/hold to let a held image be tried again; after a
-# rollback that did not come back, every run fails until
+# rollback that did not come back, or an interrupted update, every run fails until
 # /var/lib/couchdb-update/needs-operator is removed. Failed runs leave
 # couchdb-data.failed-<TS> and couchdb-data.pre-<TS> in /root/couchdb-server
-# for inspection; remove them by hand once the cause is known.
+# for inspection; remove them by hand once the cause is known. The maintenance
+# marker keeps the public sync proxy closed until recovery has been verified.
 
 [Unit]
 Description=CouchDB: apply the latest 3.x release

@@ -10,12 +10,13 @@
 # CouchDB and copy its data directory, then recreate on the new image and
 # check the version, the counts, the uuid and the effective CORS origins.
 #
-# Any failure after the stop puts the copied data directory and the
-# previous image back and holds the failed image; if that does not come
-# back either, $ATTENTION is left and every run fails until the operator
+# A failed candidate check puts the copied data directory and previous
+# image back and holds the failed image. Interruption or failed recovery
+# leaves $ATTENTION and every run fails until the operator
 # has restored by couchdb/RESTORE.md and removed it. The cold copy is what
 # makes going back safe whatever the new version did to its files. As in
-# forgejo-update.sh, a declined image never keeps the local tag.
+# forgejo-update.sh, a declined image never keeps the local tag. The sync
+# proxy must support $MAINTENANCE before the updater can stop the server.
 set -euo pipefail
 export TMPDIR=${TMPDIR:-/var/tmp}
 
@@ -32,7 +33,15 @@ KEEP_COPIES=${KEEP_COPIES:-2}
 STATE=${STATE:-/var/lib/couchdb-update}
 HOLD=${HOLD:-$STATE/hold}
 ATTENTION=${ATTENTION:-$STATE/needs-operator}
+MAINTENANCE=${MAINTENANCE:-$STATE/maintenance}
+PUBLIC_URL=${PUBLIC_URL:-https://sync.levineuwirth.org/}
 log() { echo "couchdb-update: $*"; }
+
+# Serialise hand runs and the timer too. The directory must be traversable
+# by nginx, which checks only the non-secret maintenance marker.
+mkdir -p "$STATE"
+exec 9>"$STATE/lock"
+flock -n 9 || { log "another update is running"; exit 1; }
 
 # Admin credentials from the compose directory's server.env, handed to curl
 # on stdin (-K -), never in its argv.
@@ -46,8 +55,12 @@ admin_cfg() {
 get() { admin_cfg | curl -fsS -K - --max-time 5 "$URL$1"; }
 field() { python3 -c 'import json,sys; v=json.load(sys.stdin); print(v[sys.argv[1]] if sys.argv[1] else v)' "${1:-}"; }
 counts() {   # "db=count …" for every database in DBS
-    local db out=""
-    for db in $DBS; do out+="$db=$(get "/$db" | field doc_count) "; done
+    local db count out=""
+    for db in $DBS; do
+        count=$(get "/$db" | field doc_count) || return 1
+        [[ "$count" =~ ^[0-9]+$ ]] || return 1
+        out+="$db=$count "
+    done
     printf '%s' "${out% }"
 }
 image_version() { docker image inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$1" | sed -n 's/^COUCHDB_VERSION=//p'; }
@@ -55,7 +68,7 @@ up_at() {    # up_at <image version>: answers /_up, at that version (the image's
     local _ v   # COUCHDB_VERSION may add a packaging revision: 3.5.2.1 serves 3.5.2)
     for _ in $(seq "$WAIT"); do
         if get /_up >/dev/null 2>&1; then
-            v=$(get / | field version)
+            v=$(get / | field version) || { sleep 1; continue; }
             case "$1" in "$v"|"$v".*) return 0 ;; esac
         fi
         sleep 1
@@ -72,6 +85,7 @@ if [ -f "$ATTENTION" ]; then
     log "restore by couchdb/RESTORE.md, then remove $ATTENTION"
     exit 1
 fi
+[ ! -e "$MAINTENANCE" ] || { log "maintenance marker remains; operator needed"; exit 1; }
 
 cd "$DIR"
 grep -q "image: $IMAGE\$" docker-compose.yml || { log "docker-compose.yml does not use $IMAGE; refusing"; exit 1; }
@@ -95,18 +109,50 @@ case "$new" in
 esac
 [ -s "$DIR/instance.ini" ] || decline "no $DIR/instance.ini: a recreated container would be a different server (couchdb/RESTORE.md)"
 uuid_want=$(ini_value couchdb uuid "$DIR/instance.ini")
+secret_want=$(ini_value chttpd_auth secret "$DIR/instance.ini")
 origins_want=$(ini_value cors origins "$DIR/local.ini")
+[ -n "$uuid_want" ] && [ -n "$secret_want" ] && [ -n "$origins_want" ] \
+    || decline "instance.ini or local.ini is incomplete; refusing"
+[ "$(get / | field uuid)" = "$uuid_want" ] \
+    && [ "$(get /_node/_local/_config/chttpd_auth/secret | field)" = "$secret_want" ] \
+    || decline "instance.ini does not match the running identity; refusing"
+
+healthy() {
+    local got
+    up_at "$1" || return 1
+    got=$(counts) || return 1
+    [ "$got" = "$counts_before" ] || return 1
+    [ "$(get / | field uuid)" = "$uuid_want" ] || return 1
+    [ "$(get /_node/_local/_config/chttpd_auth/secret | field)" = "$secret_want" ] || return 1
+    [ "$(get /_node/_local/_config/cors/origins | field)" = "$origins_want" ] || return 1
+}
 
 log "couchdb ${before:-?} -> $new: backing up first"
 $BACKUP || decline "backup failed; not updating"
-counts_before=$(counts) || decline "could not count documents; not updating"
-log "documents: $counts_before; images: running $running, applying $pulled"
-
 ts=$(date -u +%Y%m%dT%H%M%SZ)
 copy="$DIR/couchdb-data.pre-$ts"
-docker compose stop >/dev/null 2>&1 || decline "could not stop CouchDB; not updating"
+# Persist recovery information BEFORE any stop or replacement. A timeout,
+# signal or failed filesystem command must never become "unchanged" tomorrow.
+printf '%s update pending; previous image %s; candidate %s; data copy %s\n' \
+    "$(date -u +%FT%TZ)" "$running" "$pulled" "$copy" > "$ATTENTION"
+touch "$MAINTENANCE"
+# The proxy blocks new sync requests throughout validation and rollback.
+# Otherwise a candidate could acknowledge writes which its rollback discards.
+status=$(curl -sS --max-time 10 --output /dev/null --write-out '%{http_code}' "$PUBLIC_URL") || status=000
+if [ "$status" != 503 ]; then
+    rm -f "$ATTENTION" "$MAINTENANCE"
+    decline "sync proxy did not return maintenance 503; install nginx/couchdb-sync.conf first"
+fi
+if ! counts_before=$(counts); then
+    rm -f "$ATTENTION" "$MAINTENANCE"
+    decline "could not count documents; not updating"
+fi
+log "documents: $counts_before; images: running $running, applying $pulled"
+hold
+docker compose stop >/dev/null 2>&1 || decline "could not stop CouchDB; operator needed"
 if ! cp -a "$DIR/couchdb-data" "$copy"; then
-    rm -rf "$copy"; docker compose start >/dev/null 2>&1 || true
+    docker compose start >/dev/null 2>&1 || true
+    if healthy "$before"; then rm -f "$ATTENTION" "$MAINTENANCE"; fi
     decline "could not copy the data directory; not updating"
 fi
 log "stopped; data directory copied to $copy"
@@ -114,35 +160,25 @@ log "stopped; data directory copied to $copy"
 docker tag "$pulled" "$IMAGE"
 docker compose up -d >/dev/null 2>&1 || log "compose up reported an error; checking anyway"
 
-why=""
-if ! up_at "$new"; then
-    why="did not come up at $new"
-elif [ "$(counts)" != "$counts_before" ]; then
-    why="document counts changed: $counts_before -> $(counts)"
-elif [ -n "$uuid_want" ] && [ "$(get / | field uuid)" != "$uuid_want" ]; then
-    why="uuid is not the one in instance.ini"
-elif [ -n "$origins_want" ] && [ "$(get /_node/_local/_config/cors/origins | field)" != "$origins_want" ]; then
-    why="effective CORS origins are not local.ini's"
-fi
-
-if [ -z "$why" ]; then
-    rm -f "$HOLD"
+if healthy "$new"; then
     # keep the newest KEEP_COPIES data copies
     find "$DIR" -maxdepth 1 -name 'couchdb-data.pre-*' -type d | sort -r | tail -n +$((KEEP_COPIES + 1)) \
         | while read -r d; do rm -rf "$d"; done
     docker image prune -f >/dev/null 2>&1 || true
+    rm -f "$HOLD" "$ATTENTION" "$MAINTENANCE"
     log "couchdb running at $new ($counts_before, uuid and CORS as configured)"
     exit 0
 fi
 
-log "couchdb $new $why; putting $before and its data back"
+log "couchdb $new failed version, counts, identity or CORS validation; putting $before and its data back"
 hold
-docker compose stop >/dev/null 2>&1 || true
+docker compose stop >/dev/null 2>&1 || { log "could not stop candidate; operator needed"; exit 1; }
 mv "$DIR/couchdb-data" "$DIR/couchdb-data.failed-$ts"
 cp -a "$copy" "$DIR/couchdb-data"
 docker tag "$running" "$IMAGE"
 docker compose up -d >/dev/null 2>&1 || true
-if up_at "$before" && [ "$(counts)" = "$counts_before" ]; then
+if healthy "$before"; then
+    rm -f "$ATTENTION" "$MAINTENANCE"
     log "rolled back to $before with its data; $new is on hold (the failed data directory is $DIR/couchdb-data.failed-$ts)"
 else
     mkdir -p "$STATE"

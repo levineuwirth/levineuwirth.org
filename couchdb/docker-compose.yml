@@ -3,8 +3,9 @@
 # /root/couchdb-server/docker-compose.yml on the VPS; this copy is the
 # tracked source, same spirit as forgejo/.
 #
-#   scp couchdb/{docker-compose.yml,local.ini} root@<vps>:/root/couchdb-server/
-#   ssh root@<vps> "cd /root/couchdb-server && docker compose up -d"
+# Existing server: follow systemd/README.md's ordered phase-2 installation.
+# Do not recreate by hand: couchdb-update.sh owns the backup, cold data copy,
+# maintenance window and post-update checks.
 #
 # server.env (COUCHDB_USER / COUCHDB_PASSWORD, the admin account) is never
 # committed — copy couchdb/server.env.example to /root/couchdb-server/server.env
