@@ -147,7 +147,17 @@ def atomic_write_bytes(path: Path, data: bytes) -> None:
     """Write to a PID-unique temp then os.replace: an interrupt mid-write
     cannot leave a truncated file at the final path, fsync makes the
     rename durable across power loss, and the PID suffix keeps two
-    concurrent runs from interleaving writes into one temp file."""
+    concurrent runs from interleaving writes into one temp file.
+
+    Identical bytes are left alone: Hakyll judges an input changed by its
+    mtime, so rewriting an unchanged similar-links.json made every page that
+    reads it recompile, and re-copied, recompressed and re-signed the
+    semantic pair, on every build (audit X3/D05)."""
+    try:
+        if path.read_bytes() == data:
+            return
+    except OSError:
+        pass
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + f".tmp.{os.getpid()}")
     try:
