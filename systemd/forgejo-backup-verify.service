@@ -28,6 +28,7 @@ Environment=TMPDIR=/var/tmp
 Type=oneshot
 EnvironmentFile=-/etc/default/forgejo-backup
 ExecStart=/usr/local/bin/forgejo-backup.sh --verify
+TimeoutStartSec=2h
 Nice=15
 IOSchedulingClass=idle
 # Extraction needs room for a second copy of the data directory.

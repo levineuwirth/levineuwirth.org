@@ -5,8 +5,10 @@
 Description=Weekly CouchDB backup verification
 
 [Timer]
-# Sunday 04:45 UTC: after Forgejo's verify (04:30) so the two don't overlap
-# their docker-heavy restore tests.
+# Sunday 04:45 UTC, after Forgejo's verify starts (04:30, but with up to
+# 20 min of random delay it can start as late as 04:50, so the two
+# docker-heavy restore tests can still overlap; neither takes a lock the
+# other needs).
 OnCalendar=Sun *-*-* 04:45
 RandomizedDelaySec=10min
 Persistent=true

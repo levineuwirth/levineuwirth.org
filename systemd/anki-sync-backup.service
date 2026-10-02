@@ -9,12 +9,17 @@
 [Unit]
 Description=Anki sync server backup (consistent SQLite snapshots + media)
 Documentation=https://git.levineuwirth.org/neuwirth/levineuwirth.org
-After=anki-sync.service
+# network-online: borg reaches the storage box over ssh, and Persistent=
+# fires a missed run right at boot (audit Y07).
+After=anki-sync.service network-online.target
+Wants=network-online.target
 
 [Service]
 Type=oneshot
 EnvironmentFile=-/etc/default/anki-sync-backup
-ExecStart=/usr/local/bin/anki-sync-backup.sh
+# One lock with anki-sync-upgrade.service: an upgrade's pip install must not
+# rewrite the venv while this run imports anki from it (audit Y03).
+ExecStart=/usr/bin/flock /run/lock/anki-sync.lock /usr/local/bin/anki-sync-backup.sh
 Nice=15
 IOSchedulingClass=idle
 TimeoutStartSec=45min

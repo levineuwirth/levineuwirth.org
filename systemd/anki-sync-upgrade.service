@@ -15,5 +15,9 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/anki-sync-upgrade.sh
+# One lock with anki-sync-backup.service (see there).
+ExecStart=/usr/bin/flock /run/lock/anki-sync.lock /usr/local/bin/anki-sync-upgrade.sh
+# A oneshot has no start timeout by default: a stalled pip download would
+# leave the unit activating, neither failed nor refired (audit Y07).
+TimeoutStartSec=30min
 Nice=10

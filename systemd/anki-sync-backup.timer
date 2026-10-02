@@ -2,9 +2,10 @@
 Description=Nightly Anki sync server backup
 
 [Timer]
-# 03:45 UTC: after the Forgejo backup's window (03:30 + up to 20 min
-# delay is fine — the two are independent), before anyone in Europe is
-# awake to sync.
+# 03:45 UTC, before anyone in Europe is awake to sync. The window overlaps
+# the Forgejo (03:30 + 20 min) and CouchDB (03:15 + 10 min) backups, and
+# all three upload to one borg repository; borg-offhost.sh waits for the
+# repository lock (BORG_LOCK_WAIT) rather than failing the later job.
 OnCalendar=*-*-* 03:45
 RandomizedDelaySec=10min
 Persistent=true

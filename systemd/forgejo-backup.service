@@ -24,7 +24,10 @@ Description=Forgejo backup (consistent SQLite snapshot + data tarball)
 Documentation=https://git.levineuwirth.org/neuwirth/levineuwirth.org
 # The script checks for the container itself and fails loudly if it is
 # absent, but ordering after docker avoids a guaranteed-failed run at boot.
-After=docker.service
+# network-online: borg reaches the storage box over ssh, and Persistent=
+# fires a missed run right at boot (audit Y07).
+After=docker.service network-online.target
+Wants=network-online.target
 Requires=docker.service
 
 [Service]

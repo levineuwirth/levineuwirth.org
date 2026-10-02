@@ -23,4 +23,7 @@ Wants=network-online.target
 Type=oneshot
 Environment=TMPDIR=/var/tmp
 ExecStart=/usr/local/bin/forgejo-update.sh
+# A oneshot has no start timeout by default: a stalled pull or backup would
+# leave the unit activating, neither failed nor refired (audit Y07).
+TimeoutStartSec=1h
 Nice=10
