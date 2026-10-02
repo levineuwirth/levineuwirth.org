@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for tools/code-refs.py link discovery — no network.
+"""Tests for tools/code-refs.py — no network.
 
 Run with: ``python3 -m unittest tests.test_code_refs``.
 """
@@ -7,9 +7,14 @@ Run with: ``python3 -m unittest tests.test_code_refs``.
 from __future__ import annotations
 
 import importlib.util
+import json
+import os
 import tempfile
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
+from io import StringIO
 from pathlib import Path
+from unittest import mock
 
 _SPEC = importlib.util.spec_from_file_location(
     "code_refs",
@@ -74,6 +79,154 @@ class Discover(unittest.TestCase):
             )
             links = code_refs.discover_links(Path(d))
         self.assertEqual(list(links), [f"https://github.com/o/r/blob/{SHA}/f.py"])
+
+
+class Eligibility(unittest.TestCase):
+    """Everything under code-refs/ is published, so only links on pages the
+    site publishes may be snapshotted (audit X1, T07)."""
+
+    def discover(self, files: dict[str, str]) -> set[str]:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            for rel, text in files.items():
+                (root / rel).parent.mkdir(parents=True, exist_ok=True)
+                (root / rel).write_text(text)
+            return {u.rsplit("/", 1)[-1] for u in code_refs.discover_links(root)}
+
+    def link(self, name: str) -> str:
+        return f"[x](https://github.com/o/r/blob/{SHA}/{name})\n"
+
+    def test_only_published_pages_are_scanned(self):
+        found = self.discover({
+            "essays/pub.md": "---\ntitle: P\n---\n" + self.link("public.py"),
+            "drafts/essay/index.md": self.link("drafts.py"),
+            "essays/notes.local.md": self.link("local.py"),
+            "essays/plan.draft.md": self.link("draftname.py"),
+            "essays/wip.md": "---\ntitle: W\ndraft: true\n---\n" + self.link("flagged.py"),
+            "poetry/coll/index.md": "---\ndraft: yes\n---\n",
+            "poetry/coll/poem.md": self.link("in-draft-collection.py"),
+            "poetry/open/index.md": "---\ndraft: false\n---\n",
+            "poetry/open/poem.md": self.link("open-collection.py"),
+        })
+        self.assertEqual(found, {"public.py", "open-collection.py"})
+
+    def test_draft_word_in_body_is_not_a_flag(self):
+        found = self.discover({
+            "essays/a.md": "---\ntitle: A\n---\ndraft: true\n" + self.link("a.py"),
+        })
+        self.assertEqual(found, {"a.py"})
+
+
+class Fetch(unittest.TestCase):
+    """cmd_fetch against a temporary store, with the network stubbed."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        self.content = self.root / "content"
+        self.store = self.root / "code-refs"
+        for name, value in (("CONTENT_DIR", self.content), ("STORE_DIR", self.store),
+                            ("INDEX_PATH", self.store / "index.json")):
+            p = mock.patch.object(code_refs, name, value)
+            p.start()
+            self.addCleanup(p.stop)
+        code_refs._visibility.clear()
+        (self.content / "essays").mkdir(parents=True)
+
+    def page(self, text: str) -> None:
+        (self.content / "essays" / "a.md").write_text(text)
+
+    def fake_snapshot(self, sha: str):
+        def snap(link):
+            code_refs.refuse_private(link["owner"], link["repo"])
+            d = code_refs.sha_dir(link["owner"], link["repo"], sha)
+            (d / "tree").mkdir(parents=True, exist_ok=True)
+            (d / "commit.json").write_text("{}")
+            (d / "tree" / "_root.json").write_text("{}")
+            return {"kind": "tree", "host": "github", "owner": link["owner"],
+                    "repo": link["repo"], "ref": link["ref"], "sha": sha, "path": "",
+                    "pinned": link["pinned"],
+                    "src": code_refs.public(d / "tree" / "_root.json"),
+                    "commit": code_refs.public(d / "commit.json"),
+                    "date": "2026-09-30T00:00:00Z", "fetched": "2026-10-02"}
+        return snap
+
+    def fetch(self, snap) -> str:
+        out = StringIO()
+        with mock.patch.object(code_refs, "snapshot", snap), redirect_stdout(out), redirect_stderr(out):
+            code_refs.cmd_fetch(None)
+        return out.getvalue()
+
+    def test_unmoved_branch_keeps_its_entry(self):
+        # T02: the same commit on another day must not rewrite index.json.
+        self.page("[t](https://github.com/o/r/tree/main)\n")
+        self.fetch(self.fake_snapshot("a" * 40))
+        index = json.loads((self.store / "index.json").read_text())
+        url = "https://github.com/o/r/tree/main"
+        index[url]["fetched"] = "2026-09-01"
+        (self.store / "index.json").write_text(json.dumps(index))
+        before = (self.store / "index.json").read_bytes()
+        self.fetch(self.fake_snapshot("a" * 40))
+        self.assertEqual((self.store / "index.json").read_bytes(), before)
+
+    def test_moved_branch_drops_the_old_commit(self):
+        self.page("[t](https://github.com/o/r/tree/main)\n")
+        self.fetch(self.fake_snapshot("a" * 40))
+        self.fetch(self.fake_snapshot("b" * 40))
+        self.assertFalse((self.store / "github/o/r" / ("a" * 40)).exists())
+        self.assertTrue((self.store / "github/o/r" / ("b" * 40) / "commit.json").exists())
+
+    def test_debris_is_collected_after_a_clean_fetch(self):
+        self.page("[t](https://github.com/o/r/tree/main)\n")
+        stray = self.store / "github/o/r" / ("a" * 40) / "blob/x.py.txt.partial"
+        stray.parent.mkdir(parents=True)
+        stray.write_text("half")
+        self.fetch(self.fake_snapshot("a" * 40))
+        self.assertFalse(stray.exists())
+
+    def test_failure_keeps_previous_snapshots(self):
+        self.page("[t](https://github.com/o/r/tree/main)\n[u](https://github.com/o/s/tree/main)\n")
+        self.fetch(self.fake_snapshot("a" * 40))
+        def flaky(link):
+            if link["repo"] == "s":
+                raise code_refs.FetchError("offline")
+            return self.fake_snapshot("b" * 40)(link)
+        self.fetch(flaky)
+        # The failed link keeps its entry, and nothing is collected.
+        self.assertTrue((self.store / "github/o/s" / ("a" * 40) / "commit.json").exists())
+        self.assertTrue((self.store / "github/o/r" / ("a" * 40) / "commit.json").exists())
+
+    def test_private_repository_refused_with_a_token(self):
+        self.page("[t](https://github.com/o/secret/tree/main)\n[u](https://github.com/o/pub/tree/main)\n")
+        def api(path):
+            return {"private": path.endswith("/secret")}
+        with mock.patch.dict(os.environ, {"GITHUB_TOKEN": "t"}), \
+             mock.patch.object(code_refs, "api_json", api):
+            out = self.fetch(self.fake_snapshot("a" * 40))
+        index = json.loads((self.store / "index.json").read_text())
+        self.assertEqual(list(index), ["https://github.com/o/pub/tree/main"])
+        self.assertFalse((self.store / "github/o/secret").exists())
+        self.assertIn("private", out)
+
+
+class RepositoryStore(unittest.TestCase):
+    """The committed store: every file is referenced, every reference
+    exists, and every entry comes from a page the site publishes."""
+
+    def test_store_matches_index(self):
+        index = code_refs.load_index()
+        refs = {e[k][len(code_refs.PUBLIC_PREFIX):] for e in index.values() for k in ("src", "commit")}
+        files = {p.relative_to(code_refs.STORE_DIR).as_posix()
+                 for p in (code_refs.STORE_DIR / "github").rglob("*") if p.is_file()}
+        self.assertEqual(sorted(files - refs), [], "unreferenced snapshot files (run tools/code-refs.py gc)")
+        self.assertEqual(sorted(refs - files), [], "index references missing files")
+
+    def test_every_entry_comes_from_a_published_page(self):
+        index = code_refs.load_index()
+        published = code_refs.discover_links()
+        self.assertEqual(sorted(set(index) - set(published)), [],
+                         "snapshots for links no published page contains")
 
 
 if __name__ == "__main__":

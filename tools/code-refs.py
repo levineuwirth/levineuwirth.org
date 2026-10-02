@@ -10,11 +10,20 @@ repository's description and its star count, fetched live from
 api.github.com. This tool fetches what the link actually points at, once,
 and stores it in the site so the popup can show it from the same origin.
 
-    fetch   Scan content/**/*.md for GitHub blob / tree / commit links,
-            fetch any snapshot that is missing, and rewrite
-            code-refs/index.json. Wired into `make build`.
+    fetch   Scan the published pages under content/ for GitHub blob /
+            tree / commit links, fetch any snapshot that is missing, and
+            rewrite code-refs/index.json. When every link resolved, end
+            with gc, so the store holds exactly what the index references.
+            Wired into `make build` and `make deploy`'s preflight.
     gc      Delete snapshots that no current link references
             (--dry-run lists them instead).
+
+Everything under code-refs/ is published, so only links on pages the site
+publishes are snapshotted: never content/drafts/, never a private name the
+build refuses to publish (*.local.md, *.draft.md), never a page marked
+`draft: true` or one inside a collection whose index.md is. With
+GITHUB_TOKEN set (which can read private repositories), a private
+repository is refused outright and its previous snapshot dropped.
 
 What gets stored, under code-refs/github/<owner>/<repo>/<sha>/:
 
@@ -54,6 +63,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import http.client
 import json
 import os
 import re
@@ -126,9 +136,55 @@ def parse_link(match: re.Match) -> dict | None:
     }
 
 
-def discover_links(content_dir: Path = CONTENT_DIR) -> dict[str, dict]:
+# File names the build never publishes (build/Site.hs `neverPublish`), and
+# a front-matter `draft:` that is true.
+PRIVATE_SUFFIXES = (".local.md", ".draft.md")
+DRAFT_RE = re.compile(
+    r"""^draft:[ \t]*["']?(true|yes|on)["']?[ \t]*(#.*)?$""", re.IGNORECASE | re.MULTILINE
+)
+
+
+def front_matter(text: str) -> str:
+    if not text.startswith("---"):
+        return ""
+    end = text.find("\n---", 3)
+    return text[3:end] if end != -1 else ""
+
+
+def is_draft(md: Path) -> bool:
+    try:
+        return bool(DRAFT_RE.search(front_matter(md.read_text(encoding="utf-8"))))
+    except (OSError, UnicodeDecodeError):
+        return False
+
+
+def publishable(md: Path, content_dir: Path) -> bool:
+    """Whether the site can publish this page: only those may give a link a
+    (public) snapshot."""
+    rel = md.relative_to(content_dir)
+    if rel.parts[0] == "drafts" or any(p.startswith(".") for p in rel.parts):
+        return False
+    if md.name.endswith(PRIVATE_SUFFIXES):
+        return False
+    if is_draft(md):
+        return False
+    # A draft collection hides everything in it (the collection's
+    # index.md carries the flag), however deep.
+    for parent in md.parents:
+        if parent == content_dir or content_dir not in parent.parents:
+            break
+        index = parent / "index.md"
+        if index != md and index.exists() and is_draft(index):
+            return False
+    return True
+
+
+def discover_links(content_dir: Path | None = None) -> dict[str, dict]:
+    content_dir = content_dir or CONTENT_DIR
     links: dict[str, dict] = {}
     for md in sorted(content_dir.rglob("*.md")):
+        if not publishable(md, content_dir):
+            continue
         try:
             text = md.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
@@ -148,6 +204,10 @@ class FetchError(Exception):
     pass
 
 
+class PrivateRepository(FetchError):
+    """Readable only with the token: never snapshotted, never kept."""
+
+
 def http_get(url: str, *, api: bool) -> bytes:
     headers = {"User-Agent": "levineuwirth.org code-refs"}
     if api:
@@ -158,14 +218,20 @@ def http_get(url: str, *, api: bool) -> bytes:
     req = urllib.request.Request(url, headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
-            return resp.read(MAX_BLOB_BYTES + 1)
+            # The size cap is for file contents only. An API response is
+            # read whole: a commit with large patches runs past a megabyte,
+            # and a truncated body is unparseable JSON, refetched (and
+            # failed) on every build.
+            return resp.read(MAX_BLOB_BYTES + 1) if not api else resp.read()
     except urllib.error.HTTPError as e:
         hint = ""
-        if e.code == 403 and e.headers.get("x-ratelimit-remaining") == "0":
+        if e.code == 429 or (e.code == 403 and e.headers.get("x-ratelimit-remaining") == "0"):
             hint = " (API rate limit; set GITHUB_TOKEN)"
         raise FetchError(f"HTTP {e.code} for {url}{hint}") from None
-    except (urllib.error.URLError, TimeoutError, OSError) as e:
-        raise FetchError(f"{url}: {e}") from None
+    except (urllib.error.URLError, TimeoutError, OSError, http.client.HTTPException) as e:
+        # HTTPException covers IncompleteRead, which is not an OSError and
+        # would otherwise escape as a traceback and fail the build.
+        raise FetchError(f"{url}: {e!r}") from None
 
 
 def api_json(path: str):
@@ -207,7 +273,11 @@ def ensure_commit(owner: str, repo: str, ref: str) -> dict:
         cached = sha_dir(owner, repo, ref) / "commit.json"
         if cached.exists():
             return json.loads(cached.read_text())
-    data = api_json(f"/repos/{owner}/{repo}/commits/{urllib.parse.quote(ref, safe='')}")
+    # per_page bounds the file list (and its patches) the API returns.
+    data = api_json(
+        f"/repos/{owner}/{repo}/commits/{urllib.parse.quote(ref, safe='')}"
+        f"?per_page={MAX_COMMIT_FILES}"
+    )
     files = data.get("files") or []
     commit = {
         "sha": data["sha"],
@@ -277,9 +347,26 @@ def ensure_tree(owner: str, repo: str, sha: str, path: str) -> Path:
     return dest
 
 
+_visibility: dict[tuple[str, str], bool] = {}
+
+
+def refuse_private(owner: str, repo: str) -> None:
+    """With GITHUB_TOKEN set the API can read private repositories, and
+    their snapshots would be published like any other. Without a token a
+    private repository is a 404 already, so no check is needed."""
+    if not os.environ.get("GITHUB_TOKEN"):
+        return
+    key = (owner, repo)
+    if key not in _visibility:
+        _visibility[key] = bool(api_json(f"/repos/{owner}/{repo}").get("private"))
+    if _visibility[key]:
+        raise PrivateRepository(f"{owner}/{repo} is private; not snapshotted")
+
+
 def snapshot(link: dict) -> dict:
     """Fetch (or find) the snapshot for one link; return its index entry."""
     owner, repo = link["owner"], link["repo"]
+    refuse_private(owner, repo)
     commit = ensure_commit(owner, repo, link["ref"])
     sha = commit["sha"]
     kind = link["kind"]
@@ -337,13 +424,25 @@ def cmd_fetch(_args) -> int:
             new[url] = prev
             continue
         try:
-            new[url] = snapshot(link)
-            fetched += 1
+            entry = snapshot(link)
+        except PrivateRepository as e:
+            failed += 1
+            warn(str(e))
+            continue
         except (FetchError, KeyError, ValueError) as e:
             failed += 1
             warn(str(e))
             if prev and snapshot_present(prev):
                 new[url] = prev
+            continue
+        # A branch link re-resolves every run. When it still names the same
+        # commit, keep the entry as it was, `fetched` included: rewriting
+        # the date alone left index.json modified after every build day.
+        if prev and same_snapshot(prev, entry) and snapshot_present(prev):
+            new[url] = prev
+        else:
+            new[url] = entry
+            fetched += 1
     if new != old:
         STORE_DIR.mkdir(exist_ok=True)
         write_json(INDEX_PATH, dict(sorted(new.items())))
@@ -351,10 +450,27 @@ def cmd_fetch(_args) -> int:
         f"code-refs: {len(new)} linked snapshots"
         f" ({fetched} fetched, {failed} failed, {len(links) - len(new)} without a snapshot)"
     )
+    # Everything under code-refs/ is published. Once every link has
+    # resolved, drop what no link references any more (a moved branch's
+    # old commit, a link taken out of a page, debris from an interrupted
+    # write). After a failure the previous snapshots stay for the retry.
+    if failed == 0:
+        collect_garbage(dry_run=False)
     return 0
 
 
+def same_snapshot(a: dict, b: dict) -> bool:
+    return {k: v for k, v in a.items() if k != "fetched"} == {
+        k: v for k, v in b.items() if k != "fetched"
+    }
+
+
 def cmd_gc(args) -> int:
+    collect_garbage(dry_run=args.dry_run)
+    return 0
+
+
+def collect_garbage(*, dry_run: bool) -> None:
     index = load_index()
     keep = {
         (STORE_DIR / e[k][len(PUBLIC_PREFIX):]).resolve()
@@ -363,14 +479,13 @@ def cmd_gc(args) -> int:
     gh = STORE_DIR / "github"
     doomed = [p for p in gh.rglob("*") if p.is_file() and p.resolve() not in keep] if gh.exists() else []
     for p in doomed:
-        print(("would remove " if args.dry_run else "removed ") + str(p.relative_to(ROOT)))
-        if not args.dry_run:
+        print(("would remove " if dry_run else "removed ") + str(p.relative_to(STORE_DIR.parent)))
+        if not dry_run:
             p.unlink()
-    if not args.dry_run and gh.exists():
+    if not dry_run and gh.exists():
         for d in sorted((d for d in gh.rglob("*") if d.is_dir()), key=lambda d: -len(d.parts)):
             if not any(d.iterdir()):
                 d.rmdir()
-    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
