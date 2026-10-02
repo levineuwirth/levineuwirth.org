@@ -1,4 +1,4 @@
-.PHONY: test validate audit-viz viz-provenance viz-provenance-check build build-locked deploy deploy-locked deploy-preflight deploy-recheck deploy-rsync-inplace deploy-rsync-atomic deploy-clean sign download-model download-pdfjs download-leaflet compress-assets convert-images thumbnails pdf-thumbs pdfs watch watch-locked clean dev dev-locked audit-marks archive-gc archive-wayback archive-check archive-suggest
+.PHONY: test validate audit-viz viz-provenance viz-provenance-check build build-locked deploy deploy-locked deploy-guard deploy-preflight deploy-recheck deploy-rsync-inplace deploy-rsync-atomic deploy-clean sign download-model download-pdfjs download-leaflet compress-assets convert-images thumbnails pdf-thumbs pdfs watch watch-locked clean dev dev-locked audit-marks archive-gc archive-wayback archive-check archive-suggest
 
 # Prerequisite orders (deploy: build -> sign; deploy-clean: clean ->
 # deploy) are only correct serially; under `make -j` they could
@@ -468,13 +468,33 @@ deploy-recheck:
 	   exit 1; \
 	 fi
 
+# The document root as the rsync targets use it: blanks stripped and one
+# trailing slash removed, matching what tools/deploy-guard.sh accepts.
+VPS_DOCROOT = $(patsubst %/,%,$(strip $(VPS_PATH)))
+
+# Everything that must hold before anything is pushed or rsynced. The rsync
+# targets depend on it too, so it holds when one is re-run by hand after a
+# failed transfer (audit D04).
+deploy-guard:
+	@test -n "$(strip $(VPS_USER))" || { echo "deploy: VPS_USER not set in .env" >&2; exit 1; }
+	@test -n "$(strip $(VPS_HOST))" || { echo "deploy: VPS_HOST not set in .env" >&2; exit 1; }
+	@tools/deploy-guard.sh docroot "$(VPS_PATH)" >/dev/null
+	# Refuse to deploy a manifestly broken build. _site/index.html must
+	# exist and be non-empty before we run rsync --delete on the VPS.
+	@test -s _site/index.html || { echo "deploy: _site/index.html is missing or empty — refusing to rsync" >&2; exit 1; }
+	# Dev artifacts must never ship. `make build` purges _site/drafts, so
+	# this firing means _site was produced by something else (e.g. a raw
+	# `cabal run site -- build` after a watch session) — rebuild properly.
+	@if [ -d _site/drafts ]; then \
+	  echo "deploy: _site/drafts exists — dev drafts must not deploy; run 'make build' (or 'make deploy-clean')" >&2; \
+	  exit 1; \
+	fi
+
 deploy:
 	@$(WITH_LOCK) $(MAKE) --no-print-directory deploy-locked
 
 deploy-locked: deploy-preflight build-locked validate sign
-	@test -n "$(VPS_USER)" || (echo "deploy: VPS_USER not set in .env" >&2; exit 1)
-	@test -n "$(VPS_HOST)" || (echo "deploy: VPS_HOST not set in .env" >&2; exit 1)
-	@test -n "$(VPS_PATH)" || (echo "deploy: VPS_PATH not set in .env" >&2; exit 1)
+	@$(MAKE) --no-print-directory deploy-guard
 	# The revision that was actually compiled. tools/build-freshness.sh
 	# writes data/last-build-commit.txt from `git rev-parse HEAD` right
 	# after the last successful compile pass; if HEAD has moved since, the
@@ -486,19 +506,6 @@ deploy-locked: deploy-preflight build-locked validate sign
 	   echo "        Something committed between the build and the deploy. Re-run 'make deploy'." >&2; \
 	   exit 1; \
 	 fi
-	# Refuse to deploy a manifestly broken build. _site/index.html must
-	# exist and be non-empty before we run rsync --delete on the VPS.
-	@test -s _site/index.html || { echo "deploy: _site/index.html is missing or empty — refusing to rsync" >&2; exit 1; }
-	# Dev artifacts must never ship. `make build` purges _site/drafts, so
-	# this firing means _site was produced by something else (e.g. a raw
-	# `cabal run site -- build` after a watch session) — rebuild properly.
-	@if [ -d _site/drafts ]; then \
-	  echo "deploy: _site/drafts exists — dev drafts must not deploy; run 'make build' (or 'make deploy-clean')" >&2; \
-	  exit 1; \
-	fi
-	# Defense-in-depth: refuse rsync --delete to obviously dangerous
-	# parents in case VPS_PATH was typo'd (e.g. trailing-slash mistake).
-	@case "$(VPS_PATH)" in /|/srv|/srv/http|/var|/var/www|/home|/root|"") echo "deploy: VPS_PATH=$(VPS_PATH) looks unsafe — refusing" >&2; exit 1 ;; esac
 	@$(MAKE) --no-print-directory deploy-recheck
 	@command -v notify-send >/dev/null 2>&1 && notify-send "make deploy" "Ready to push & rsync — waiting for auth" || true
 	# Push first: a successful push is cheap to roll back, while a
@@ -515,8 +522,13 @@ deploy-locked: deploy-preflight build-locked validate sign
 # The default publication path, unchanged: rsync straight into the live
 # document root. Not atomic — for the ~30 seconds rsync runs, a visitor can
 # get new HTML with old JS, or a page whose signature has not landed yet.
-deploy-rsync-inplace:
-	rsync -avz --delete _site/ "$(VPS_USER)@$(VPS_HOST):$(VPS_PATH)/"
+#
+# The dry run first refuses a destination that is not the live site (no
+# index.html there) or a transfer that would delete more than
+# DEPLOY_MAX_DELETE files — see tools/deploy-guard.sh for the overrides.
+deploy-rsync-inplace: deploy-guard
+	@tools/deploy-guard.sh target _site "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$(VPS_DOCROOT)/"
+	rsync -avz --delete _site/ "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$(VPS_DOCROOT)/"
 
 # ---------------------------------------------------------------------------
 # ATOMIC_DEPLOY=1 — opt-in release directories  (B06)
@@ -549,24 +561,24 @@ deploy-rsync-inplace:
 # retained release costs only what actually changed.
 ATOMIC_KEEP ?= 3
 
-deploy-rsync-atomic:
+deploy-rsync-atomic: deploy-guard
 	@set -e; \
-	 rel="$(VPS_PATH).releases"; \
+	 rel="$(VPS_DOCROOT).releases"; \
 	 ts=$$(date -u +%Y%m%dT%H%M%SZ); \
 	 echo "deploy: atomic release $$ts under $$rel"; \
-	 ssh "$(VPS_USER)@$(VPS_HOST)" "test -L '$(VPS_PATH)' || { \
-	     echo 'deploy: $(VPS_PATH) is not a symlink — run the one-time server step in the Makefile' >&2; exit 1; }; \
+	 ssh "$(strip $(VPS_USER))@$(strip $(VPS_HOST))" "test -L '$(VPS_DOCROOT)' || { \
+	     echo 'deploy: $(VPS_DOCROOT) is not a symlink — run the one-time server step in the Makefile' >&2; exit 1; }; \
 	   mkdir -p '$$rel'"; \
-	 prev=$$(ssh "$(VPS_USER)@$(VPS_HOST)" "readlink -f '$(VPS_PATH)' 2>/dev/null || true"); \
+	 prev=$$(ssh "$(strip $(VPS_USER))@$(strip $(VPS_HOST))" "readlink -f '$(VPS_DOCROOT)' 2>/dev/null || true"); \
 	 linkdest=""; \
 	 if [ -n "$$prev" ]; then linkdest="--link-dest=$$prev"; fi; \
-	 rsync -avz --delete $$linkdest _site/ "$(VPS_USER)@$(VPS_HOST):$$rel/$$ts/"; \
-	 ssh "$(VPS_USER)@$(VPS_HOST)" "set -e; \
+	 rsync -avz --delete $$linkdest _site/ "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$$rel/$$ts/"; \
+	 ssh "$(strip $(VPS_USER))@$(strip $(VPS_HOST))" "set -e; \
 	   test -s '$$rel/$$ts/index.html'; \
-	   ln -sfn '$$rel/$$ts' '$(VPS_PATH).new'; \
-	   mv -Tf '$(VPS_PATH).new' '$(VPS_PATH)'; \
+	   ln -sfn '$$rel/$$ts' '$(VPS_DOCROOT).new'; \
+	   mv -Tf '$(VPS_DOCROOT).new' '$(VPS_DOCROOT)'; \
 	   ls -1dt '$$rel'/*/ 2>/dev/null | tail -n +$$(( $(ATOMIC_KEEP) + 1 )) | xargs -r rm -rf"; \
-	 echo "deploy: $(VPS_PATH) now points at $$rel/$$ts (keeping $(ATOMIC_KEEP) releases)"
+	 echo "deploy: $(VPS_DOCROOT) now points at $$rel/$$ts (keeping $(ATOMIC_KEEP) releases)"
 
 # Escape hatch: the old behaviour — full rebuild, then deploy. The
 # freshness triggers in tools/build-freshness.sh make this rarely
