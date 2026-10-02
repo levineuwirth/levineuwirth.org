@@ -110,6 +110,11 @@ build-locked:
 	@$(MAKE) -s pdf-thumbs
 	@./tools/download-pdfjs.sh
 	@./tools/download-leaflet.sh
+	# The semantic-search model (static/models/, gitignored), like the two
+	# above: without it the deploy's rsync --delete would remove the
+	# published model (audit D07). Skips present files after re-checking
+	# their pinned SHA-256.
+	@./tools/download-model.sh >/dev/null
 	# Photography pipeline (Phase 3): generate per-photo EXIF + palette
 	# sidecars under content/photography/**/*.{exif,palette}.yaml so the
 	# Hakyll context can merge them with frontmatter at compile time.

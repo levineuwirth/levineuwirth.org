@@ -452,6 +452,22 @@ class CheckSiteTestCase(unittest.TestCase):
         code, output = self.run_gate()
         self.assertEqual(code, 0, output)
 
+    # -- search model -----------------------------------------------------
+
+    def test_semantic_search_without_its_model_fails(self):
+        self.site.write("js/semantic-search.js", "// search")
+        code, output = self.run_gate()
+        self.assertEqual(code, 1)
+        self.assertIn("search-model", output)
+        self.assertIn("download-model.sh", output)
+
+    def test_semantic_search_with_its_model_passes(self):
+        self.site.write("js/semantic-search.js", "// search")
+        for rel in check_site.SEARCH_MODEL_FILES:
+            self.site.write(f"models/{rel}", "x")
+        code, output = self.run_gate()
+        self.assertEqual(code, 0, output)
+
     # -- feeds and sitemap -------------------------------------------------
 
     def test_non_rfc3339_feed_updated_fails(self):

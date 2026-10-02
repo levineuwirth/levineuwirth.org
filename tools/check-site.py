@@ -600,6 +600,32 @@ def check_webp(site_dir: str, report: Report, *, as_error: bool) -> None:
         )
 
 
+# The files tools/download-model.sh fetches, relative to _site/models/.
+SEARCH_MODEL_FILES = tuple(
+    f"all-MiniLM-L6-v2/{name}"
+    for name in ("config.json", "tokenizer.json", "tokenizer_config.json",
+                 "special_tokens_map.json", "onnx/model_quantized.onnx")
+)
+
+
+def check_search_model(site_dir: str, report: Report) -> None:
+    """D07 — static/models/ is gitignored, so a checkout without it builds a
+    site whose semantic search has no model, and the deploy's rsync --delete
+    then removes the model from the server."""
+    report.check("search-model")
+    if not os.path.exists(os.path.join(site_dir, "js", "semantic-search.js")):
+        return
+    missing = [f for f in SEARCH_MODEL_FILES
+               if not os.path.isfile(os.path.join(site_dir, "models", f))]
+    if missing:
+        report.error(
+            "search-model",
+            f"semantic search ships without models/{missing[0]}"
+            f"{f' (+{len(missing) - 1} more)' if len(missing) > 1 else ''} — "
+            f"run tools/download-model.sh",
+        )
+
+
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
@@ -656,6 +682,7 @@ def main(argv: list[str] | None = None) -> int:
     check_sitemap(site_dir, report)
     check_404(site_dir, report, as_error=not args.allow_missing_404)
     check_webp(site_dir, report, as_error=args.require_webp)
+    check_search_model(site_dir, report)
 
     status = report.summarise(site_dir)
     if status and args.warn_only:
