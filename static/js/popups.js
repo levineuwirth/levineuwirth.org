@@ -662,8 +662,9 @@
                 if (sub === 'www') sub = 'en';
                 /* pageimages|extracts in one call: the article's lead
                    image thumbnail rides along with the intro text.
-                   Thumbnails come from upload.wikimedia.org — that host
-                   must stay in the CSP's img-src. 480px because the
+                   Thumbnails come from thumb.wikimedia.org (older ones
+                   from upload.wikimedia.org) — both hosts must stay in
+                   the CSP's img-src. 480px because the
                    banner spans the rich popup's full width. */
                 return 'https://' + sub + '.wikipedia.org/w/api.php'
                      + '?action=query&prop=extracts%7Cpageimages&exintro=1'
