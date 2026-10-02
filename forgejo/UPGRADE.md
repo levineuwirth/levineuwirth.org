@@ -113,6 +113,12 @@ What changed after this was written on 2026-09-06, folded in below:
   (`OFFHOST_TOOL=borg`), which closes § 7.3's first gap, and local
   retention is `KEEP=3`. That is enough here (§ 5): a hop's rollback only
   ever needs the newest archive, and every per-hop archive is in borg.
+  *Correction (2026-10-02, audit Y08):* until then `borg prune
+  --keep-daily` kept only the last archive of each day, so of the
+  2026-10-01 per-hop archives borg kept just the day's last one; the
+  pre-upgrade `1.21.11-0` state survives only in the 09-30 nightly and in
+  the laptop copy of § 1.7. The default retention now starts with
+  `--keep-within 7d`, which keeps every archive of the last week.
 * **`/tmp` is a 1.9 GB tmpfs.** The backup units use `TMPDIR=/var/tmp`, and
   § 5.1 extracts under `/root`. Keep any ad-hoc extraction off `/tmp`.
 * **16.0 still leaves support on 2026-10-29, and 17.0 lands 2026-10-15**, so
@@ -593,8 +599,10 @@ git clone https://git.levineuwirth.org/neuwirth/levineuwirth.org.git /tmp/cc && 
 
 Retention is `KEEP=3` locally (`/etc/default/forgejo-backup`), and that is
 enough: a hop's rollback only ever needs `PREHOP`, the newest archive, and
-every per-hop archive also lands in borg, so the pre-upgrade `1.21.11-0`
-archive stays restorable after the local copy is pruned:
+every per-hop archive also lands in borg, kept for at least a week by the
+`--keep-within 7d` retention (before 2026-10-02 only the day's last one was
+kept; see the correction at the top), so a pre-upgrade archive stays
+restorable after the local copy is pruned:
 
 ```bash
 BORG_RSH='ssh -i /root/.ssh/id_storagebox -o BatchMode=yes' \
