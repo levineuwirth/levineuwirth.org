@@ -92,12 +92,12 @@ the VPS rsync target consumed by `make deploy`. Never commit it.
 - `tools/` — Python tooling (embeddings, importers) and shell scripts.
 - `data/` — generated and source data (commonplace.yaml, annotations.json,
   bibliographies, similar-links.json).
-- `nginx/` — vhost snippets shipped to the VPS (`security-headers.conf`,
-  `security-framing.conf`, `csp-report.conf`, `static-assets.conf`,
-  `popup-proxy.conf`, `archive.conf`). The live vhost on the VPS is the
-  source of truth; see `nginx/vhost.conf.example` for the canonical
-  structure and the include order these snippets expect. Nothing here is
-  deployed by `make deploy` — see "Deployment safety" below.
+- `nginx/` — every nginx file on the VPS: `nginx.conf`, the server blocks
+  (`levineuwirth.conf`, `forgejo.conf`, the two sync servers, a default
+  server), the site's snippets and their `conf.d` companions.
+  `nginx/README.md` maps each to its path and has the install steps.
+  Nothing here is deployed by `make deploy` — see "Deployment safety"
+  below.
 
 ## Deployment safety
 
@@ -123,20 +123,14 @@ first deploy of the day:
 ### nginx snippets are not deployed
 
 `make deploy` only rsyncs `_site/`. Nothing under `nginx/` reaches the server
-by itself — the files there are the reviewable copy of the configuration, and
-they take effect only when you copy them by hand:
-
-```sh
-scp nginx/*.conf VPS:/etc/nginx/snippets/     # then, on the VPS:
-sudo nginx -t                                 # must pass before reloading
-sudo systemctl reload nginx
-```
+by itself. The files there are the configuration the VPS runs, and each takes
+effect only when copied to its own path (snippets, `conf.d`, server blocks
+and `nginx.conf` all differ); `nginx/README.md` has the table and the steps.
 
 Always `nginx -t` before the reload: a snippet that fails to parse takes the
 whole server down on a restart, and several snippets depend on directives
 that live in `http { }` (`proxy_cache_path`, `limit_req_zone`, the
-`csp_report` log format) and will fail the test if those are missing.
-`nginx/vhost.conf.example` lists all of them.
+`csp_report` log format), in the `conf.d` files beside them.
 
 ## Architecture pointers
 

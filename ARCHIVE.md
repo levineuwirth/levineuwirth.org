@@ -204,7 +204,7 @@ fixes didn't fully close:
   obtained through a second unobservable document request.
 - **`nginx/archive.conf` is wired into the deploy template** and
   re-`include`s `security-headers.conf` inside its `location` block.
-  `nginx/vhost.conf.example` now includes `archive.conf`; the snippet
+  `nginx/levineuwirth.conf` includes `archive.conf`; the snippet
   itself re-emits the baseline headers because nginx's `add_header` chain
   is inherited from a parent only when the current context declares *no*
   `add_header` directives — without the re-include, /archive/ would lose

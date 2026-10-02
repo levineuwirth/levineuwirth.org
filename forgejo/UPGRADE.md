@@ -78,7 +78,9 @@ inline in `/etc/nginx/nginx.conf` and not tracked here, gained a
 `location ~ ^/api/v1/repos/[^/]+/[^/]+/archive/ { return 404; }` (copy
 before it: `/root/nginx.conf.bak-2026-10-01`). The rest of the API, raw
 files and clones were checked unaffected. And the instance moved onto the
-floating `:15` tag with `forgejo-update.timer` (§ 7.4).
+floating `:15` tag with `forgejo-update.timer` (§ 7.4). Since 2026-10-03 the
+block is tracked as `nginx/forgejo.conf`, in its own file under
+`sites-available/` (`nginx/README.md`).
 
 Left open: § 9.5, about 2026-10-08; excluding
 `gitea/repo-archive` from the backups; § 7.4's subscriptions and the
@@ -923,7 +925,7 @@ reached the server:
 | `nginx/security-headers.conf` | `report-uri /csp-report`; `upgrade-insecure-requests` dropped; framing moved out |
 | `nginx/security-framing.conf` | **new**: `X-Frame-Options` and `frame-ancestors`, now kept apart from the other headers |
 | `nginx/csp-report.conf` | **new**: the collector at `/csp-report`, written to `/var/log/nginx/csp-report.log` |
-| `nginx/archive.conf`, `static-assets.conf`, `popup-proxy.conf`, `vhost.conf.example` | other 2026-09-06 changes; some may already be live |
+| `nginx/archive.conf`, `static-assets.conf`, `popup-proxy.conf`, `vhost.conf.example` (now `levineuwirth.conf`) | other 2026-09-06 changes; some may already be live |
 
 **Deploy `security-headers.conf` and `security-framing.conf` together.**
 The new `security-headers.conf` no longer sets `X-Frame-Options`, so
@@ -983,7 +985,7 @@ independent of the CSP.
    `include snippets/security-headers.conf;`, add
    `include snippets/security-framing.conf;` and
    `include snippets/csp-report.conf;` (once, at server level; see
-   `nginx/vhost.conf.example`).
+   `nginx/levineuwirth.conf`).
 4. `nginx -t && systemctl reload nginx`. If `-t` fails, nothing has changed
    yet; fix it or restore the backup directory.
 
