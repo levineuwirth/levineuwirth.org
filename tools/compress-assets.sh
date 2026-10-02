@@ -97,7 +97,12 @@ compress_one() {
     local h kind cached tmp
     h=$(sha256sum "$src" | cut -c1-64)
     for kind in gz br; do
-        [ "$kind" = br ] && [ "$have_brotli" != 1 ] && continue
+        if [ "$kind" = br ] && [ "$have_brotli" != 1 ]; then
+            # A previously built sidecar may describe older source bytes.
+            # nginx prefers it, so gzip-only builds must remove it.
+            rm -f "$src.br" "$src.br.tmp"
+            continue
+        fi
         cached="$COMPRESS_CACHE/${h:0:2}/$h.$kind"
         if [ -f "$cached" ]; then
             touch "$cached"                     # recently used: kept by the prune

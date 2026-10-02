@@ -98,6 +98,28 @@ class CompressAssets(unittest.TestCase):
         for k in self.kinds:
             self.assertFalse(Path(f"{self.page}{k}").exists(), k)
 
+    def test_missing_brotli_never_keeps_a_stale_sidecar(self):
+        self.run_script()
+        # Model a checkout moved to a machine without the optional encoder.
+        if not Path(f"{self.page}.br").exists():
+            Path(f"{self.page}.br").write_bytes(b"old compressed bytes")
+        self.page.write_text("<p>" + "new content " * 200 + "</p>")
+        # Override only command discovery, retaining the actual tools used
+        # for gzip/cache operations. No real Brotli invocation is possible.
+        shell = '''command() {
+            if [ "$1" = -v ] && [ "$2" = brotli ]; then return 1; fi
+            builtin command "$@"
+        }
+        export -f command
+        exec bash "$1" "$2"
+        '''
+        done = subprocess.run(["bash", "-c", shell, "test", str(SCRIPT), str(self.site)],
+                              env=dict(os.environ, COMPRESS_CACHE=str(self.cache)),
+                              capture_output=True, text=True)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertFalse(Path(f"{self.page}.br").exists())
+        self.assertEqual(decode(Path(f"{self.page}.gz")), self.page.read_bytes())
+
     def test_orphaned_sidecars_are_swept(self):
         self.run_script()
         self.page.unlink()
