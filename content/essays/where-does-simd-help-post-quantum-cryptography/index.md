@@ -162,7 +162,7 @@ The figure shows the cycle count distributions for three representative operatio
 
 The separation between `ref` and `avx2` is qualitatively different across operation types: for `INVNTT` the distributions do not overlap at all (disjoint spikes separated by two orders of magnitude on the log scale); for `gen_a` there is partial overlap; for noise sampling the distributions are nearly coincident.
 
-![Cycle count distributions for three representative ML-KEM-512 operations. Log $x$-axis. Dashed lines mark medians. Right-skew and outlier structure motivate nonparametric statistics.](figures/distributions.pdf){#fig-distributions}
+![Cycle count distributions for three representative ML-KEM-512 operations. Log $x$-axis. Dashed lines mark medians. Right-skew and outlier structure motivate nonparametric statistics.](figures/distributions.svg){#fig-distributions}
 
 ### Speedup Decomposition
 
