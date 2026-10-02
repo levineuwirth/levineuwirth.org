@@ -210,8 +210,8 @@ verify_archive() {
     local vpass port=${VERIFY_PORT:-15984} tries=0
     vpass=$(head -c 18 /dev/urandom | base64 | tr -dc 'A-Za-z0-9')
     VERIFY_CONTAINER="couchdb-verify-$$"
-    docker run -d --rm --name "$VERIFY_CONTAINER" \
-        -e COUCHDB_USER=verify -e COUCHDB_PASSWORD="$vpass" \
+    COUCHDB_USER=verify COUCHDB_PASSWORD="$vpass" docker run -d --rm --name "$VERIFY_CONTAINER" \
+        -e COUCHDB_USER -e COUCHDB_PASSWORD \
         -p "127.0.0.1:$port:5984" "$COUCHDB_IMAGE" >/dev/null \
         || die "--verify: could not start a scratch CouchDB ($COUCHDB_IMAGE)"
     until req "http://127.0.0.1:$port" verify "$vpass" GET / -o /dev/null 2>/dev/null; do
