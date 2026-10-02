@@ -1,6 +1,6 @@
 {-# LANGUAGE GHC2021 #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Site (rules, siteConfiguration) where
+module Site (rules, siteConfiguration, siteConfigurationFor) where
 
 import Control.Monad (forM, forM_, void, when)
 import Control.Monad.Except (catchError)
@@ -46,6 +46,7 @@ import Tags       (buildAllTags, applyTagRules, sidecarIdentifier,
                    portalIntroField, portalTooltipField)
 import Pagination (blogPaginateRules)
 import Stats      (statsRules)
+import Utils      (cacheDirFor, outputDirFor)
 
 -- ---------------------------------------------------------------------------
 -- Publication boundary
@@ -74,9 +75,17 @@ import Stats      (statsRules)
 --   @.swp@) are preserved by delegating to 'defaultConfiguration' first
 --   rather than replacing the function.
 siteConfiguration :: Configuration
-siteConfiguration = defaultConfiguration
+siteConfiguration = siteConfigurationFor False
+
+-- | 'siteConfiguration' with the output and store a dev build uses when
+--   given True (see 'Utils.outputDirFor').
+siteConfigurationFor :: Bool -> Configuration
+siteConfigurationFor dev = defaultConfiguration
     { ignoreFile = \path ->
         ignoreFile defaultConfiguration path || neverPublish path
+    , destinationDirectory = outputDirFor dev
+    , storeDirectory       = cacheDirFor dev
+    , tmpDirectory         = cacheDirFor dev ++ "/tmp"
     }
 
 -- | Paths that must never become Hakyll identifiers. See

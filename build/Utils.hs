@@ -17,11 +17,29 @@ module Utils
     , authorSlugify
     , authorNameOf
     , canonicalUrlPath
+    , isDevBuild
+    , outputDirFor
+    , cacheDirFor
     ) where
 
 import           Data.Char (isAlphaNum, isSpace, toLower)
 import           Data.List (dropWhileEnd, isSuffixOf)
 import qualified Data.Text as T
+import           System.Environment (lookupEnv)
+
+-- | Whether this run is a dev build: @SITE_ENV=dev@, set by @make dev@ and
+--   @make watch@ (and forced off by @make build@).
+isDevBuild :: IO Bool
+isDevBuild = (== Just "dev") <$> lookupEnv "SITE_ENV"
+
+-- | Where a build writes, and where Hakyll keeps its store. A dev build has
+--   its own pair, so a draft or a dev-only route (a draft collection is
+--   routed outside @/drafts/@) can never be left in the tree that
+--   @make deploy@ signs and publishes, and a dev session's clean never
+--   throws away the production build (audit D06).
+outputDirFor, cacheDirFor :: Bool -> FilePath
+outputDirFor dev = if dev then "_site-dev" else "_site"
+cacheDirFor dev = if dev then "_cache-dev" else "_cache"
 
 -- | Public URL for a Hakyll route, in the directory form the site's own
 --   navigation, sitemap, and generated semantic metadata use:

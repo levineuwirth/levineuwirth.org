@@ -1,6 +1,9 @@
 dist-newstyle/
 _site/
 _cache/
+# Dev builds (make dev / make watch) write here instead (audit D06).
+_site-dev/
+_cache-dev/
 .DS_Store
 .env
 # Defense-in-depth: the auto-snapshot in `make build` stages content/

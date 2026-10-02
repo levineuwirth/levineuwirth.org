@@ -49,7 +49,7 @@ import Contexts                   (siteCtx, authorLinksField, canonicalUrlPath)
 import Marks                      (hasMonogram, monogramSvgFieldFor,
                                    hasMonogramFieldFor)
 import qualified Patterns         as P
-import Utils                      (readingTime)
+import Utils                      (isDevBuild, outputDirFor, readingTime)
 
 -- ---------------------------------------------------------------------------
 -- Types
@@ -747,7 +747,7 @@ displayExt path = case takeExtension path of
 
 getOutputStats :: IO (Map.Map String (Int, Integer), Int, Integer)
 getOutputStats = do
-    files <- walkDir "_site"
+    files <- walkDir . outputDirFor =<< isDevBuild
     let grouped = foldr (\(path, sz) acc ->
                     Map.insertWith (\(c1,s1) (c2,s2) -> (c1+c2, s1+s2))
                                    (displayExt path)

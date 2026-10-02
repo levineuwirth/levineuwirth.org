@@ -753,11 +753,11 @@ archive-check:
 # SITE_ENV=production for itself, so a dev value set here (or exported in
 # your shell) can no longer leak into a production compile.
 #
-# NOTE: this writes drafts into the SAME _site that deploy publishes from.
-# `make build` deletes _site/drafts before embedding and again after
-# compiling, and tools/check-site.py fails on any surviving /drafts/ link,
-# so the leftovers cannot ship — but the tidiest habit is still to run
-# `make build` before `make deploy` after a dev session.
+# A dev build writes to _site-dev/ with its own store, _cache-dev/
+# (build/Utils.hs outputDirFor), never to the _site/ that deploy publishes:
+# a draft collection is routed outside /drafts/ in dev, and before the split
+# a dev session could leave such a page for the next deploy to sign and
+# publish (audit D06). The clean below only clears the dev pair.
 dev:
 	@$(WITH_LOCK) $(MAKE) --no-print-directory dev-locked
 
@@ -765,4 +765,4 @@ dev-locked: export SITE_ENV = dev
 dev-locked:
 	cabal run site -- clean
 	cabal run site -- build
-	python3 -m http.server 8000 --bind 127.0.0.1 --directory _site
+	python3 -m http.server 8000 --bind 127.0.0.1 --directory _site-dev

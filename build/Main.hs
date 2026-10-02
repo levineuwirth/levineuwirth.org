@@ -5,7 +5,8 @@ import System.Directory      (createDirectoryIfMissing)
 import System.Environment    (getArgs)
 import Hakyll                (hakyllWith)
 import Golden                (renderFixture)
-import Site                  (rules, siteConfiguration)
+import Site                  (rules, siteConfigurationFor)
+import Utils                 (isDevBuild)
 
 -- | Stamp the start of this build into @data/build-stamp.txt@ before
 -- Hakyll scans the provider directory. The file therefore always exists
@@ -19,7 +20,7 @@ writeBuildStamp = do
     t <- getPOSIXTime
     writeFile "data/build-stamp.txt" (show t ++ "\n")
 
--- | 'siteConfiguration' (not 'Hakyll.defaultConfiguration') is the
+-- | 'siteConfigurationFor' (not 'Hakyll.defaultConfiguration') is the
 -- publication boundary: it extends Hakyll's @ignoreFile@ so that private
 -- notes, key material, and editor/interpreter junk never become
 -- identifiers, and therefore can never be routed into @_site/@. See
@@ -35,4 +36,5 @@ main = do
         ["render-fixture", path] -> renderFixture path
         _ -> do
             writeBuildStamp
-            hakyllWith siteConfiguration rules
+            dev <- isDevBuild
+            hakyllWith (siteConfigurationFor dev) rules
