@@ -41,6 +41,9 @@ refresh  Re-exports pieces from their manifests (all of them by default):
 shrink   Rewrites the pages already on disk as an import now writes them
          (below), in place. For pages exported before shrinking existed;
          a page already shrunk is left alone.
+thumbnail
+         Writes scores/thumb.webp for pieces imported before thumbnails
+         existed (below).
 check    Reports every composition whose score is missing or stale, a page
          cut short, or an import that was interrupted.
 
@@ -54,6 +57,13 @@ and viewBox, every <line> and <polyline> (the instrument-name gutter is
 measured from them), the barlines (the timing's scale), and the fill and
 stroke attributes the stylesheet recolours by. The root <title> and <desc>,
 which carry the source file's name, go.
+
+Each import also writes page 1 as scores/thumb.webp, 720 px wide and grey,
+which the composition page's frontispiece and the /music/ shelf show in
+place of the SVG: a decoded image of about 26 KB, where the SVG is 2,000
+outlines for the browser to rasterise at a fifth of their size (audit
+MO4). It needs rsvg-convert and Pillow with WebP; without them the import
+warns and the pages show the SVG, as before.
 
 An import is assembled in .music-import/<slug>/ at the repository root and
 swapped into place by two renames, the manifest written last: a crash
@@ -104,6 +114,11 @@ PAGES = "scores"
 STAGING = ROOT / ".music-import"
 AUDIO = "realization.mp3"
 TIMING = "timing.json"
+THUMB = "thumb.webp"
+# The frontispiece is at most 17.5rem wide (280 px at the default text size,
+# about 350 at the largest), the shelf's face-out narrower; twice that for a
+# 2x screen.
+THUMB_WIDTH = 720
 AUDIO_LABEL = "MIDI realization (Muse Sounds)"
 
 # The engravers the importer can drive. MuseScore 3's AppImage bundles a Qt
@@ -671,6 +686,34 @@ def shrink_pages(slug: str, pages: list[Path]) -> tuple[int, int]:
     return before, after
 
 
+def thumbnail(page: Path, out: Path) -> bool:
+    """Write page as a greyscale WebP THUMB_WIDTH wide to out; False, with a
+    warning, when the tools are missing or fail."""
+    rsvg = shutil.which("rsvg-convert")
+    try:
+        from PIL import Image, features
+        webp = features.check("webp")
+    except ImportError:
+        webp = False
+    if not rsvg or not webp:
+        warn(f"no thumbnail for {page.parent.parent.name}: needs rsvg-convert and Pillow "
+             f"with WebP; the pages show the SVG instead")
+        return False
+    png = out.with_name(f".{out.stem}.png")
+    r = subprocess.run([rsvg, "-w", str(THUMB_WIDTH), "-b", "white", "-o", str(png), str(page)],
+                       capture_output=True, text=True)
+    if r.returncode != 0:
+        png.unlink(missing_ok=True)
+        warn(f"rsvg-convert could not render {page}: {r.stderr.strip()[-500:]}")
+        return False
+    tmp = out.with_name(f".{out.name}.tmp")
+    with Image.open(png) as im:
+        im.convert("L").save(tmp, "WEBP", quality=80, method=6)
+    png.unlink()
+    os.replace(tmp, out)
+    return True
+
+
 def page_problem(page: Path) -> str | None:
     """Why a page cannot be a whole SVG, or None. Reads its two ends only."""
     with page.open("rb") as f:
@@ -736,6 +779,8 @@ def install(slug: str, source: Path, pdf: bool, audio: bool, force: bool, new: b
 
         # The timing was measured on the pages as exported; only now shrink.
         before, after = shrink_pages(slug, got["pages"])
+        thumb = tmpdir / THUMB
+        made_thumb = bool(got["pages"]) and thumbnail(got["pages"][0], thumb)
 
         # Every export has succeeded. Assemble the new score directory beside
         # the published one, then swap them.
@@ -748,7 +793,8 @@ def install(slug: str, source: Path, pdf: bool, audio: bool, force: bool, new: b
         manifest = MUSIC / slug / MANIFEST
         if manifest.exists():
             shutil.copy2(manifest, stage / MANIFEST)
-        produced = {AUDIO, TIMING} | ({got["pdf"].name} if got["pdf"] else set())
+        # A thumbnail of an earlier page 1 is never carried over.
+        produced = {AUDIO, TIMING, THUMB} | ({got["pdf"].name} if got["pdf"] else set())
         if dest.is_dir():
             # What this import does not write stays: a PDF from an earlier
             # --pdf import, say. A realization and its timing stand or fall
@@ -761,6 +807,8 @@ def install(slug: str, source: Path, pdf: bool, audio: bool, force: bool, new: b
             shutil.move(str(f), new_scores / f.name)
         if got["pdf"]:
             shutil.move(str(got["pdf"]), new_scores / got["pdf"].name)
+        if made_thumb:
+            shutil.move(str(thumb), new_scores / THUMB)
         if got["audio"]:
             shutil.move(str(got["audio"]), new_scores / AUDIO)
             (new_scores / TIMING).write_text(json.dumps(follow, separators=(",", ":")))
@@ -856,6 +904,17 @@ def cmd_shrink(a: argparse.Namespace) -> None:
         print(f"all: {total_before / 1e6:.1f} → {total_after / 1e6:.1f} MB")
 
 
+def cmd_thumbnail(a: argparse.Namespace) -> None:
+    for slug in a.slugs or pieces():
+        pages = sorted((MUSIC / slug / PAGES).glob("page-*.svg"), key=page_index)
+        if not pages:
+            warn(f"{slug}: no pages on disk")
+            continue
+        out = MUSIC / slug / PAGES / THUMB
+        if thumbnail(pages[0], out):
+            print(f"{slug}: {out.relative_to(ROOT)} ({out.stat().st_size // 1024} KB)")
+
+
 def cmd_check(_: argparse.Namespace) -> None:
     problems = 0
     for left in sorted(STAGING.glob("*/")) if STAGING.is_dir() else []:
@@ -879,6 +938,8 @@ def cmd_check(_: argparse.Namespace) -> None:
         unshrunk = sum(1 for p in pages if SHRUNK.encode() not in p.open("rb").read(512))
         if unshrunk:
             print(f"{slug}: {unshrunk} page(s) not shrunk — tools/music-import.py shrink {slug}")
+        if pages and not (MUSIC / slug / PAGES / THUMB).exists():
+            print(f"{slug}: no thumbnail — tools/music-import.py thumbnail {slug}")
         if not m:
             print(f"{slug}: declares a score but has no {MANIFEST}")
             problems += 1
@@ -921,6 +982,9 @@ def main() -> None:
     p = sub.add_parser("shrink", help="shrink pages exported before shrinking existed")
     p.add_argument("slugs", nargs="*")
     p.set_defaults(fn=cmd_shrink)
+    p = sub.add_parser("thumbnail", help="write page 1's thumbnail for pieces already imported")
+    p.add_argument("slugs", nargs="*")
+    p.set_defaults(fn=cmd_thumbnail)
     p = sub.add_parser("check", help="report missing or stale score pages")
     p.set_defaults(fn=cmd_check)
     a = ap.parse_args()

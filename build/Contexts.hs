@@ -10,6 +10,7 @@ module Contexts
     , compositionCtx
     , declaresScore
     , scorePageList
+    , scoreThumb
     , durationPrimes
     , svgAspect
     , photographyCtx
@@ -1489,6 +1490,23 @@ scorePageList item = do
                     [ makeRelative srcDir (toFilePath i) | i <- ids ]
             _ -> return []
 
+-- | Page 1's thumbnail, @thumb.webp@ beside the pages, as a path relative
+--   to the composition's directory, when the importer has written one
+--   (tools/music-import.py, audit MO4). The frontispiece and the /music/
+--   shelf show it instead of the page itself: an image to decode, not
+--   2,000 outlines to rasterise at a fifth of their size. Read through
+--   'unsafeCompiler' like the timing map; @musicScoreDep@ covers it.
+scoreThumb :: Item a -> Compiler (Maybe String)
+scoreThumb item = do
+    pages <- scorePageList item
+    case pages of
+        []      -> return Nothing
+        (p : _) -> do
+            let rel    = takeDirectory p </> "thumb.webp"
+                srcDir = takeDirectory (toFilePath (itemIdentifier item))
+            exists <- unsafeCompiler (doesFileExist (srcDir </> rel))
+            return (if exists then Just rel else Nothing)
+
 -- | Filename ordering that compares digit runs numerically, so
 --   @page-2.svg@ sorts before @page-10.svg@ whether or not the author
 --   zero-padded. Plain lexicographic order silently interleaves the pages
@@ -1595,6 +1613,7 @@ compositionCtx =
     <> scorePageCountField
     <> scorePagesListField
     <> firstScorePageField
+    <> scoreThumbField
     <> scoreAspectField
     <> scorePortraitField
     <> hasMovementsField
@@ -1678,6 +1697,12 @@ compositionCtx =
         case pages of
             (p : _) -> return $ "/music/" ++ compSlug item ++ "/" ++ p
             []      -> noResult "no score pages"
+
+    scoreThumbField = field "score-thumb" $ \item -> do
+        thumb <- scoreThumb item
+        case thumb of
+            Just t  -> return $ "/music/" ++ compSlug item ++ "/" ++ t
+            Nothing -> noResult "no thumbnail"
 
     -- Present when page 1 is taller than it is wide. Portrait pages default
     -- to fit-width rather than fit-height: a portrait sheet in a landscape

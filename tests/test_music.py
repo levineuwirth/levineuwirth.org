@@ -65,6 +65,14 @@ if HAVE_YAML:
     sys.modules[SPEC.name] = music_import
     SPEC.loader.exec_module(music_import)
 
+HAVE_THUMB_TOOLS = bool(__import__("shutil").which("rsvg-convert"))
+if HAVE_THUMB_TOOLS:
+    try:
+        from PIL import features as _pil_features
+        HAVE_THUMB_TOOLS = _pil_features.check("webp")
+    except ImportError:
+        HAVE_THUMB_TOOLS = False
+
 # Pages whose engraving is known to run past the foot of the page. Each is a
 # defect in the score, tracked by its own expected-failure test below; the
 # general box check leaves them out so it still guards every other page.
@@ -389,6 +397,8 @@ class ImporterTests(unittest.TestCase):
         for i in range(1, pages + 1):
             (d / "scores" / f"page-{i}.svg").write_text(
                 f'<svg viewBox="0 0 10 10">\n{music_import.SHRUNK}\n</svg>\n')
+        if pages:
+            (d / "scores" / "thumb.webp").write_bytes(b"RIFF")
         if audio and realization:
             for f in ("realization.mp3", "timing.json"):
                 (d / "scores" / f).write_text("x")
@@ -473,6 +483,21 @@ class ImporterTests(unittest.TestCase):
         self.assertEqual(out.count("<polyline"), 2)
         self.assertEqual(music_import.barline_xs(out), [4379.0, 4379.0])
 
+    @unittest.skipUnless(HAVE_THUMB_TOOLS, "rsvg-convert or Pillow's WebP support missing")
+    def test_the_thumbnail_is_page_one_small_and_grey(self) -> None:
+        from PIL import Image
+        page = self.write("page-1.svg", music_import.shrink_page(SAMPLE_PAGE, "p-1-"))
+        out = self.tmp / "thumb.webp"
+        self.assertTrue(music_import.thumbnail(page, out))
+        with Image.open(out) as im:
+            self.assertEqual(im.format, "WEBP")
+            self.assertEqual(im.size, (720, round(720 * 13200 / 10200)))
+            # grey, give or take the encoder's chroma rounding
+            spread = max(max(px) - min(px) for px in im.convert("RGB").getdata())
+            self.assertLessEqual(spread, 8)
+        self.assertEqual(sorted(p.name for p in self.tmp.iterdir()), ["page-1.svg", "thumb.webp"],
+                         "no intermediate PNG left behind")
+
     def test_shrinking_a_shrunk_page_changes_nothing(self) -> None:
         once = music_import.shrink_page(SAMPLE_PAGE, "piece-3-")
         self.assertEqual(music_import.shrink_page(once, "piece-3-"), once)
@@ -512,9 +537,10 @@ class ImporterTests(unittest.TestCase):
         with self.import_patches(pages=2):
             quiet(music_import.install, "p", self.tmp / "Scores" / "p.mscz",
                   False, False, True, False)
+        thumbs = ["thumb.webp"] if HAVE_THUMB_TOOLS else []
         self.assertEqual(sorted(f.name for f in scores.iterdir()),
-                         ["p.pdf", "page-1.svg", "page-2.svg"],
-                         "page-3 and the old realization and timing go; the PDF stays")
+                         ["p.pdf", "page-1.svg", "page-2.svg"] + thumbs,
+                         "page-3, the old realization, timing and thumbnail go; the PDF stays")
         self.assertIn(music_import.SHRUNK, (scores / "page-2.svg").read_text())
         self.assertIn('id="p-2-0"', (scores / "page-2.svg").read_text())
         self.assertFalse((self.tmp / ".music-import" / "p").exists())
@@ -593,7 +619,8 @@ class ImporterTests(unittest.TestCase):
                 quiet(music_import.install, "p", self.tmp / "Scores" / "p.mscz",
                       False, False, True, False)
         old = self.tmp / ".music-import" / "p" / "scores.old"
-        self.assertEqual(sorted(f.name for f in old.iterdir()), ["page-1.svg", "page-2.svg", "page-3.svg"])
+        self.assertEqual(sorted(f.name for f in old.iterdir()),
+                         ["page-1.svg", "page-2.svg", "page-3.svg", "thumb.webp"])
         out = io.StringIO()
         with mock.patch.object(music_import, "MUSIC", self.tmp / "music"), \
              mock.patch.object(music_import, "STAGING", self.tmp / ".music-import"), \
@@ -833,9 +860,24 @@ class BuiltMusicPageTests(unittest.TestCase):
             with self.subTest(piece=d.parent.name):
                 source = MUSIC_DIR / d.parent.name / "scores"
                 orphans = sorted(f.name for f in d.iterdir()
-                                 if f.suffix in (".svg", ".json", ".mp3", ".pdf")
+                                 if f.suffix in (".svg", ".json", ".mp3", ".pdf", ".webp")
                                  and not (source / f.name).is_file())
                 self.assertEqual(orphans, [])
+
+    def test_frontispiece_and_shelf_show_the_thumbnail_when_there_is_one(self) -> None:
+        """Page 1 as a decoded image rather than 2,000 outlines (audit MO4)."""
+        shelf = self.html("music/index.html")
+        for d in self.pieces:
+            if not (d / "scores" / "page-1.svg").is_file():
+                continue
+            with self.subTest(piece=d.name):
+                thumb = (d / "scores" / "thumb.webp").is_file()
+                want = f"/music/{d.name}/scores/" + ("thumb.webp" if thumb else "page-1.svg")
+                page = self.html(f"music/{d.name}/index.html")
+                src = re.search(r'class="comp-frontispiece".*?<img src="([^"]+)"', page, re.S).group(1)
+                self.assertEqual(urlsplit(urljoin(f"/music/{d.name}/", src)).path, want)
+                self.assertTrue(site_file(src, f"/music/{d.name}/").is_file())
+                self.assertIn(f'data-page="{want}"', shelf)
 
     def test_reader_movement_buttons_line_up_with_the_realization(self) -> None:
         for d in self.pieces:

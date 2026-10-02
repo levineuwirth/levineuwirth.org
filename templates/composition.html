@@ -6,7 +6,7 @@
         $if(has-score)$
         <a class="comp-frontispiece" href="$score-url$" data-stack="$score-stack$"
            aria-label="Read the score, $score-page-count$ pages">
-            <img src="$first-score-page$" alt=""$if(score-aspect)$ style="aspect-ratio: $score-aspect$"$endif$ decoding="async">
+            <img src="$if(score-thumb)$$score-thumb$$else$$first-score-page$$endif$" alt=""$if(score-aspect)$ style="aspect-ratio: $score-aspect$"$endif$ decoding="async">
         </a>
         $endif$
         <div class="comp-titling">

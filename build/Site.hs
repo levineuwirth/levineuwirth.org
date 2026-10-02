@@ -801,6 +801,7 @@ rules = do
     -- lists, which records none of its own (audit H06).
     musicScoreDep <- makePatternDependency $
                          "content/music/**/*.svg" .||. "content/music/**/*.json"
+                         .||. "content/music/**/*.webp"
 
     rulesExtraDependencies [musicScoreDep] $ match "content/music/index.md" $ do
         route   $ constRoute "music/index.html"
@@ -823,6 +824,12 @@ rules = do
         compile copyFileCompiler
 
     match "content/music/**/*.pdf" $ do
+        route   $ stripPrefixRoute "content/"
+        compile copyFileCompiler
+
+    -- Page 1's thumbnail (tools/music-import.py), for the frontispiece and
+    -- the /music/ shelf.
+    match "content/music/**/*.webp" $ do
         route   $ stripPrefixRoute "content/"
         compile copyFileCompiler
 

@@ -26,7 +26,7 @@ import System.FilePath (takeDirectory, (</>))
 import Data.Time.Calendar (Day)
 import Data.Time.Format   (defaultTimeLocale, formatTime, parseTimeM)
 import Hakyll
-import Contexts (durationPrimes, scorePageList, siteCtx, svgAspect)
+import Contexts (durationPrimes, scorePageList, scoreThumb, siteCtx, svgAspect)
 
 -- ---------------------------------------------------------------------------
 -- Entry type
@@ -44,7 +44,7 @@ data CatalogEntry = CatalogEntry
     , ceHasRecording    :: Bool
     , ceWithheld        :: [String]       -- movements listed with a status
     , cePages           :: Int
-    , ceFirstPage       :: Maybe String   -- absolute URL of page 1
+    , ceFirstPage       :: Maybe String   -- absolute URL of page 1's image: its thumbnail, or the page
     , ceAspect          :: Maybe String   -- page 1's width / height
     , ceSortKey         :: String         -- year, completion, then date: chronological
     }
@@ -135,6 +135,7 @@ parseCatalogEntry item = do
     -- shelf cannot disagree with what the reader shows: a composition that
     -- declares its pages with @score-dir@ has no @score-pages@ key to find.
     pages  <- scorePageList item
+    thumb  <- scoreThumb item
     let srcDir = takeDirectory (toFilePath (itemIdentifier item))
     aspect <- case pages of
         (p : _) -> unsafeCompiler (svgAspect (srcDir </> p))
@@ -163,7 +164,7 @@ parseCatalogEntry item = do
                 , ceHasRecording    = hasRecordingMeta meta
                 , ceWithheld        = withheldMovements meta
                 , cePages           = length pages
-                , ceFirstPage       = (\p -> slugDir ++ "/" ++ p) <$> listToMaybe pages
+                , ceFirstPage       = (\p -> slugDir ++ "/" ++ p) <$> maybe (listToMaybe pages) Just thumb
                 , ceAspect          = aspect
                 , ceSortKey         = fromMaybe "0000" year ++ "|"
                                       ++ completedKey meta ++ "|"
