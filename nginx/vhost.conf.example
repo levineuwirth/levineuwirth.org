@@ -32,6 +32,11 @@
 #   log_format csp_report escape=json
 #       '{"time":"$time_iso8601","ua":"$http_user_agent",'
 #       '"referer":"$http_referer","report":"$request_body"}';
+#
+# and its rate limit, which `nginx -t` rejects as a "zero size shared
+# memory zone" when the zone is missing:
+#
+#   limit_req_zone $binary_remote_addr zone=csp_report:1m rate=30r/m;
 
 # ── HTTPS server ────────────────────────────────────────────────────
 server {
