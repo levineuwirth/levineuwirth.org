@@ -34,6 +34,10 @@
 #   SYNC_BASE   /var/lib/anki-sync       DEST  /root/anki-sync-backups   KEEP  7
 #   BORG_REPO, BORG_PASSCOMMAND, BORG_RSH, OFFHOST_PRUNE — see borg-offhost.sh; unset BORG_REPO = local only
 set -euo pipefail
+# Units set TMPDIR=/var/tmp; a run by hand from root's shell would otherwise
+# extract gigabytes into /tmp, which on the VPS is a 1.9 GB RAM tmpfs
+# (audit Y10).
+export TMPDIR=${TMPDIR:-/var/tmp}
 
 SYNC_BASE=${SYNC_BASE:-/var/lib/anki-sync}
 DEST=${DEST:-/root/anki-sync-backups}
@@ -132,7 +136,11 @@ if [ "$users" -eq 0 ]; then
     exit 0
 fi
 
-tar czf "$TMP_ARCHIVE" -C "$STAGE" . || die "tar failed"
+# gzip --rsyncable resets its compressor at content-defined boundaries, so a
+# night that changes little produces a tarball whose bytes mostly match the
+# last one, and borg stores only the difference (audit Y19: 162.7 MB of new
+# data on a 167 MB test tree became 12.5 MB). Same .tar.gz, same checksum.
+tar -I 'gzip --rsyncable' -cf "$TMP_ARCHIVE" -C "$STAGE" . || die "tar failed"
 (cd "$DEST" && sha256sum "$(basename "$TMP_ARCHIVE")" | sed "s/\.anki-$TS.tar.gz.partial/anki-$TS.tar.gz/" > "$TMP_SUM")
 ARCHIVE="$DEST/anki-$TS.tar.gz"
 mv "$TMP_SUM" "$ARCHIVE.sha256"

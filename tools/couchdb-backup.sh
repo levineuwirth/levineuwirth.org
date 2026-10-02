@@ -37,6 +37,10 @@
 #   COUCHDB_IMAGE couchdb:3.4.2 — keep in sync with couchdb/docker-compose.yml (--verify only)
 #   BORG_REPO, BORG_PASSCOMMAND, BORG_RSH, OFFHOST_PRUNE — see borg-offhost.sh; unset BORG_REPO = local only
 set -euo pipefail
+# Units set TMPDIR=/var/tmp; a run by hand from root's shell would otherwise
+# extract gigabytes into /tmp, which on the VPS is a 1.9 GB RAM tmpfs
+# (audit Y10).
+export TMPDIR=${TMPDIR:-/var/tmp}
 
 COUCHDB_URL=${COUCHDB_URL:-http://127.0.0.1:5984}
 DEST=${DEST:-/root/couchdb-backups}
@@ -155,7 +159,11 @@ for db in $DBS; do
     printf '%s\t%s\n' "$db" "$before" >> "$STAGE/manifest"
 done
 
-tar czf "$TMP_ARCHIVE" -C "$STAGE" . || die "tar failed"
+# gzip --rsyncable resets its compressor at content-defined boundaries, so a
+# night that changes little produces a tarball whose bytes mostly match the
+# last one, and borg stores only the difference (audit Y19: 162.7 MB of new
+# data on a 167 MB test tree became 12.5 MB). Same .tar.gz, same checksum.
+tar -I 'gzip --rsyncable' -cf "$TMP_ARCHIVE" -C "$STAGE" . || die "tar failed"
 
 # The checksum names the final archive, not the temporary, so `sha256sum -c`
 # works unchanged in $DEST after the renames below.

@@ -49,6 +49,10 @@
 #   forgejo-backup.sh --verify /path/to/forgejo-<TS>.tar.gz
 #
 set -euo pipefail
+# Units set TMPDIR=/var/tmp; a run by hand from root's shell would otherwise
+# extract gigabytes into /tmp, which on the VPS is a 1.9 GB RAM tmpfs
+# (audit Y10).
+export TMPDIR=${TMPDIR:-/var/tmp}
 
 SRC=${SRC:-/root/forgejo-server}
 DEST=${DEST:-/root/forgejo-backups}
@@ -232,6 +236,7 @@ offhost_copy() {
     rm -f "$back"
     [ "$want" = "$got" ] || die "off-host: read-back checksum mismatch (want $want, got $got)"
     log "off-host: verified — remote copy hashes to $got"
+    date -u +%Y-%m-%dT%H:%M:%SZ > "$DEST/last-offhost-success"
 }
 
 # ---------------------------------------------------------------------------
@@ -316,7 +321,10 @@ while IFS= read -r stale; do
     rm -f "$stale"
 done < <(find "$SRC/forgejo-data/gitea" -maxdepth 1 -name 'hot-*.db' -type f 2>/dev/null)
 
-docker exec "$CONTAINER" sqlite3 /data/gitea/gitea.db ".backup '/data/$SNAP_REL'"
+# .timeout: wait for a writer's lock instead of failing at once with
+# "database is locked", as integrity_check and forgejo-update.sh already do
+# (audit Y15; WAL makes it rare, not impossible).
+docker exec "$CONTAINER" sqlite3 -cmd '.timeout 15000' /data/gitea/gitea.db ".backup '/data/$SNAP_REL'"
 
 INTEGRITY=$(docker exec "$CONTAINER" sqlite3 "/data/$SNAP_REL" "PRAGMA integrity_check;")
 if [ "$INTEGRITY" != "ok" ]; then
@@ -332,7 +340,11 @@ log "snapshot ok, $REPOS repositories — this file is the database record in th
 # $(basename "$SRC") — hardcoding "forgejo-server" would silently stop
 # excluding anything the moment SRC is pointed somewhere else.
 TOP=$(basename "$SRC")
-tar czf "$TMP_ARCHIVE" \
+# gzip --rsyncable resets its compressor at content-defined boundaries, so a
+# night that changes little produces a tarball whose bytes mostly match the
+# last one, and borg stores only the difference (audit Y19: 162.7 MB of new
+# data on a 167 MB test tree became 12.5 MB). Same .tar.gz, same checksum.
+tar -I 'gzip --rsyncable' -cf "$TMP_ARCHIVE" \
     --exclude="$TOP/forgejo-data/gitea/gitea.db" \
     --exclude="$TOP/forgejo-data/gitea/gitea.db-wal" \
     --exclude="$TOP/forgejo-data/gitea/gitea.db-shm" \
