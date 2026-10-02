@@ -201,6 +201,8 @@ content/photography/**/*.png
 # Excerpts quoted in the programme notes live in <slug>/excerpts/ and are
 # versioned like any other figure.
 content/music/*/scores/
+# tools/music-import.py assembles an import here before swapping it in.
+/.music-import/
 
 # Defense-in-depth — refuse to commit RAW or oversize originals, which were
 # never meant to be here even when the delivery JPEGs were. To intentionally

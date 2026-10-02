@@ -38,7 +38,28 @@ refresh  Re-exports pieces from their manifests (all of them by default):
          plays. Both come from one playback of one layout, so they agree
          by construction — repeats included, since the timing lists bars
          in the order they are played.
-check    Reports every composition whose score is missing or stale.
+shrink   Rewrites the pages already on disk as an import now writes them
+         (below), in place. For pages exported before shrinking existed;
+         a page already shrunk is left alone.
+check    Reports every composition whose score is missing or stale, a page
+         cut short, or an import that was interrupted.
+
+Pages are shrunk on import, by about two thirds raw and a third over the
+wire (audit MO1). MuseScore writes coordinates to two decimals of a 1/1200
+inch unit and repeats every glyph's outline wherever it is drawn: the
+coordinates are rounded to whole units, a twelve-hundredth of an inch, and
+each outline drawn more than once on a page is written once in <defs> and
+placed with <use>. Nothing the reader depends on changes: the root's size
+and viewBox, every <line> and <polyline> (the instrument-name gutter is
+measured from them), the barlines (the timing's scale), and the fill and
+stroke attributes the stylesheet recolours by. The root <title> and <desc>,
+which carry the source file's name, go.
+
+An import is assembled in .music-import/<slug>/ at the repository root and
+swapped into place by two renames, the manifest written last: a crash
+leaves the old pages or the new ones, never a mixture with the other
+export's timing, and `check` names what an interrupted run left behind
+(audit M09).
 
 Why refresh refuses to change the page count without --force: unlike a
 photo resize, a re-export is not reproducible. A newer MuseScore can
@@ -75,6 +96,10 @@ MUSIC = ROOT / "content" / "music"
 SCORES_DIR = Path(os.environ.get("MUSIC_SCORES_DIR", "~/Documents/Scores")).expanduser()
 MANIFEST = "score-source.yaml"
 PAGES = "scores"
+# Imports are assembled here, on the same filesystem as content/ (a rename
+# across filesystems is a copy) and outside it (the build must never see a
+# half-assembled set). Gitignored; Hakyll skips dot-directories.
+STAGING = ROOT / ".music-import"
 AUDIO = "realization.mp3"
 TIMING = "timing.json"
 AUDIO_LABEL = "MIDI realization (Muse Sounds)"
@@ -562,6 +587,96 @@ def compare_movements(slug: str, mvts: list[dict], published: int | None = None)
 
 
 # ---------------------------------------------------------------------------
+# Shrinking the pages
+# ---------------------------------------------------------------------------
+
+SHRUNK = "<!-- shrunk by tools/music-import.py, v1 -->"
+DECIMAL = re.compile(r"-?\d*\.\d+")
+GLYPH = re.compile(r'<path class="([^"]*)" transform="([^"]*)" d="([^"]*)"\s*/>')
+
+
+def whole(text: str) -> str:
+    """Every decimal in text rounded to a whole number."""
+    def one(m: re.Match) -> str:
+        v = round(float(m.group()))
+        return "0" if v == 0 else str(v)
+    return DECIMAL.sub(one, text)
+
+
+def shrink_page(svg: str, ids: str) -> str:
+    """A page as the site publishes it; `ids` prefixes the ids of the
+    outlines moved into <defs>, which must be unique across the site. Pure,
+    and idempotent: a shrunk page comes back unchanged.
+
+    MuseScore draws only in absolute coordinates (M, L, C; no relative
+    commands, no exponents), so rounding a number moves only its own point.
+    In a glyph's matrix only the translation is rounded: the scale is what
+    turns font units into page units."""
+    if SHRUNK in svg:
+        return svg
+    svg = re.sub(r"<\?xml[^>]*\?>\s*", "", svg, count=1)
+    svg = re.sub(r"<title>.*?</title>\s*|<desc>.*?</desc>\s*", "", svg, flags=re.S)
+    svg = re.sub(r'\b(d|points)="([^"]*)"', lambda m: f'{m.group(1)}="{whole(m.group(2))}"', svg)
+
+    def matrix(m: re.Match) -> str:
+        parts = m.group(1).split(",")
+        return 'transform="matrix(' + ",".join(parts[:4] + [whole(v) for v in parts[4:]]) + ')"'
+    svg = re.sub(r'transform="matrix\(([^)]*)\)"', matrix, svg)
+
+    # Outlines drawn more than once: noteheads, rests, accidentals, clefs.
+    # Only a bare <path class transform d> is moved; one with a fill or
+    # stroke of its own keeps it on the element the stylesheet matches.
+    counts: dict[str, int] = {}
+    for m in GLYPH.finditer(svg):
+        counts[m.group(3)] = counts.get(m.group(3), 0) + 1
+    defs: dict[str, str] = {}
+
+    def use(m: re.Match) -> str:
+        cls, transform, d = m.groups()
+        if counts[d] < 2:
+            return m.group(0)
+        if d not in defs:
+            defs[d] = f"{ids}{len(defs)}"
+        return f'<use class="{cls}" href="#{defs[d]}" transform="{transform}"/>'
+    svg = GLYPH.sub(use, svg)
+    block = "".join(f'<path id="{i}" d="{d}"/>' for d, i in defs.items())
+    head = SHRUNK + (f"\n<defs>{block}</defs>" if block else "")
+    return re.sub(r"(<svg\b[^>]*>)", lambda m: m.group(1) + "\n" + head, svg, count=1)
+
+
+def page_index(page: Path) -> int:
+    """page-7.svg (MuseScore 4) and page-07.svg (MuseScore 3) alike."""
+    return int(page.stem.rsplit("-", 1)[1])
+
+
+def shrink_pages(slug: str, pages: list[Path]) -> tuple[int, int]:
+    """Shrink each page file in place; (bytes before, bytes after)."""
+    before = after = 0
+    for page in pages:
+        text = page.read_text(encoding="utf-8")
+        out = shrink_page(text, f"{slug}-{page_index(page)}-")
+        before += len(text.encode()); after += len(out.encode())
+        if out != text:
+            tmp = page.with_name(f".{page.name}.tmp")
+            tmp.write_text(out, encoding="utf-8")
+            os.replace(tmp, page)
+    return before, after
+
+
+def page_problem(page: Path) -> str | None:
+    """Why a page cannot be a whole SVG, or None. Reads its two ends only."""
+    with page.open("rb") as f:
+        head = f.read(256).lstrip()
+        f.seek(max(0, page.stat().st_size - 64))
+        tail = f.read().rstrip()
+    if not (head.startswith(b"<svg") or head.startswith(b"<?xml")):
+        return "does not begin as an SVG"
+    if not tail.endswith(b"</svg>"):
+        return "is cut short"
+    return None
+
+
+# ---------------------------------------------------------------------------
 # Commands
 # ---------------------------------------------------------------------------
 
@@ -607,22 +722,35 @@ def install(slug: str, source: Path, pdf: bool, audio: bool, force: bool, new: b
                 follow["duration"] = round(cut["ms"] / 1000, 2)
                 trim_audio(got["audio"], cut["ms"] / 1000)
 
-        # Every export has succeeded; only now replace the published files.
-        dest.mkdir(parents=True, exist_ok=True)
-        for f in dest.glob("page-*.svg"):
-            f.unlink()
+        # The timing was measured on the pages as exported; only now shrink.
+        before, after = shrink_pages(slug, got["pages"])
+
+        # Every export has succeeded. Assemble the new score directory beside
+        # the published one, then swap them.
+        stage = STAGING / slug
+        shutil.rmtree(stage, ignore_errors=True)
+        new = stage / PAGES
+        new.mkdir(parents=True)
+        produced = {AUDIO, TIMING} | ({got["pdf"].name} if got["pdf"] else set())
+        if dest.is_dir():
+            # What this import does not write stays: a PDF from an earlier
+            # --pdf import, say. A realization and its timing stand or fall
+            # together; re-exported without --audio, both go, rather than
+            # keep a timing map for a layout that may have moved.
+            for f in dest.iterdir():
+                if f.is_file() and not f.name.startswith("page-") and f.name not in produced:
+                    shutil.copy2(f, new / f.name)
         for f in got["pages"]:
-            shutil.move(str(f), dest / f.name)
+            shutil.move(str(f), new / f.name)
         if got["pdf"]:
-            shutil.move(str(got["pdf"]), dest / got["pdf"].name)
-        # A realization and its timing stand or fall together; a piece
-        # re-exported without --audio drops both rather than keep a timing
-        # map for a layout that may have moved.
-        for f in (dest / AUDIO, dest / TIMING):
-            f.unlink(missing_ok=True)
+            shutil.move(str(got["pdf"]), new / got["pdf"].name)
         if got["audio"]:
-            shutil.move(str(got["audio"]), dest / AUDIO)
-            (dest / TIMING).write_text(json.dumps(follow, separators=(",", ":")))
+            shutil.move(str(got["audio"]), new / AUDIO)
+            (new / TIMING).write_text(json.dumps(follow, separators=(",", ":")))
+        if dest.exists():
+            os.rename(dest, stage / f"{PAGES}.old")
+        os.rename(new, dest)
+        shutil.rmtree(stage)
 
     write_manifest(slug, {
         "source": source_key(source),
@@ -635,7 +763,8 @@ def install(slug: str, source: Path, pdf: bool, audio: bool, force: bool, new: b
         "exported": dt.datetime.now().isoformat(timespec="seconds"),
     })
     print(f"{slug}: {n} pages from {source.name} ({version})"
-          + (f", with a Muse Sounds realization" if audio else ""))
+          + (f", with a Muse Sounds realization" if audio else "")
+          + f"; pages shrunk {before / 1e6:.1f} → {after / 1e6:.1f} MB")
     for i, m in enumerate(mvts if len(mvts) > 1 else []):
         held = k is not None and i >= k
         print(f"  {m['numeral'] or '·':5} "
@@ -692,15 +821,42 @@ def cmd_refresh(a: argparse.Namespace) -> None:
                 engraver=a.engraver or m.get("engraver-cli", "mscore"))
 
 
+def cmd_shrink(a: argparse.Namespace) -> None:
+    total_before = total_after = 0
+    for slug in a.slugs or pieces():
+        pages = sorted((MUSIC / slug / PAGES).glob("page-*.svg"), key=page_index)
+        if not pages:
+            warn(f"{slug}: no pages on disk")
+            continue
+        before, after = shrink_pages(slug, pages)
+        total_before += before; total_after += after
+        print(f"{slug}: {len(pages)} pages, {before / 1e6:.1f} → {after / 1e6:.1f} MB")
+    if total_before:
+        print(f"all: {total_before / 1e6:.1f} → {total_after / 1e6:.1f} MB")
+
+
 def cmd_check(_: argparse.Namespace) -> None:
     problems = 0
+    for left in sorted(STAGING.glob("*/")) if STAGING.is_dir() else []:
+        print(f"{left.name}: an interrupted import left {STAGING.name}/{left.name}/ — if "
+              f"content/music/{left.name}/{PAGES} is missing, its previous pages are in "
+              f"{PAGES}.old there; otherwise re-run the import, which clears it")
+        problems += 1
     for index in sorted(MUSIC.glob("*/index.md")):
         slug = index.parent.name
         fm = frontmatter(slug) or {}
         if not fm.get("score-dir"):
             continue
         m = read_manifest(slug)
-        have = len(list((MUSIC / slug / PAGES).glob("page-*.svg")))
+        pages = list((MUSIC / slug / PAGES).glob("page-*.svg"))
+        have = len(pages)
+        broken = [(p.name, why) for p in pages if (why := page_problem(p))]
+        for name, why in broken:
+            print(f"{slug}: {name} {why} — tools/music-import.py refresh {slug}")
+        problems += len(broken)
+        unshrunk = sum(1 for p in pages if SHRUNK.encode() not in p.open("rb").read(512))
+        if unshrunk:
+            print(f"{slug}: {unshrunk} page(s) not shrunk — tools/music-import.py shrink {slug}")
         if not m:
             print(f"{slug}: declares a score but has no {MANIFEST}")
             problems += 1
@@ -740,6 +896,9 @@ def main() -> None:
     p.add_argument("--engraver", choices=sorted(ENGRAVERS), help="override the manifest's engraver")
     p.add_argument("--force", action="store_true", help="accept a changed page count")
     p.set_defaults(fn=cmd_refresh)
+    p = sub.add_parser("shrink", help="shrink pages exported before shrinking existed")
+    p.add_argument("slugs", nargs="*")
+    p.set_defaults(fn=cmd_shrink)
     p = sub.add_parser("check", help="report missing or stale score pages")
     p.set_defaults(fn=cmd_check)
     a = ap.parse_args()
