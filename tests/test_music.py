@@ -520,6 +520,65 @@ class ImporterTests(unittest.TestCase):
         self.assertFalse((self.tmp / ".music-import" / "p").exists())
         self.assertEqual(yaml.safe_load((self.tmp / "music" / "p" / "score-source.yaml").read_text())["pages"], 2)
 
+    def test_a_first_import_creates_the_composition_directory(self) -> None:
+        source = self.write("Scores/new-piece.mscz", "x")
+        with self.import_patches(pages=2):
+            quiet(music_import.install, "new-piece", source, False, False, False, True)
+        piece = self.tmp / "music" / "new-piece"
+        self.assertTrue((piece / "index.md").is_file())
+        self.assertEqual(len(list((piece / "scores").glob("page-*.svg"))), 2)
+        self.assertEqual(yaml.safe_load((piece / "score-source.yaml").read_text())["pages"], 2)
+
+    def test_refresh_does_not_recreate_a_removed_index(self) -> None:
+        self.piece("p")
+        index = self.tmp / "music" / "p" / "index.md"
+        index.unlink()
+        with self.import_patches(pages=3):
+            quiet(music_import.install, "p", self.tmp / "Scores" / "p.mscz",
+                  False, False, False, False)
+        self.assertFalse(index.exists(), "only an explicit import may scaffold a page")
+
+    def test_a_failed_manifest_keeps_recovery_files_and_blocks_the_check(self) -> None:
+        self.piece("p")
+        manifest = self.tmp / "music" / "p" / "score-source.yaml"
+        original = manifest.read_bytes()
+        with self.import_patches(pages=3):
+            with mock.patch.object(music_import, "write_manifest", side_effect=OSError("disk full")):
+                with self.assertRaises(OSError):
+                    quiet(music_import.install, "p", self.tmp / "Scores" / "p.mscz",
+                          False, False, False, False)
+            with self.assertRaises(SystemExit):
+                quiet(music_import.cmd_check, None)
+        stage = self.tmp / ".music-import" / "p"
+        self.assertEqual(len(list((stage / "scores.old").glob("page-*.svg"))), 3)
+        self.assertEqual((stage / "score-source.yaml").read_bytes(), original)
+        self.assertEqual(manifest.read_bytes(), original)
+
+    def test_retry_preserves_an_interrupted_imports_only_copy_of_the_old_files(self) -> None:
+        self.piece("p")
+        scores = self.tmp / "music" / "p" / "scores"
+        (scores / "p.pdf").write_bytes(b"original PDF")
+        stage = self.tmp / ".music-import" / "p"
+        stage.mkdir(parents=True)
+        scores.rename(stage / "scores.old")
+        with self.import_patches(pages=3), \
+             mock.patch.object(music_import, "export", wraps=self.fake_export(3)) as export:
+            with self.assertRaises(SystemExit):
+                quiet(music_import.install, "p", self.tmp / "Scores" / "p.mscz",
+                      False, False, False, False)
+            export.assert_not_called()
+        self.assertEqual((stage / "scores.old" / "p.pdf").read_bytes(), b"original PDF")
+
+    def test_a_failed_manifest_replace_preserves_the_previous_manifest(self) -> None:
+        self.piece("p")
+        manifest = self.tmp / "music" / "p" / "score-source.yaml"
+        original = manifest.read_bytes()
+        with mock.patch.object(music_import, "MUSIC", self.tmp / "music"), \
+             mock.patch.object(music_import.os, "replace", side_effect=OSError("disk full")):
+            with self.assertRaises(OSError):
+                music_import.write_manifest("p", {"pages": 2})
+        self.assertEqual(manifest.read_bytes(), original)
+
     def test_an_interrupted_swap_leaves_whole_pages_and_check_names_it(self) -> None:
         self.piece("p", pages=3)
         scores = self.tmp / "music" / "p" / "scores"

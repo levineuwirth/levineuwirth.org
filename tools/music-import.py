@@ -59,7 +59,9 @@ An import is assembled in .music-import/<slug>/ at the repository root and
 swapped into place by two renames, the manifest written last: a crash
 leaves the old pages or the new ones, never a mixture with the other
 export's timing, and `check` names what an interrupted run left behind
-(audit M09).
+(audit M09). Recovery files stay until the manifest and any new index are
+written. An import refuses an existing staging directory; recover its
+saved pages and manifest before removing it and trying again.
 
 Why refresh refuses to change the page count without --force: unlike a
 photo resize, a re-export is not reproducible. A newer MuseScore can
@@ -478,7 +480,13 @@ def write_manifest(slug: str, data: dict) -> None:
             "# not versioned; this records how to regenerate them:\n"
             f"#   tools/music-import.py refresh {slug}\n")
     body = yaml.safe_dump(data, sort_keys=False, allow_unicode=True)
-    (MUSIC / slug / MANIFEST).write_text(head + body)
+    manifest = MUSIC / slug / MANIFEST
+    tmp = manifest.with_name(f".{manifest.name}.tmp")
+    try:
+        tmp.write_text(head + body, encoding="utf-8")
+        os.replace(tmp, manifest)
+    finally:
+        tmp.unlink(missing_ok=True)
 
 
 def frontmatter(slug: str) -> dict | None:
@@ -684,6 +692,10 @@ def install(slug: str, source: Path, pdf: bool, audio: bool, force: bool, new: b
             movements_spec: str | None = None, engraver: str = "mscore") -> None:
     if not source.exists():
         die(f"no such score: {source}")
+    stage = STAGING / slug
+    if stage.exists():
+        die(f"{slug}: an interrupted import left {stage}. Recover its saved files "
+            "and remove the staging directory before importing again; run check for details.")
     dest = MUSIC / slug / PAGES
     old = read_manifest(slug)
     meta = score_meta(source)
@@ -727,10 +739,15 @@ def install(slug: str, source: Path, pdf: bool, audio: bool, force: bool, new: b
 
         # Every export has succeeded. Assemble the new score directory beside
         # the published one, then swap them.
-        stage = STAGING / slug
-        shutil.rmtree(stage, ignore_errors=True)
-        new = stage / PAGES
-        new.mkdir(parents=True)
+        # Exclusive creation also protects a second importer that finished
+        # exporting while this one was publishing. Never discard recovery
+        # files left by an earlier run.
+        stage.mkdir(parents=True)
+        new_scores = stage / PAGES
+        new_scores.mkdir()
+        manifest = MUSIC / slug / MANIFEST
+        if manifest.exists():
+            shutil.copy2(manifest, stage / MANIFEST)
         produced = {AUDIO, TIMING} | ({got["pdf"].name} if got["pdf"] else set())
         if dest.is_dir():
             # What this import does not write stays: a PDF from an earlier
@@ -739,18 +756,18 @@ def install(slug: str, source: Path, pdf: bool, audio: bool, force: bool, new: b
             # keep a timing map for a layout that may have moved.
             for f in dest.iterdir():
                 if f.is_file() and not f.name.startswith("page-") and f.name not in produced:
-                    shutil.copy2(f, new / f.name)
+                    shutil.copy2(f, new_scores / f.name)
         for f in got["pages"]:
-            shutil.move(str(f), new / f.name)
+            shutil.move(str(f), new_scores / f.name)
         if got["pdf"]:
-            shutil.move(str(got["pdf"]), new / got["pdf"].name)
+            shutil.move(str(got["pdf"]), new_scores / got["pdf"].name)
         if got["audio"]:
-            shutil.move(str(got["audio"]), new / AUDIO)
-            (new / TIMING).write_text(json.dumps(follow, separators=(",", ":")))
+            shutil.move(str(got["audio"]), new_scores / AUDIO)
+            (new_scores / TIMING).write_text(json.dumps(follow, separators=(",", ":")))
+        dest.parent.mkdir(parents=True, exist_ok=True)
         if dest.exists():
             os.rename(dest, stage / f"{PAGES}.old")
-        os.rename(new, dest)
-        shutil.rmtree(stage)
+        os.rename(new_scores, dest)
 
     write_manifest(slug, {
         "source": source_key(source),
@@ -774,6 +791,10 @@ def install(slug: str, source: Path, pdf: bool, audio: bool, force: bool, new: b
         scaffold(slug, meta, mvts, pdf, created, k)
     else:
         compare_movements(slug, mvts, k)
+    # Keep the recovery marker until the manifest and any new index have
+    # been written too. Even a same-page-count import must fail the deploy
+    # check if publication stops between the directory swap and metadata.
+    shutil.rmtree(stage)
 
 
 def cut_point(mpos: Path, mvts: list[dict], k: int, playback: Path | None = None) -> dict:
@@ -840,7 +861,8 @@ def cmd_check(_: argparse.Namespace) -> None:
     for left in sorted(STAGING.glob("*/")) if STAGING.is_dir() else []:
         print(f"{left.name}: an interrupted import left {STAGING.name}/{left.name}/ — if "
               f"content/music/{left.name}/{PAGES} is missing, its previous pages are in "
-              f"{PAGES}.old there; otherwise re-run the import, which clears it")
+              f"{PAGES}.old there. Recover that directory and the saved {MANIFEST}, "
+              "if present; inspect the published files before removing staging and re-running")
         problems += 1
     for index in sorted(MUSIC.glob("*/index.md")):
         slug = index.parent.name
