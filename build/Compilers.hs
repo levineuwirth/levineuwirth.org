@@ -23,7 +23,8 @@ import           Text.Pandoc.Options        (ReaderOptions (..), WriterOptions (
                                              HTMLMathMethod (..))
 import           Text.Pandoc.Extensions     (enableExtension, Extension (..))
 import qualified Data.Text                  as T
-import           Control.Monad              (forM_, void)
+import           Control.Monad              (forM_, void, when)
+import           Data.List                  (isInfixOf)
 import           Data.Char                  (toLower)
 import           Data.Maybe                 (fromMaybe)
 import           System.FilePath            (takeDirectory)
@@ -290,6 +291,15 @@ photographyCompiler = do
     body <- getResourceBody
     let src   = itemBody body
         body' = itemSetBody (preprocessSource src) body
+    -- Filters.Images reads a *.dims.yaml sidecar for each Markdown image,
+    -- inside unsafeCompiler where Hakyll cannot see it. Only a page whose
+    -- own Markdown has an image needs the dependency, and today no
+    -- photograph's does: putting it on all 378 pages cost ~11 s of every
+    -- build's out-of-date check (audit H06). A glob, so a new sidecar counts.
+    when ("![" `isInfixOf` src) $
+        void $ getMatches (   "content/photography/*.dims.yaml"
+                         .||. "content/photography/*/*.dims.yaml"
+                         .||. "static/**/*.dims.yaml")
     filePath   <- getResourceFilePath
     let srcDir  = takeDirectory filePath
     pandocItem <- readPandocWith readerOpts body'

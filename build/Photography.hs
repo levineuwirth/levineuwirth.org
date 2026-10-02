@@ -81,22 +81,17 @@ photographyRules = do
     -- Dimension sidecars are read by Filters.Images inside 'unsafeCompiler'
     -- (via 'photographyCompiler' → 'Filters.applyAll'), which Hakyll cannot
     -- see. Audit B11: editing a sidecar left the page byte-identical,
-    -- serving the previous width/height. The essay rule solved this by
-    -- claiming the sidecars with a no-route rule — a dependency on an
-    -- unclaimed file can never fire, because Hakyll's modified set is
-    -- intersected with the identifiers some rule claims — and then naming
-    -- them in a pattern dependency. Same two steps here.
+    -- serving the previous width/height. They are claimed here with a
+    -- no-route rule — a dependency on an unclaimed file can never fire,
+    -- because Hakyll's modified set is intersected with the identifiers
+    -- some rule claims — and 'photographyCompiler' depends on them for the
+    -- pages whose Markdown has an image (audit H06).
     match (   "content/photography/*.dims.yaml"
          .||. "content/photography/*/*.dims.yaml") $ compile getResourceLBS
 
-    dimsDep <- makePatternDependency
-                    (   "content/photography/*.dims.yaml"
-                   .||. "content/photography/*/*.dims.yaml")
-
-    rulesExtraDependencies [dimsDep] $ do
-        photographyEntryRules seriesSlugs
-        photographySeriesPhotoRules
-        photographyLandingRules
+    photographyEntryRules seriesSlugs
+    photographySeriesPhotoRules
+    photographyLandingRules
     photographyMapDataRule
     photographyMapPageRule
     photographyFeedRule
