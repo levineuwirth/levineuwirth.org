@@ -455,6 +455,9 @@ cd ~ && rm -rf ~/tmp/forgejo-lab
 
 Latest patch of each major as of 2026-09-06, plus row 10 (2026-10-01). Use
 these exact tags — a floating `:15` tag makes the rollback in § 5 ambiguous.
+(That holds for the manual hops below. Since 2026-10-01 the deployment itself
+follows `:15` through forgejo-update.sh, which logs the exact image IDs it
+runs and applies; § 5.1 ends with the variant for a failed automatic update.)
 
 | # | image tag | what happens |
 |---|---|---|
@@ -656,6 +659,25 @@ immediately before the hop rather than reusing an earlier one.
 
 ---
 
+
+#### After a failed automatic update (forgejo-update.sh)
+
+The journal names everything this needs:
+`journalctl -u forgejo-update.service | grep forgejo-update:` shows the
+`pre-update archive:` (use it as `PREHOP`) and the `images:` line (the
+running image ID before the update, and the one applied), and
+`/var/lib/forgejo-update/needs-operator` repeats both.
+
+1. Restore the database and data from `PREHOP` exactly as above.
+2. Put the previous image back under the tag the compose file uses, so
+   `docker compose up -d` starts it: `docker tag <running-id> codeberg.org/forgejo/forgejo:15`,
+   then `docker compose up -d` and the checks above.
+3. Leave `/var/lib/forgejo-update/hold` in place: it names the failed image,
+   and the timer will refuse that image (and re-point the tag at the running
+   one) every morning until a newer patch is published.
+4. Remove `/var/lib/forgejo-update/needs-operator`. Until then every run
+   fails at once, by design.
+
 ## 6. What was rehearsed, and what that does and does not prove
 
 Every hop in § 3 was run locally on 2026-09-06, on Docker 29.7.2, against a
@@ -793,8 +815,14 @@ fixing that leaves the same instance drifting again from a newer number.
   pulls it and, when the image changed, backs up, refuses anything off the
   15.0 line, recreates, waits for the new version and checks the database.
   A patch that does not come up and ran no migrations is rolled back and
-  held in `/var/lib/forgejo-update/hold`; one that migrated and then failed
-  is left for § 5.1, with the pre-update archive named in the journal. The
+  held in `/var/lib/forgejo-update/hold`. One that migrated and then
+  failed, or came up with a failed `integrity_check`, is held too, and
+  also leaves `/var/lib/forgejo-update/needs-operator` naming the image and
+  the pre-update archive; every later run fails until that file is gone,
+  so the failure cannot clear itself overnight (§ 5.1, last part). Whenever
+  a run declines a pulled image, the local `:15` tag is pointed back at the
+  running image, so a hand-run `docker compose up -d` recreates the forge on
+  what is running, never on a held or refused image (audit Y04). The
   failed unit shows in `tools/vps-status`. What runs, and when it changed:
 
   ```bash

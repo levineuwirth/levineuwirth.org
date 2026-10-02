@@ -11,7 +11,9 @@
 #   ssh root@<vps> systemctl daemon-reload && systemctl enable --now forgejo-update.timer
 #
 # A failed run is a failed unit, which tools/vps-status reports. Remove
-# /var/lib/forgejo-update/hold to let a held image be tried again.
+# /var/lib/forgejo-update/hold to let a held image be tried again. After a
+# failure that needs a restore, every run fails until
+# /var/lib/forgejo-update/needs-operator is removed (forgejo/UPGRADE.md § 5.1).
 
 [Unit]
 Description=Forgejo: apply the latest 15.0 LTS patch release
