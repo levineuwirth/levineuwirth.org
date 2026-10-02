@@ -21,6 +21,7 @@
 module Tags
     ( buildAllTags
     , applyTagRules
+    , anchoredTagsRules
     , tagPaginationThreshold
     , tagPageSize
     , sidecarIdentifier
@@ -29,6 +30,7 @@ module Tags
     , seeAlsoContext
     ) where
 
+import Control.Monad (forM_)
 import Data.Char  (isSpace)
 import Data.List  (intercalate, isPrefixOf, nub, sort, sortBy)
 import Data.Maybe (fromMaybe, isNothing, maybeToList)
@@ -333,12 +335,32 @@ applyTagRules tags portalPairs baseCtx = do
     -- in sync with the matching rule in Site.rules.
     sidecarIds <- getMatches ("content/tag-meta/*.md" .||. "content/tag-meta/**/*.md")
     let sidecarSet = Set.fromList sidecarIds
-    tagsRules tags $ \tag pat -> do
+    anchoredTagsRules "_dependencies/tags" tags $ \tag pat -> do
         let itemCount = length (fromMaybe [] (lookup tag (tagsMap tags)))
             saCtx     = seeAlsoContext portalPairs tags tag
         if itemCount <= tagPaginationThreshold
             then clientPaginatedRule tag pat sidecarSet saCtx baseCtx
             else serverPaginatedRule tag pat sidecarSet saCtx baseCtx
+
+-- | 'tagsRules', with the dependency every tag page shares held once.
+--
+--   'tagsRules' gives each tag page the same pattern dependency: the
+--   pattern the tags were built from, with every identifier it matched.
+--   Hakyll re-matches each held pattern against every identifier on every
+--   build, once per holder: 54 tag pages × 76 ms, 4 s of every pass's
+--   out-of-date check (audit H06). Here an anchor item holds the pattern,
+--   and each tag page depends on the anchor by identifier, which costs a
+--   set lookup. The effect is the same: the anchor is out of date when a
+--   page joins or leaves the pattern or any matched page changes, and so,
+--   through it, is every tag page.
+anchoredTagsRules :: Identifier -> Tags -> (String -> Pattern -> Rules ()) -> Rules ()
+anchoredTagsRules anchor tags rules = do
+    rulesExtraDependencies [tagsDependency tags] $
+        create [anchor] $ compile (makeItem ("" :: String))
+    forM_ (tagsMap tags) $ \(tag, identifiers) ->
+        rulesExtraDependencies [IdentifierDependency anchor] $
+            create [tagsMakeId tags tag] $
+                rules tag (fromList identifiers)
 
 -- | Single-page tag index: the count toggle runs client-side against
 --   the full list. No server-side pagination, no @page/N@ URLs.

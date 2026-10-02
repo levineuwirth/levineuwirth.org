@@ -790,7 +790,19 @@ rules = do
     -- ---------------------------------------------------------------------------
     -- Music — catalog index
     -- ---------------------------------------------------------------------------
-    match "content/music/index.md" $ do
+    -- Every rule below whose context reads scores carries this one pattern.
+    -- Same unsafeCompiler blind spot as the me/ and memento-mori score
+    -- fragments (B11): Filters.Score reads content/music/<slug>/scores/*.svg
+    -- relative to the source file. The SVG copy rule claims them, so the
+    -- dependency can fire. The timing map is in the pattern too: the
+    -- reader's 'realization' field only asks whether it exists, so adding or
+    -- removing a realization would otherwise leave the reader stale. It is
+    -- also the only dependency on the score pages that 'scorePageList'
+    -- lists, which records none of its own (audit H06).
+    musicScoreDep <- makePatternDependency $
+                         "content/music/**/*.svg" .||. "content/music/**/*.json"
+
+    rulesExtraDependencies [musicScoreDep] $ match "content/music/index.md" $ do
         route   $ constRoute "music/index.html"
         compile $ pageCompiler
             >>= loadAndApplyTemplate "templates/music-catalog.html" musicCatalogCtx
@@ -820,16 +832,8 @@ rules = do
         route   $ stripPrefixRoute "content/"
         compile copyFileCompiler
 
-    -- Landing page — full essay pipeline.
-    --
-    -- Same unsafeCompiler blind spot as the me/ and memento-mori score
-    -- fragments (B11): Filters.Score reads content/music/<slug>/scores/*.svg
-    -- relative to the source file. The SVG copy rule above claims them, so
-    -- the dependency can fire. The timing map is in the pattern too: the
-    -- reader's 'realization' field only asks whether it exists, so adding or
-    -- removing a realization would otherwise leave the reader stale.
-    musicScoreDep <- makePatternDependency $
-                         "content/music/**/*.svg" .||. "content/music/**/*.json"
+    -- Landing page — full essay pipeline. Its score dependency is
+    -- 'musicScoreDep', above the catalog.
 
     rulesExtraDependencies [musicScoreDep] $ match "content/music/*/index.md" $ do
         route   $ stripPrefixRoute "content/"

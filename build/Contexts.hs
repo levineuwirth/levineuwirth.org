@@ -47,6 +47,7 @@ import Data.List               (intercalate, isPrefixOf, isSuffixOf, sortBy,
 import Data.Maybe              (fromMaybe, mapMaybe)
 import Data.Ord                (Down (..), comparing)
 import qualified Data.Scientific    as Sci
+import qualified Data.Set           as Set
 import Data.Time.Calendar      (toGregorian)
 import Data.Time.Clock         (UTCTime, getCurrentTime, utctDay)
 import Data.Time.Format        (formatTime, defaultTimeLocale, parseTimeM)
@@ -61,6 +62,7 @@ import Text.Pandoc             (runPure, readMarkdown, writeHtml5String, writePl
 import Text.Pandoc.Options     (WriterOptions(..), HTMLMathMethod(..))
 import Text.Pandoc.Extensions  (Extension(..), disableExtension)
 import Hakyll       hiding (trim)
+import Hakyll.Core.Compiler.Internal (compilerAsk, compilerUniverse)
 import Backlinks    (backlinksField)
 import Dingbat      (dingbatField)
 import Marks        (monogramSvgField, hasMonogramField, epistemicSvgField)
@@ -1460,10 +1462,17 @@ declaresScore meta =
 --
 --   An explicit @score-pages@ list wins when present — it is the escape
 --   hatch for an order no filename convention can express. Otherwise
---   @score-dir@ is globbed through 'getMatches', which registers a real
---   Hakyll dependency, so dropping a page into the directory triggers a
---   rebuild. Hand-listing sixty orchestral pages is not viable, and a
---   hand-list that falls out of sync with the directory fails silently.
+--   @score-dir@ is globbed against Hakyll's identifiers. Hand-listing sixty
+--   orchestral pages is not viable, and a hand-list that falls out of sync
+--   with the directory fails silently.
+--
+--   The glob records no dependency of its own. Every rule whose context
+--   calls this carries @musicScoreDep@ (build/Site.hs), one pattern over
+--   all of content/music, so dropping a page into the directory still
+--   triggers a rebuild. Through 'getMatches', each call recorded its own
+--   copy of the glob, up to 29 per page, and Hakyll re-matches every copy
+--   against every identifier on every build: 3 s of each pass's
+--   out-of-date check (audit H06).
 scorePageList :: Item a -> Compiler [FilePath]
 scorePageList item = do
     meta <- getMetadata (itemIdentifier item)
@@ -1473,7 +1482,9 @@ scorePageList item = do
         else case fmap trim (lookupString "score-dir" meta) of
             Just dir | not (null dir) -> do
                 let srcDir = takeDirectory (toFilePath (itemIdentifier item))
-                ids <- getMatches (fromGlob (srcDir </> dir </> "*.svg"))
+                universe <- compilerUniverse <$> compilerAsk
+                let ids = filterMatches (fromGlob (srcDir </> dir </> "*.svg"))
+                                        (Set.toList universe)
                 return $ sortBy compareNatural
                     [ makeRelative srcDir (toFilePath i) | i <- ids ]
             _ -> return []

@@ -20,6 +20,7 @@ import Pagination           (sortAndGroup)
 import Patterns             (authorIndexable)
 import Contexts             (abstractField, tagLinksField, canonicalUrlField)
 import Utils                (authorSlugify, authorNameOf)
+import Tags                 (anchoredTagsRules)
 
 
 -- ---------------------------------------------------------------------------
@@ -83,7 +84,7 @@ buildAllAuthors :: Rules Tags
 buildAllAuthors = buildTagsWith getAuthors allContent authorIdentifier
 
 applyAuthorRules :: Tags -> Context String -> Rules ()
-applyAuthorRules authors baseCtx = tagsRules authors $ \name pat -> do
+applyAuthorRules authors baseCtx = anchoredTagsRules "_dependencies/authors" authors $ \name pat -> do
     let slug = slugify name
     paginate <- buildPaginateWith sortAndGroup pat (authorPageId slug)
     paginateRules paginate $ \pageNum pat' -> do
