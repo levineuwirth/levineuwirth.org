@@ -257,6 +257,13 @@ STRIP_SELECTORS = [
     # verbatim at the document end — indexing it would double every
     # footnote in search results and skew page similarity.
     "section.footnotes",
+    # An archive page's Referenced by and Related: what every other page
+    # keeps inside the stripped .page-meta-footer. Other pages' sentences
+    # and titles are not this page's content; embedding them fed each
+    # archive page's Related list back into its own embedding, and, since
+    # footers come from files written between the compile passes
+    # (build/FooterData.hs), re-embedded the page a build after any change.
+    "section.archive-backlinks", "section.archive-related",
     # Inline-SVG metadata (matplotlib emits creator boilerplate and,
     # historically, a per-run <dc:date> timestamp). None of it is page
     # content, and the timestamp made every recompile a cache miss.
