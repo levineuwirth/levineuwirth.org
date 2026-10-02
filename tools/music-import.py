@@ -265,6 +265,30 @@ def movements(root: ET.Element, mpos: Path, total_seconds: float) -> list[dict]:
     return out
 
 
+TAG = re.compile(r"<(polyline|line)\b([^>]*)>")
+ATTR = re.compile(r'([\w:-]+)="([^"]*)"')
+
+
+def barline_xs(svg_text: str) -> list[float]:
+    """The x of every barline on a page, in viewBox units.
+
+    Attributes are read by name, in any order: MuseScore writes class first,
+    but a minifier need not (svgo puts it last), and a pattern that assumed
+    the order found no barlines at all on such a page (audit M16). A
+    polyline's points alternate x and y."""
+    xs = []
+    for m in TAG.finditer(svg_text):
+        attrs = dict(ATTR.findall(m.group(2)))
+        if "BarLine" not in attrs.get("class", "").split():
+            continue
+        if m.group(1) == "polyline":
+            nums = re.findall(r"-?[\d.]+", attrs.get("points", ""))
+            xs += [float(v) for v in nums[0::2]]
+        else:
+            xs += [float(attrs[k]) for k in ("x1", "x2") if k in attrs]
+    return xs
+
+
 def mpos_scale(mpos_text: str, pages: list[Path]) -> tuple[float, float, float]:
     """How .mpos units map onto the SVG pages: (units per SVG unit, viewBox
     width, viewBox height).
@@ -280,8 +304,7 @@ def mpos_scale(mpos_text: str, pages: list[Path]) -> tuple[float, float, float]:
     for i, svg in enumerate(pages):
         text = svg.read_text()
         vb = re.search(r'viewBox="[\d.\-]+ [\d.\-]+ ([\d.]+) ([\d.]+)"', text[:4096])
-        xs = [float(x) for pts in re.findall(r'class="BarLine"[^>]*?points="([^"]+)"', text)
-              for x in re.findall(r'([\d.]+),[\d.]+', pts)]
+        xs = barline_xs(text)
         if vb and xs and boxes.get(i):
             return boxes[i] / max(xs), float(vb.group(1)), float(vb.group(2))
     die("could not relate the bar boxes to the pages: no page has both a "

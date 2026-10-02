@@ -36,6 +36,8 @@ import io
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -222,6 +224,17 @@ class ImporterTests(unittest.TestCase):
         self.assertEqual((k, w, h), (12.0, 10200.0, 13200.0))
         with self.assertRaises(SystemExit):
             music_import.mpos_scale(text, [blank])
+
+    def test_barlines_are_found_whatever_the_attribute_order(self) -> None:
+        """A minifier may reorder attributes (svgo puts class last); the scale
+        and the barline check must still see every barline (audit M16)."""
+        svg = ('<svg viewBox="0 0 100 100">'
+               '<polyline class="BarLine" fill="none" points="10.5,1 10.5,9"/>'
+               '<polyline points="20,1 20,9" stroke="#000" class="BarLine"/>'
+               '<polyline class="StaffLines" points="0,1 99,1"/>'
+               '<line x1="30" y1="1" x2="30" y2="9" class="BarLine Final"/>'
+               '<path class="BarLine" d="M40,1 L40,9"/></svg>')
+        self.assertEqual(music_import.barline_xs(svg), [10.5, 10.5, 20.0, 20.0, 30.0, 30.0])
 
     def test_a_bar_beyond_its_page_is_reported(self) -> None:
         """What flags a score whose system overruns the page, or a scale
@@ -527,11 +540,28 @@ class ScoreDataTests(unittest.TestCase):
                 for page, edge in right.items():
                     text = (MUSIC_DIR / slug / "scores" / f"page-{page}.svg").read_text()
                     vb = re.search(r'viewBox="[\d.\-]+ [\d.\-]+ ([\d.]+) ', text[:4096])
-                    xs = [float(x) for pts in re.findall(r'class="BarLine"[^>]*?points="([^"]+)"', text)
-                          for x in re.findall(r"([\d.]+),[\d.]+", pts)]
-                    if vb and xs:
-                        self.assertAlmostEqual(edge, max(xs) / float(vb.group(1)), delta=0.03,
-                                               msg=f"page {page}")
+                    xs = music_import.barline_xs(text)
+                    # A page with bars has barlines: finding none means the
+                    # page format changed under the parser, and skipping it
+                    # would make this test pass without checking anything.
+                    self.assertTrue(vb and xs, f"page {page}: bar boxes but no barlines found")
+                    self.assertAlmostEqual(edge, max(xs) / float(vb.group(1)), delta=0.03,
+                                           msg=f"page {page}")
+
+    def test_the_timing_ends_with_the_realization(self) -> None:
+        """The slider's length is timing.duration and the clock counts to
+        it; a realization that runs on past it (or stops short) leaves the
+        last bars unreachable or the clock wrong. A trimmed partial work has
+        its audio cut at the same moment."""
+        if not shutil.which("ffprobe"):
+            self.skipTest("ffprobe not installed")
+        for slug, t in self.timing.items():
+            with self.subTest(piece=slug):
+                audio = MUSIC_DIR / slug / "scores" / t["audio"]
+                out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                                      "-of", "csv=p=0", str(audio)],
+                                     capture_output=True, text=True, check=True).stdout
+                self.assertAlmostEqual(float(out), t["duration"], delta=5.0)
 
     def test_movement_starts_agree_with_index_pages(self) -> None:
         """score-follow.js wires the reader's movement buttons only when the
@@ -611,6 +641,18 @@ class BuiltMusicPageTests(unittest.TestCase):
                 self.assertEqual([page_number(Path(u)) for u in urls], list(range(1, count + 1)))
                 missing = [u for u in urls if not site_file(u).is_file()]
                 self.assertEqual(missing, [])
+
+    def test_no_published_score_file_outlives_its_source(self) -> None:
+        """Hakyll never deletes an output whose source is gone; a page left
+        in _site after a re-export with fewer pages is still served, and
+        still reachable from an old ?p= link (audit M02, M16)."""
+        for d in sorted((SITE_DIR / "music").glob("*/scores")):
+            with self.subTest(piece=d.parent.name):
+                source = MUSIC_DIR / d.parent.name / "scores"
+                orphans = sorted(f.name for f in d.iterdir()
+                                 if f.suffix in (".svg", ".json", ".mp3", ".pdf")
+                                 and not (source / f.name).is_file())
+                self.assertEqual(orphans, [])
 
     def test_reader_movement_buttons_line_up_with_the_realization(self) -> None:
         for d in self.pieces:
