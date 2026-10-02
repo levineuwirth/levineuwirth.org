@@ -40,7 +40,7 @@ I have always thought that the defining characteristic of what makes Levi *Levi*
 The realization of this curiosity/creativity complex yields what I find simultaneously as my greatest strength and my most detrimental flaw. I can be relentlessly ambitious and work persistently towards goals that others might dismiss as too far-sighted, impossible, etc. - but I also consistently bite off more than I can chew and overwork myself. I'm at least aware of the latter fact and try to counter it by introducing work that I enjoy, such as work on this website!
 
 ### Personality
-For what it is worth, I am an **INTP**. Whether or not this means anything is up to your interpretation. In other, perhaps more grounded descriptions (i.e., those from my fellow humans) I am usually thought to be neither overly optimistic nor pessimistic, one of those introverts who is really an extrovert with a *limited* social battery, a particularly animated and energetic person when the focus is something about which I care, and often I am found to be deep in thought (or mental composition of music).
+I am usually thought to be neither overly optimistic nor pessimistic, one of those introverts who is really an extrovert with a *limited* social battery, a particularly animated and energetic person when the focus is something about which I care, and often I am found to be deep in thought (or mental composition of music).
 
 ### Aphantasia
 
@@ -146,6 +146,8 @@ I have long had some notion of a "Linguistic Bucket List" - a collection of lang
 
 ### Naturalism
 I am fascinated by and interested in flora and fauna of all types, but as for the latter, birds and herps are especially intriguing to me. I have a lot of broad aspirations for this, but there always seems to be too little time to see them all the way through.  
+
+I am an [iNaturalist](https://www.inaturalist.org/people/lneuwirth) ambassador and a frequent contributor and identifier on that platform, once again primarily of birds and herps.
 
 ### Running
 
