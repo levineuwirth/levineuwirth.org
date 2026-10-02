@@ -1,0 +1,618 @@
+{
+ "sha": "3eb438a526992a676368fbf1654802c126520997",
+ "message": "Merge pull request #99 from levineuwirth/r6/r6-015-proposal\n\nR6: qualification audit and constrained certificate replay (partial result)",
+ "author": "Levi Neuwirth",
+ "date": "2026-10-01T21:20:48Z",
+ "parents": [
+  "1f694b652d5ea945f9a97be6f9a29ad0a5a56e94",
+  "b97a6b09ebe6ceebbca83b26287a80118a230518"
+ ],
+ "stats": {
+  "total": 430691,
+  "additions": 430674,
+  "deletions": 17
+ },
+ "files_total": 100,
+ "files": [
+  {
+   "filename": "experiments/r6/R6-015-ANALYSIS-AND-LOCK.md",
+   "status": "added",
+   "additions": 193,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/R6-015-BUILD.md",
+   "status": "added",
+   "additions": 159,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/R6-015-HARNESS.md",
+   "status": "added",
+   "additions": 144,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/R6-015-PROPOSAL.md",
+   "status": "added",
+   "additions": 293,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/R6-015-STEP-3.md",
+   "status": "added",
+   "additions": 155,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/R6-015.md",
+   "status": "added",
+   "additions": 130,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/R6-QUALIFICATION-1-ADDENDUM-1.md",
+   "status": "added",
+   "additions": 92,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/R6-QUALIFICATION-1-AUDIT-BUILD.md",
+   "status": "added",
+   "additions": 92,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/R6-QUALIFICATION-1-AUDIT-PROPOSAL.md",
+   "status": "added",
+   "additions": 135,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/R6-QUALIFICATION-1.md",
+   "status": "added",
+   "additions": 73,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/R6-SYNTHESIS.md",
+   "status": "modified",
+   "additions": 4,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/policies/qualification-audit-v1.sha256.json",
+   "status": "added",
+   "additions": 461,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/policies/r6-015-replay-v1.sha256.json",
+   "status": "added",
+   "additions": 614,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/qualification-audit/Audit.lean",
+   "status": "added",
+   "additions": 422,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/qualification-audit/R6AuditControls.lean",
+   "status": "added",
+   "additions": 371,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/qualification-audit/R6AuditControls.provenance.json",
+   "status": "added",
+   "additions": 21,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/qualification-audit/make_controls.py",
+   "status": "added",
+   "additions": 107,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/qualification-audit/qualification_audit.py",
+   "status": "added",
+   "additions": 251,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/certificate-verdict.json",
+   "status": "added",
+   "additions": 8,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/events.ndjson",
+   "status": "added",
+   "additions": 31,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/evidence.json",
+   "status": "added",
+   "additions": 1699,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/input/Frozen.lean",
+   "status": "added",
+   "additions": 225,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/input/ProposalCapture.lean",
+   "status": "added",
+   "additions": 76,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/input/source.patch",
+   "status": "added",
+   "additions": 17,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/provenance/binaries.json",
+   "status": "added",
+   "additions": 15,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/provenance/instrumentation.patch",
+   "status": "added",
+   "additions": 266,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/provenance/r6-015/replay_bridge.py",
+   "status": "added",
+   "additions": 199,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/provenance/r6-015/replay_episode.py",
+   "status": "added",
+   "additions": 268,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/provenance/r6-015/replay_lock.py",
+   "status": "added",
+   "additions": 141,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/provenance/sources.json",
+   "status": "added",
+   "additions": 267,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/residual.txt",
+   "status": "added",
+   "additions": 1,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/residual/command.json",
+   "status": "added",
+   "additions": 24,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/residual/report.json",
+   "status": "added",
+   "additions": 31,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/residual/stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/residual/stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/runtime.json",
+   "status": "added",
+   "additions": 21,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/seal.json",
+   "status": "added",
+   "additions": 83,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/solution.ndjson.gz",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/spec.json",
+   "status": "added",
+   "additions": 11,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/capture-build/capture-build.process.json",
+   "status": "added",
+   "additions": 23,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/capture-build/capture-build.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/capture-build/capture-build.stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/capture-build/command.json",
+   "status": "added",
+   "additions": 133,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/capture-build/scope-command.json",
+   "status": "added",
+   "additions": 18,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/capture-build/supervisor.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/capture-build/supervisor.stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/certificate-check/certificate-check.process.json",
+   "status": "added",
+   "additions": 23,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/certificate-check/certificate-check.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/certificate-check/certificate-check.stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/certificate-check/command.json",
+   "status": "added",
+   "additions": 65,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/certificate-check/scope-command.json",
+   "status": "added",
+   "additions": 18,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/certificate-check/supervisor.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/certificate-check/supervisor.stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/export/command.json",
+   "status": "added",
+   "additions": 160,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/export/export.process.json",
+   "status": "added",
+   "additions": 23,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/export/export.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/export/scope-command.json",
+   "status": "added",
+   "additions": 18,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/export/supervisor.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/export/supervisor.stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/reconstruct/command.json",
+   "status": "added",
+   "additions": 148,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/reconstruct/output/context.json",
+   "status": "added",
+   "additions": 164,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/reconstruct/reconstruct.process.json",
+   "status": "added",
+   "additions": 23,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/reconstruct/reconstruct.stderr",
+   "status": "added",
+   "additions": 12,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/reconstruct/reconstruct.stdout",
+   "status": "added",
+   "additions": 5,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/reconstruct/scope-command.json",
+   "status": "added",
+   "additions": 18,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/reconstruct/supervisor.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/reconstruct/supervisor.stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/validation-local/command.json",
+   "status": "added",
+   "additions": 79,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/validation-local/scope-command.json",
+   "status": "added",
+   "additions": 18,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/validation-local/supervisor.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/validation-local/supervisor.stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/validation-local/validation-local.process.json",
+   "status": "added",
+   "additions": 23,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/validation-local/validation-local.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/validation-local/validation-local.stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/validation-whole/command.json",
+   "status": "added",
+   "additions": 79,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/validation-whole/scope-command.json",
+   "status": "added",
+   "additions": 18,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/validation-whole/supervisor.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/validation-whole/supervisor.stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/validation-whole/validation-whole.process.json",
+   "status": "added",
+   "additions": 23,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/validation-whole/validation-whole.stderr",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/stages/validation-whole/validation-whole.stdout",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/validation-input/local/policy.json",
+   "status": "added",
+   "additions": 42,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/validation-input/whole/policy.json",
+   "status": "added",
+   "additions": 42,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/validation-local.raw.json.gz",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/validation-whole.raw.json.gz",
+   "status": "added",
+   "additions": 0,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-deterministic/verdict.json",
+   "status": "added",
+   "additions": 34,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-learned-draw1/certificate-verdict.json",
+   "status": "added",
+   "additions": 8,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-learned-draw1/events.ndjson",
+   "status": "added",
+   "additions": 31,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-learned-draw1/evidence.json",
+   "status": "added",
+   "additions": 1696,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-learned-draw1/input/Frozen.lean",
+   "status": "added",
+   "additions": 225,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-learned-draw1/input/ProposalCapture.lean",
+   "status": "added",
+   "additions": 76,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-learned-draw1/input/source.patch",
+   "status": "added",
+   "additions": 17,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-learned-draw1/provenance/binaries.json",
+   "status": "added",
+   "additions": 15,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-learned-draw1/provenance/instrumentation.patch",
+   "status": "added",
+   "additions": 266,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-learned-draw1/provenance/r6-015/replay_bridge.py",
+   "status": "added",
+   "additions": 199,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-learned-draw1/provenance/r6-015/replay_episode.py",
+   "status": "added",
+   "additions": 268,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-learned-draw1/provenance/r6-015/replay_lock.py",
+   "status": "added",
+   "additions": 141,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-learned-draw1/provenance/sources.json",
+   "status": "added",
+   "additions": 267,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-learned-draw1/residual.txt",
+   "status": "added",
+   "additions": 1,
+   "deletions": 0
+  },
+  {
+   "filename": "experiments/r6/r6-015-rehearsal-runs/rehearsal-l069-learned-draw1/residual/command.json",
+   "status": "added",
+   "additions": 24,
+   "deletions": 0
+  }
+ ]
+}
