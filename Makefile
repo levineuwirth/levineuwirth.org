@@ -375,7 +375,16 @@ pdfs:
 #
 # deploy-preflight refuses that. It runs BEFORE the build so a dirty tree
 # costs a second, not a full compile. (B05)
-DIRTY_PATHS := build templates static data yaml-source tools nginx Makefile levineuwirth.cabal
+#
+# code-refs/ and archive/ are written by the build itself (Stage 0 fetches
+# snapshots for newly linked code and pages) and both are published, so
+# deploy-preflight runs those fetchers first: a new snapshot then shows up
+# here as an untracked input, in seconds, instead of shipping uncommitted
+# (it did on 2026-10-01, audit X1). The root files are those published
+# verbatim under /source/ or compiled into the generator.
+DIRTY_PATHS := build templates static data yaml-source tools nginx Makefile levineuwirth.cabal \
+	code-refs archive cabal.project cabal.project.freeze pyproject.toml uv.lock \
+	LICENSE README.md WRITING.md PHOTOGRAPHY.md
 
 # The build inputs under $(1) that differ from HEAD, one per line: tracked
 # modifications, plus untracked files everywhere but data/ (see below).
@@ -400,6 +409,10 @@ deploy-preflight:
 	   echo "        commits to main while the site is built from it." >&2; \
 	   exit 1; \
 	 fi
+	# Fetch what the build would fetch before judging the tree, so that a
+	# snapshot for a newly linked page or code file is caught below.
+	@python3 tools/code-refs.py fetch
+	@if [ -d .venv ]; then uv run python tools/archive.py fetch; fi
 	# Tracked modifications anywhere in DIRTY_PATHS, plus untracked files in
 	# all of them except data/. data/ is excluded from the untracked check
 	# on purpose: it is where every build artifact and state file lands
