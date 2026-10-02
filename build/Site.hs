@@ -628,16 +628,28 @@ rules = do
     -- left the page byte-identical, still serving the old dimensions. Milder
     -- than the figure case (a wrong layout hint, not a wrong claim) but the
     -- same silence, so it belongs in the same dependency.
-    figureDep <- makePatternDependency $
-                      "content/essays/**/figures/**"
-                 .||. "content/drafts/essays/**/figures/**"
-                 .||. "content/essays/**/*.dims.yaml"
-                 .||. "content/drafts/essays/**/*.dims.yaml"
-                 -- Essays embed site-wide images from /images/; their
-                 -- dimension sidecars live under static/ and are read by
-                 -- the same filter (B11).
-                 .||. "static/**/*.dims.yaml"
-                 .||. "tools/viz_theme.py"
+    --
+    -- Hakyll records a pattern dependency by matching the files on disk
+    -- (unversioned), and re-checks it every run against the identifiers some
+    -- rule claims, where a glob also matches versioned ones. So the pattern is
+    -- restricted to unversioned identifiers, every file in it must be claimed
+    -- without a version (viz_theme.py is, just below, besides its
+    -- source-preview copy), and the drafts globs apply only in dev, where a
+    -- rule claims drafts. Otherwise the two sets differ on every run and
+    -- every essay is out of date on every build (audit H05).
+    figureDep <- makePatternDependency $ hasNoVersion .&&.
+                     (     "content/essays/**/figures/**"
+                      .||. "content/essays/**/*.dims.yaml"
+                      -- Essays embed site-wide images from /images/; their
+                      -- dimension sidecars live under static/ and are read by
+                      -- the same filter (B11).
+                      .||. "static/**/*.dims.yaml"
+                      .||. "tools/viz_theme.py"
+                      .||. (if isDev
+                              then "content/drafts/essays/**/figures/**"
+                                   .||. "content/drafts/essays/**/*.dims.yaml"
+                              else fromList []))
+    match "tools/viz_theme.py" $ compile getResourceLBS
 
     rulesExtraDependencies [figureDep] $ match allEssays $ do
         route $ customRoute $ \ident ->
