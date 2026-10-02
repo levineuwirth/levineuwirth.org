@@ -137,10 +137,10 @@ def parse_link(match: re.Match) -> dict | None:
 
 
 # File names the build never publishes (build/Site.hs `neverPublish`), and
-# a front-matter `draft:` that is true.
+# a front-matter `draft:` that is true (the values build/Site.hs accepts).
 PRIVATE_SUFFIXES = (".local.md", ".draft.md")
 DRAFT_RE = re.compile(
-    r"""^draft:[ \t]*["']?(true|yes|on)["']?[ \t]*(#.*)?$""", re.IGNORECASE | re.MULTILINE
+    r"""^draft:[ \t]*["']?(true|yes|1)["']?[ \t]*(#.*)?$""", re.IGNORECASE | re.MULTILINE
 )
 
 
