@@ -23,6 +23,7 @@ commit exact positions to a public repository and route around it.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import sys
@@ -45,7 +46,9 @@ def render(key: str, value) -> str:
     text = str(value)
     if key == "captured" and re.fullmatch(r"\d{4}-\d{2}-\d{2}", text):
         return f"{key}: {text}"
-    return f'{key}: "{text}"'
+    # A JSON string is a valid YAML double-quoted scalar: quotes and
+    # backslashes in a title, location or lens name are escaped, not fatal.
+    return f"{key}: {json.dumps(text, ensure_ascii=False)}"
 
 
 def exif_lines(sidecar: Path) -> list[str]:

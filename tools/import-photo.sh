@@ -293,7 +293,7 @@ fi
 # ---------------------------------------------------------------------------
 
 EXIF_FRONTMATTER="$( cd "$REPO_ROOT" && .venv/bin/python - "$EXIF_SIDECAR" <<'PY' 2>/dev/null || true
-import re, sys, pathlib
+import json, re, sys, pathlib
 
 try:
     import yaml
@@ -320,7 +320,9 @@ def render(key, value):
     text = str(value)
     if key == "captured" and re.fullmatch(r"\d{4}-\d{2}-\d{2}", text):
         return f"{key}: {text}"
-    return f'{key}: "{text}"'
+    # A JSON string is a valid YAML double-quoted scalar: quotes and
+    # backslashes in a lens name or title are escaped, not fatal.
+    return f"{key}: {json.dumps(text, ensure_ascii=False)}"
 
 for key in keys:
     value = data.get(key)
@@ -362,9 +364,12 @@ if [ -n "$SERIES" ]; then
     SERIES_FIELD="series: $SERIES"
 fi
 
+# Quoted as a JSON string (valid YAML), so a title containing " or \ still parses.
+TITLE_YAML="$(python3 -c 'import json, sys; print(json.dumps(sys.argv[1], ensure_ascii=False))' "$TITLE")"
+
 cat > "$INDEX_MD" <<EOF
 ---
-title: "$TITLE"
+title: $TITLE_YAML
 date: $TODAY
 tags: [$TAGS]
 photo: $PHOTO_FIELD
