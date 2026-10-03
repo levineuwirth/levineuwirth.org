@@ -1,0 +1,18 @@
+# /etc/logrotate.d/nginx (replaces the package's rule).
+# The existing logrotate.timer checks daily. Keep 14 nonempty rotations;
+# quiet files can therefore retain entries older than 14 days.
+/var/log/nginx/*log {
+    daily
+    rotate 14
+    missingok
+    notifempty
+    create 0640 http root
+    sharedscripts
+    compress
+    delaycompress
+    postrotate
+        if systemctl -q is-active nginx; then
+            systemctl -q kill --signal=USR1 --kill-whom=main nginx
+        fi
+    endscript
+}

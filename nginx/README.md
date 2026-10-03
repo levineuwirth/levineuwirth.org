@@ -16,6 +16,8 @@ is reloaded.
 | `couchdb-sync.conf` | `sites-available/couchdb-sync.conf`, linked | sync.levineuwirth.org |
 | `security-headers.conf`, `security-framing.conf`, `csp-report.conf`, `static-assets.conf`, `popup-proxy.conf`, `archive.conf` | `/etc/nginx/snippets/` | included by `levineuwirth.conf` |
 | `csp-report-format.conf`, `csp-report-zone.conf`, `popup-proxy-cache.conf`, `anki-sync-zone.conf` | `/etc/nginx/conf.d/` | `http { }` companions of the snippets; `nginx -t` fails without them |
+| `access-log-format.conf` | `/etc/nginx/conf.d/` | JSON access format, original path without query, asset logging filter |
+| `logrotate` | `/etc/logrotate.d/nginx` | daily rotation, 14 nonempty rotations, compression after one rotation |
 
 The brotli modules are loaded by Arch's `/etc/nginx/modules.d/20-brotli.conf`
 (`nginx-mod-brotli`), which `nginx.conf` includes.
@@ -77,3 +79,131 @@ curl -sk https://178.104.77.249/                                     # handshake
 
 Then on the VPS, `certbot renew --dry-run`. The :80 servers redirect inside
 `location /`, so a challenge location certbot adds is matched first.
+
+## Access logs
+
+Each completed request is a JSON object on one line. The service's HTTP
+redirects and HTTPS requests use the same file, with `scheme` and `host`
+distinguishing them. Files are under `/var/log/nginx/`:
+
+| File | Traffic |
+|---|---|
+| `site.access.json.log` | apex and www; pages and popup proxies |
+| `forgejo.access.json.log` | git.levineuwirth.org, including its assets and API |
+| `anki-sync.access.json.log` | anki.levineuwirth.org |
+| `couchdb-sync.access.json.log` | sync.levineuwirth.org |
+| `unmatched.access.json.log` | fallback for requests outside the known vhosts |
+| `csp-report.log` | CSP submissions, including rejected requests |
+
+The website's asset locations record errors and requests taking at least
+one second; successful assets below that threshold are omitted. Thus these
+logs cannot measure the website's total bandwidth or asset request count.
+The other service logs are unfiltered. A TLS handshake rejected before an
+HTTP request does not produce an access record; check nginx's journal.
+
+Fields include the client address, hostname and selected vhost, original
+path, method, protocol, status, bytes sent (including headers), request
+length, request ID, total duration, backend timings/status, proxy cache
+status, response encoding, rate-limit outcome, referring host, and user
+agent. Durations are in seconds. Backend fields are strings because a
+request can have multiple attempts, or no backend at all. Total duration
+includes client upload/download time: a long CouchDB changes feed or Git
+transfer is not necessarily a slow backend. Cache status describes nginx's
+proxy cache, not the visitor's browser cache. User-agent bot names are claims,
+not verified identities.
+
+Ordinary access records omit query strings, referring paths, cookies,
+Authorization, and bodies. Paths, addresses and user agents still identify
+activity, so files are mode 0640. CSP records deliberately retain the report
+body and referring URL; they are untrusted and can contain sensitive URLs.
+Their new `method` and `status` fields distinguish 204, 405, 413, and 429;
+older records lack those fields. Existing `.report` parsing still works.
+
+Writes are buffered for up to five seconds. On the VPS:
+
+```sh
+# Follow the forge. jq's --unbuffered matters when piping a live stream.
+tail -F /var/log/nginx/forgejo.access.json.log | jq --unbuffered -c '{time,host,method,path,status,request_time,upstream_response_time}'
+
+# Errors or requests taking at least one second in the current website log.
+jq -c 'select(.status >= 400 or .request_time >= 1)' /var/log/nginx/site.access.json.log
+
+# Most-requested forge paths, including retained rotations.
+zcat -f /var/log/nginx/forgejo.access.json.log* | jq -r .path | sort | uniq -c | sort -nr | head -20
+
+# User-agent claims. This includes crawlers, real browsers and spoofed strings.
+jq -r .ua /var/log/nginx/forgejo.access.json.log | sort | uniq -c | sort -nr | head -20
+
+# Backend errors, independently of the final status delivered by nginx.
+jq -c 'select(.upstream_status | test("(^|[, :])[5][0-9][0-9]($|[, :])"))' /var/log/nginx/forgejo.access.json.log
+
+# Collector rejections since the new fields were installed.
+jq -c 'select((.status // 0) >= 400)' /var/log/nginx/csp-report.log
+```
+
+### Logging rollout and rotation
+
+Install `access-log-format.conf` before reloading any vhost that names
+`access_json`. Install the changed vhosts, `nginx.conf`, `static-assets.conf`,
+`csp-report.conf` and `csp-report-format.conf` together. The logging-only
+change does not require a site build or deploy. For each new JSON filename,
+create it with `touch`, then `chown http:root` and `chmod 0640` before reload;
+also restrict the existing CSP log to 0640. Do not truncate existing files.
+Run `nginx -t` before the reload. The new filenames keep older combined-format
+records separate; retain those old logs as historical evidence.
+
+Back up `/etc/logrotate.d/nginx`, then install `nginx/logrotate` there with
+mode 0644. `logrotate --debug /etc/logrotate.conf` checks the full setup
+without changing logs or rotation state. The existing `logrotate.timer`
+runs daily, with up to an hour's randomized delay. `daily` overrides the
+system's weekly default for nginx only. Each file retains 14 nonempty
+rotations, which can cover more than 14 days on quiet services. There is no
+hard size cap between timer runs. The newest rotation stays uncompressed
+until the following rotation (`delaycompress`), allowing nginx time to
+reopen it after USR1. Older rotations are gzip-compressed. Rotation renames
+files and reopens them; it does not use `copytruncate`.
+
+```sh
+systemctl list-timers logrotate.timer
+journalctl -u logrotate.service --since yesterday
+logrotate --debug /etc/logrotate.conf
+```
+
+Rehearse routing, JSON escaping, query removal, backend timings, slow/failed
+assets, unmatched hosts and CSP acceptance/rejection locally:
+
+```sh
+RUN_NGINX_TESTS=1 python3 -m unittest discover -s tests -p test_nginx_logging.py -v
+```
+
+This uses a locally available `nginx:1.30` Docker image, opens no host ports,
+and has no network access. It loads the real vhosts and snippets, replacing
+certificate/root/backend paths with fixtures and omitting the stock image's
+unavailable Brotli module. Production's `nginx -t` checks the installed modules.
+
+## Evaluating Anubis for Forgejo
+
+The logging rollout supplies the baseline for this decision. Compare at
+least 24–48 hours of forge traffic by path, status, backend duration, user
+agent, and client address. Check Forgejo's CPU/memory and responsiveness
+alongside it: request count alone does not establish overload, and a bot
+name in a user agent does not authenticate the crawler.
+
+[Anubis](https://github.com/TecharoHQ/anubis) can sit between nginx and
+Forgejo and challenge browser traffic. A prospective deployment here is
+`nginx (TLS) → Anubis → Forgejo`, scoped to `git.levineuwirth.org`; Git over
+SSH stays on its existing separate port. Upstream documents the
+[proxy arrangement](https://github.com/TecharoHQ/anubis/blob/main/docs/docs/admin/installation.mdx)
+and ships a [Git client rule](https://github.com/TecharoHQ/anubis/blob/main/data/clients/git.yaml).
+That rule checks spoofable headers; it is not authentication or proof that
+a client is harmless. Challenge policies can also impede legitimate bots
+and non-browser clients.
+
+Before routing production through it, pin a release and rehearse browser
+browsing/login, clone/fetch/push over HTTPS, Git LFS if used, API calls
+(including the site's snapshot fetcher), raw files, feeds, and the updater's
+health checks. Restrict bypasses to the necessary methods and endpoints;
+allowing all `/api/` or every `git/` user agent creates an easy crawler bypass.
+Keep its listener private and overwrite forwarded client-address headers at
+nginx. Test a direct-to-Forgejo rollback and account for the extra process's
+resource use. Anubis is not installed as part of the logging change.
