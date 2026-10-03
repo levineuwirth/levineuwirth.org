@@ -192,22 +192,27 @@ normalizeColors
     . T.replace "fill:#000000"        "fill:currentColor"
     . T.replace "stroke:#000000"      "stroke:currentColor"
 
--- | Remove @width="..."@ and @height="..."@ from the root @<svg>@.
---   The substitution is conservative: it walks once and only touches
---   the first occurrence of each attribute (the root tag in a
---   well-formed monogram).
+-- | Remove @width="..."@ and @height="..."@ from the root @<svg>@ start
+--   tag, so the mark sizes from CSS. Only that tag: none of the marks'
+--   roots carries dimensions, and a search of the whole file stripped them
+--   from the first @<rect>@ instead, which then drew nothing (audit H02:
+--   eight marks, among them /build/'s and proof-broker's).
 stripRootDims :: T.Text -> T.Text
-stripRootDims = stripFirst "width" . stripFirst "height"
+stripRootDims txt = case T.breakOn "<svg" txt of
+    (pre, rest)
+        | T.null rest -> txt
+        | otherwise   ->
+            let (tag, body) = T.breakOn ">" rest
+            in  pre <> stripAttr "width" (stripAttr "height" tag) <> body
   where
-    stripFirst attr txt =
-        case T.breakOn (T.pack (" " ++ attr ++ "=\"")) txt of
+    stripAttr attr tag =
+        let key = T.pack (" " ++ attr ++ "=\"")
+        in case T.breakOn key tag of
             (before, after)
-                | T.null after -> txt
+                | T.null after -> tag
                 | otherwise ->
-                    -- Drop ` attr="..."` including its closing quote.
-                    let restAfterEq = T.drop (T.length (T.pack (" " ++ attr ++ "=\""))) after
-                    in case T.breakOn "\"" restAfterEq of
-                        (_, rest) | T.null rest -> txt
+                    case T.breakOn "\"" (T.drop (T.length key) after) of
+                        (_, rest) | T.null rest -> tag
                                   | otherwise   -> before <> T.drop 1 rest
 
 -- ---------------------------------------------------------------------------
