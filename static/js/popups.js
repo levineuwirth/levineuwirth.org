@@ -1149,17 +1149,14 @@
         scroll.appendChild(body);
         wrap.appendChild(scroll);
 
-        /* Prism is loaded with `defer` from the page template; by the
-           time a hover delay fires it is reliably available. Guard
-           anyway so a missing component (e.g. an unrecognised lang)
-           degrades to plain monospace rather than throwing. */
-        if (lang && window.Prism && Prism.languages && Prism.languages[lang]) {
-            try { Prism.highlightElement(code); } catch (_) { /* keep plain */ }
-        }
-
         var partial = start > 1 || end < n;
         wrap.appendChild(sourceFooter(opts,
             partial ? 'lines ' + start + '–' + end + ' of ' + n : ''));
+        /* A page without inline code does not preload Prism. The shared
+           loader highlights this detached preview before it is shown. */
+        if (lang && typeof window.lnHighlightCode === 'function') {
+            return window.lnHighlightCode(wrap).then(function () { return wrap; });
+        }
         return wrap;
     }
 
