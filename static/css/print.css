@@ -39,7 +39,13 @@
        specific than a bare body.reading-mode. */
     body.reading-mode,
     [data-theme] body.reading-mode,
-    :root:not([data-theme]) body.reading-mode { --bg: #ffffff; }
+    :root:not([data-theme]) body.reading-mode {
+        --bg: #ffffff;
+        /* Cappuccino lifts these on the body for screen reading, so
+           overriding only the root leaves pale metadata on white paper. */
+        --text-muted: #333333;
+        --text-faint: #555555;
+    }
 
     /* ----------------------------------------------------------------
        Hide chrome.
