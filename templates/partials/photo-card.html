@@ -7,9 +7,9 @@
 <li class="photo-card"$if(orientation)$ data-orientation="$orientation$"$endif$>
     <a class="photo-card-link" href="$canonical-url$">
         $if(photo-url)$
-        <picture>$if(photo-webp-srcset)$<source srcset="$photo-webp-srcset$" type="image/webp" sizes="auto">$endif$<img class="photo-card-img" src="$photo-url$"$if(photo-srcset)$ srcset="$photo-srcset$" sizes="auto"$endif$ alt="$if(alt)$$alt$$else$$title$$endif$" loading="lazy" decoding="async"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$></picture>
+        <picture>$if(photo-webp-srcset)$<source srcset="$photo-webp-srcset$" type="image/webp" sizes="auto">$endif$<img class="photo-card-img" src="$photo-url$"$if(photo-srcset)$ srcset="$photo-srcset$" sizes="auto"$endif$ alt="$if(alt)$$plain(alt)$$else$$plain(title)$$endif$" loading="lazy" decoding="async"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$></picture>
         $else$$if(photo)$
-        <img class="photo-card-img" src="$photo$" alt="$if(alt)$$alt$$else$$title$$endif$" loading="lazy" decoding="async"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$>
+        <img class="photo-card-img" src="$photo$" alt="$if(alt)$$plain(alt)$$else$$plain(title)$$endif$" loading="lazy" decoding="async"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$>
         $endif$$endif$
         <div class="photo-card-meta">
             <span class="photo-card-title">$title$</span>

@@ -66,10 +66,10 @@
                     <a class="archive-viewer-open" href="$artifact-url$" target="_blank" rel="noopener noreferrer">Open raw&nbsp;&#8599;</a>
                 </div>
                 $if(is-pdf)$
-                <iframe class="archive-frame" src="$artifact-url$" title="$title$ &mdash; archived document" loading="lazy"></iframe>
+                <iframe class="archive-frame" src="$artifact-url$" title="$plain(title)$ &mdash; archived document" loading="lazy"></iframe>
                 $endif$
                 $if(is-html)$
-                <iframe class="archive-frame" src="$artifact-url$" title="$title$ &mdash; archived snapshot" sandbox referrerpolicy="no-referrer" loading="lazy"></iframe>
+                <iframe class="archive-frame" src="$artifact-url$" title="$plain(title)$ &mdash; archived snapshot" sandbox referrerpolicy="no-referrer" loading="lazy"></iframe>
                 $endif$
             </div>
             $endif$

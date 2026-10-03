@@ -39,7 +39,7 @@ import qualified Data.Vector            as V
 import qualified Data.Scientific        as Sci
 import           Hakyll
 import           Compilers              (pageCompiler, photographyCompiler)
-import           Contexts               (photographyCtx, pageCtx, siteCtx,
+import           Contexts               (feedTitleField, photographyCtx, pageCtx, siteCtx,
                                          recentFirstByDisplay, feedMetaFields,
                                          photoVariantName)
 import qualified Patterns               as P
@@ -675,7 +675,8 @@ photographyFeedRule =
             -- (audits F11 and C03) — shared with the site feed so the two
             -- cannot disagree.
             let feedCtx =
-                    feedMetaFields
+                    feedTitleField
+                    <> feedMetaFields
                     <> photographyFeedDescription
                     <> bodyField "description"
                     <> defaultContext

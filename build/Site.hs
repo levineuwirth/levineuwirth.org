@@ -35,7 +35,7 @@ import Catalog      (musicCatalogCtx)
 import Commonplace  (commonplaceCtx)
 import Now          (nowCtx, nowLastUpdated)
 import Vita         (vitaCtx, projectsCtx)
-import Contexts   (siteCtx, essayCtx, postCtx, pageCtx, poetryCtx, fictionCtx, compositionCtx,
+import Contexts   (feedTitleField, siteCtx, essayCtx, postCtx, pageCtx, poetryCtx, fictionCtx, compositionCtx,
                    contentKindField, declaresScore, recentFirstByDisplay,
                    tagLinksFieldExcludingTopSegment, isProvedConfidence,
                    canonicalUrlPath, feedMetaFields, identifierDisplayUTC)
@@ -202,7 +202,8 @@ musicFeedConfig = FeedConfiguration
 --   revision and no subscriber could see that it had changed.
 feedCtx :: Context String
 feedCtx =
-    feedMetaFields
+    feedTitleField
+    <> feedMetaFields
     <> bodyField "description"
     <> defaultContext
 

@@ -18,6 +18,8 @@ module Contexts
     , contentKindField
     , abstractField
     , descriptionField
+    , plainField
+    , feedTitleField
     , tagLinksField
     , tagLinksFieldExcludingScope
     , tagLinksFieldExcludingTopSegment
@@ -667,6 +669,29 @@ attrEscape = concatMap esc
     esc '\'' = "&#39;"
     esc c    = [c]
 
+-- | @$plain(field)$@: a field as text that is safe in an attribute or in
+--   @<title>@: tags stripped, whitespace collapsed, @& < > " '@ escaped.
+--   Hakyll hands metadata to templates as it is written. A title may carry
+--   @<em>@ for its heading, which then showed as literal tags in browser
+--   tabs, link previews and the feed; and a quotation mark in any
+--   free-text field would end the attribute it was put in (audit V04).
+plainField :: Context a
+plainField = functionField "plain" $ \args _ -> case args of
+    [v] -> return (plainText v)
+    _   -> fail "plain takes one field"
+
+plainText :: String -> String
+plainText = attrEscape . unwords . words . stripTags
+
+-- | An Atom entry's @title@ as plain text. Hakyll's template writes
+--   @$title$@ into a text-type @<title>@, where markup is not allowed
+--   (RFC 4287 3.1.1.1); an @<em>@ in one made that entry invalid. No title
+--   falls through to the default context's.
+feedTitleField :: Context String
+feedTitleField = field "title" $ \item -> do
+    t <- getMetadataField (itemIdentifier item) "title"
+    maybe (noResult "no title") (return . plainText) t
+
 -- ---------------------------------------------------------------------------
 -- Summary field
 -- ---------------------------------------------------------------------------
@@ -692,6 +717,7 @@ summaryField = field "summary" $ \item -> do
 siteCtx :: Context String
 siteCtx =
     constField "site-title" "Levi Neuwirth"
+    <> plainField
     <> constField "site-url" "https://levineuwirth.org"
     <> canonicalUrlField
     <> buildTimeField
@@ -1783,7 +1809,8 @@ compositionCtx =
             [1..] mvs
       where
         movCtx =
-            field "movement-name"        (return . movName     . mvOf)
+            plainField
+            <> field "movement-name"        (return . movName     . mvOf)
             <> field "movement-numeral"
                 (\i -> case fst (splitNumeral (movName (mvOf i))) of
                           "" -> noResult "no numeral"
