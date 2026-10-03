@@ -100,6 +100,8 @@
        and letterspacing in the components, not by unreadable ink. */
     --text-faint:      #6e6a64;
     --border:          #cccccc;
+    /* Destructive actions (Clear annotations): 6.4:1 on --bg-offset (audit V05). */
+    --danger:          #9e2f2f;
     --border-muted:    #aaaaaa;
 
     /* Link colors */
@@ -206,6 +208,7 @@
     --text-muted:      #8c8881;
     --text-faint:      #8b8680;
     --border:          #333333;
+    --danger:          #e08a84;   /* 6.7:1 on --bg-offset */
     --border-muted:    #444444;
 
     --link:            #d4d0c8;
@@ -245,6 +248,7 @@
        step below --text-muted, so the hierarchy survives. */
     --text-faint:      #c6ac88;
     --border:          #7a5d44;
+    --danger:          #ffb0a0;   /* 6.7:1 on --bg-offset */
     --border-muted:    #6a4f38;
 
     --link:            #ead0a0;
@@ -276,6 +280,7 @@
         --text-muted:      #8c8881;
         --text-faint:      #8b8680;
         --border:          #333333;
+        --danger:          #e08a84;
         --border-muted:    #444444;
 
         --link:            #d4d0c8;

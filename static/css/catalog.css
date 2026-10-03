@@ -164,6 +164,13 @@
     opacity: 0.75;
 }
 
+/* Cappuccino's spines are its cream, lettered in its brown; at 0.75 the
+   year and opus fell to 3.9:1 (audit A07). 0.85 is 5.0:1. */
+[data-theme="cappuccino"] .shelf-spine-year,
+[data-theme="cappuccino"] .shelf-spine-title .cat-opus {
+    opacity: 0.85;
+}
+
 /* Pointing at a spine draws it a little way off the shelf. */
 .shelf-spine:hover,
 .shelf-spine:focus-visible {

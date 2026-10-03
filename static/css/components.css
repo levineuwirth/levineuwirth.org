@@ -249,11 +249,19 @@ nav.site-nav {
     text-align: center;
 }
 
-.settings-btn--danger {
-    color: rgba(180, 80, 80, 0.85);
+/* --danger clears 4.5:1 on the button's own background in every theme
+   (audit V05; the old translucent red was 2.1–3.5:1). On hover the
+   background stays and the border takes the colour: Cappuccino's hover
+   ground, --border, is too mid-toned for any warning red to read on it.
+   Two classes, so it outranks .settings-btn:hover:not(:disabled), which
+   used to erase the red on hover. */
+.settings-btn.settings-btn--danger {
+    color: var(--danger);
 }
-.settings-btn--danger:hover {
-    color: rgba(180, 80, 80, 1);
+.settings-btn.settings-btn--danger:hover:not(:disabled) {
+    background: var(--bg-offset);
+    border-color: var(--danger);
+    color: var(--danger);
 }
 
 .settings-col {

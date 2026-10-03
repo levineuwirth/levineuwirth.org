@@ -37,6 +37,11 @@ body.reading-mode {
 
 [data-theme="cappuccino"] body.reading-mode {
     --bg: #634432;
+    /* The lifted ground costs the faint and muted text their contrast
+       (faint 4.0:1 here, audit A07): one step lighter each, the hierarchy
+       kept — text 5.8, muted 5.2, faint 4.8 to 1. */
+    --text-muted: #dcc49c;
+    --text-faint: #d4bc98;
     background-color: var(--bg);
 }
 
