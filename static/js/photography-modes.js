@@ -88,9 +88,23 @@
         // Mode toggle
         // ----------------------------------------------------------------
 
+        /* What a card is wide in each mode, inside the 800px measure.
+           Browsers that support sizes="auto" use the laid-out width and
+           ignore the rest; the others read the rest, and with "auto"
+           alone fell back to 100vw and fetched the 2400w file for every
+           thumbnail (audit O04). The templates carry the grid entry. */
+        var SIZES = {
+            grid:          '(max-width: 26rem) 100vw, (max-width: 50rem) 50vw, 13rem',
+            masonry:       '(max-width: 34rem) 100vw, (max-width: 50rem) 50vw, 17rem',
+            chronological: '(max-width: 50rem) 100vw, 48rem'
+        };
+
         function applyMode(mode) {
             if (!grid) return;
             grid.setAttribute('data-photography-mode', mode);
+            grid.querySelectorAll('img[sizes], source[sizes]').forEach(function (el) {
+                el.setAttribute('sizes', 'auto, ' + SIZES[mode]);
+            });
             /* A06: the controls are a labelled navigation group, not a
                tablist and not a set of toggle buttons, so the selected
                view is stated with aria-current rather than aria-pressed
