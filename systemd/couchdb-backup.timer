@@ -5,8 +5,9 @@
 Description=Nightly CouchDB backup
 
 [Timer]
-# 03:15 UTC: ahead of Forgejo's 03:30 and Anki's 03:45 so the three
-# nightly jobs don't contend for the same disk I/O window.
+# 03:15 UTC + up to 10 min. The nightly jobs can overlap with Forgejo,
+# Anki and config backups; borg-offhost.sh waits for their shared
+# repository lock (BORG_LOCK_WAIT).
 OnCalendar=*-*-* 03:15
 RandomizedDelaySec=10min
 # The VPS is not always up. Persistent=true runs a missed backup shortly
