@@ -18,10 +18,10 @@ module Compilers
 
 import           Hakyll
 import           Text.Pandoc.Definition     (Pandoc (..), Block (..),
-                                             Inline (..), QuoteType (..),
+                                             Inline (..), QuoteType (..), Citation (..),
                                              Format (..), nullAttr, nullMeta)
 import           Text.Pandoc.Class          (runPure)
-import           Text.Pandoc.Walk           (walk)
+import           Text.Pandoc.Walk           (walk, query)
 import           Text.Pandoc.Writers        (writeHtml5String)
 import           Text.Pandoc.Options        (ReaderOptions (..), WriterOptions (..),
                                              HTMLMathMethod (..))
@@ -263,6 +263,13 @@ essayCompilerWith rOpts = do
     _ <- saveSnapshot "reading-time"         (itemSetBody (show (readingTime src))       htmlItem)
     _ <- saveSnapshot "bibliography"         (itemSetBody (T.unpack bibHtml)             htmlItem)
     _ <- saveSnapshot "further-reading-refs" (itemSetBody (T.unpack furtherHtml)         htmlItem)
+    -- The keys this page cites or lists as further reading, for
+    -- /bibliography/, which claims "every work cited across this site" and
+    -- so lists only these (audit C07).
+    let citeKeys = query (\i -> case i of
+                              Cite cs _ -> map citationId cs
+                              _         -> []) (itemBody pandocItem)
+    _ <- saveSnapshot "cite-keys"            (itemSetBody (unwords (map T.unpack (citeKeys ++ frKeys))) htmlItem)
 
     return htmlItem
 

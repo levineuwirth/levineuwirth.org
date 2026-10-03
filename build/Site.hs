@@ -238,6 +238,13 @@ rules = do
                     then P.essayPattern .||. P.draftEssayPattern
                     else P.essayPattern
 
+        -- Everything compiled through 'Compilers.essayCompilerWith', which
+        -- saves each page's "cite-keys" snapshot for /bibliography/.
+        essayPipeline = allEssays .||. P.blogPattern .||. P.poetryPattern
+                   .||. P.fictionPattern .||. "content/music/*/index.md"
+                   .||. fromList [ "content/me/index.md", "content/memento-mori/index.md"
+                                 , "content/colophon.md" ]
+
     -- ---------------------------------------------------------------------------
     -- Backlinks (pass 1: link extraction; pass 2: JSON generation)
     -- Must run before content rules so dependencies resolve correctly.
@@ -1225,7 +1232,14 @@ rules = do
         route idRoute
         compile $ do
             trackBibInputs
-            let sortedKeys = bibliographyIndexOrder bibExtrasAll
+            -- Only the works a published page cites or lists as further
+            -- reading: the page says "every work cited across this site", and
+            -- listing every .bib entry put nine uncited ones on it, some kept
+            -- only for a draft (audit C07).
+            cited <- Set.fromList . concatMap (words . itemBody) <$>
+                (loadAllSnapshots (essayPipeline .&&. hasNoVersion) "cite-keys"
+                    :: Compiler [Item String])
+            let sortedKeys = filter (`Set.member` cited) (bibliographyIndexOrder bibExtrasAll)
                 grouped    = groupByLetter bibExtrasAll sortedKeys
                 present    = map fst grouped
             html <- unsafeCompiler $ do
