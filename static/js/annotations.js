@@ -94,6 +94,7 @@
         var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
         var full = '';
         var at   = [];   /* at[i] = [node, offset] of full[i] */
+        var lastWasSpace = false;
         var node;
         while ((node = walker.nextNode())) {
             /* Skip text already inside an annotation mark */
@@ -101,7 +102,11 @@
             var v = node.nodeValue;
             for (var j = 0; j < v.length; j++) {
                 var white = /\s/.test(v[j]);
-                if (white && full.charAt(full.length - 1) === ' ') continue;
+                /* Reading the growing string with charAt here repeatedly
+                   flattens it in V8: a long page can freeze for seconds.
+                   Track this one bit instead, across text-node boundaries. */
+                if (white && lastWasSpace) continue;
+                lastWasSpace = white;
                 full += white ? ' ' : v[j];
                 at.push([node, j]);
             }
