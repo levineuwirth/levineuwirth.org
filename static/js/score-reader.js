@@ -378,7 +378,10 @@
        which stays in the document beside it. */
     function gutterCopy(node, frac) {
         var box  = node.getBoundingClientRect();
-        var edge = box.left + box.width * frac - 1;
+        /* Compare at the staff edge itself: subtracting a CSS pixel loses
+           bracket spines at phone scale. This copy survives later zooms,
+           when the missing line would become plainly visible. */
+        var edge = box.left + box.width * frac;
         var copy = node.cloneNode(false);
         Array.prototype.forEach.call(node.children, function (el) {
             if (el.localName === 'defs') return;
