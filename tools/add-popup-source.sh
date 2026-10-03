@@ -19,7 +19,6 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-POPUPS_JS="$REPO_ROOT/static/js/popups.js"
 NGINX_CONF="$REPO_ROOT/nginx/popup-proxy.conf"
 ORIGIN="https://levineuwirth.org"
 

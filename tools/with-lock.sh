@@ -15,6 +15,10 @@
 # command exits — including when it is killed, which a lock file guarded by
 # a trap would not survive.
 #
+# Re-entrant: the holder exports SITE_LOCK_HELD=<lockfile>, so a target the
+# locked build or deploy runs in turn (`make thumbnails`, `validate`, `sign`)
+# passes straight through instead of waiting on its own parent.
+#
 # Environment:
 #   LOCK_TIMEOUT   seconds to wait for the lock (default 0 = fail at once)
 #
@@ -29,6 +33,10 @@ fi
 
 lock="$1"
 shift
+
+if [ "${SITE_LOCK_HELD:-}" = "$lock" ]; then
+    exec "$@"
+fi
 
 mkdir -p "$(dirname "$lock")"
 
@@ -54,4 +62,5 @@ if ! flock -w "${LOCK_TIMEOUT:-0}" 9; then
     exit 1
 fi
 
+export SITE_LOCK_HELD="$lock"
 exec "$@"

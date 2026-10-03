@@ -108,7 +108,7 @@ case "${1:-}" in
     "")
         ;;
     *)
-        echo "usage: $0 [--status | --disarm]" >&2
+        echo "usage: $0 [--print | --status | --disarm]" >&2
         exit 2
         ;;
 esac

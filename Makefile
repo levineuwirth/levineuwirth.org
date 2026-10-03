@@ -1,4 +1,4 @@
-.PHONY: test validate audit-viz viz-provenance viz-provenance-check build build-locked deploy deploy-locked deploy-guard deploy-preflight deploy-recheck deploy-rsync-inplace deploy-rsync-atomic deploy-clean sign download-model download-pdfjs download-leaflet compress-assets convert-images thumbnails pdf-thumbs pdfs watch watch-locked clean dev dev-locked audit-marks archive-gc archive-wayback archive-check archive-suggest
+.PHONY: test validate audit-viz viz-provenance viz-provenance-check build build-locked deploy deploy-locked validate-locked thumbnails-locked pdf-thumbs-locked deploy-guard deploy-preflight deploy-recheck deploy-rsync-inplace deploy-rsync-atomic deploy-clean sign download-model download-pdfjs download-leaflet compress-assets convert-images thumbnails pdf-thumbs pdfs watch watch-locked clean dev dev-locked audit-marks archive-gc archive-wayback archive-check archive-suggest
 
 # Prerequisite orders (deploy: build -> sign; deploy-clean: clean ->
 # deploy) are only correct serially; under `make -j` they could
@@ -25,6 +25,10 @@ export VPS_USER VPS_HOST VPS_PATH GITHUB_REPO
 #
 # So each of build / deploy / watch / dev is a two-line wrapper that
 # re-enters make under flock, and the real recipe lives in <name>-locked.
+# The smaller targets that write _site/, _cache/ or static/ (clean, sign,
+# compress-assets, convert-images, thumbnails, pdf-thumbs) and validate,
+# which reads _site/, take the same lock. with-lock.sh is re-entrant, so
+# when the locked build or deploy runs one of them it passes through.
 # GNU make executes any recipe line containing $(MAKE) even under `-n`, and
 # passes `-n` down, so `make -n build` still prints the whole real recipe in
 # order rather than just the wrapper.
@@ -92,7 +96,7 @@ build-locked:
 	  echo "build: SKIP_SNAPSHOT=1 — not auto-committing content/"; \
 	else \
 	  git add content/; \
-	  git diff --cached --quiet -- content/ || git commit -m "auto: $$(date -u +%Y-%m-%dT%H:%M:%SZ) [skip ci]" -- content/; \
+	  git diff --cached --quiet -- content/ || git commit -m "auto: $$(date -u +%Y-%m-%dT%H:%M:%SZ)" -- content/; \
 	fi
 	@mkdir -p data
 	@date +%s > data/build-start.txt
@@ -237,7 +241,6 @@ build-locked:
 	  python3 tools/stamp-build-time.py _site; \
 	fi
 	@./tools/compress-assets.sh _site
-	> IGNORE.txt
 	# ---- Stage 6: gate ---------------------------------------------------
 	# Reject the finished artifact before anything can sign or ship it:
 	# published private/ignored files (S01), figure-render error blocks and
@@ -245,13 +248,17 @@ build-locked:
 	# (B03), draft links (B08), missing images, broken feeds. See
 	# tools/check-site.py. `make validate` runs the same gate by hand.
 	@python3 tools/check-site.py _site $(CHECK_SITE_FLAGS)
+	# IGNORE.txt pins pages against stability changes for one build
+	# (build/Stability.hs). Clear it only once the build has passed the
+	# gate: a rejected build has not used the pins.
+	@: > IGNORE.txt
 	@BUILD_END=$$(date +%s); \
 	 BUILD_START=$$(cat data/build-start.txt); \
 	 echo $$((BUILD_END - BUILD_START)) > data/last-build-seconds.txt.tmp && \
 	 mv data/last-build-seconds.txt.tmp data/last-build-seconds.txt
 
 sign:
-	@./tools/sign-site.sh
+	@$(WITH_LOCK) ./tools/sign-site.sh
 
 # Download the quantized ONNX model for client-side semantic search.
 # Run once; files are gitignored. Safe to re-run (skips existing files).
@@ -275,7 +282,7 @@ download-leaflet:
 # Runs automatically as part of `build`. Pairs with `gzip_static` /
 # `brotli_static` in the nginx vhost (see nginx/static-assets.conf).
 compress-assets:
-	@./tools/compress-assets.sh _site
+	@$(WITH_LOCK) ./tools/compress-assets.sh _site
 
 # Convert JPEG/PNG images to WebP companions (also runs automatically in build).
 #
@@ -289,7 +296,7 @@ compress-assets:
 # only emitted for .webp files that exist, so the site stays correct), but
 # it now says so loudly. `make validate REQUIRE_WEBP=1` makes it fatal.
 convert-images:
-	@./tools/convert-images.sh
+	@$(WITH_LOCK) ./tools/convert-images.sh
 
 # Generate responsive delivery variants for photography (also runs in build).
 #
@@ -320,17 +327,23 @@ convert-images:
 # correct, just heavier. tools/check-site.py is what makes a genuinely
 # missing srcset target fatal.
 thumbnails:
+	@$(WITH_LOCK) $(MAKE) --no-print-directory thumbnails-locked
+
+thumbnails-locked:
 	@if [ -d .venv ]; then \
 	  uv run python tools/generate-thumbnails.py $(THUMBNAIL_FLAGS); \
 	else \
 	  python3 tools/generate-thumbnails.py $(THUMBNAIL_FLAGS); \
 	fi
 
-# Generate first-page thumbnails for PDFs in static/papers/ (also runs in build).
-# Requires pdftoppm: pacman -S poppler  /  apt install poppler-utils
-# Thumbnails are written as static/papers/foo.thumb.png alongside each PDF.
-# Skipped silently when pdftoppm is not installed or static/papers/ is empty.
+# Generate first-page thumbnails for the PDFs under static/ (also runs in
+# build). Requires pdftoppm: pacman -S poppler  /  apt install poppler-utils
+# Each is written as foo.thumb.png beside its PDF. Without pdftoppm the
+# target says so and exits 0.
 pdf-thumbs:
+	@$(WITH_LOCK) $(MAKE) --no-print-directory pdf-thumbs-locked
+
+pdf-thumbs-locked:
 	# A failing pdftoppm must at least warn: the `find | while` pipeline's
 	# exit status is the last iteration's, so without the `||` a corrupt
 	# PDF would silently ship without a thumbnail.
@@ -368,7 +381,7 @@ pdf-thumbs:
 # is really about `make -C yaml-source all` needing xelatex. (C08)
 pdfs:
 	@if [ ! -d yaml-source ]; then \
-	  echo "pdfs: yaml-source/ not present — skipping (pipeline is local-only)"; \
+	  echo "pdfs: yaml-source/ not present — skipping"; \
 	  exit 0; \
 	fi
 	@$(MAKE) -C yaml-source all
@@ -597,8 +610,9 @@ deploy-rsync-atomic: deploy-guard
 # Escape hatch: the old behaviour — full rebuild, then deploy. The
 # freshness triggers in tools/build-freshness.sh make this rarely
 # necessary; reach for it when local state looks suspicious.
-# `clean` runs unlocked; `deploy` takes the lock for everything after it.
-deploy-clean: clean deploy
+# One lock across both, so a running watch cannot rebuild between them.
+deploy-clean:
+	@$(WITH_LOCK) $(MAKE) --no-print-directory clean deploy
 
 watch:
 	@$(WITH_LOCK) $(MAKE) --no-print-directory watch-locked
@@ -608,7 +622,7 @@ watch-locked:
 	cabal run site -- watch
 
 clean:
-	cabal run site -- clean
+	@$(WITH_LOCK) cabal run site -- clean
 
 # ---------------------------------------------------------------------------
 # test / validate
@@ -646,7 +660,7 @@ test:
 	  echo "== yaml-source/tests/ =="; \
 	  ( cd yaml-source && "$$PY" -m unittest discover -s tests -v ) || exit 1; \
 	else \
-	  echo "yaml-source/tests/ not present — skipping (CV pipeline is local-only)"; \
+	  echo "yaml-source/tests/ not present — skipping"; \
 	fi
 
 # The deployment contract, checked in one command: both test suites plus
@@ -657,10 +671,14 @@ test:
 #   make validate                      gate an existing _site
 #   make validate REQUIRE_WEBP=1       also fail on zero WebP companions
 #   make validate CHECK_SITE_FLAGS='--warn-only'  report everything, exit 0
-validate: REQUIRE_VENV = 1
-validate: test
+validate:
+	@$(WITH_LOCK) $(MAKE) --no-print-directory validate-locked
+
+validate-locked: REQUIRE_VENV = 1
+validate-locked: test
 	@test -d _site || { echo "validate: _site/ does not exist — run 'make build' first" >&2; exit 1; }
 	@python3 tools/check-site.py _site $(CHECK_SITE_FLAGS) $(if $(REQUIRE_WEBP),--require-webp,)
+	@$(MAKE) --no-print-directory viz-provenance-check
 
 # Checksum the CSVs behind each figure into figures/data/PROVENANCE.json, so
 # a reader who downloads the data can tell it is what the chart was drawn
