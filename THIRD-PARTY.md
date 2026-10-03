@@ -92,6 +92,9 @@ font files remain under the OFL, independently of the documents using them.
   [Full notice](/licenses/Leaflet-BSD-2-Clause.txt).
 - [Leaflet.markercluster 1.5.3](https://github.com/Leaflet/Leaflet.markercluster/tree/v1.5.3):
   MIT, copyright 2012 David Leaver. [Full notice](/licenses/Leaflet.markercluster-MIT.txt).
+- [KaTeX 0.16.11](https://github.com/KaTeX/KaTeX/tree/v0.16.11): MIT, copyright
+  2013–2020 Khan Academy and other contributors. [Full notice](/licenses/KaTeX-MIT.txt).
+  Self-hosted under `/katex/`; its fonts are under the same licence.
 - Mozilla PDF.js retains its distributed [Apache 2.0 licence and notices](/pdfjs/LICENSE)
   and the notices in its release bundle.
 - The semantic-search model, [Xenova/all-MiniLM-L6-v2](https://huggingface.co/Xenova/all-MiniLM-L6-v2),

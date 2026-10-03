@@ -305,6 +305,31 @@
             bubbles: true,
             detail: { container: container, source: opts.source || null }
         }));
+
+        ensureMath(container);
+    }
+
+    /* KaTeX loads only on pages whose own body has math (audit X6). A
+       transclusion can bring math to a page that has none: load it then,
+       once. katex-bootstrap.js renders the whole document when it runs,
+       skipping anything already typeset. */
+    var mathLoading = false;
+    function ensureMath(container) {
+        if (mathLoading || typeof window.renderMath === 'function') return;
+        if (!container.querySelector('.math') && !container.classList.contains('math')) return;
+        mathLoading = true;
+        var css = document.createElement('link');
+        css.rel = 'stylesheet';
+        css.href = '/katex/katex.min.css';
+        document.head.appendChild(css);
+        var lib = document.createElement('script');
+        lib.src = '/katex/katex.min.js';
+        lib.onload = function () {
+            var boot = document.createElement('script');
+            boot.src = '/js/katex-bootstrap.js';
+            document.head.appendChild(boot);
+        };
+        document.head.appendChild(lib);
     }
 
     window.lnEnhance = enhance;

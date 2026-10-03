@@ -7,7 +7,7 @@ $partial("templates/partials/head.html")$
 <a class="skip-link" href="#markdownBody">Skip to content</a>
 $partial("templates/partials/nav.html")$
 $if(search)$
-<script src="/pagefind/pagefind-ui.js"></script>
+<script src="/pagefind/pagefind-ui.js" defer></script>
 <script src="/js/search.js" defer></script>
 <script src="/js/semantic-search.js" defer></script>
 <script src="/js/search-filters.js" defer></script>
@@ -21,11 +21,11 @@ $partial("templates/partials/footer.html")$
 <script src="/js/annotations.js" defer></script>
 <script src="/js/selection-popup.js" defer></script>
 <script src="/js/settings.js" defer></script>
-<script src="/js/prism.min.js" defer></script>
+$if(has-code)$<script src="/js/prism.min.js" defer></script>$endif$
 <script src="/js/toc.js" defer></script>
 <script src="/js/nav.js" defer></script>
-<script src="/js/gallery.js" defer></script>
-<script src="/js/sidenotes.js" defer></script>
+$if(has-exhibits)$<script src="/js/gallery.js" defer></script>$endif$
+$if(has-sidenotes)$<script src="/js/sidenotes.js" defer></script>$endif$
 <script src="/js/lightbox.js" defer></script>
 $if(home)$<script src="/js/random.js" defer></script>$endif$
 $if(reading)$<script src="/js/reading.js" defer></script>$endif$
@@ -38,7 +38,7 @@ $if(photography-map)$<script src="/leaflet/leaflet.markercluster.js" defer></scr
 $if(photography-map)$<script src="/js/photography-map.js" defer></script>$endif$
 $for(page-scripts)$<script src="/$script-src$" defer></script>$endfor$
 $if(math)$
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+<script defer src="/katex/katex.min.js"></script>
 <script defer src="/js/katex-bootstrap.js"></script>
 $endif$
 </body>

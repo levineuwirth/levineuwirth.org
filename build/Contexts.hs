@@ -45,7 +45,7 @@ import qualified Data.Aeson.Key     as AK
 import qualified Data.Aeson.KeyMap  as KM
 import qualified Data.Vector        as V
 import Data.Char               (isDigit, isSpace, toLower, toUpper)
-import Data.List               (intercalate, isPrefixOf, isSuffixOf, sortBy,
+import Data.List               (intercalate, isInfixOf, isPrefixOf, isSuffixOf, sortBy,
                                 stripPrefix)
 import Data.Maybe              (fromMaybe, mapMaybe)
 import Data.Ord                (Down (..), comparing)
@@ -669,6 +669,34 @@ attrEscape = concatMap esc
     esc '\'' = "&#39;"
     esc c    = [c]
 
+-- | What a page needs loaded, read from its rendered body, so each script
+--   and stylesheet goes only where it does something (audit X6). Every
+--   essay and post used to load KaTeX, a render-blocking stylesheet among
+--   it, and every page Prism, the gallery and the sidenote layout, which
+--   12, 6, 9 and 14 pages of 548 use. A context earlier in the chain that
+--   sets one of these (the bibliography's @math@, an archive page's
+--   backlink math) still wins. The body at the outer template is the
+--   inner template's output, footer included, so math that arrives only in
+--   a backlink excerpt counts.
+--
+--   * @math@: KaTeX (Pandoc's KaTeX writer marks math with these classes)
+--   * @has-code@: Prism and syntax.css
+--   * @has-sidenotes@: sidenotes.js and .css, also where a transclusion may
+--     bring sidenotes in
+--   * @has-exhibits@: gallery.js (display math, score fragments, exhibits)
+pageFeatureFields :: Context String
+pageFeatureFields = mconcat
+    [ flag "math"          ["class=\"math inline", "class=\"math display"]
+    , flag "has-code"      ["class=\"language-", "class=\"sourceCode"]
+    , flag "has-sidenotes" ["class=\"sidenote", "data-transclude", "class=\"transclude"]
+    , flag "has-exhibits"  ["class=\"math display", "score-fragment", "class=\"exhibit"]
+    ]
+  where
+    flag name markers = field name $ \item ->
+        if any (`isInfixOf` itemBody item) markers
+            then return "true"
+            else noResult ("no " ++ name)
+
 -- | @$plain(field)$@: a field as text that is safe in an attribute or in
 --   @<title>@: tags stripped, whitespace collapsed, @& < > " '@ escaped.
 --   Hakyll hands metadata to templates as it is written. A title may carry
@@ -722,6 +750,7 @@ siteCtx =
     <> canonicalUrlField
     <> buildTimeField
     <> pageScriptsField
+    <> pageFeatureFields
     <> pageLicenseFields
     <> abstractField
     <> descriptionField
@@ -1265,7 +1294,6 @@ essayCtx =
     -- "Last modified" is the revision date, not the creation date (F11).
     <> dateModifiedField
     <> revisionDateFields
-    <> constField "math" "true"
     <> tagLinksField "essay-tags"
     <> keywordLinksField "essay-keywords"
     <> siteCtx
@@ -1283,7 +1311,6 @@ postCtx =
     <> footerDepsField
     <> dateField "date"     "%-d %B %Y"
     <> dateField "date-iso" "%Y-%m-%d"
-    <> constField "math" "true"
     -- Blog posts can opt in to the epistemic figure / chips by setting
     -- the relevant frontmatter fields. The Marks module's epistemic SVG
     -- field returns 'noResult' when @status:@ is absent, so unstatused
