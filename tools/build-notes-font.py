@@ -127,6 +127,9 @@ def main(src: str) -> None:
 
     order = list(outlines)
     fb = FontBuilder(upm, isTTF=True)
+    # Leland's dates, not today's: the same source gives the same bytes.
+    fb.updateHead(created=leland["head"].created, modified=leland["head"].modified)
+    fb.font.recalcTimestamp = False
     fb.setupGlyphOrder(order)
     fb.setupCharacterMap(CMAP)
     fb.setupGlyf(outlines)

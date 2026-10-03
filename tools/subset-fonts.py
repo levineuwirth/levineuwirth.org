@@ -29,13 +29,25 @@ What changed from the shell script, and why:
     up to 1.4 % wider: 0.5 % on a line of interface text, enough to move
     the nav's wrap points.
 
+It then rewrites the fallback faces in static/css/base.css (audit V20,
+A19): for each system font a reader may see before or instead of
+Spectral and Fira Sans, an @font-face that names it with local() and
+scales it (size-adjust) so a line of the site's prose sets to the same
+width, with the web font's ascent and descent. Text then barely moves
+when the web font arrives. The metrics come from metric-compatible open
+fonts fetched from google/fonts — Gelasio for Georgia, Tinos for Times
+New Roman, Arimo for Arial — and from Noto Serif and Roboto themselves;
+the widths are averaged over the characters of content/'s prose.
+
 Tempo Notes is built separately by tools/build-notes-font.py.
 """
 
 from __future__ import annotations
 
+import collections
 import hashlib
 import io
+import re
 import sys
 import urllib.request
 from pathlib import Path
@@ -46,6 +58,8 @@ from fontTools.varLib import instancer
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "static" / "fonts"
+BASE_CSS = ROOT / "static" / "css" / "base.css"
+CONTENT = ROOT / "content"
 CACHE = Path.home() / ".cache" / "levineuwirth-fonts"
 GOOGLE = "https://raw.githubusercontent.com/google/fonts/main/ofl"
 BBOX = "https://raw.githubusercontent.com/bBoxType/FiraSans/master"
@@ -88,6 +102,57 @@ LICENCES = {"spectral": ("OFL-Spectral.txt", google("spectral", "OFL.txt")),
 RENAME = {"firasans": ("Fira Sans", "LN Sans")}
 PRIMARY_NAME_IDS = {1, 3, 4, 6, 16, 17, 18, 21, 22}
 
+# Fallback faces. Each set stands in for one web family on the systems
+# that have its reference font, under every name that font goes by: the
+# full name ("Tinos Bold Italic") and the PostScript name
+# ("Tinos-BoldItalic"), which is what local() matches. A weight range
+# takes the semibold's measure: headings and labels are 600, 700 is rarer.
+# Monospace has none: JetBrains Mono and Courier both advance 0.6 em, and
+# code is seldom above the fold.
+STYLE_WORDS = {"Regular": "", "Italic": " Italic", "Bold": " Bold", "BoldItalic": " Bold Italic"}
+
+def full(family: str, style: str, regular: str = "") -> str:
+    return family + (STYLE_WORDS[style] or regular)
+
+def ps(prefix: str, style: str, regular: str = "-Regular") -> str:
+    return prefix + ("-" + style if style != "Regular" else regular)
+
+def ms(prefix: str, style: str) -> str:          # Monotype's: TimesNewRomanPS-BoldMT
+    return prefix + ("-" + style if style != "Regular" else "") + "MT"
+
+def weight_of(style: str) -> int:
+    return 700 if "Bold" in style else 400
+
+SERIF = [("Regular", "400", "normal", "spectral-regular.woff2"),
+         ("Italic", "400", "italic", "spectral-italic.woff2"),
+         ("Bold", "600 700", "normal", "spectral-semibold.woff2"),
+         ("BoldItalic", "600 700", "italic", "spectral-semibold-italic.woff2")]
+SANS = [("Regular", "400", "normal", "fira-sans-regular.woff2"),
+        ("Bold", "600 700", "normal", "fira-sans-semibold.woff2")]
+
+# (family, faces, local names for a style, reference font for a style: URL and wght)
+FALLBACK_SETS = [
+    ("Spectral on Georgia", SERIF,
+     lambda s: [full("Georgia", s), ps("Georgia", s, ""), full("Gelasio", s, " Regular"), ps("Gelasio", s)],
+     lambda s: (google("gelasio", "Gelasio-Italic[wght].ttf" if "Italic" in s else "Gelasio[wght].ttf"), weight_of(s))),
+    ("Spectral on Times", SERIF,
+     lambda s: [full("Times New Roman", s), ms("TimesNewRomanPS", s), full("Liberation Serif", s),
+                ps("LiberationSerif", s, ""), full("Tinos", s), ps("Tinos", s)],
+     lambda s: (google("tinos", f"Tinos-{s}.ttf"), None)),
+    ("Spectral on Noto", SERIF,
+     lambda s: [full("Noto Serif", s), ps("NotoSerif", s)],
+     lambda s: (google("notoserif", "NotoSerif-Italic[wdth,wght].ttf" if "Italic" in s else "NotoSerif[wdth,wght].ttf"), weight_of(s))),
+    ("Fira Sans on Arial", SANS,
+     lambda s: [full("Arial", s), ms("Arial", s), full("Liberation Sans", s), ps("LiberationSans", s, ""),
+                full("Arimo", s), ps("Arimo", s)],
+     lambda s: (google("arimo", "Arimo[wght].ttf"), weight_of(s))),
+    ("Fira Sans on Roboto", SANS,
+     lambda s: [full("Roboto", s), ps("Roboto", s)],
+     lambda s: (google("roboto", "Roboto[wdth,wght].ttf"), weight_of(s))),
+]
+FALLBACK_BEGIN = "/* BEGIN fallback faces — written by tools/subset-fonts.py */\n"
+FALLBACK_END = "/* END fallback faces */\n"
+
 # What each family must cover after subsetting (audit V08).
 MUST_COVER = {
     "spectral": "łŁ←→●○≤≥≈□",
@@ -119,7 +184,8 @@ def rename(font: TTFont, old: str, new: str) -> None:
 
 def build(family, url, out, features, extra, wght) -> str:
     """Write one subset; return the font's own copyright notice."""
-    font = TTFont(io.BytesIO(fetch(url)))
+    # recalcTimestamp off: the same sources give the same bytes.
+    font = TTFont(io.BytesIO(fetch(url)), recalcTimestamp=False)
     notice = font["name"].getDebugName(0)
     if wght is not None:
         font = instancer.instantiateVariableFont(font, {"wght": wght})
@@ -160,6 +226,79 @@ def write_licence(family: str, notice: str) -> None:
     (OUT / name).write_text(text, encoding="utf-8")
 
 
+def prose_frequencies() -> collections.Counter:
+    """Characters of the site's prose: content/'s Markdown without front
+    matter, code, maths, link targets or tags."""
+    freq = collections.Counter()
+    for md in CONTENT.rglob("*.md"):
+        text = md.read_text(encoding="utf-8", errors="ignore")
+        text = re.sub(r"\A---\n.*?\n---\n", "", text, flags=re.S)
+        text = re.sub(r"```.*?```|\$\$.*?\$\$|\$[^$\n]+\$|`[^`\n]+`|\]\([^)]*\)|<[^>]+>", " ", text, flags=re.S)
+        freq.update(re.sub(r"[#*_>\[\]|{}\\]", "", re.sub(r"\s+", " ", text)))
+    return freq
+
+
+def instance(font: TTFont, wght: int | None) -> TTFont:
+    """A static instance: wght as asked, every other axis at its default."""
+    if wght is None or "fvar" not in font:
+        return font
+    axes = {a.axisTag: (wght if a.axisTag == "wght" else a.defaultValue) for a in font["fvar"].axes}
+    return instancer.instantiateVariableFont(font, axes)
+
+
+def mean_advance(font: TTFont, freq: collections.Counter, chars: set[str]) -> float:
+    cmap, hmtx, upm = font.getBestCmap(), font["hmtx"], font["head"].unitsPerEm
+    total = sum(freq[c] for c in chars)
+    return sum(freq[c] * hmtx[cmap[ord(c)]][0] for c in chars) / upm / total
+
+
+def vertical_metrics(font: TTFont) -> tuple[int, int, int]:
+    """Ascent, descent and line gap as browsers read them: OS/2's typo
+    values when USE_TYPO_METRICS is set, else hhea's."""
+    os2 = font["OS/2"]
+    if os2.fsSelection & (1 << 7):
+        return os2.sTypoAscender, -os2.sTypoDescender, os2.sTypoLineGap
+    hhea = font["hhea"]
+    return hhea.ascent, -hhea.descent, hhea.lineGap
+
+
+def fallback_rule(family, weight, style, names, webfont, ref, freq) -> tuple[str, float]:
+    common = {c for c in freq if ord(c) in webfont.getBestCmap() and ord(c) in ref.getBestCmap()}
+    adjust = mean_advance(webfont, freq, common) / mean_advance(ref, freq, common)
+    upm = webfont["head"].unitsPerEm
+    # The overrides are scaled by size-adjust in turn, so divide it out.
+    asc, desc, gap = (f"{100 * v / upm / adjust:.1f}%" for v in vertical_metrics(webfont))
+    src = ", ".join(f'local("{n}")' for n in dict.fromkeys(names))
+    return (f'@font-face {{\n'
+            f'    font-family: "{family}";\n'
+            f'    src: {src};\n'
+            f'    font-weight: {weight};\n'
+            f'    font-style: {style};\n'
+            f'    size-adjust: {100 * adjust:.1f}%;\n'
+            f'    ascent-override: {asc};\n'
+            f'    descent-override: {desc};\n'
+            f'    line-gap-override: {gap};\n'
+            f'}}\n'), adjust
+
+
+def write_fallbacks() -> None:
+    freq = prose_frequencies()
+    rules = []
+    for family, faces, names_for, reference in FALLBACK_SETS:
+        for style_name, weight, style, web in faces:
+            ref_url, wght = reference(style_name)
+            ref = instance(TTFont(io.BytesIO(fetch(ref_url))), wght)
+            rule, adjust = fallback_rule(family, weight, style, names_for(style_name),
+                                         TTFont(str(OUT / web)), ref, freq)
+            rules.append(rule)
+            print(f"  {family} {weight} {style}: size-adjust {100 * adjust:.1f}%")
+    css = BASE_CSS.read_text(encoding="utf-8")
+    start, end = css.find(FALLBACK_BEGIN), css.find(FALLBACK_END)
+    if start < 0 or end < start:
+        sys.exit(f"{BASE_CSS.name}: no fallback-face markers")
+    BASE_CSS.write_text(css[:start + len(FALLBACK_BEGIN)] + "".join(rules) + css[end:], encoding="utf-8")
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     notices = {}
@@ -169,6 +308,7 @@ def main() -> None:
             sys.exit(f"{spec[2]}: copyright differs from the family's other faces")
     for family, notice in notices.items():
         write_licence(family, notice)
+    write_fallbacks()
 
 
 if __name__ == "__main__":
