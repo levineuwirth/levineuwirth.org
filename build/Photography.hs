@@ -69,6 +69,7 @@ photographyRules = do
     siblingIds <- getMatches
         ( "content/photography/*/*.md"
         .&&. complement "content/photography/*/index.md"
+        .&&. complement P.unpublished
         )
     let seriesSlugs :: Set String
         seriesSlugs = Set.fromList

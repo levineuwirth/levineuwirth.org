@@ -27,6 +27,10 @@
 #      last build saw. Any change to metadata that previously existed forces
 #      a clean; a file that had none before does not, because every route it
 #      now generates is new and an incremental build creates those correctly.
+#   2c. The draft flag. `draft: true` withholds the page (build/Drafts.hs),
+#      and Hakyll never deletes the output of a file it stops seeing, so a
+#      changed `draft:` value forces a clean whether or not the file had
+#      route metadata before.
 #   3. Compile-time clocks. Stability labels (build/Stability.hs), /now/'s
 #      relative timestamp, and archive link-rot annotations are computed
 #      via untracked IO and freeze on pages that never recompile. A full
@@ -112,6 +116,38 @@ route_fields() {
             cur = 0
         }
     '
+}
+
+# Print a document's `draft:` value from its frontmatter, or nothing.
+draft_field() {
+    awk '
+        NR == 1 { if ($0 != "---") exit; next }
+        $0 == "---" || $0 == "..." { exit }
+        /^draft:/ { sub(/^draft:[ \t]*/, ""); sub(/[ \t]*(#.*)?$/, ""); print; exit }
+    '
+}
+
+# The draft value of a file at a git revision or in the worktree; empty
+# when the file or the key is absent.
+draft_value() {
+    local rev="$1" path="$2"
+    if [ "$rev" = "WORKTREE" ]; then
+        [ -f "$path" ] && draft_field < "$path"
+    elif git cat-file -e "$rev:$path" 2>/dev/null; then
+        git show "$rev:$path" | draft_field
+    fi
+    return 0
+}
+
+# Changed Markdown whose `draft:` value differs from what the last build saw.
+changed_draft_flags() {
+    local base="$1" file
+    while IFS= read -r file; do
+        case "$file" in content/*.md) ;; *) continue ;; esac
+        if [ "$(draft_value "${base:-HEAD}" "$file")" != "$(draft_value WORKTREE "$file")" ]; then
+            printf '%s\n' "$file"
+        fi
+    done < <(route_field_candidates "$base")
 }
 
 # The route_fields digest of a file, either at a git revision or in the
@@ -203,6 +239,13 @@ check() {
         first=$(printf '%s\n' "$changed_meta" | head -3 | tr '\n' ' ')
         count=$(printf '%s\n' "$changed_meta" | grep -c .)
         reasons+=("route metadata changed in $count file(s): ${first%% }")
+    fi
+
+    changed_drafts=$(changed_draft_flags "$base")
+    if [ -n "$changed_drafts" ]; then
+        first=$(printf '%s\n' "$changed_drafts" | head -3 | tr '\n' ' ')
+        count=$(printf '%s\n' "$changed_drafts" | grep -c .)
+        reasons+=("draft flag changed in $count file(s): ${first%% }")
     fi
 
     now=$(date +%s)

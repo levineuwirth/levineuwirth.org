@@ -7,6 +7,8 @@ import System.Environment    (getArgs)
 import Hakyll                (hakyllWith)
 import Golden                (renderFixture)
 import Site                  (rules, siteConfigurationFor)
+import Drafts                (currentUnpublished, scanUnpublished, unpublishedSummary,
+                              withoutUnpublished)
 import Utils                 (isDevBuild, outputDirFor)
 import FooterData            (writeFooterData)
 
@@ -26,18 +28,22 @@ writeBuildStamp = do
 -- publication boundary: it extends Hakyll's @ignoreFile@ so that private
 -- notes, key material, and editor/interpreter junk never become
 -- identifiers, and therefore can never be routed into @_site/@. See
--- build/Site.hs.
+-- build/Site.hs. Pages flagged @draft: true@ are withheld after the rules
+-- run instead ('withoutUnpublished', build/Drafts.hs): @ignoreFile@ sees
+-- only bare file names, and a draft is known by its path.
 --
--- Two commands Hakyll does not see: @site render-fixture <file.md>@ renders
+-- Commands Hakyll does not see: @site render-fixture <file.md>@ renders
 -- a test fixture through the essay pipeline and writes nothing
 -- (build/Golden.hs); @site footer-data@ splits the backlinks and
 -- similar-links maps into per-page files between the two compile passes
--- (build/FooterData.hs).
+-- (build/FooterData.hs); @site list-unpublished@ prints what a production
+-- build withholds for @draft: true@.
 main :: IO ()
 main = do
     args <- getArgs
     case args of
         ["render-fixture", path] -> renderFixture path
+        ["list-unpublished"] -> scanUnpublished "content" >>= mapM_ putStrLn . unpublishedSummary
         ["footer-data"] -> do
             dev <- isDevBuild
             when dev $ fail "footer-data: production builds only (a dev build's backlinks include drafts)"
@@ -45,4 +51,4 @@ main = do
         _ -> do
             writeBuildStamp
             dev <- isDevBuild
-            hakyllWith (siteConfigurationFor dev) rules
+            hakyllWith (siteConfigurationFor dev) (withoutUnpublished currentUnpublished rules)

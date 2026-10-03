@@ -258,17 +258,20 @@ class FrontMatterTests(unittest.TestCase):
                     bad.append(f"{rel}: revised entry {entry!r}")
         self.assertNoViolations(bad, "revisions the build drops")
 
-    def test_draft_flag_only_where_the_build_honours_it(self) -> None:
-        # build/Site.hs honours `draft:` only on a poetry or fiction
-        # collection's index.md (isPublishedCollection). On any other page it
-        # is silently ignored and the page publishes, with its feed, sitemap
-        # and search entries (audit C06). Until drafts are excluded at every
-        # match and loadAll, an unpublished piece belongs in content/drafts/.
-        collection = re.compile(r"^content/(poetry|fiction)/[^/]+/index\.md$")
-        bad = [f"{rel}: draft: {value!r} would not keep this page unpublished — move it under content/drafts/"
-               for rel, value in self.values("draft") if not collection.match(rel)]
-        self.assertNoViolations(bad, "a draft flag the build ignores")
-
+    def test_draft_flags_are_ones_the_build_reads(self) -> None:
+        # build/Drafts.hs withholds any page whose `draft:` is true (YAML
+        # true, or "true"/"yes"/"on"/"1") and publishes it otherwise. A value it
+        # does not read as either — `draft: maybe`, `draft: [x]` — would
+        # publish the page while looking like it holds it back (audit C06).
+        truthy, falsy = {"true", "yes", "on", "1"}, {"false", "no", "off", "0"}
+        bad = []
+        for rel, value in self.values("draft"):
+            if isinstance(value, bool):
+                continue
+            if isinstance(value, str) and "".join(value.split()).lower() in truthy | falsy:
+                continue
+            bad.append(f"{rel}: draft: {value!r} is neither true nor false to the build")
+        self.assertNoViolations(bad, "a draft flag the build cannot read")
 
 if __name__ == "__main__":
     unittest.main()

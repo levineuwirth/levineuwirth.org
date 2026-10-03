@@ -138,7 +138,7 @@ def parse_link(match: re.Match) -> dict | None:
 
 
 # File names the build never publishes (build/Site.hs `neverPublish`), and
-# a front-matter `draft:` that is true (the values build/Site.hs accepts).
+# a front-matter `draft:` that is true (the values build/Drafts.hs accepts).
 PRIVATE_SUFFIXES = (
     ".local.md", ".local.html", ".draft.md", ".key", ".pem", ".p12", ".pfx", ".env",
     "~", ".swp", ".swo", ".pyc", ".pyo", ".tmp", ".part", ".partial", ".log",
@@ -146,7 +146,7 @@ PRIVATE_SUFFIXES = (
 PRIVATE_PREFIXES = ("id_rsa", "id_dsa", "id_ecdsa", "id_ed25519", "credentials")
 PRIVATE_NAMES = {"__pycache__", "checklist.md"}
 DRAFT_RE = re.compile(
-    r"""^draft:[ \t]*["']?(true|yes|1)["']?[ \t]*(#.*)?$""", re.IGNORECASE | re.MULTILINE
+    r"""^draft:[ \t]*["']?(true|yes|on|1)["']?[ \t]*(#.*)?$""", re.IGNORECASE | re.MULTILINE
 )
 
 

@@ -4,7 +4,7 @@ module Site (rules, siteConfiguration, siteConfigurationFor) where
 
 import Control.Monad (forM, forM_, void, when)
 import Control.Monad.Except (catchError)
-import Data.Char     (isSpace, toLower, toUpper)
+import Data.Char     (isSpace, toUpper)
 import Data.List     (groupBy, isPrefixOf, isSuffixOf, sort, sortBy, stripPrefix)
 import Data.Map.Strict (Map)
 import Data.Maybe    (catMaybes, fromMaybe, listToMaybe)
@@ -770,9 +770,10 @@ rules = do
             >>= relativizeUrls
 
     -- Collection index pages (e.g. content/poetry/shakespeare-sonnets/index.md).
-    -- See 'collectionCtx' and 'isPublishedCollection' for the rendering
-    -- contract and the scaffold gate (audit C05).
-    matchMetadata "content/poetry/*/index.md" (isPublishedCollection isDev) $ do
+    -- See 'collectionCtx' for the rendering contract. A landing that is
+    -- still scaffolding carries @draft: true@ and never reaches this rule in
+    -- production (build/Drafts.hs; audit C05, C06).
+    match "content/poetry/*/index.md" $ do
         route   $ stripPrefixRoute "content/"
                   `composeRoutes` setExtension "html"
         compile $ do
@@ -796,7 +797,7 @@ rules = do
 
     -- Fiction collection index pages
     -- (content/fiction/<collection>/index.md → fiction/<collection>/index.html).
-    matchMetadata "content/fiction/*/index.md" (isPublishedCollection isDev) $ do
+    match "content/fiction/*/index.md" $ do
         route   $ stripPrefixRoute "content/"
                   `composeRoutes` setExtension "html"
         compile $ do
@@ -1651,26 +1652,6 @@ collectionCtx childPattern childCtx baseCtx = do
                   listField "collection-entries" childCtx (return children)
                   <> constField "has-collection-entries" "true"
     return (entriesFld <> constField "collection" "true" <> baseCtx)
-
--- | Is a collection landing page fit to publish?
---
---   @draft: true@ marks a collection index that is still authoring
---   scaffolding — placeholder prose telling the author what to write.
---   Audit C05 found exactly that live at @\/poetry\/selected-verse\/@.
---   Such a page gets no route in a production build, which also keeps it
---   out of every listing, the sitemap, the feeds, and the search index,
---   because all of those are built from routed identifiers. @SITE_ENV=dev@
---   builds it as usual so the author can see the scaffold while working.
---
---   Deliberately a separate key from @status:@, which is the epistemic
---   peer-review state read by "Marks", and from @content\/drafts\/@, which
---   is a directory of unfinished essays.
-isPublishedCollection :: Bool -> Metadata -> Bool
-isPublishedCollection dev meta = dev || not isDraft
-  where
-    isDraft = case lookupString "draft" meta of
-        Just v  -> map toLower (filter (not . isSpace) v) `elem` ["true", "yes", "1"]
-        Nothing -> False
 
 -- ---------------------------------------------------------------------------
 -- Sitemap

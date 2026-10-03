@@ -20,6 +20,8 @@ module Patterns
     , allPhotoEntries
     , standalonePagesPattern
     , pageCollectionPattern
+      -- * Withheld (@draft: true@)
+    , unpublished
       -- * Aggregated patterns
     , allWritings        -- essays + blog + poetry + fiction
     , allContent         -- everything that backlinks should index
@@ -28,6 +30,17 @@ module Patterns
     ) where
 
 import Hakyll
+import Drafts (currentUnpublished, unpublishedPattern)
+
+-- | Pages a production build withholds for @draft: true@, and the files
+-- that go with them (build/Drafts.hs). Every per-section pattern below
+-- excludes it, so listings, tags, authors, feeds, backlinks and stats
+-- never see them; empty under @SITE_ENV=dev@.
+unpublished :: Pattern
+unpublished = unpublishedPattern currentUnpublished
+
+published :: Pattern -> Pattern
+published p = p .&&. complement unpublished
 
 -- ---------------------------------------------------------------------------
 -- Per-section
@@ -36,7 +49,7 @@ import Hakyll
 -- | All published essays — flat files, directory-based essays, and entries
 -- inside one-level collection directories.
 essayPattern :: Pattern
-essayPattern =
+essayPattern = published $
        "content/essays/*.md"
   .||. "content/essays/*/*.md"
 
@@ -53,27 +66,27 @@ draftEssayPattern =
 -- | All blog posts: flat posts plus entries inside collection directories.
 -- Collection index pages are landing pages and compile separately.
 blogPattern :: Pattern
-blogPattern =
+blogPattern = published $
        "content/blog/*.md"
   .||. ("content/blog/*/*.md" .&&. complement "content/blog/*/index.md")
 
 -- | All poetry: flat poems plus collection poems, excluding collection
 -- index pages (which are landing pages, not poems).
 poetryPattern :: Pattern
-poetryPattern =
+poetryPattern = published $
        "content/poetry/*.md"
   .||. ("content/poetry/*/*.md" .&&. complement "content/poetry/*/index.md")
 
 -- | All fiction: flat stories plus entries inside collection directories.
 -- Collection index pages are landing pages and compile separately.
 fictionPattern :: Pattern
-fictionPattern =
+fictionPattern = published $
        "content/fiction/*.md"
   .||. ("content/fiction/*/*.md" .&&. complement "content/fiction/*/index.md")
 
 -- | Music compositions (landing pages live at @content/music/<slug>/index.md@).
 musicPattern :: Pattern
-musicPattern = "content/music/*/index.md"
+musicPattern = published "content/music/*/index.md"
 
 -- | All photo entries — flat singles plus directory-form entries.
 --
@@ -90,7 +103,7 @@ musicPattern = "content/music/*/index.md"
 --   lands; until then directory-form @index.md@ files are treated as
 --   single-photo entries (a series is just a directory with siblings).
 photographyPattern :: Pattern
-photographyPattern =
+photographyPattern = published $
        ("content/photography/*.md" .&&. complement "content/photography/index.md")
   .||. "content/photography/*/index.md"
 
@@ -109,7 +122,7 @@ photographyPattern =
 --   'photographyPattern' instead, so a series shows up as a single
 --   aggregate card rather than once for the landing plus once per child.
 allPhotoEntries :: Pattern
-allPhotoEntries =
+allPhotoEntries = published $
        photographyPattern
   .||. ("content/photography/*/*.md" .&&. complement "content/photography/*/index.md")
 
@@ -117,7 +130,7 @@ allPhotoEntries =
 -- section directories are excluded so their files retain specialized
 -- compilers and routes.
 pageCollectionPattern :: Pattern
-pageCollectionPattern =
+pageCollectionPattern = published $
     "content/*/*.md" .&&. complement reservedSectionPages
   where
     reservedSectionPages =
@@ -137,7 +150,7 @@ pageCollectionPattern =
 -- | Top-level standalone pages, curated CV routing pages, and generic page
 -- collections.
 standalonePagesPattern :: Pattern
-standalonePagesPattern =
+standalonePagesPattern = published $
        "content/*.md"
   .||. "content/cv/*.md"
   .||. pageCollectionPattern

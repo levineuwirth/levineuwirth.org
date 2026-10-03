@@ -58,6 +58,33 @@ make dev      # clean build + Python HTTP server with drafts visible
 
 When the draft is ready, move it into `content/essays/`.
 
+### `draft: true`
+
+Any page can also be held back where it lives, with `draft: true` in its
+frontmatter: an essay, poem, story, blog post, composition, photograph,
+standalone or collection page. Production builds then publish nothing of it:
+no page, no listing or tag entry, no feed, sitemap or search entry, no
+backlinks or related links, and none of its files.
+
+- A directory-form entry (`content/essays/<slug>/index.md`,
+  `content/music/<slug>/index.md`, `content/photography/<slug>/index.md`)
+  withholds its whole directory: figures, scores, recordings, a series'
+  frames.
+- A flat photograph withholds the image files that share its name or its
+  `photo:` file's name.
+- A poetry, fiction or blog collection's `index.md` withholds only that
+  landing page; the pieces inside publish on their own flags.
+
+`make dev` and `make watch` show these pages, as they show
+`content/drafts/`. Remove the line (or set `draft: false`) to publish.
+`true`, `yes`, `on` and `1` count as true; any value the build cannot read as
+true or false fails the front-matter test. A published page that links to a
+withheld one fails the build's link check, as any broken link does.
+`site list-unpublished` prints what a production build would withhold.
+
+The flag is separate from `status: Draft`, the epistemic status shown in a
+page's metadata, which does not affect publication.
+
 ---
 
 ## Frontmatter
@@ -76,6 +103,7 @@ date: 2026-03-15          # required; used for ordering, feed, and display
 abstract: >               # optional; shown in the metadata block and link previews
   A one-paragraph description of the piece.
 description: "One plain sentence."  # optional; meta/og/twitter description only — wins over abstract there (default: abstract, else first paragraph)
+draft: true               # optional; withholds the page from production builds (see Drafts)
 summary: |                # optional; rendered in a "Summary" box near the abstract
   A structured summary. **Markdown allowed** — bold, lists, multiple paragraphs.
 tags:                     # optional; see Tags section
@@ -165,11 +193,8 @@ pages. Poems inside collections (`content/poetry/*/*.md`, excluding
 `index.md`) compile with `poetryCompiler` just like flat poems.
 
 `draft: true` in a collection's `index.md` marks a landing page that is still
-scaffolding: production builds give it no route, so it is absent from
-listings, the sitemap, feeds and search; `make dev` and `make watch` still
-build it. The poems inside the collection are unaffected and still publish.
-The key is read only on poetry and fiction collection index pages
-(`content/fiction/*/index.md`); unfinished essays go under `content/drafts/`.
+scaffolding: production builds withhold it, and the poems inside the
+collection still publish (see [`draft: true`](#draft-true)).
 
 **External / non-original poems** — use `poet:` instead of `authors:` to credit
 an external author without generating a (broken) author index page:

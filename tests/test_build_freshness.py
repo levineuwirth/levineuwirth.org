@@ -191,6 +191,22 @@ class BuildFreshnessTestCase(unittest.TestCase):
         self.assertIn("route metadata changed", self.check())
         self.assertTrue(self.cleaned())
 
+    def test_flagging_a_page_without_route_metadata_as_draft_forces_a_clean(self):
+        # A page that generates no routes of its own still has its own: a
+        # new `draft: true` withholds it, and only a clean removes the
+        # output Hakyll stops producing (audit C06).
+        self.write("content/plain.md", "---\ntitle: Plain\n---\nText.\n")
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "plain page")
+        self.run_script("stamp")
+        self.write("content/plain.md", "---\ntitle: Plain\ndraft: true\n---\nText.\n")
+        self.assertIn("draft flag changed", self.check())
+        self.assertTrue(self.cleaned())
+
+    def test_a_draft_word_in_the_body_is_not_a_flag(self):
+        self.write("content/essays/one.md", PAGE + "\ndraft: true\n")
+        self.assertNotIn("draft flag changed", self.check())
+
     def test_data_yaml_metadata_change_is_seen(self):
         self.write("data/now.yaml", "status: paused\ntags:\n  - now\n")
         self.assertIn("route metadata changed", self.check())
