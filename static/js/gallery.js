@@ -65,20 +65,31 @@
         return ann ? ann.textContent.trim() : '';
     }
 
-    function getGroupName(katexEl, markdownBody) {
-        /* Named exhibit takes priority */
-        var exhibit = katexEl.closest('.exhibit[data-exhibit-name]');
-        if (exhibit) return exhibit.dataset.exhibitName || '';
+    /* The nearest heading before an element. The headings are found once
+       and the elements asked about in document order, so a pointer only
+       moves forward: finding them per equation walked the whole body for
+       each of a page's 220 equations, 1.5 s of main thread on the
+       near-critical essay (audit J01). Asked out of order, it starts over. */
+    function headingBefore(markdownBody) {
+        var headings = Array.prototype.slice.call(
+            markdownBody.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+        var i = -1;
+        function precedes(h, el) {
+            return !!(h.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING);
+        }
+        return function (el) {
+            if (i >= 0 && !precedes(headings[i], el)) i = -1;
+            while (i + 1 < headings.length && precedes(headings[i + 1], el)) i++;
+            return i >= 0 ? headings[i] : null;
+        };
+    }
 
-        /* Otherwise: nearest preceding heading */
-        var headings = Array.from(markdownBody.querySelectorAll(':is(h1,h2,h3,h4,h5,h6)'));
-        var nearest  = null;
-        headings.forEach(function (h) {
-            if (h.compareDocumentPosition(katexEl) & Node.DOCUMENT_POSITION_FOLLOWING) {
-                nearest = h;
-            }
-        });
-        return nearest ? nearest.textContent.trim() : '';
+    function getGroupName(el, nearestHeading) {
+        /* Named exhibit takes priority */
+        var exhibit = el.closest('.exhibit[data-exhibit-name]');
+        if (exhibit) return exhibit.dataset.exhibitName || '';
+        var h = nearestHeading(el);
+        return h ? h.textContent.trim() : '';
     }
 
     function getCaption(katexEl) {
@@ -89,22 +100,6 @@
            exhibits where the math IS the primary content. */
         if (exhibit.dataset.exhibitType === 'proof') return '';
         return exhibit.dataset.exhibitCaption || '';
-    }
-
-    /* Make a plain wrapper <div> keyboard-operable: role=button, tabindex,
-       and Enter/Space sharing the click path. Only ever applied to
-       elements with no semantics of their own — see addExpandButton for
-       anything that is already a <figure>. */
-    function bindActivation(el, activate) {
-        el.setAttribute('role', 'button');
-        el.setAttribute('tabindex', '0');
-        el.addEventListener('click', activate);
-        el.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                activate();
-            }
-        });
     }
 
     /* A07: a <figure> may not carry role="button" (axe: aria-allowed-role),
@@ -137,10 +132,13 @@
     }
 
     function discoverFocusableMath(markdownBody) {
+        var nearestHeading = headingBefore(markdownBody);
+        var perGroup = {};   /* equations counted per section, for their names */
         markdownBody.querySelectorAll('.katex-display').forEach(function (katexEl) {
             var source    = getSource(katexEl);
-            var groupName = getGroupName(katexEl, markdownBody);
+            var groupName = getGroupName(katexEl, nearestHeading);
             var caption   = getCaption(katexEl);
+            var n = perGroup[groupName] = (perGroup[groupName] || 0) + 1;
 
             /* Wrap in .math-focusable — the entire wrapper is the click target */
             var wrapper = document.createElement('div');
@@ -148,13 +146,6 @@
             if (caption) wrapper.dataset.caption = caption; /* drives CSS ::after tooltip */
             katexEl.parentNode.insertBefore(wrapper, katexEl);
             wrapper.appendChild(katexEl);
-
-            /* Decorative expand glyph (pointer-events: none in CSS) */
-            var glyph = document.createElement('span');
-            glyph.className = 'exhibit-expand';
-            glyph.setAttribute('aria-hidden', 'true');
-            glyph.textContent = '⤢';
-            wrapper.appendChild(glyph);
 
             var entry = {
                 type:      'math',
@@ -166,17 +157,21 @@
             };
             focusables.push(entry);
 
-            /* Click or Enter/Space anywhere on the wrapper opens the overlay.
-               The wrapper is a <div> created here, so role="button" replaces
-               no existing semantics. */
-            entry.focusEl = wrapper;
-            bindActivation(wrapper, function () {
+            /* A real, named button, as the scores have (audit J04): the
+               wrapper used to be the control itself, an unnamed
+               role="button" around the math — 220 of the near-critical
+               essay's 463 tab stops, each announced as "button" and
+               nothing else. Pointer users keep the whole equation as a
+               click target. */
+            var label = 'Expand equation ' + n + (groupName ? ' in \u201C' + groupName + '\u201D' : '');
+            entry.focusEl = addExpandButton(wrapper, label, function () {
                 openOverlay(focusables.indexOf(entry));
             });
         });
     }
 
     function discoverFocusableScores(markdownBody) {
+        var nearestHeading = headingBefore(markdownBody);
         markdownBody.querySelectorAll('.score-fragment').forEach(function (figEl) {
             var svgEl = figEl.querySelector('svg');
             if (!svgEl) return;
@@ -184,7 +179,7 @@
             var captionEl   = figEl.querySelector('.score-caption');
             var captionText = captionEl ? captionEl.textContent.trim() : '';
             var name        = figEl.dataset.exhibitName || '';
-            var groupName   = name || getGroupName(figEl, markdownBody);
+            var groupName   = name || getGroupName(figEl, nearestHeading);
 
             var entry = {
                 type:      'score',
