@@ -59,6 +59,15 @@
         popup.addEventListener('mouseenter', cancelHide);
         popup.addEventListener('mouseleave', scheduleHide);
 
+        /* Escape dismisses the popup at once, and a pending one with it;
+           it stays away until the pointer or focus reaches a target anew
+           (WCAG 1.4.13, audit A03). Sidenotes and the selection popup
+           already did this. Other Escape handlers still see the key. */
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape' || !activeTarget) return;
+            hideNow();
+        });
+
         loadAnnotations().then(function () {
             bindTargets(document.body);
         });
@@ -267,11 +276,16 @@
 
     function scheduleHide() {
         clearTimeout(showTimer);
-        hideTimer = setTimeout(function () {
-            popup.classList.remove('is-visible');
-            popup.setAttribute('aria-hidden', 'true');
-            activeTarget = null;
-        }, HIDE_DELAY);
+        hideTimer = setTimeout(hideNow, HIDE_DELAY);
+    }
+
+    /* A provider still loading finds activeTarget changed and shows nothing. */
+    function hideNow() {
+        clearTimeout(showTimer);
+        clearTimeout(hideTimer);
+        popup.classList.remove('is-visible');
+        popup.setAttribute('aria-hidden', 'true');
+        activeTarget = null;
     }
 
     function cancelHide() { clearTimeout(hideTimer); }
