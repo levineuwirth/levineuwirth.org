@@ -63,19 +63,19 @@ Essay directories are copied **recursively**: everything under
 (`build/Site.hs`, the `content/essays/**` match). That rule is deliberately
 broad so figures, data files, and scripts sit next to the prose that uses
 them — but it means a stray artifact dropped into an essay directory
-(a `.log`, a scratch CSV) becomes a public URL, whether or not Git ignores
+(a scratch CSV) becomes a public URL, whether or not Git ignores
 it. Git-ignoring a file does not keep it out of the build. A stray `.md`
 there (say `notes.md` beside `index.md`) is compiled as an essay.
 
 Two checks stand in the way, and both go by file name only.
 `neverPublish` in `build/Site.hs` keeps private-looking names out of the
 build: `*.local.md`, `*.draft.md`, key and credential files, `.env`, editor
-backups, swap and `.pyc` files, `*.tmp`, `*.part`, `__pycache__/`.
+backups, swap and `.pyc` files, `*.tmp`, `*.part`, `*.partial`, `*.log`, `__pycache__/`.
 `tools/check-site.py`, the post-build artifact gate, fails the build when a
 name on its own list (`PRIVATE_FILE_GLOBS`) reaches `_site/` anyway,
 compressed and signed copies included. `make build` runs it automatically
 and `make validate` runs the same gate by hand. Neither can tell what an
-ordinary file is for: a `.log`, a CSV or a `notes.md` passes both, so keep
+ordinary file is for: a CSV or a `notes.md` passes both, so keep
 those out of essay directories, or give a private note a `.local.md` name.
 To exclude a new kind of file, add it to both lists; `.gitignore` will not
 do it.

@@ -108,7 +108,7 @@ neverPublish path =
         -- Editor and interpreter junk.
         , "~", ".swp", ".swo", ".pyc", ".pyo"
         -- Interrupted or in-flight writes.
-        , ".tmp", ".part"
+        , ".tmp", ".part", ".partial", ".log"
         ]
 
     prefixes =

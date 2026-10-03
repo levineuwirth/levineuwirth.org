@@ -38,6 +38,7 @@ _cache-dev/
 **/*.tmp.*
 **/*.part
 **/*.partial
+**/*.log
 
 # Editor backup/swap files
 *~

@@ -71,6 +71,8 @@ PRIVATE_FILE_GLOBS = (
     "*.pyc",
     "*.tmp",
     "*.part",
+    "*.partial",
+    "*.log",
     ".DS_Store",
     "credentials*",
     "checklist.md",

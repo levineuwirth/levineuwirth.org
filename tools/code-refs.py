@@ -141,7 +141,7 @@ def parse_link(match: re.Match) -> dict | None:
 # a front-matter `draft:` that is true (the values build/Site.hs accepts).
 PRIVATE_SUFFIXES = (
     ".local.md", ".local.html", ".draft.md", ".key", ".pem", ".p12", ".pfx", ".env",
-    "~", ".swp", ".swo", ".pyc", ".pyo", ".tmp", ".part",
+    "~", ".swp", ".swo", ".pyc", ".pyo", ".tmp", ".part", ".partial", ".log",
 )
 PRIVATE_PREFIXES = ("id_rsa", "id_dsa", "id_ecdsa", "id_ed25519", "credentials")
 PRIVATE_NAMES = {"__pycache__", "checklist.md"}

@@ -112,6 +112,17 @@ class CheckSiteTestCase(unittest.TestCase):
 
     # -- S01: publication boundary ----------------------------------------
 
+    def test_logs_and_interrupted_files_fail_including_transport_sidecars(self):
+        for name in ("build.log", "snapshot.partial", "build.log.br", "build.log.gz.sig"):
+            with self.subTest(name=name):
+                path = self.site.write("essays/one/" + name, "private build output")
+                try:
+                    code, output = self.run_gate()
+                    self.assertEqual(code, 1, output)
+                    self.assertIn(name, output)
+                finally:
+                    path.unlink()
+
     def test_private_note_fails(self):
         self.site.write("essays/private.local.html", PAGE)
         code, output = self.run_gate()
