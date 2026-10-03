@@ -18,16 +18,17 @@ mode = os.environ['STUB_MODE']
 applied = root / 'applied'
 tag = root / 'tag'
 if Path(sys.argv[0]).name == 'curl':
-    if mode == 'unchanged-down':
+    if mode == 'unchanged-down' or (mode == 'unchanged-down-after-pull' and (root / 'pulled').exists()):
         sys.exit(7)
     v = '15.0.1' if applied.exists() else '15.0.0'
-    if mode == 'rollback' and applied.exists():
+    if mode.startswith('rollback') and applied.exists():
         sys.exit(7)
     print('{"version":"' + v + '"}')
 elif args[0] == 'inspect' and 'RestartCount' in args[2]:
     # The container's state. In crashloop modes the new image restarts on
-    # every look; the old one (after a rollback) is steady.
-    if mode.startswith('crashloop') and applied.exists():
+    # every look; the old one (after a rollback) is normally steady.
+    if ((mode.startswith('crashloop') and applied.exists())
+            or mode in ('unchanged-crashloop', 'rollback-crashloop')):
         n = root / 'restarts'
         count = int(n.read_text()) + 1 if n.exists() else 1
         n.write_text(str(count))
@@ -38,6 +39,8 @@ elif args[0] == 'inspect' and 'RestartCount' in args[2]:
         print('running false 0 2026-10-04T05:00:00Z')
 elif args[0] == 'inspect':
     print('sha256:old')
+elif args[0] == 'pull':
+    (root / 'pulled').touch()
 elif args[0] == 'logs':
     if mode == 'crashloop-migrated' and applied.exists():
         print('2026/10/04 05:00:01 ...Migration[302]: add a column')
@@ -155,6 +158,28 @@ class ForgejoUpdateRecovery(unittest.TestCase):
         result = self.run_update("unchanged")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("unchanged", result.stdout)
+
+    def test_nothing_to_apply_rejects_a_loop_between_running_samples(self):
+        result = self.run_update("unchanged-crashloop")
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("restarted or stopped", result.stdout)
+        self.assertFalse((self.root / "tag").exists())
+
+    def test_nothing_to_apply_rechecks_the_api_after_pulling(self):
+        self.env["PULL"] = "1"
+        result = self.run_update("unchanged-down-after-pull")
+        self.assertTrue((self.root / "pulled").exists())
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("not answering", result.stdout)
+        self.assertFalse((self.root / "tag").exists())
+
+    def test_a_rollback_that_answers_then_crash_loops_keeps_attention(self):
+        result = self.run_update("rollback-crashloop")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("rollback did not come up and stay up", result.stdout)
+        self.assertTrue(self.attention.exists(), result.stdout + result.stderr)
+        self.assertEqual(self.hold.read_text().strip(), "sha256:new")
+        self.assertEqual((self.root / "tag").read_text(), "sha256:old")
 
 
 if __name__ == "__main__":

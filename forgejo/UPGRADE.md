@@ -842,9 +842,10 @@ fixing that leaves the same instance drifting again from a newer number.
   a run declines a pulled image, the local `:15` tag is pointed back at the
   running image, so a hand-run `docker compose up -d` recreates the forge on
   what is running, never on a held or refused image (audit Y04). A run with
-  nothing to apply still fails if the container is not running steadily or
-  the API does not answer, so a crash loop that starts later is reported
-  every morning rather than passing as "unchanged". The failed unit shows
+  nothing to apply rechecks the API after pulling and uses the same
+  two-minute stability window. It fails if the API does not answer or the
+  container stops or restarts during that window, so an observed crash
+  loop cannot pass as "unchanged". The failed unit shows
   in `tools/vps-status`. What runs, and when it changed:
 
   ```bash
@@ -857,7 +858,8 @@ fixing that leaves the same instance drifting again from a newer number.
   broken 15.0 image rolled back and held, the held image refused again,
   and the hold cleared by the next good one. The stay-up check (added
   2026-10-03) is covered by `tests/test_forgejo_update.py` (a release that
-  answers then crash-loops, one that migrated first, one that stops) and
+  answers then crash-loops, one that migrated first, one that stops, an
+  unstable rollback, and no-update runs with a restart or stale API reply) and
   was rehearsed against real containers under `restart: unless-stopped`:
   a crash 5 s after start was caught on the next 2 s sample.
 * **Diarise the LTS end date: 2027-07-15.** The next LTS is 19.0

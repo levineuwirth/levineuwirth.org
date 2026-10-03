@@ -6,9 +6,9 @@
 # recreate, wait for the new version, watch that it stays up, check the
 # database. If the new version does not come up, or comes up and then
 # restarts or stops within $STABLE seconds, and it ran no migrations, put the
-# previous image back and
-# hold the failed one; if it ran migrations, stop and leave it to the
-# operator, because an older Forgejo cannot open a migrated database
+# previous image back and hold the failed one; if it ran migrations, stop
+# and leave it to the operator, because an older Forgejo cannot open a
+# migrated database
 # (forgejo/UPGRADE.md § 5.1, with the archive this run logged).
 #
 # Every failure holds the image it tried, so the next morning's run does
@@ -20,9 +20,9 @@
 # one, so a hand-run `docker compose up -d` cannot recreate the forge on an
 # image that was held or refused (audit Y04).
 #
-# A run that finds nothing to apply still fails when Forgejo is not
-# answering or not running steadily, so a crash loop that starts after a
-# successful update does not pass as "unchanged" day after day.
+# A run that finds nothing to apply rechecks the API after pulling and
+# requires the same stability window. A later crash loop caught during
+# that window must not pass as "unchanged".
 #
 # From $EOL_WARN_DAYS before the end of the 15.0 LTS, patches still apply
 # but every run fails with a reminder to plan the next LTS (audit Y09).
@@ -36,7 +36,7 @@ API=${API:-http://127.0.0.1:3000}
 BACKUP=${BACKUP:-systemctl start forgejo-backup.service}
 PULL=${PULL:-1}
 WAIT=${WAIT:-300}
-STABLE=${STABLE:-120}                   # seconds the new version must stay up after answering
+STABLE=${STABLE:-120}                   # seconds any accepted version must stay up after answering
 CHECK_EVERY=${CHECK_EVERY:-5}
 HOLD=${HOLD:-/var/lib/forgejo-update/hold}
 PRUNE=${PRUNE:-1}                       # drop the now-dangling previous image after a success
@@ -119,13 +119,11 @@ archive=none
 pulled=$(docker image inspect -f '{{.Id}}' "$IMAGE")
 
 if [ "$pulled" = "$running" ]; then
-    state=$(container_state)
-    case "$state" in
-        "running false "*) ;;
-        *) log "nothing to apply, but the container is not running steadily ($state)"; exit 1 ;;
-    esac
-    [ -n "$before" ] || { log "nothing to apply, but forgejo is not answering on $API"; exit 1; }
-    done_ok "forgejo $before — unchanged"
+    # Pulling can take long enough for the earlier API reply to go stale.
+    current=$(version)
+    [ -n "$current" ] || { log "nothing to apply, but forgejo is not answering on $API"; exit 1; }
+    stays_up "$current" || { log "nothing to apply, but forgejo did not stay healthy"; exit 1; }
+    done_ok "forgejo $current — unchanged"
 fi
 if [ -f "$HOLD" ] && [ "$(cat "$HOLD")" = "$pulled" ]; then
     decline "the pulled image failed before and is on hold; not applying it (remove $HOLD to retry)"
