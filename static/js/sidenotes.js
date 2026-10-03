@@ -51,6 +51,20 @@
         });
     }
 
+    /* The positions follow the laid-out text, which keeps moving after
+       DOMContentLoaded: web fonts swap in (on a cold load notes ended up to
+       725 px from their marks, some overlapping; audit J03), images and
+       KaTeX arrive, sections collapse, transclusions land. Whatever asks,
+       one pass per frame. */
+    let frame = 0;
+    function schedulePosition() {
+        if (frame) return;
+        frame = requestAnimationFrame(function () {
+            frame = 0;
+            positionSidenotes();
+        });
+    }
+
     /* ------------------------------------------------------------------ */
     /*  Hover + click + keyboard wiring                                    */
     /* ------------------------------------------------------------------ */
@@ -222,6 +236,12 @@
 
         wireAll(body);
         positionSidenotes();
+
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedulePosition);
+        window.addEventListener('load', schedulePosition);
+        /* The notes are positioned absolutely, so moving them does not
+           resize the body: no loop. */
+        if (window.ResizeObserver) new ResizeObserver(schedulePosition).observe(body);
     }
 
     /* Public re-init hook used by transclude.js after it injects new
@@ -233,5 +253,5 @@
     };
 
     document.addEventListener('DOMContentLoaded', init);
-    window.addEventListener('resize', positionSidenotes);
+    window.addEventListener('resize', schedulePosition);
 }());
