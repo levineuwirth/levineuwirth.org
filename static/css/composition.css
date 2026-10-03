@@ -18,7 +18,8 @@
    MuseScore's Leland Text (SIL OFL 1.1) by tools/build-notes-font.py,
    so a tempo on the page matches the tempo in the score. It covers the
    SMuFL metronome range MuseScore writes into tempo text, the typed
-   ♩ ♪, and the Unicode note values in the decomposed form Unicode
+   ♩ ♪, the accidentals ♭ ♮ ♯ (Spectral has none: "clarinets in B♭"),
+   and the Unicode note values in the decomposed form Unicode
    normalisation always leaves them in.
 
    Declared for italic as well as roman: the tempo is set in italic,
@@ -27,7 +28,7 @@
     font-family: "Tempo Notes";
     src: url("../fonts/tempo-notes.woff2") format("woff2");
     font-style: normal;
-    unicode-range: U+2669-266A, U+1D157-1D161, U+1D165, U+1D16D-1D16F, U+ECA0-ECBF;
+    unicode-range: U+2669-266A, U+266D-266F, U+1D157-1D161, U+1D165, U+1D16D-1D16F, U+ECA0-ECBF;
     font-display: swap;
 }
 
@@ -35,7 +36,7 @@
     font-family: "Tempo Notes";
     src: url("../fonts/tempo-notes.woff2") format("woff2");
     font-style: italic;
-    unicode-range: U+2669-266A, U+1D157-1D161, U+1D165, U+1D16D-1D16F, U+ECA0-ECBF;
+    unicode-range: U+2669-266A, U+266D-266F, U+1D157-1D161, U+1D165, U+1D16D-1D16F, U+ECA0-ECBF;
     font-display: swap;
 }
 
