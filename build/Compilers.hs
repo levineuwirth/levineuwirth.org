@@ -18,7 +18,11 @@ module Compilers
 
 import           Hakyll
 import           Text.Pandoc.Definition     (Pandoc (..), Block (..),
-                                             Inline (..))
+                                             Inline (..), QuoteType (..),
+                                             Format (..), nullAttr, nullMeta)
+import           Text.Pandoc.Class          (runPure)
+import           Text.Pandoc.Walk           (walk)
+import           Text.Pandoc.Writers        (writeHtml5String)
 import           Text.Pandoc.Options        (ReaderOptions (..), WriterOptions (..),
                                              HTMLMathMethod (..))
 import           Text.Pandoc.Extensions     (enableExtension, Extension (..))
@@ -73,6 +77,11 @@ parseBool v = case map toLower v of
     "0"     -> Just False
     _       -> Nothing
 
+-- | A heading as plain text: what toc.js shows as the current section's
+--   label. Quotation marks stay (“consumed” is not consumed), math keeps
+--   its source, and raw HTML keeps its text but not its tags: Typography
+--   wraps "e.g." in an <abbr>, which used to reach the TOC escaped and
+--   visible (audit H03).
 stringify :: [Inline] -> T.Text
 stringify = T.concat . map inlineToText
   where
@@ -82,48 +91,69 @@ stringify = T.concat . map inlineToText
     inlineToText LineBreak         = " "
     inlineToText (Emph ils)        = stringify ils
     inlineToText (Strong ils)      = stringify ils
+    inlineToText (Underline ils)   = stringify ils
     inlineToText (Strikeout ils)   = stringify ils
     inlineToText (Superscript ils) = stringify ils
     inlineToText (Subscript ils)   = stringify ils
     inlineToText (SmallCaps ils)   = stringify ils
-    inlineToText (Quoted _ ils)    = stringify ils
+    inlineToText (Quoted DoubleQuote ils) = "\8220" <> stringify ils <> "\8221"
+    inlineToText (Quoted SingleQuote ils) = "\8216" <> stringify ils <> "\8217"
     inlineToText (Cite _ ils)      = stringify ils
     inlineToText (Code _ t)        = t
-    inlineToText (RawInline _ t)   = t
+    inlineToText (Math _ t)        = t
+    inlineToText (RawInline (Format "html") t) = T.pack (stripTags (T.unpack t))
+    inlineToText (RawInline _ _)   = ""
     inlineToText (Link _ ils _)    = stringify ils
     inlineToText (Image _ ils _)   = stringify ils
     inlineToText (Note _)          = ""
     inlineToText (Span _ ils)      = stringify ils
-    inlineToText _                 = ""
+
+-- | A heading's inlines as the body renders them, for its TOC entry: the
+--   site's writer, so quotation marks, math (typeset by KaTeX like the
+--   body's) and abbreviations come out as they do in the heading itself.
+--   Notes go; a link becomes its text, an anchor cannot hold another; and
+--   a span loses its id, which the heading already has.
+tocHtml :: [Inline] -> String
+tocHtml ils = either (const (T.unpack (escapeText (stringify clean)))) (T.unpack . T.strip)
+    (runPure (writeHtml5String writerOpts (Pandoc nullMeta [Plain clean])))
+  where
+    clean = walk unlink (walk (filter (not . isNote)) ils)
+    isNote (Note _) = True
+    isNote _        = False
+    unlink (Link _ xs _)          = Span nullAttr xs
+    unlink (Image _ xs _)         = Span nullAttr xs
+    unlink (Span (_, cls, kv) xs) = Span ("", cls, kv) xs
+    unlink x                      = x
+    escapeText = T.pack . Utils.escapeHtml . T.unpack
 
 -- ---------------------------------------------------------------------------
 -- TOC extraction
 -- ---------------------------------------------------------------------------
 
--- | Collect (level, identifier, title-text) for h2/h3 headings.
-collectHeadings :: Pandoc -> [(Int, T.Text, String)]
+-- | Collect (level, identifier, entry HTML, plain label) for h2/h3 headings.
+collectHeadings :: Pandoc -> [(Int, T.Text, String, String)]
 collectHeadings (Pandoc _ blocks) = concatMap go blocks
   where
     go (Header lvl (ident, _, _) inlines)
         | lvl == 2 || lvl == 3
-        = [(lvl, ident, T.unpack (stringify inlines))]
+        = [(lvl, ident, tocHtml inlines, T.unpack (stringify inlines))]
     go _ = []
 
 -- ---------------------------------------------------------------------------
 -- TOC tree
 -- ---------------------------------------------------------------------------
 
-data TOCNode = TOCNode T.Text String [TOCNode]
+data TOCNode = TOCNode T.Text String String [TOCNode]
 
-buildTree :: [(Int, T.Text, String)] -> [TOCNode]
+buildTree :: [(Int, T.Text, String, String)] -> [TOCNode]
 buildTree = go 2
   where
     go _ [] = []
-    go lvl ((l, i, t) : rest)
+    go lvl ((l, i, h, t) : rest)
         | l == lvl  =
-            let (childItems, remaining) = span (\(l', _, _) -> l' > lvl) rest
+            let (childItems, remaining) = span (\(l', _, _, _) -> l' > lvl) rest
                 children                = go (lvl + 1) childItems
-            in  TOCNode i t children : go lvl remaining
+            in  TOCNode i h t children : go lvl remaining
         | l < lvl   = []
         | otherwise = go lvl rest   -- skip unexpected deeper items at this level
 
@@ -131,9 +161,10 @@ renderTOC :: [TOCNode] -> String
 renderTOC [] = ""
 renderTOC nodes = "<ol>\n" ++ concatMap renderNode nodes ++ "</ol>\n"
   where
-    renderNode (TOCNode i t children) =
-        "<li><a href=\"#" ++ T.unpack i ++ "\" data-target=\"" ++ T.unpack i ++ "\">"
-        ++ Utils.escapeHtml t ++ "</a>" ++ renderTOC children ++ "</li>\n"
+    renderNode (TOCNode i h t children) =
+        "<li><a href=\"#" ++ T.unpack i ++ "\" data-target=\"" ++ T.unpack i
+        ++ "\" data-label=\"" ++ Utils.escapeHtml t ++ "\">"
+        ++ h ++ "</a>" ++ renderTOC children ++ "</li>\n"
 
 -- | Build a TOC HTML string from a Pandoc document.
 buildTOC :: Pandoc -> String

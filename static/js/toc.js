@@ -37,7 +37,9 @@
         function activate(id) {
             links.forEach(a => a.classList.toggle('is-active', a.dataset.target === id));
             const activeLink = linkMap.get(id);
-            const text = activeLink ? activeLink.textContent : pageTitle;
+            /* data-label is the heading as plain text: a link's own text
+               would carry KaTeX's markup for any math in it. */
+            const text = activeLink ? (activeLink.dataset.label || activeLink.textContent) : pageTitle;
             if (label) label.textContent = text;
             if (mobileLabel) mobileLabel.textContent = text;
         }

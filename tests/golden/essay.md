@@ -44,6 +44,11 @@ Inline $e^{i\pi} + 1 = 0$, and display:
 
 $$\sum_{k=1}^{n} k = \frac{n(n+1)}{2}$$
 
+## What "consumed" means, e.g. for $K_4$
+
+A heading with quotation marks, an abbreviation Typography wraps in
+`<abbr>`, and math: the TOC entry must keep all three (audit H03).
+
 ## Embeds
 
 {{golden-page}}
