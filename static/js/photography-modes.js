@@ -51,6 +51,33 @@
         square:    1
     };
 
+    /* sizes=auto is not available in every browser. Its fallback must
+       follow the actual grid, including the reader's text-size setting;
+       viewport breakpoints cannot predict the auto-fill column count. */
+    function updateImageSizes(container) {
+        var image = container.querySelector('img[sizes]');
+        if (!image) return;
+        var width = Math.ceil(image.getBoundingClientRect().width);
+        if (!width) return;
+        var sizes = 'auto, ' + width + 'px';
+        container.querySelectorAll('img[sizes], source[sizes]').forEach(function (el) {
+            if (el.getAttribute('sizes') !== sizes) el.setAttribute('sizes', sizes);
+        });
+    }
+
+    function watchImageSizes(container) {
+        var image = container.querySelector('img[sizes]');
+        if (!image) return;
+        updateImageSizes(container);
+        if (window.ResizeObserver) {
+            // A font-size change may change column count without changing
+            // the container's width, so observe a card's image instead.
+            new ResizeObserver(function () { updateImageSizes(container); }).observe(image);
+        } else {
+            window.addEventListener('resize', function () { updateImageSizes(container); });
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         /* Only the view links live in .photography-mode-toggle now — the
            slideshow launch was moved out of the group (A06), which also
@@ -58,6 +85,8 @@
            layout mode and must not be marked current. */
         var toggleButtons = document.querySelectorAll('.photography-mode-toggle .mode-btn');
         var grid = document.querySelector('.photography-grid');
+        document.querySelectorAll('.photography-contact-sheet').forEach(watchImageSizes);
+        if (grid) watchImageSizes(grid);
 
         // The script is loaded site-wide on photography pages but only
         // does work when there's a toggle (and, separately, when there's
@@ -88,23 +117,10 @@
         // Mode toggle
         // ----------------------------------------------------------------
 
-        /* What a card is wide in each mode, inside the 800px measure.
-           Browsers that support sizes="auto" use the laid-out width and
-           ignore the rest; the others read the rest, and with "auto"
-           alone fell back to 100vw and fetched the 2400w file for every
-           thumbnail (audit O04). The templates carry the grid entry. */
-        var SIZES = {
-            grid:          '(max-width: 26rem) 100vw, (max-width: 50rem) 50vw, 13rem',
-            masonry:       '(max-width: 34rem) 100vw, (max-width: 50rem) 50vw, 17rem',
-            chronological: '(max-width: 50rem) 100vw, 48rem'
-        };
-
         function applyMode(mode) {
             if (!grid) return;
             grid.setAttribute('data-photography-mode', mode);
-            grid.querySelectorAll('img[sizes], source[sizes]').forEach(function (el) {
-                el.setAttribute('sizes', 'auto, ' + SIZES[mode]);
-            });
+            updateImageSizes(grid);
             /* A06: the controls are a labelled navigation group, not a
                tablist and not a set of toggle buttons, so the selected
                view is stated with aria-current rather than aria-pressed

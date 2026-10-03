@@ -1,13 +1,11 @@
 <!-- A11: an authored `alt:` field wins over the title.
-     P01: one <img> serves all three grid modes (261px 3-up, 396px 2-up,
-     800px 1-up), so no static `sizes` list can be right for more than one
-     of them. sizes="auto, (max-width: 26rem) 100vw, (max-width: 50rem) 50vw, 13rem" on a lazy image is exactly the rendered width;
-     where it is not supported the attribute is invalid and the browser
-     falls back to 100vw, which over-fetches but never blurs. -->
+     P01/O04: lazy-image auto sizing follows each card's rendered width.
+     The conservative fallback is replaced with the measured pixel width
+     by photography-modes.js as the view, viewport or text size changes. -->
 <li class="photo-card"$if(orientation)$ data-orientation="$orientation$"$endif$>
     <a class="photo-card-link" href="$canonical-url$">
         $if(photo-url)$
-        <picture>$if(photo-webp-srcset)$<source srcset="$photo-webp-srcset$" type="image/webp" sizes="auto, (max-width: 26rem) 100vw, (max-width: 50rem) 50vw, 13rem">$endif$<img class="photo-card-img" src="$photo-url$"$if(photo-srcset)$ srcset="$photo-srcset$" sizes="auto, (max-width: 26rem) 100vw, (max-width: 50rem) 50vw, 13rem"$endif$ alt="$if(alt)$$plain(alt)$$else$$plain(title)$$endif$" loading="lazy" decoding="async"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$></picture>
+        <picture>$if(photo-webp-srcset)$<source srcset="$photo-webp-srcset$" type="image/webp" sizes="auto, (max-width: 50rem) 100vw, 48rem">$endif$<img class="photo-card-img" src="$photo-url$"$if(photo-srcset)$ srcset="$photo-srcset$" sizes="auto, (max-width: 50rem) 100vw, 48rem"$endif$ alt="$if(alt)$$plain(alt)$$else$$plain(title)$$endif$" loading="lazy" decoding="async"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$></picture>
         $else$$if(photo)$
         <img class="photo-card-img" src="$photo$" alt="$if(alt)$$plain(alt)$$else$$plain(title)$$endif$" loading="lazy" decoding="async"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$>
         $endif$$endif$

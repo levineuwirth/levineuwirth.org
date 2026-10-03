@@ -13,11 +13,9 @@
             <li class="contact-frame">
                 <a class="contact-frame-link" href="$canonical-url$">
                     $if(photo-url)$
-                    <!-- P01: a contact frame is 210px at three across and
-                         reflows to two and then one below 830px / 585px.
-                         sizes="auto, (max-width: 26rem) 100vw, (max-width: 50rem) 33vw, 12rem" on a lazy image tracks that exactly,
-                         and degrades to 100vw where it is unsupported. -->
-                    <picture>$if(photo-webp-srcset)$<source srcset="$photo-webp-srcset$" type="image/webp" sizes="auto, (max-width: 26rem) 100vw, (max-width: 50rem) 33vw, 12rem">$endif$<img class="contact-frame-img" src="$photo-url$"$if(photo-srcset)$ srcset="$photo-srcset$" sizes="auto, (max-width: 26rem) 100vw, (max-width: 50rem) 33vw, 12rem"$endif$ alt="$if(alt)$$plain(alt)$$else$$plain(title)$$endif$" loading="lazy" decoding="async"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$></picture>
+                    <!-- P01/O04: auto sizing uses the rendered width;
+                         photography-modes.js measures the fallback too. -->
+                    <picture>$if(photo-webp-srcset)$<source srcset="$photo-webp-srcset$" type="image/webp" sizes="auto, (max-width: 50rem) 100vw, 48rem">$endif$<img class="contact-frame-img" src="$photo-url$"$if(photo-srcset)$ srcset="$photo-srcset$" sizes="auto, (max-width: 50rem) 100vw, 48rem"$endif$ alt="$if(alt)$$plain(alt)$$else$$plain(title)$$endif$" loading="lazy" decoding="async"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$></picture>
                     $else$$if(photo)$
                     <img class="contact-frame-img" src="$photo$" alt="$if(alt)$$plain(alt)$$else$$plain(title)$$endif$" loading="lazy" decoding="async"$if(width)$ width="$width$"$endif$$if(height)$ height="$height$"$endif$>
                     $endif$$endif$
