@@ -42,7 +42,9 @@ image_version() {
     docker run --rm --entrypoint /app/gitea/gitea "$1" --version 2>/dev/null \
         | sed -n 's/^forgejo version \([^+ ]*\).*/\1/p' || true
 }
-wait_for() {   # wait_for <version> — the API answers with it, and the container is not restarting
+wait_for() {   # wait_for <version> — poll the API ($WAIT tries, a second apart) until it reports it
+    # One matching answer passes; whether the container then stays up or
+    # falls into a restart loop is not checked.
     local _
     for _ in $(seq "$WAIT"); do
         [ "$(version)" = "$1" ] && return 0

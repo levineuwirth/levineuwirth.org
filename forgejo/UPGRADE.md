@@ -9,7 +9,9 @@ operator to run.
 "Executed 2026-10-01" below for what differed from this runbook. Part B
 (§ 9) was done the same night; § 9.5 (enforcement) is due a week later.
 
-**Target: `15.0.7`** — the current LTS, supported until 2027-07-15.
+**Target: `15.0.9`** — the current LTS, supported until 2027-07-15. The
+rehearsed chain ends at `15.0.7`; one patch step on the same line takes it
+to `15.0.9` (§ 3, row 10).
 
 Not `16.0.x`: it is the newer stable, but its support window closes
 2026-10-29, seven weeks from this writing, and `17.0` lands 2026-10-15.
@@ -137,11 +139,11 @@ to upgrade alongside, and none of the MySQL/PostgreSQL minimum-version
 requirements introduced in 7.0 apply.
 
 `forgejo/docker-compose.yml` in this repo is the tracked mirror of
-`/root/forgejo-server/docker-compose.yml` on the VPS. **Its image tag still
-reads `1.21.11-0` on purpose**: it describes the live instance, and editing
-it before the upgrade lands would make the tracked copy a lie. The tags to
-put there are in § 3 and § 5; commit the change once production is actually
-running the new image.
+`/root/forgejo-server/docker-compose.yml` on the VPS. Until the upgrade
+landed, **its image tag read `1.21.11-0` on purpose**: it described the live
+instance, and editing it earlier would have made the tracked copy a lie.
+Since 2026-10-01 it reads the floating `:15`, which `forgejo-update.timer`
+follows (§ 7.4). The tags for the hops themselves are in § 3 and § 5.
 
 ### The supported upgrade path, as Forgejo documents it
 
@@ -456,10 +458,16 @@ cd ~ && rm -rf ~/tmp/forgejo-lab
 ## 3. The hop sequence, with exact tags
 
 Latest patch of each major as of 2026-09-06, plus row 10 (2026-10-01). Use
-these exact tags — a floating `:15` tag makes the rollback in § 5 ambiguous.
-(That holds for the manual hops below. Since 2026-10-01 the deployment itself
-follows `:15` through forgejo-update.sh, which logs the exact image IDs it
-runs and applies; § 5.1 ends with the variant for a failed automatic update.)
+these exact tags for the hops: § 5.1 rolls a hop back by writing the tag you
+came from into the compose file, and a floating tag names no one image to
+come back to. The deployment itself has followed `:15` since 2026-10-01, and
+forgejo-update.sh rolls back by image ID rather than by tag. Before it
+recreates, it logs the running and the applied image IDs and the pre-update
+archive. A new version that does not come up and ran no migrations is put
+back: the local `:15` is pointed at the previous image, the forge recreated,
+and the failed image held. One that migrated, or came up with a failed
+`integrity_check`, is held and left for the operator; § 5.1 ends with the
+restore for that case.
 
 | # | image tag | what happens |
 |---|---|---|
@@ -555,8 +563,9 @@ Only after production is running it:
     image: codeberg.org/forgejo/forgejo:15.0.9
 ```
 
-Also update the header comment in `forgejo/docker-compose.yml`, which still
-describes 1.21-era behaviour.
+Also update the header comment in `forgejo/docker-compose.yml`, which
+described 1.21-era behavior. (Both done on 2026-10-01; the same night the
+tag moved on to the floating `:15`, § 7.4.)
 
 ---
 

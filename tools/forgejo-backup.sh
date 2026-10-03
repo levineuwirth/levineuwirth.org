@@ -5,12 +5,13 @@
 # Installed at /usr/local/bin/forgejo-backup.sh and driven by
 # systemd/forgejo-backup.timer. Source of truth is this file in the repo.
 #
-# The database is SQLite, so the whole instance is a directory and a 2 MB
-# file — but a plain `cp` of a live SQLite database can capture a torn
-# write. `.backup` takes a consistent snapshot of a running database, and
-# the snapshot is integrity-checked before anything is allowed to depend on
-# it. If the check fails the run aborts non-zero, so systemd marks the unit
-# failed rather than quietly writing a corrupt archive over a good one.
+# The database is SQLite, so the whole instance is one directory with the
+# database a single file inside it (archived, about 1.1 GB in 2026-10) — but
+# a plain `cp` of a live SQLite database can capture a torn write. `.backup`
+# takes a consistent snapshot of a running database, and the snapshot is
+# integrity-checked before anything is allowed to depend on it. If the
+# check fails the run aborts non-zero, so systemd marks the unit failed
+# rather than quietly writing a corrupt archive over a good one.
 #
 # Nothing is stopped: Forgejo stays up for the duration.
 #

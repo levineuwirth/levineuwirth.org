@@ -3,16 +3,16 @@
 # borg-offhost.sh — the off-host half shared by the VPS backup scripts.
 #
 # Installed at /usr/local/lib/borg-offhost.sh and sourced by
-# forgejo-backup.sh (OFFHOST_TOOL=borg), anki-sync-backup.sh and
-# couchdb-backup.sh. Source of truth is this file in the repo. Not
-# executable on its own.
+# forgejo-backup.sh (OFFHOST_TOOL=borg), anki-sync-backup.sh,
+# couchdb-backup.sh and vps-config-backup.sh. Source of truth is this file
+# in the repo. Not executable on its own.
 #
 # One borg repository on the storage box holds every set, told apart by
-# archive prefix: forgejo-<TS>, anki-<TS>, couchdb-<TS>. Each caller prunes
-# only its own prefix, so a broken Anki run can never thin the Forgejo
-# history. The jobs' timer windows overlap, so every borg call waits for
-# the repository lock (BORG_LOCK_WAIT) instead of borg's default of one
-# second, which failed whichever job came second (audit Y03).
+# archive prefix: forgejo-<TS>, anki-<TS>, couchdb-<TS>, config-<TS>.
+# Each caller prunes only its own prefix, so a broken Anki run can never
+# thin the Forgejo history. The jobs' timer windows overlap, so every borg
+# call waits for the repository lock (BORG_LOCK_WAIT) instead of borg's
+# default of one second, which failed whichever job came second (audit Y03).
 #
 # Environment (from /etc/default/<caller>, read by systemd — one KEY=value
 # per line, no shell):
@@ -38,8 +38,8 @@ OFFHOST_PRUNE=${OFFHOST_PRUNE:---keep-within 7d --keep-daily 14 --keep-weekly 8 
 BORG_LOCK_WAIT=${BORG_LOCK_WAIT:-1800}
 
 borg_offhost_copy() {
-    # $1 prefix (forgejo|anki), $2 archive path, $3 its .sha256; logs via
-    # the caller's log/die.
+    # $1 prefix (forgejo|anki|couchdb|config), $2 archive path, $3 its
+    # .sha256; logs via the caller's log/die.
     local prefix=$1 archive=$2 sum=$3 name
     command -v borg >/dev/null 2>&1 || die "off-host: borg is not installed"
     [ -n "${BORG_REPO:-}" ] || die "off-host: BORG_REPO is unset"
