@@ -359,9 +359,9 @@ rules = do
     -- allowlist; 'Filters.SourceRefs.publicDataJson' is the same list, so
     -- the link-emitting heuristic and the serving rule cannot drift.
     --
-    -- @checklist.md@ is deliberately absent: .gitignore calls it a local
-    -- working/planning document, and it was nonetheless being served in
-    -- full at /source/checklist.md.
+    -- @checklist.md@ is deliberately absent: it is a local planning
+    -- document (.gitignore, check-site's PRIVATE_FILE_GLOBS), and it was
+    -- once served in full at /source/checklist.md.
     -- ---------------------------------------------------------------------------
     let sourcePreviewable =
                  "build/**.hs"

@@ -44,44 +44,21 @@ _cache-dev/
 *.swp
 *.swo
 
-# Python bytecode caches
+# Python bytecode caches, and uv's environment (uv also writes its own
+# .gitignore inside it; this does not rely on that).
 **/__pycache__/
 *.pyc
 *.pyo
+/.venv/
 
-# LaTeX build artifacts (sitewide — covers paper/, any future TeX sources)
-*.aux
-*.bbl
-*.blg
-*.brf
-*.fdb_latexmk
-*.fls
-*.glo
-*.gls
-*.idx
-*.ilg
-*.ind
-*.lof
-*.lot
-*.nav
-*.out
-*.snm
-*.synctex.gz
-*.toc
-*.vrb
-# PGF/TikZ scratch outputs
-pgftest*.pdf
-pgftest*.log
-pgftest*.aux
-# LaTeX run logs (scoped to paper/ — bare *.log would be too broad sitewide)
-paper/*.log
+# No LaTeX globs: the only TeX built here is the CV, whose artifacts stay in
+# yaml-source/build/ (below), and the manuscripts live in their own
+# repositories. A sitewide *.out or *.toc would also hide an essay's data
+# file from the content snapshot while the site still published it.
 
 # Data files that are generated at build time (not version-controlled)
-data/embeddings.json
 data/similar-links.json
 data/footer/
-data/backlinks.json
-data/build-stats.json
 data/build-start.txt
 data/build-stamp.txt
 data/last-build-seconds.txt
@@ -118,12 +95,12 @@ data/archive-index.json
 data/archive-state.json
 
 # IGNORE.txt is for the local build and need not be synced.
-IGNORE.txt
+/IGNORE.txt
 
-# Working notes / planning docs at the repo root (not site content).
+# Drafts, and planning checklists at any depth (tools/check-site.py and
+# tools/code-refs.py treat the name as private wherever it appears).
 content/drafts/
 checklist.md
-FORGEJO-MIGRATION.md
 
 # CV/résumé build pipeline (YAML → Jinja → xelatex). The canonical PDFs
 # live under static/ and ship with the site. The pipeline *source* is
@@ -140,9 +117,6 @@ yaml-source/variants/private/
 # untracked files under yaml-source/. Variants already tracked are
 # unaffected; publish a new one with `git add -f`.
 yaml-source/variants/*.yml
-yaml-source/data/*~
-# Handover bundle (archived locally for reference; not part of the site).
-levineuwirth_handover.zip
 
 # Model files for client-side semantic search (~22 MB binary artifacts).
 # Download with: make download-model
@@ -226,10 +200,11 @@ content/photography/**/*.psd
 # named here, so this pattern is safe to publish in a public repo.
 *.local.md
 
-# Site audit report. Describes server-side configuration, log paths, and
-# operational internals; this repo mirrors to public remotes, so the report
-# stays local. Anchored so it matches only the file at the repository root,
-# and named explicitly because `*.local.md` above does not cover it.
+# The September audit report. Describes server-side configuration, log
+# paths, and operational internals; this repo mirrors to public remotes, so
+# the report stays local (later reports are *.local.md). Anchored so it
+# matches only the file at the repository root, and named explicitly
+# because `*.local.md` above does not cover it.
 /local.md
 
 # Local agent instructions (AGENTS.md, and CLAUDE.md, which mirrors it).
