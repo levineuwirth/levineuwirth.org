@@ -45,7 +45,7 @@ import qualified Data.Aeson.Key     as AK
 import qualified Data.Aeson.KeyMap  as KM
 import qualified Data.Vector        as V
 import Data.Char               (isDigit, isSpace, toLower, toUpper)
-import Data.List               (intercalate, isInfixOf, isPrefixOf, isSuffixOf, sortBy,
+import Data.List               (intercalate, isInfixOf, isPrefixOf, sortBy,
                                 stripPrefix)
 import Data.Maybe              (fromMaybe, mapMaybe)
 import Data.Ord                (Down (..), comparing)

@@ -15,6 +15,13 @@
 --
 -- @IGNORE.txt@ is cleared by the build target in the Makefile after
 -- every successful build, so pins are one-shot.
+--
+-- A page's fields each asked git separately (stability, last-reviewed and
+-- its ISO twin, and every version-history field, with templates
+-- evaluating @$if(x)$@ and @$x$@ apart): about seven @git log --follow@
+-- runs per page and pass (audit H11). Both inputs are now read once per
+-- process: 'gitDates' memoizes per path, and 'readIgnore' rereads
+-- @IGNORE.txt@ only when its modification time changes.
 module Stability
     ( stabilityField
     , resolveStability
@@ -30,6 +37,8 @@ module Stability
     ) where
 
 import Control.Exception        (catch, IOException)
+import Data.IORef               (IORef, atomicModifyIORef', newIORef, readIORef)
+import qualified Data.Map.Strict    as Map
 import Data.Aeson               (Value (..))
 import qualified Data.Aeson.KeyMap  as KM
 import qualified Data.Vector        as V
@@ -37,12 +46,14 @@ import Data.List                (sortBy, nub)
 import Data.Maybe               (catMaybes, fromMaybe, listToMaybe)
 import Data.Ord                 (comparing, Down (..))
 import Data.Time.Calendar       (Day, diffDays)
-import Data.Time.Clock          (getCurrentTime, utctDay)
+import Data.Time.Clock          (UTCTime, getCurrentTime, utctDay)
 import Data.Time.Format         (parseTimeM, formatTime, defaultTimeLocale)
 import qualified Data.Text      as T
 import qualified Data.Text.IO   as TIO
+import System.Directory         (getModificationTime)
 import System.Exit              (ExitCode (..))
 import System.IO                (hPutStrLn, stderr)
+import System.IO.Unsafe         (unsafePerformIO)
 import System.Process           (readProcessWithExitCode)
 import Hakyll
 
@@ -55,10 +66,26 @@ import Hakyll
 --
 -- Uses strict text IO so the file handle is released immediately rather
 -- than left dangling on the lazy spine of 'readFile'.
+--
+-- Cached by modification time: one stat per call instead of one read, and
+-- an edit during a long @make watch@ session is still picked up.
 readIgnore :: IO [FilePath]
-readIgnore =
-    (filter (not . null) . map T.unpack . T.lines <$> TIO.readFile "IGNORE.txt")
-    `catch` \(_ :: IOException) -> return []
+readIgnore = do
+    mtime <- (Just <$> getModificationTime "IGNORE.txt")
+             `catch` \(_ :: IOException) -> return Nothing
+    memo <- readIORef ignoreCacheRef
+    case (mtime, memo) of
+        (Nothing, _) -> return []
+        (Just t, Just (t', paths)) | t == t' -> return paths
+        (Just t, _) -> do
+            paths <- (filter (not . null) . map T.unpack . T.lines <$> TIO.readFile "IGNORE.txt")
+                     `catch` \(_ :: IOException) -> return []
+            atomicModifyIORef' ignoreCacheRef (const (Just (t, paths), ()))
+            return paths
+
+{-# NOINLINE ignoreCacheRef #-}
+ignoreCacheRef :: IORef (Maybe (UTCTime, [FilePath]))
+ignoreCacheRef = unsafePerformIO (newIORef Nothing)
 
 -- ---------------------------------------------------------------------------
 -- Git helpers
@@ -69,20 +96,44 @@ readIgnore =
 -- Logs git's stderr to the build's stderr when present so the author
 -- isn't left in the dark when a file isn't tracked yet (the warning
 -- otherwise vanishes silently).
+--
+-- Memoized per path for the life of the process: a build compiles each
+-- page against a fixed history (the content auto-commit runs before it),
+-- so the answer cannot change mid-run. Only successful runs are cached, so
+-- a file that git does not know yet is asked about again. A @make watch@
+-- session keeps the dates it first read until it restarts; it never makes
+-- commits of its own.
 gitDates :: FilePath -> IO [String]
 gitDates fp = do
+    cache <- readIORef gitDatesCacheRef
+    case Map.lookup fp cache of
+        Just dates -> return dates
+        Nothing    -> do
+            r <- gitDatesUncached fp
+            case r of
+                Just dates -> do
+                    atomicModifyIORef' gitDatesCacheRef (\m -> (Map.insert fp dates m, ()))
+                    return dates
+                Nothing -> return []
+
+{-# NOINLINE gitDatesCacheRef #-}
+gitDatesCacheRef :: IORef (Map.Map FilePath [String])
+gitDatesCacheRef = unsafePerformIO (newIORef Map.empty)
+
+gitDatesUncached :: FilePath -> IO (Maybe [String])
+gitDatesUncached fp = do
     (ec, out, err) <- readProcessWithExitCode
         "git" ["log", "--follow", "--format=%ad", "--date=short", "--", fp] ""
     case ec of
         ExitFailure _ -> do
             let msg = if null err then "git log failed" else err
             hPutStrLn stderr $ "[Stability] " ++ fp ++ ": " ++ msg
-            return []
+            return Nothing
         ExitSuccess   -> do
             case err of
                 "" -> return ()
                 _  -> hPutStrLn stderr $ "[Stability] " ++ fp ++ ": " ++ err
-            return $ filter (not . null) (lines out)
+            return $ Just (filter (not . null) (lines out))
 
 -- | Commit dates for @fp@, newest-first, with a frontmatter fallback.
 --
@@ -206,7 +257,9 @@ lastReviewedField = field "last-reviewed" $ \item -> do
 -- | Raw-ISO companion to @$last-reviewed$@ — for hover-popup
 -- @data-date-start@ attribute. Falls back to the frontmatter value for
 -- pinned files (which is expected to already be ISO, the same convention
--- used by 'lastReviewedField' before it applied 'fmtIso').
+-- used by 'lastReviewedField' before it applied 'fmtIso'). Reads the same
+-- 'effectiveDates' as @$last-reviewed$@, so the two cannot disagree (they
+-- did when a @history:@ date was newer than the last commit; audit H11).
 lastReviewedIsoField :: Context String
 lastReviewedIsoField = field "last-reviewed-iso" $ \item -> do
     let srcPath = toFilePath (itemIdentifier item)
@@ -215,7 +268,7 @@ lastReviewedIsoField = field "last-reviewed-iso" $ \item -> do
         ignored <- readIgnore
         if srcPath `elem` ignored
             then return $ lookupString "last-reviewed" meta
-            else listToMaybe <$> gitDates srcPath
+            else listToMaybe <$> effectiveDates srcPath meta
     case mIso of
         Nothing -> fail "no last-reviewed ISO"
         Just d  -> return d
