@@ -227,7 +227,6 @@
                 Object.keys(groups).forEach(function (key) {
                     var g     = groups[key];
                     var count = g.pins.length;
-                    var first = g.pins[0];
 
                     // A div icon, not the default PNG: it scales with the
                     // count, carries the number, and removes the map's only

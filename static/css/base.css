@@ -320,7 +320,6 @@
     /* Transitions */
     --transition-fast:    0.15s ease;
     --transition-medium:  0.28s ease;
-    --transition-slow:    0.5s  ease;
 
     /* Writing activity heatmap (light mode) */
     --hm-0: #e8e8e4;   /* empty cell */
@@ -343,17 +342,13 @@
     --font-ui:     var(--font-sans);
     --bg-subtle:   var(--bg-offset);
 
-    /* Layout breakpoints — referenced from JS via getComputedStyle and
-       documented here for grep. CSS @media queries cannot use custom
-       properties, so the @media values throughout components.css and
-       layout.css must be kept in lockstep with these. */
-    --bp-phone:    540px;
-    --bp-tablet:   680px;
-    --bp-desktop:  900px;
-    --bp-wide:    1500px;
+    /* Layout breakpoints: phone 540px, tablet 680px, desktop 900px,
+       wide 1500px. Named here for grep only — @media queries cannot use
+       custom properties and no script reads them — so the values in
+       components.css and layout.css are kept in lockstep by hand. */
 }
 
-/* Below --bp-phone the primary links wrap to two rows and the Portals
+/* Below the phone breakpoint the primary links wrap to two rows and the Portals
    row sits under them: the header measures ~141px rather than ~59px.
    Kept in lockstep with the nav's own 540px block in components.css. */
 @media (max-width: 540px) {

@@ -18,9 +18,7 @@
  * Semantic: filtering is pushed *into* the ranker via
  * window.lnSemanticSearch.setResultFilter, so it runs over the whole
  * scored list before the top-8 cut. Excluding a high-ranked passage now
- * promotes the next passing one instead of leaving a hole. (If an older
- * cached semantic-search.js is in play and the hook is absent, this file
- * falls back to the previous hide-after-render behaviour.)
+ * promotes the next passing one instead of leaving a hole.
  *
  * Keyword: Pagefind ranks, counts, and paginates inside its own bundle
  * and its index carries no epistemic fields, so hits can only be removed
@@ -350,31 +348,13 @@
     /* Push the predicate into the ranker so it applies before top-K. */
     function applyToSemantic() {
         var api = semanticHook();
-        if (!api) { applyToSemanticFallback(); return; }
+        if (!api) return;
         if (!epistemicMeta || !hasActiveFilters()) {
             api.setResultFilter(null);
             return;
         }
         api.setResultFilter(function (entry) {
             return accepts(normUrl(entry && entry.url));
-        });
-    }
-
-    /* Pre-hook behaviour, kept only for a stale cached semantic-search.js:
-       hide already-rendered results. Ranking is not corrected in this
-       path — it cannot be from out here. */
-    function applyToSemanticFallback() {
-        if (!epistemicMeta || !hasActiveFilters()) {
-            document.querySelectorAll('.semantic-result.search-filtered').forEach(function (el) {
-                el.classList.remove('search-filtered');
-            });
-            return;
-        }
-        document.querySelectorAll('.semantic-result').forEach(function (el) {
-            var link = el.querySelector('.semantic-result-title');
-            if (!link) return;
-            el.classList.toggle('search-filtered',
-                !accepts(normUrl(link.getAttribute('href'))));
         });
     }
 
@@ -556,17 +536,6 @@
             new MutationObserver(function () {
                 if (epistemicMeta) applyToPagefind();
             }).observe(searchEl, { childList: true, subtree: true });
-        }
-
-        /* Semantic results are filtered inside the ranker now, so this
-           observer only matters for the no-hook fallback path. */
-        var semanticEl = document.getElementById('semantic-results');
-        if (semanticEl && !semanticHook()) {
-            new MutationObserver(function () {
-                if (hasActiveFilters() && epistemicMeta) {
-                    applyToSemanticFallback();
-                }
-            }).observe(semanticEl, { childList: true, subtree: true });
         }
     });
 }());

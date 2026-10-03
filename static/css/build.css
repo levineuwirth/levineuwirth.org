@@ -2,10 +2,6 @@
    Build telemetry page (/build/)
    ============================================================ */
 
-.build-section {
-    margin: 2.5rem 0;
-}
-
 /* Summary + tag tables */
 .build-table {
     width: 100%;

@@ -114,7 +114,12 @@
     if (!spec) return;
     // Always apply site theme; ignore any config baked into the spec.
     var mergedSpec = Object.assign({}, spec, { config: themeConfig() });
+    // Release the previous view (its timers and listeners) before the
+    // re-render replaces it.
+    if (container._vegaResult) container._vegaResult.finalize();
+    container._vegaResult = null;
     vegaEmbed(container, mergedSpec, { actions: false, renderer: 'svg' })
+      .then(function (result) { container._vegaResult = result; })
       .catch(function (err) { console.error('[viz]', err); });
   }
 
@@ -157,5 +162,10 @@
       }
     }
   }).observe(document.documentElement, { attributes: true });
+
+  // With no theme chosen, isDark() follows the system; follow its changes too.
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+    if (!document.documentElement.dataset.theme) reRenderAll();
+  });
 
 }());

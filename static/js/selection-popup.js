@@ -273,10 +273,8 @@
              + btn('wikipedia', 'Wikipedia');
     }
 
-    function btn(action, label, placeholder) {
-        var cls   = 'selection-popup-btn' + (placeholder ? ' selection-popup-btn--placeholder' : '');
-        var extra = placeholder ? ' aria-disabled="true" title="Coming soon"' : '';
-        return '<button class="' + cls + '" data-action="' + action + '"' + extra + '>'
+    function btn(action, label) {
+        return '<button class="selection-popup-btn" data-action="' + action + '">'
              + label + '</button>';
     }
 

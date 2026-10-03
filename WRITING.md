@@ -1239,6 +1239,15 @@ in the paragraph.
 A paragraph that immediately follows a `::: dropcap` block will be indented
 correctly (`text-indent: 1.5em`), matching the paragraph-after-paragraph rule.
 
+### Other styling classes
+
+| Markup | Renders as |
+|--------|-----------|
+| `::: epigraph` | An italic, muted prelude set in from a left rule; place it before the first paragraph |
+| `::: pull-quote` | A larger centered italic passage between two rules |
+| `::: proof` | A proof block; later paragraphs lose their indent. Begin it with `*Proof.*` or `[Proof.]{.proof-label}` (italic semibold), and end it with `[□]{.proof-qed}` to float the tombstone right |
+| `<strong class="semibold">…</strong>` | Semibold (600) emphasis beside the default bold (700) |
+
 ---
 
 ## Text selection popup

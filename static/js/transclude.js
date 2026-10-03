@@ -274,12 +274,10 @@
         container.dataset.lnEnhanced = '1';
 
         /* sidenotes.js — wire newly injected sidenote refs/spans and
-           reposition the column. Falls back to a manual resize event
-           for older builds that haven't been redeployed yet. */
+           reposition the column. A page that transcludes always loads it
+           (has-sidenotes counts transclusion markers). */
         if (typeof window.reinitSidenotes === 'function') {
             window.reinitSidenotes(container);
-        } else {
-            window.dispatchEvent(new Event('resize'));
         }
 
         /* popups.js — bind hover popups for newly injected links so
@@ -292,11 +290,6 @@
         /* collapse.js exposes reinitCollapse for newly added headings. */
         if (typeof window.reinitCollapse === 'function') {
             window.reinitCollapse(container);
-        }
-
-        /* gallery.js can expose reinitGallery when needed. */
-        if (typeof window.reinitGallery === 'function') {
-            window.reinitGallery(container);
         }
 
         /* Everything else (math, code-copy, annotations, lightbox) joins

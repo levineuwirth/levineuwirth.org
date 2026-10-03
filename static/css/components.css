@@ -1508,26 +1508,6 @@ nav.site-nav {
     text-decoration: none;
 }
 
-/* Tooltip shown on hover */
-.cite-tooltip {
-    position: absolute;
-    z-index: 200;
-    max-width: 340px;
-    padding: 0.55rem 0.75rem;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
-    font-family: var(--font-sans);
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    line-height: 1.5;
-    pointer-events: auto;
-}
-
-.cite-tooltip em {
-    font-style: italic;
-}
 
 
 /* ============================================================
