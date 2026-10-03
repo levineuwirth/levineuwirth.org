@@ -51,7 +51,7 @@ and each keeps getting better, if not more complex.
 If we take the example of Claude's formalization of Fermat's Last Theorem, then
 we're on the scale of millions of lines of proof across many subtheorems.
 The amount that a human needs to review is mind-boggling; a model's proof sketch,
-at least given the current tendency of models towards verbosity, is a claim
+at least given the current tendency of models toward verbosity, is a claim
 made by something nobody can audit at all, in a way that is difficult to audit.
 A solver's `unsat` is, in stark contrast, a claim made by a
 few hundred thousand lines of C++. 
@@ -106,7 +106,7 @@ Farkas witness — one nonnegative multiplier per hypothesis whose
 weighted sum is a contradiction — and Tier 2 is its case-split
 extension. A Tier 0 certificate carries only the solver's verdict
 inside an integrity envelope, with no checkable content, and it is
-labelled as such. The broker verifies what each tier claims, prefers
+labeled as such. The broker verifies what each tier claims, prefers
 the strongest tier that verifies, and records the tier in the result,
 so a consumer always knows which rung it is standing on. The tiers
 grade the evidence that came back, not the backend that sent it: how

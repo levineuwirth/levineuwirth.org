@@ -817,7 +817,7 @@ $$
 \frac{\partial\mathcal F^{(z)}}{\partial x_i}=g_{i-1}+\frac d2(\log\ell_{i-1}+1)+g_i+s_d'(a_i)-d(\log y_i+1)+\frac d2(\log\ell_i+1),
 $$
 
-with the same formula at $i=1$ after replacing the left layer expression by its root analogue.
+with the same formula at $i=1$ after replacing the left layer expression by its root analog.
 
 Define, up to a common positive scale,
 
@@ -842,7 +842,7 @@ $$
 \frac d2\log\ell_{i-1}-d\log\left(\lambda_i\frac{y_i}{\sqrt{\ell_i}}\right)=0.
 $$
 
-Thus $\lambda_iy_i=\sqrt{\ell_{i-1}\ell_i}$, which is the displayed identity. The root contribution at $i=1$ has the same algebra, with the activity term cancelling through the root diagonal equation. □
+Thus $\lambda_iy_i=\sqrt{\ell_{i-1}\ell_i}$, which is the displayed identity. The root contribution at $i=1$ has the same algebra, with the activity term canceling through the root diagonal equation. □
 :::
 
 ::: {#prop-kkt-stationarity .exhibit .exhibit--proposition data-exhibit-type="proposition" data-exhibit-name="Proposition 21 (Compact KKT equals two-message stationarity)"}

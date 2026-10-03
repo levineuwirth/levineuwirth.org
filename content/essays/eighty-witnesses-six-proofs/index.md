@@ -297,7 +297,7 @@ cmp /tmp/r6.json \
 
 **The money reconciles to the micro-dollar.** The final authorization
 covered all 88 slots at 9,011,200 µUSD, about \$9.01. The ledger holds
-89 reservation rows totalling 9,113,600 µUSD gross; one pre-send release
+89 reservation rows totaling 9,113,600 µUSD gross; one pre-send release
 returned 102,400, so the net committed is exactly the authorization, and
 nothing is open. The provider reported 108,480 input and 44,886 output
 tokens, which at the frozen rates prices at 944,490 µUSD, about \$0.94.

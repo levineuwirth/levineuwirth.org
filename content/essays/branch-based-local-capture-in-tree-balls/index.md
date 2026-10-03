@@ -340,7 +340,7 @@ The present arguments do not address five natural directions; no claim of novelt
 Theorem [10](#thm-persistence) treats only length-$t$ nonbacktracking paths starting at $v_0$. Stationary moves and reversals destroy the monotone depth evolution used by the interception schedule.
 
 ::: question
-**Question 17**. *Can a static or adaptive local certificate give an analogue of Theorem [10](#thm-persistence) for arbitrary length-$t$ robber walks from $v_0$, including stationary moves and reversals? How do repeated vertices and reversed edges change the required witnesses and coverage cost?*
+**Question 17**. *Can a static or adaptive local certificate give an analog of Theorem [10](#thm-persistence) for arbitrary length-$t$ robber walks from $v_0$, including stationary moves and reversals? How do repeated vertices and reversed edges change the required witnesses and coverage cost?*
 :::
 
 ## Partial and adaptive coverage
@@ -400,7 +400,7 @@ If $w$ has depth at least $2$, then $w\in S$. Otherwise $w$ has depth $1$, and i
 The persistence proof uses only the unique geodesics of synchronized witnesses inside $B_R(v_0)$. With cycles, rooted branches would have to give way to a shortest-path directed acyclic graph in which paths may split or merge. No persistence theorem or coverage bound is proved in that setting.
 
 ::: question
-**Question 21**. *For a radius-$R$ ball obtained from a tree by adding one edge, can geodesic tubes and branch-load support be replaced by notions for which an analogue of Theorem [10](#thm-persistence) holds? More generally, how do the answer and the minimum exhaustive-coverage cost depend on bounded tree excess?*
+**Question 21**. *For a radius-$R$ ball obtained from a tree by adding one edge, can geodesic tubes and branch-load support be replaced by notions for which an analog of Theorem [10](#thm-persistence) holds? More generally, how do the answer and the minimum exhaustive-coverage cost depend on bounded tree excess?*
 :::
 
 # Conclusion

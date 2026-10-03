@@ -3,6 +3,9 @@
 Reference for creating content on levineuwirth.org. Covers file placement, all
 frontmatter fields, and every authoring feature available in the Markdown source.
 
+Use American English for original site copy. Preserve the source spelling in
+quotations, work titles, proper names, and verbatim third-party notices.
+
 ---
 
 ## File placement
@@ -1580,11 +1583,11 @@ once. After that, `make build` invokes `uv run python tools/embed.py`
 automatically. If `.venv` is absent, the step is skipped with a warning and
 the build continues normally.
 
-## Per-page licences
+## Per-page licenses
 
 The footer defaults to CC BY-NC-SA 4.0 for Levi Neuwirth's original prose.
-Use `license: Public domain` for a public-domain work, or another licence
-name with an optional `license-url:`. Known CC licences resolve to their
+Use `license: Public domain` for a public-domain work, or another license
+name with an optional `license-url:`. Known CC licenses resolve to their
 canonical URLs; an unfamiliar name without a URL appears as plain text.
 Credit an individual illustration or quotation beside that work instead of
-changing the licence of the entire page. See `THIRD-PARTY.md` for scope.
+changing the license of the entire page. See `THIRD-PARTY.md` for scope.

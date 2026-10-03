@@ -241,7 +241,7 @@ The NTT butterfly loop processes 128 pairs of 16-bit coefficients per forward tr
 The observed INVNTT speedup of $56.3\times$ at ML-KEM-512 *exceeds* the theoretical $16\times$ register-width advantage. We attribute this to two compounding factors: (1) the unrolled hand-written assembly eliminates loop overhead and branch prediction pressure; (2) the inverse NTT has a slightly different access pattern than the forward NTT that benefits from out-of-order execution with wide issue ports on the Cascade Lake microarchitecture.
 
 ::: {.annotation .annotation--static}
-**Phase 2:** Confirm with IPC and port utilisation counters.
+**Phase 2:** Confirm with IPC and port utilization counters.
 :::
 
 ### Why the Compiler Cannot Auto-Vectorize NTT

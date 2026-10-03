@@ -17,7 +17,7 @@ abstract: >
 ---
 
 This collection is a scaffold. Replace this body with a short
-introduction describing the collection's organising principle — a
+introduction describing the collection's organizing principle — a
 single author, a thematic arc, a translation project, a sequence
 written in a particular season — or whatever frame matters to you.
 
