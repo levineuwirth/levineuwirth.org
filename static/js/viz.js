@@ -112,15 +112,31 @@
   function renderOne(container) {
     var spec = container._vegaSpec;
     if (!spec) return;
+    // vegaEmbed is asynchronous and mutates the container. Serialize
+    // renders, coalescing theme changes while one is still in flight.
+    if (container._vegaRendering) {
+      container._vegaRedraw = true;
+      return;
+    }
+    container._vegaRendering = true;
     // Always apply site theme; ignore any config baked into the spec.
     var mergedSpec = Object.assign({}, spec, { config: themeConfig() });
     // Release the previous view (its timers and listeners) before the
     // re-render replaces it.
     if (container._vegaResult) container._vegaResult.finalize();
     container._vegaResult = null;
-    vegaEmbed(container, mergedSpec, { actions: false, renderer: 'svg' })
+    Promise.resolve().then(function () {
+      return vegaEmbed(container, mergedSpec, { actions: false, renderer: 'svg' });
+    })
       .then(function (result) { container._vegaResult = result; })
-      .catch(function (err) { console.error('[viz]', err); });
+      .catch(function (err) { console.error('[viz]', err); })
+      .then(function () {
+        container._vegaRendering = false;
+        if (container._vegaRedraw) {
+          container._vegaRedraw = false;
+          renderOne(container);
+        }
+      });
   }
 
   function renderAll() {
