@@ -352,7 +352,8 @@ pdf-thumbs:
 
 # Rebuild the CV + website résumé from yaml-source/ and refresh static/.
 # Standalone helper — NOT a dependency of `build` or `deploy`. Run manually
-# after editing a YAML under yaml-source/data/. The site build copies
+# after editing a YAML under yaml-source/data/; check-site warns when the
+# PDFs are older than their sources (tools/cv-pdfs.py, audit C02). The site build copies
 # static/*.pdf through unchanged, so a subsequent `make build` picks them up.
 #
 # The ATS variant (yaml-source/output/resume_ats.pdf) is intentionally not
@@ -373,7 +374,8 @@ pdfs:
 	@$(MAKE) -C yaml-source all
 	@cp yaml-source/output/cv.pdf static/cv.pdf
 	@cp yaml-source/output/resume.pdf static/resume.pdf
-	@echo "pdfs: static/cv.pdf and static/resume.pdf refreshed."
+	@python3 tools/cv-pdfs.py write
+	@echo "pdfs: static/cv.pdf and static/resume.pdf refreshed; commit them with yaml-source/pdfs.sha256."
 
 # ---------------------------------------------------------------------------
 # deploy

@@ -43,6 +43,7 @@ from __future__ import annotations
 import argparse
 import fnmatch
 import html
+import importlib.util
 import os
 import re
 import sys
@@ -648,6 +649,21 @@ def jpeg_gps(path: str) -> bool:
 DATA_PAGES_RE = re.compile(r'''data-pages="([^"]*)"''')
 
 
+def check_cv_pdfs(site_dir: str, report: Report) -> None:
+    """C02 — /cv.pdf and /resume.pdf are built by hand from the CV YAML the
+    Vita page reads at every build; warn when they are older than it. Only
+    for this repository's own output: the record is the checkout's."""
+    report.check("cv-pdfs")
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if os.path.realpath(site_dir) not in (os.path.join(root, "_site"), os.path.join(root, "_site-dev")):
+        return
+    spec = importlib.util.spec_from_file_location("cv_pdfs", os.path.join(root, "tools", "cv-pdfs.py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    for problem in module.stale():
+        report.warn("cv-pdfs", problem)
+
+
 def check_score_pages(site_dir: str, report: Report) -> None:
     """M02 — a score reader and its published pages agree. A page file the
     reader does not list is left over from an earlier engraving (or a
@@ -764,6 +780,7 @@ def main(argv: list[str] | None = None) -> int:
     check_sitemap(site_dir, report)
     check_404(site_dir, report, as_error=not args.allow_missing_404)
     check_webp(site_dir, report, as_error=args.require_webp)
+    check_cv_pdfs(site_dir, report)
     check_search_model(site_dir, report)
     check_photo_gps(site_dir, report)
     check_score_pages(site_dir, report)
