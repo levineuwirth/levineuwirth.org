@@ -37,6 +37,7 @@ module Stability
     ) where
 
 import Control.Exception        (catch, IOException)
+import Control.Concurrent.MVar  (MVar, modifyMVar, newMVar)
 import Data.IORef               (IORef, atomicModifyIORef', newIORef, readIORef)
 import qualified Data.Map.Strict    as Map
 import Data.Aeson               (Value (..))
@@ -99,26 +100,25 @@ ignoreCacheRef = unsafePerformIO (newIORef Nothing)
 --
 -- Memoized per path for the life of the process: a build compiles each
 -- page against a fixed history (the content auto-commit runs before it),
--- so the answer cannot change mid-run. Only successful runs are cached, so
--- a file that git does not know yet is asked about again. A @make watch@
+-- so the answer cannot change mid-run. Only successful, nonempty histories
+-- are cached: git exits successfully for an untracked file too. Concurrent
+-- requests share a lookup rather than all observing an empty cache slot.
+-- A file that git does not know yet is asked about again. A @make watch@
 -- session keeps the dates it first read until it restarts; it never makes
 -- commits of its own.
 gitDates :: FilePath -> IO [String]
-gitDates fp = do
-    cache <- readIORef gitDatesCacheRef
+gitDates fp = modifyMVar gitDatesCacheRef $ \cache -> do
     case Map.lookup fp cache of
-        Just dates -> return dates
+        Just dates -> return (cache, dates)
         Nothing    -> do
             r <- gitDatesUncached fp
             case r of
-                Just dates -> do
-                    atomicModifyIORef' gitDatesCacheRef (\m -> (Map.insert fp dates m, ()))
-                    return dates
-                Nothing -> return []
+                Just dates | not (null dates) -> return (Map.insert fp dates cache, dates)
+                _ -> return (cache, [])
 
 {-# NOINLINE gitDatesCacheRef #-}
-gitDatesCacheRef :: IORef (Map.Map FilePath [String])
-gitDatesCacheRef = unsafePerformIO (newIORef Map.empty)
+gitDatesCacheRef :: MVar (Map.Map FilePath [String])
+gitDatesCacheRef = unsafePerformIO (newMVar Map.empty)
 
 gitDatesUncached :: FilePath -> IO (Maybe [String])
 gitDatesUncached fp = do
