@@ -1211,8 +1211,11 @@ def moved_meaningfully(orig: str, final: str) -> bool:
 
 def probe_url(url: str) -> tuple[str, str | None]:
     """Probe a URL for reachability. Returns @(result, new_url)@ where
-    result is 'ok' | 'moved' | 'fail'. HEAD first; a server that rejects
-    HEAD (405/501/403) is retried with a ranged GET."""
+    result is 'ok' | 'moved' | 'fail'. HEAD first; any HEAD failure is
+    confirmed with a ranged GET before it counts. Servers answer HEAD
+    wrongly in more ways than 403/405/501: nvlpubs.nist.gov returns 404 to
+    HEAD and 206 to GET for a live document, which was on course to be
+    marked rotted and replaced by the local copy (audit C03)."""
     for method in ("HEAD", "GET"):
         headers = {"User-Agent": USER_AGENT}
         if method == "GET":
@@ -1224,13 +1227,11 @@ def probe_url(url: str) -> tuple[str, str | None]:
                 if moved_meaningfully(url, final):
                     return ("moved", final)
                 return ("ok", None)
-        except urllib.error.HTTPError as exc:
-            if method == "HEAD" and exc.code in (403, 405, 501):
-                continue                       # HEAD not allowed — try GET
-            return ("fail", None)              # a definite 4xx/5xx
-        except Exception:                      # noqa: BLE001 — network failure
+        except Exception as exc:               # noqa: BLE001 — HTTP error or network failure
+            if isinstance(exc, urllib.error.HTTPError):
+                exc.close()                    # it holds the response open
             if method == "HEAD":
-                continue
+                continue                       # confirm with GET
             return ("fail", None)
     return ("fail", None)
 
