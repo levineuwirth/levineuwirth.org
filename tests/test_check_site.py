@@ -200,6 +200,14 @@ class CheckSiteTestCase(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("score fragment missing", output)
 
+    def test_raw_citation_syntax_fails(self):
+        self.site.write("essays/one/index.html",
+                        '<!doctype html><title>One</title><p>as in '
+                        '<span class="citation" data-cites="k">[@k, Theorem 3.1]</span></p>')
+        code, output = self.run_gate()
+        self.assertEqual(code, 1)
+        self.assertIn("citation shows its source syntax", output)
+
     def test_unresolved_figure_reference_fails(self):
         self.site.write(
             "essays/refs.html",

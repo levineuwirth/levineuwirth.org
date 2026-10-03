@@ -49,7 +49,7 @@ import           Text.Pandoc.Writers        (writeHtml5String)
 import           Text.Pandoc.Definition     (Block (..), Inline (..), Pandoc (..),
                                              nullMeta)
 import           Text.Pandoc.Options        (WriterOptions (..), HTMLMathMethod (..))
-import           Text.Pandoc.Walk           (query)
+import           Text.Pandoc.Walk           (query, walk)
 import           Hakyll
 import           Compilers                  (readerOpts, writerOpts)
 import           Filters                    (preprocessSource)
@@ -177,13 +177,25 @@ isPageLink u
 
 -- | Render a list of inlines to an HTML fragment string.
 -- Uses Plain (not Para) to avoid a wrapping <p> — callers add their own.
+--
+-- This pass runs on the raw AST, before citeproc and the sidenote filter.
+-- A citation would render as its source syntax (@[\@PralatWormald,
+-- Theorem 3.1]@) and a footnote as a whole footnotes section inside the
+-- excerpt (audit H04). A citation becomes "[…]", the mark for matter left
+-- out of a quotation: the cited work's number or label belongs to the
+-- other page's bibliography and would mean nothing here. Notes go.
 renderInlines :: [Inline] -> String
 renderInlines inlines =
     case runPure (writeHtml5String contextWriterOpts doc) of
         Left  _   -> ""
         Right txt -> T.unpack txt
   where
-    doc = Pandoc nullMeta [Plain inlines]
+    doc = Pandoc nullMeta [Plain (walk quoteable inlines)]
+    quoteable :: [Inline] -> [Inline]
+    quoteable = concatMap one
+    one (Cite _ _) = [Str "[\8230]"]
+    one (Note _)   = []
+    one x          = [x]
 
 -- | Split a list of inlines into sentences by terminator punctuation.
 --

@@ -119,6 +119,11 @@ RENDER_FAILURE_MARKERS = (
     ("Figure ?</a>", "unresolved figure cross-reference"),
 )
 
+# A citation that reached the page as its source syntax, [@key]: rendered
+# without citeproc, as backlink excerpts once were (audit H04). Citeproc's
+# own spans hold the rendered label, never "[@".
+RAW_CITATION_RE = re.compile(r'class="citation"[^>]*>\[@')
+
 # B08 — a link into the draft tree, wherever it survived the drafts purge.
 DRAFT_HREF_RE = re.compile(r"""(?:href|src)=["'](?:[^"']*/)?drafts/""")
 
@@ -340,6 +345,8 @@ def check_html_corpus(
         for marker, description in RENDER_FAILURE_MARKERS:
             if marker in text:
                 report.error("render-failures", f"{rel}: {description}")
+        if RAW_CITATION_RE.search(text):
+            report.error("render-failures", f"{rel}: a citation shows its source syntax [@…]")
 
         if DRAFT_HREF_RE.search(text):
             report.error("draft-links", f"{rel}: links into /drafts/")
