@@ -5,7 +5,7 @@
         <span class="footer-nav"> · <a href="/about.html">vita</a> · <a href="/cv/projects/">projects</a></span>
     </div>
     <div class="footer-center">
-        <span class="footer-license"><a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license">CC&nbsp;BY-NC-SA&nbsp;4.0</a> · <a href="https://git.levineuwirth.org/neuwirth/levineuwirth.org">MIT</a> · <a href="/memento-mori.html" class="footer-mm">MM</a></span>
+        <span class="footer-license">$if(page-license-url)$<a href="$plain(page-license-url)$" rel="license">$plain(page-license)$</a>$else$$plain(page-license)$$endif$ · <a href="/licenses/MIT.txt">Code: MIT</a> · <a href="/licenses.html">Notices</a> · <a href="/memento-mori.html" class="footer-mm">MM</a></span>
     </div>
     <div class="footer-right">
         <a href="/build/" class="footer-build-link" aria-label="Build telemetry">build</a> <span class="footer-build-time" data-build-time>$build-time$</span>

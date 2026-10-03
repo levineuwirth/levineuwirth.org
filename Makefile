@@ -398,7 +398,7 @@ pdfs:
 # verbatim under /source/ or compiled into the generator.
 DIRTY_PATHS := build templates static data yaml-source tools nginx Makefile levineuwirth.cabal \
 	code-refs archive cabal.project cabal.project.freeze pyproject.toml uv.lock \
-	LICENSE README.md WRITING.md PHOTOGRAPHY.md
+	LICENSE LICENSE-CONTENT THIRD-PARTY.md README.md WRITING.md PHOTOGRAPHY.md
 
 # The build inputs under $(1) that differ from HEAD, one per line: tracked
 # modifications, plus untracked files everywhere but data/ (see below).

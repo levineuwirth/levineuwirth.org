@@ -323,6 +323,18 @@ rules = do
     -- Templates
     match "templates/**" $ compile templateBodyCompiler
 
+    -- The repository and the public site carry the same licence texts.
+    match (fromList ["LICENSE", "LICENSE-CONTENT"]) $ do
+        route $ customRoute $ \ident -> "licenses/" ++
+            if toFilePath ident == "LICENSE" then "MIT.txt" else "CC-BY-NC-SA-4.0.txt"
+        compile copyFileCompiler
+    match "THIRD-PARTY.md" $ do
+        route $ constRoute "licenses.html"
+        compile $ pageCompiler
+            >>= loadAndApplyTemplate "templates/page.html" pageCtx
+            >>= loadAndApplyTemplate "templates/default.html" pageCtx
+            >>= relativizeUrls
+
     -- ---------------------------------------------------------------------------
     -- Source-preview corpus — raw copies of source files, served at
     -- @/source/<path>@, fetched on hover by the popup provider in

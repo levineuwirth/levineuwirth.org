@@ -450,6 +450,8 @@ archiveEntryCtx :: ArchiveEntry -> Context String
 archiveEntryCtx ae = mconcat
     [ constField "title"            (pvTitle pv)
     , constField "archive"          "true"
+    , constField "page-license"     "Source terms"
+    , constField "page-license-url" "/licenses.html#archived-material"
     , constField "noindex"          "true"
     -- C01: without this the page falls through to a body excerpt, which
     -- on an archive wrapper is the banner label ("Archived copy").

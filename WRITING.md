@@ -1579,3 +1579,12 @@ Both are skipped silently when the tools are not installed.
 once. After that, `make build` invokes `uv run python tools/embed.py`
 automatically. If `.venv` is absent, the step is skipped with a warning and
 the build continues normally.
+
+## Per-page licences
+
+The footer defaults to CC BY-NC-SA 4.0 for Levi Neuwirth's original prose.
+Use `license: Public domain` for a public-domain work, or another licence
+name with an optional `license-url:`. Known CC licences resolve to their
+canonical URLs; an unfamiliar name without a URL appears as plain text.
+Credit an individual illustration or quotation beside that work instead of
+changing the licence of the entire page. See `THIRD-PARTY.md` for scope.

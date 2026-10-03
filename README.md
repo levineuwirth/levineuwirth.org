@@ -151,4 +151,10 @@ Normal website builds do not require the research checkout or a TeX toolchain.
 
 ## License
 
-See `LICENSE`.
+The website code and its software documentation are [MIT-licensed](LICENSE).
+Levi Neuwirth's original prose and textual content data are licensed under
+[CC BY-NC-SA 4.0](LICENSE-CONTENT), unless a page says otherwise. These grants
+do not relicense third-party material or public-domain works, and do not
+automatically cover photographs, artwork, scores, recordings or papers.
+See [the scope and third-party notices](THIRD-PARTY.md), also published at
+[/licenses.html](https://levineuwirth.org/licenses.html).

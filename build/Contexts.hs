@@ -722,6 +722,7 @@ siteCtx =
     <> canonicalUrlField
     <> buildTimeField
     <> pageScriptsField
+    <> pageLicenseFields
     <> abstractField
     <> descriptionField
     <> summaryField
@@ -2093,6 +2094,30 @@ canonicalLicenseUrl raw =
         | c >= 'A' && c <= 'Z' = toEnum (fromEnum c + 32)
         | otherwise            = c
 
+-- | The page's own notice wins over the prose default. An unknown custom
+-- notice without a URL stays plain text; it must not inherit a CC link.
+-- The same license/license-url metadata is used by photography below.
+pageLicenseFields :: Context String
+pageLicenseFields = field "page-license" label <> field "page-license-url" url
+  where
+    label item = do
+        meta <- getMetadata (itemIdentifier item)
+        return $ case lookupString "license" meta of
+            Just l | not (null (trim l)) -> trim l
+            _ -> "Prose: CC BY-NC-SA 4.0"
+    url item = do
+        meta <- getMetadata (itemIdentifier item)
+        let name = case lookupString "license" meta of
+                Just l | not (null (trim l)) -> trim l
+                _ -> "CC BY-NC-SA 4.0"
+        case resolveLicenseUrl (lookupString "license-url" meta) name of
+            Just u -> return u
+            Nothing -> noResult "custom license without a URL"
+
+resolveLicenseUrl :: Maybe String -> String -> Maybe String
+resolveLicenseUrl (Just u) _ | not (null (trim u)) = Just (trim u)
+resolveLicenseUrl _ name = canonicalLicenseUrl name
+
 -- | Context for photography pages and photo cards.
 --
 --   Phase 1: frontmatter-only. Auto-extracted EXIF + palette sidecars
@@ -2375,13 +2400,10 @@ photographyCtx =
     licenseUrlField :: Context String
     licenseUrlField = field "license-url-resolved" $ \item -> do
         meta <- getMetadata (itemIdentifier item)
-        case lookupString "license-url" meta of
-            Just u | not (null (trim u)) -> return (trim u)
-            _ -> case lookupString "license" meta of
-                Nothing -> noResult "no license"
-                Just l  -> case canonicalLicenseUrl l of
-                    Just u  -> return u
-                    Nothing -> noResult "license not in canonical lookup"
+        case resolveLicenseUrl (lookupString "license-url" meta)
+                (fromMaybe "" (lookupString "license" meta)) of
+            Just u -> return u
+            Nothing -> noResult "no license URL"
 
     -- @links:@ frontmatter — outbound links to other surfaces where
     -- the photograph appears or can be acquired (Wikimedia Commons,

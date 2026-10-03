@@ -41,7 +41,10 @@ Yes and no, if you ask me. I believe in the power of transparency and honesty. I
 
 ## Applied Vanitas
 
-![Dante and Beatrice gaze upon the highest heaven.](/images/canto31.jpg "Gustav Doré - Paradiso, Canto 31")
+<figure>
+<img src="/images/canto31.jpg" alt="Dante and Beatrice gaze upon the highest heaven." title="Gustave Doré - Paradiso, Canto 31" width="2400" height="2962" loading="lazy" decoding="async" data-lightbox="true">
+<figcaption>Gustave Doré, <em>Paradiso</em>, Canto 31 — <a href="https://creativecommons.org/publicdomain/mark/1.0/">public domain</a>.</figcaption>
+</figure>
 
 ::: dropcap
 Time passes regardless of our wishes, our intentions, our apprehensions. That is perhaps the most beautifully profound fact of our existence, and one that therefore I view with gratitude. 

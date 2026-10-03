@@ -2,6 +2,7 @@
 title: Sonnet 60
 date: 1609-05-20
 poet: William Shakespeare
+license: Public domain
 abstract: Like as the waves make towards the pebbled shore, / So do our minutes hasten to their end.
 tags: [poetry]
 history:

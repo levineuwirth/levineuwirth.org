@@ -2,6 +2,7 @@
 title: Ozymandias
 date: 1818-01-11
 poet: Percy Bysshe Shelley
+license: Public domain
 abstract: I met a traveller from an antique land, / Who said — "Two vast and trunkless legs of stone / Stand in the desert."
 tags: [poetry]
 ---

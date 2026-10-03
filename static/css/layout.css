@@ -130,9 +130,11 @@ body > header:not(.essay-frontmatter) {
 
 .footer-left {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     flex: 1;
     gap: 1rem;
+    row-gap: 0.3rem;
 }
 
 .footer-left a {
