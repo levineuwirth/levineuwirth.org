@@ -66,6 +66,7 @@ data/last-build-seconds.txt
 # Build-freshness state (tools/build-freshness.sh): which rules/commit
 # the last build used and when the last full rebuild happened
 data/rules-hash.txt
+data/unpublished-hash.txt
 data/last-build-commit.txt
 data/last-full-rebuild.txt
 data/.full-rebuild-pending

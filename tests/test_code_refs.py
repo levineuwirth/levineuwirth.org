@@ -108,7 +108,17 @@ class Eligibility(unittest.TestCase):
             "poetry/open/index.md": "---\ndraft: false\n---\n",
             "poetry/open/poem.md": self.link("open-collection.py"),
         })
-        self.assertEqual(found, {"public.py", "open-collection.py"})
+        self.assertEqual(found, {"public.py", "open-collection.py", "in-draft-collection.py"})
+
+    def test_yaml_drafts_cannot_create_public_snapshots(self):
+        files = {
+            "essays/public.md": self.link("public.py"),
+            "essays/hidden/index.md": "---\ndraft: true\n---\n",
+            "essays/hidden/notes.md": self.link("hidden-child.py"),
+        }
+        for index, flag in enumerate(('"draft": true', 'draft:\n  true', 'draft: >-\n  true')):
+            files[f"essays/draft{index}.md"] = f"---\n{flag}\n...\n" + self.link(f"draft{index}.py")
+        self.assertEqual(self.discover(files), {"public.py"})
 
     def test_draft_word_in_body_is_not_a_flag(self):
         found = self.discover({

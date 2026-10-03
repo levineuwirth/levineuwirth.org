@@ -44,6 +44,7 @@ main = do
     case args of
         ["render-fixture", path] -> renderFixture path
         ["list-unpublished"] -> scanUnpublished "content" >>= mapM_ putStrLn . unpublishedSummary
+        ["list-unpublished", root] -> scanUnpublished root >>= mapM_ putStrLn . unpublishedSummary
         ["footer-data"] -> do
             dev <- isDevBuild
             when dev $ fail "footer-data: production builds only (a dev build's backlinks include drafts)"

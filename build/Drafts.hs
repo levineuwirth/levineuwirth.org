@@ -86,11 +86,11 @@ scanUnpublished root = do
         stems = concat [flatPhotoStems fp photo | (fp, photo) <- flagged, isFlatPhoto fp]
     return (Unpublished (Set.fromList (map norm files)) (map norm dirs) (map norm stems))
   where
-    isDirectoryEntry fp = case splitDirectories (norm fp) of
-        ["content", section, _, "index.md"] -> section `elem` ["essays", "music", "photography"]
+    isDirectoryEntry fp = case splitDirectories (makeRelative root fp) of
+        [section, _, "index.md"] -> section `elem` ["essays", "music", "photography"]
         _                                   -> False
-    isFlatPhoto fp = case splitDirectories (norm fp) of
-        ["content", "photography", name] -> name /= "index.md"
+    isFlatPhoto fp = case splitDirectories (makeRelative root fp) of
+        ["photography", name] -> name /= "index.md"
         _                                -> False
     flatPhotoStems fp photo =
         let dir = takeDirectory fp
@@ -185,6 +185,7 @@ draftFlag fp = do
                 _ -> Nothing
   where
     truthy (Just (A.Bool b))   = b
+    truthy (Just (A.Number n)) = n == 1
     -- YAML 1.1 readers (PyYAML, the tests) take yes/on as true; accept the
     -- same spellings when they arrive here as strings.
     truthy (Just (A.String t)) = map toLower (filter (not . isSpace) (T.unpack t)) `elem` ["true", "yes", "on", "1"]

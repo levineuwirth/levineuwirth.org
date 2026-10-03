@@ -268,6 +268,8 @@ class FrontMatterTests(unittest.TestCase):
         for rel, value in self.values("draft"):
             if isinstance(value, bool):
                 continue
+            if isinstance(value, int) and value in (0, 1):
+                continue
             if isinstance(value, str) and "".join(value.split()).lower() in truthy | falsy:
                 continue
             bad.append(f"{rel}: draft: {value!r} is neither true nor false to the build")

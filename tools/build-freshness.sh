@@ -29,8 +29,10 @@
 #      now generates is new and an incremental build creates those correctly.
 #   2c. The draft flag. `draft: true` withholds the page (build/Drafts.hs),
 #      and Hakyll never deletes the output of a file it stops seeing, so a
-#      changed `draft:` value forces a clean whether or not the file had
-#      route metadata before.
+#      changed set of withheld files forces a clean. The generator reads
+#      YAML once per scan; snapshot discovery uses the same boundary. The
+#      recorded hash describes the last built worktree, including uncommitted
+#      or untracked flags, rather than assuming that worktree matched HEAD.
 #   3. Compile-time clocks. Stability labels (build/Stability.hs), /now/'s
 #      relative timestamp, and archive link-rot annotations are computed
 #      via untracked IO and freeze on pages that never recompile. A full
@@ -43,7 +45,7 @@
 #   build-freshness.sh stamp   immediately after a successful site build
 #
 # State lives in data/ (gitignored): rules-hash.txt, last-build-commit.txt,
-# last-full-rebuild.txt, .full-rebuild-pending. Deleting any of them is
+# last-full-rebuild.txt, unpublished-hash.txt, .full-rebuild-pending. Deleting any of them is
 # safe — the next build rebuilds from scratch and re-seeds them.
 #
 # KNOWN LIMITS (deliberate, bounded by the 7-day full rebuild):
@@ -74,6 +76,7 @@ RULES_HASH_FILE="$STATE_DIR/rules-hash.txt"
 LAST_BUILD_COMMIT_FILE="$STATE_DIR/last-build-commit.txt"
 LAST_FULL_REBUILD_FILE="$STATE_DIR/last-full-rebuild.txt"
 PENDING_MARKER="$STATE_DIR/.full-rebuild-pending"
+DRAFT_HASH_FILE="$STATE_DIR/unpublished-hash.txt"
 
 # Everything that changes the compiled site generator: the Haskell rules
 # and the cabal metadata (dependency-bound moves change behaviour too).
@@ -116,38 +119,6 @@ route_fields() {
             cur = 0
         }
     '
-}
-
-# Print a document's `draft:` value from its frontmatter, or nothing.
-draft_field() {
-    awk '
-        NR == 1 { if ($0 != "---") exit; next }
-        $0 == "---" || $0 == "..." { exit }
-        /^draft:/ { sub(/^draft:[ \t]*/, ""); sub(/[ \t]*(#.*)?$/, ""); print; exit }
-    '
-}
-
-# The draft value of a file at a git revision or in the worktree; empty
-# when the file or the key is absent.
-draft_value() {
-    local rev="$1" path="$2"
-    if [ "$rev" = "WORKTREE" ]; then
-        [ -f "$path" ] && draft_field < "$path"
-    elif git cat-file -e "$rev:$path" 2>/dev/null; then
-        git show "$rev:$path" | draft_field
-    fi
-    return 0
-}
-
-# Changed Markdown whose `draft:` value differs from what the last build saw.
-changed_draft_flags() {
-    local base="$1" file
-    while IFS= read -r file; do
-        case "$file" in content/*.md) ;; *) continue ;; esac
-        if [ "$(draft_value "${base:-HEAD}" "$file")" != "$(draft_value WORKTREE "$file")" ]; then
-            printf '%s\n' "$file"
-        fi
-    done < <(route_field_candidates "$base")
 }
 
 # The route_fields digest of a file, either at a git revision or in the
@@ -241,11 +212,11 @@ check() {
         reasons+=("route metadata changed in $count file(s): ${first%% }")
     fi
 
-    changed_drafts=$(changed_draft_flags "$base")
-    if [ -n "$changed_drafts" ]; then
-        first=$(printf '%s\n' "$changed_drafts" | head -3 | tr '\n' ' ')
-        count=$(printf '%s\n' "$changed_drafts" | grep -c .)
-        reasons+=("draft flag changed in $count file(s): ${first%% }")
+    # Compare the actual last-built boundary, including untracked flags
+    # and photo stems. A git revision cannot represent a SKIP_SNAPSHOT build.
+    draft_hash=$(python3 tools/unpublished.py hash)
+    if [ ! -f "$DRAFT_HASH_FILE" ] || [ "$draft_hash" != "$(cat "$DRAFT_HASH_FILE")" ]; then
+        reasons+=("draft flag changed (withheld pages or assets differ from last build)")
     fi
 
     now=$(date +%s)
@@ -277,6 +248,8 @@ check() {
 
 stamp() {
     mkdir -p "$STATE_DIR"
+    python3 tools/unpublished.py hash > "$DRAFT_HASH_FILE.tmp"
+    mv "$DRAFT_HASH_FILE.tmp" "$DRAFT_HASH_FILE"
     rules_hash > "$RULES_HASH_FILE"
     git rev-parse HEAD > "$LAST_BUILD_COMMIT_FILE"
     if [ -f "$PENDING_MARKER" ]; then

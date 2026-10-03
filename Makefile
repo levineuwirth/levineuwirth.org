@@ -145,7 +145,8 @@ build-locked:
 	fi
 	# Code-reference snapshots: fetch any GitHub blob/tree/commit linked from
 	# content/ that has no snapshot in code-refs/ yet, for the hover popup.
-	# Stdlib only, so not gated on .venv. Network failures are warnings;
+	# Python stdlib plus the site draft scanner; not gated on .venv.
+	# Network failures are warnings;
 	# the link keeps its previous snapshot or gets no code popup.
 	@python3 tools/code-refs.py fetch
 	# ---- Stage 1: compile (produces the HTML that embed.py reads) --------

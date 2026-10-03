@@ -64,6 +64,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import http.client
+import importlib.util
 import json
 import os
 import re
@@ -75,6 +76,9 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+_spec = importlib.util.spec_from_file_location("unpublished", ROOT / "tools/unpublished.py")
+unpublished = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(unpublished)
 CONTENT_DIR = ROOT / "content"
 STORE_DIR = ROOT / "code-refs"
 INDEX_PATH = STORE_DIR / "index.json"
@@ -145,26 +149,7 @@ PRIVATE_SUFFIXES = (
 )
 PRIVATE_PREFIXES = ("id_rsa", "id_dsa", "id_ecdsa", "id_ed25519", "credentials")
 PRIVATE_NAMES = {"__pycache__", "checklist.md"}
-DRAFT_RE = re.compile(
-    r"""^draft:[ \t]*["']?(true|yes|on|1)["']?[ \t]*(#.*)?$""", re.IGNORECASE | re.MULTILINE
-)
-
-
-def front_matter(text: str) -> str:
-    if not text.startswith("---"):
-        return ""
-    end = text.find("\n---", 3)
-    return text[3:end] if end != -1 else ""
-
-
-def is_draft(md: Path) -> bool:
-    try:
-        return bool(DRAFT_RE.search(front_matter(md.read_text(encoding="utf-8"))))
-    except (OSError, UnicodeDecodeError):
-        return False
-
-
-def publishable(md: Path, content_dir: Path) -> bool:
+def publishable(md: Path, content_dir: Path, boundary=None) -> bool:
     """Whether the site can publish this page: only those may give a link a
     (public) snapshot."""
     rel = md.relative_to(content_dir)
@@ -175,24 +160,17 @@ def publishable(md: Path, content_dir: Path) -> bool:
     if any(p.startswith((".", *PRIVATE_PREFIXES)) or p.endswith(PRIVATE_SUFFIXES)
            or p in PRIVATE_NAMES or ".draft." in p for p in rel.parts):
         return False
-    if is_draft(md):
-        return False
-    # A draft collection hides everything in it (the collection's
-    # index.md carries the flag), however deep.
-    for parent in md.parents:
-        if parent == content_dir or content_dir not in parent.parents:
-            break
-        index = parent / "index.md"
-        if index != md and index.exists() and is_draft(index):
-            return False
-    return True
+    if boundary is None:
+        boundary = unpublished.load_boundary(content_dir)
+    return not unpublished.withheld(md, boundary)
 
 
 def discover_links(content_dir: Path | None = None) -> dict[str, dict]:
     content_dir = content_dir or CONTENT_DIR
+    boundary = unpublished.load_boundary(content_dir)
     links: dict[str, dict] = {}
     for md in sorted(content_dir.rglob("*.md")):
-        if not publishable(md, content_dir):
+        if not publishable(md, content_dir, boundary):
             continue
         try:
             text = md.read_text(encoding="utf-8")

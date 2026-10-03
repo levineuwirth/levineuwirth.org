@@ -81,6 +81,11 @@ class UnpublishedTests(unittest.TestCase):
         self.write("content/drafts/essays/g.md", DRAFT)                        # drafts/ is never published anyway
         self.assertEqual(self.unpublished(), ["file content/a.md", "file content/b.md"])
 
+    def test_all_documented_true_values_are_withheld(self):
+        for index, flag in enumerate(('true', 'yes', 'on', '1', '"1"', '" t r u e "')):
+            self.write(f"content/true{index}.md", f"---\ndraft: {flag}\n---\n")
+        self.assertEqual(self.unpublished(), [f"file content/true{i}.md" for i in range(6)])
+
 
 if __name__ == "__main__":
     unittest.main()

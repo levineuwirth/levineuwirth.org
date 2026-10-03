@@ -81,6 +81,9 @@ backlinks or related links, and none of its files.
 true or false fails the front-matter test. A published page that links to a
 withheld one fails the build's link check, as any broken link does.
 `site list-unpublished` prints what a production build would withhold.
+Snapshot discovery uses that same list. If it differs from the previous
+build (including uncommitted flags or a draft photo's image name), the next
+production build cleans first so previously published output cannot linger.
 
 The flag is separate from `status: Draft`, the epistemic status shown in a
 page's metadata, which does not affect publication.

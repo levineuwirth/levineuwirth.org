@@ -43,6 +43,11 @@ def have(binary: str) -> bool:
 
 @unittest.skipUnless(have("git") and have("bash"), "needs git and bash")
 class BuildFreshnessTestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        from tests.test_golden import site_binary
+        cls.binary = site_binary()
+
     def setUp(self) -> None:
         self._tmp = tempfile.TemporaryDirectory(prefix="freshness-test-")
         self.addCleanup(self._tmp.cleanup)
@@ -87,6 +92,7 @@ class BuildFreshnessTestCase(unittest.TestCase):
         tools = self.root / "tools"
         tools.mkdir(exist_ok=True)
         shutil.copy2(SCRIPT, tools / SCRIPT.name)
+        shutil.copy2(REPO / "tools/unpublished.py", tools / "unpublished.py")
 
         self.git("add", "-A")
         self.git("commit", "-q", "-m", "initial")
@@ -104,6 +110,7 @@ class BuildFreshnessTestCase(unittest.TestCase):
         env["CLEAN_CMD"] = f"touch {self.root}/CLEANED"
         env["STATE_DIR"] = "data"
         env["CACHE_DIR"] = "_cache"
+        env["SITE_DRAFTS_BINARY"] = str(self.binary)
         return subprocess.run(
             ["bash", str(self.root / "tools" / SCRIPT.name), arg],
             cwd=self.root,
@@ -206,6 +213,33 @@ class BuildFreshnessTestCase(unittest.TestCase):
     def test_a_draft_word_in_the_body_is_not_a_flag(self):
         self.write("content/essays/one.md", PAGE + "\ndraft: true\n")
         self.assertNotIn("draft flag changed", self.check())
+
+    def test_yaml_draft_spellings_remove_already_published_outputs(self):
+        self.write("content/plain.md", "---\ntitle: Plain\n---\nText.\n")
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "plain page")
+        self.run_script("stamp")
+        for flag in ('"draft": true', 'draft:\n  true', 'draft: >-\n  true'):
+            with self.subTest(flag=flag):
+                self.write("content/plain.md", f"---\ntitle: Plain\n{flag}\n---\nText.\n")
+                self.assertIn("draft flag changed", self.check())
+
+    def test_untracked_directory_draft_removes_previously_published_assets(self):
+        self.write("content/essays/wip/figure.svg", "<svg/>")
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "figure")
+        self.run_script("stamp")
+        self.write("content/essays/wip/index.md", "---\ndraft: true\n---\n")
+        self.assertIn("draft flag changed", self.check())
+
+    def test_draft_boundary_uses_the_last_built_worktree(self):
+        self.write("content/plain.md", "---\ndraft: true\n---\n")
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "draft page")
+        self.write("content/plain.md", "---\ndraft: false\n---\n")
+        self.run_script("stamp")  # SKIP_SNAPSHOT build published this worktree.
+        self.write("content/plain.md", "---\ndraft: true\n---\n")
+        self.assertIn("draft flag changed", self.check())
 
     def test_data_yaml_metadata_change_is_seen(self):
         self.write("data/now.yaml", "status: paused\ntags:\n  - now\n")
