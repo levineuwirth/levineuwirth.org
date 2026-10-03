@@ -135,9 +135,12 @@ export -f compress_one
 
 # Extensions worth compressing. Images (png/jpg/webp) and PDFs are already
 # compressed; fonts (woff2) are zstd/brotli internally — don't re-wrap.
-# Kept in one place because the orphan sweep below has to agree with it
-# exactly: a suffix this list does not claim must never be deleted.
-COMPRESSIBLE_EXTS=(html css js mjs json svg xml txt wasm)
+# onnx: the 23 MB search model brotlis to 15.7 MB, fetched on the first
+# semantic query; ico and pdf.js's .ftl locale files shrink by 70-80 %
+# (audit O17). Kept in one place because the orphan sweep below has to
+# agree with it exactly: a suffix this list does not claim must never be
+# deleted.
+COMPRESSIBLE_EXTS=(html css js mjs json svg xml txt wasm onnx ico ftl)
 
 find_predicates=()
 for ext in "${COMPRESSIBLE_EXTS[@]}"; do
