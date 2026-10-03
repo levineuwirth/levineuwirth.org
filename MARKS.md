@@ -38,7 +38,7 @@ and to live as a section in the colophon once shipped.
   with a colophon-glossed interpretation that adapts to genre.
 - One narrow exception (`confidence: proved`) that lets formal proofs
   honestly opt out of a numeric credence without forcing false precision.
-- A new Pandoc filter (`Filters/Mark.hs`) that emits the epistemic
+- A new Haskell module (`build/Marks.hs`) that emits the epistemic
   figure SVG inline in the essay header at build time.
 - Template changes in `templates/essay.html` and `templates/blog-post.html`
   to provide three-column frontmatter slots (monogram | title | figure).
@@ -553,6 +553,12 @@ Two new field rows are appended to the existing field list:
 
 ### 7.1 New Haskell module
 
+*As built:* the module is `build/Marks.hs`, and it exports Hakyll
+context fields (`monogramSvgField`, `hasMonogramField`,
+`epistemicSvgField`) that `build/Contexts.hs` composes into the page
+contexts, rather than a Pandoc filter wired into `Compilers.hs`. The
+template field names below are unchanged. The original design:
+
 A new module `build/Filters/Mark.hs` exports two functions:
 
     -- | Render the monogram inline. Reads from disk; substitutes
@@ -755,13 +761,17 @@ extends to compute these. No new external dependencies.
 
 ### 9.3 Linting hook
 
-A pre-commit hook (`tools/hooks/pre-commit-marks.sh`) runs
-`make audit-marks` and warns on any new `.md` file under
-`content/essays/` or `content/research/` (effectively, anything
-tagged `research/*` or in those directories) added without a
-`mark.svg` or with `status:` unset. Warning only; does not block
-the commit. Authors who genuinely want to publish without marks
-can ignore the warning.
+An optional pre-commit hook (`tools/hooks/pre-commit-marks.sh`)
+warns when a commit adds a new `.md` file under `content/essays/`
+(flat or directory form) without a `mark.svg` or with `status:`
+unset in the staged frontmatter. It runs its own check, not
+`make audit-marks`, and ignores modified files. Warning only; does
+not block the commit. Authors who genuinely want to publish without
+marks can ignore the warning.
+
+It is not installed by default. To install it:
+
+    ln -s ../../tools/hooks/pre-commit-marks.sh .git/hooks/pre-commit
 
 ---
 
@@ -769,7 +779,7 @@ can ignore the warning.
 
 ### Phase 1 — Wire the system, no content (1 build)
 
-  - Land `Filters/Mark.hs`, the template changes, and `static/css/marks.css`.
+  - Land `build/Marks.hs`, the template changes, and `static/css/marks.css`.
   - Land `tools/audit-marks.py`.
   - Land the two new schema fields (`peer-status`, `result-shape`)
     and the `confidence: proved` exception in `Contexts.hs` and
@@ -892,7 +902,7 @@ PR scope:
 
 **New:**
 
-  - `build/Filters/Mark.hs`
+  - `build/Marks.hs`
   - `tools/audit-marks.py`
   - `tools/hooks/pre-commit-marks.sh`
   - `static/css/marks.css`

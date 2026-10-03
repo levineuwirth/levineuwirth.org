@@ -1,10 +1,10 @@
 # Photography
 
-Design and implementation plan for the photography section of levineuwirth.org. This is the source of truth for the section's architecture, authoring conventions, and build pipeline. It sits alongside `WRITING.md` and `HOMEPAGE.md` as authoritative spec.
+Design and implementation plan for the photography section of levineuwirth.org. This is the source of truth for the section's architecture, authoring conventions, and build pipeline. It sits alongside `WRITING.md` as authoritative spec.
 
 ## Status
 
-Pre-implementation. Decisions locked; phased build to follow.
+Live at `/photography/`. Phases 1–5 are built (see Phased implementation); the rest is under Open / deferred questions.
 
 ---
 
@@ -354,7 +354,7 @@ Until that script exists, Phase 1 + 2 work with manually prepared JPEGs.
 
 ### Build-pipeline integration
 
-New steps slot into the Makefile alongside the existing `convert-images` and `pdf-thumbs` targets, all gated on tool availability (silent skip if missing, matching the `embed.py` pattern).
+New steps slot into the Makefile alongside the existing `convert-images` and `pdf-thumbs` targets, all gated on tool availability (skipped with a notice if missing, matching the `embed.py` pattern).
 
 The order in `make build` is load-bearing, not incidental:
 
@@ -404,7 +404,7 @@ Alternative considered: render the richer wrapper from the template instead of t
 
 ### Build-time data
 
-`tools/build-map-data.py` walks `content/photography/`, reads each entry's `geo` + `geo-precision`, applies the precision rounding, and emits `_site/photography/map.json`:
+A Hakyll rule (`photographyMapDataRule` in `build/Photography.hs`) walks the photo entries, reads each one's `geo` + `geo-precision`, applies the precision rounding, and emits `_site/photography/map.json`:
 
 ```json
 [
@@ -519,7 +519,7 @@ Each phase has explicit exit criteria. Don't move to the next phase until the cu
 - [x] `tools/extract-exif.py` (uses `exiftool` if present, falls back to `Pillow`)
 - [x] `tools/extract-palette.py` (Python + colorthief)
 - [x] `tools/import-photo.sh` (resize, strip EXIF from delivered file, write sidecars, scaffold frontmatter)
-- [x] Wire both into the Makefile, gated on `.venv` (silent-skip pattern matching `embed.py`)
+- [x] Wire both into the Makefile, gated on `.venv` (skip-with-notice pattern matching `embed.py`)
 - [x] Extend `photographyCtx` to merge sidecar EXIF + palette into the template context (frontmatter wins)
 - [x] Update `.gitignore` with photography sidecars and RAW patterns
 - [ ] **Deferred** — Extend `Filters/Images.hs` with the richer photography wrapper
@@ -587,7 +587,7 @@ These are non-blocking but worth tracking:
 ## References
 
 - `WRITING.md` — frontmatter conventions for essays (template for the photography schema's structure)
-- `HOMEPAGE.md` — homepage portal grid
+- `build/Site.hs` (`homePortals`) — homepage portal grid
 - `build/Patterns.hs` — current content pattern definitions
 - `build/Tags.hs` — slash-hierarchy tag system (reused for photography tags)
 - `build/Filters/Images.hs` — current image filter (to be extended)

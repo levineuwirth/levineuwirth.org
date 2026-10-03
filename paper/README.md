@@ -1,13 +1,13 @@
 # Graph theory research moved
 
 The editable graph-theory manuscripts and numerical experiments now live in
-`~/Repos/research/meyniel`.
+a separate research repository, `meyniel`.
 
-Start with [the research handoff](/home/jeans/Repos/research/meyniel/HANDOFF.md).
+Start with its `HANDOFF.md`.
 Build with `make papers` there; explicitly export reviewed artifacts with:
 
 ```sh
-make -C "$HOME/Repos/research/meyniel" export WEBSITE="$HOME/Repos/personal/levineuwirth.org"
+make -C /path/to/meyniel export WEBSITE=/path/to/levineuwirth.org
 ```
 
 The research repository's `docs/PUBLISHING.md` describes stale-build checks,

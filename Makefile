@@ -6,13 +6,13 @@
 # preserving, so disable it outright.
 .NOTPARALLEL:
 
-# Source .env for deploy / GitHub config if it exists.
+# Source .env for the deploy target if it exists.
 # .env format: KEY=value (one per line, no `export` prefix, no quotes needed).
 # Only the variables explicitly listed below are exported to recipe
 # subprocesses — bare `export` would leak every .env key (including any
 # future GITHUB_TOKEN) into every child process.
 -include .env
-export VPS_USER VPS_HOST VPS_PATH GITHUB_REPO
+export VPS_USER VPS_HOST VPS_PATH
 
 # ---------------------------------------------------------------------------
 # Inter-process lock  (B06)
@@ -718,9 +718,9 @@ audit-viz:
 
 # Report which content pieces are missing a monogram (mark.svg) and / or
 # the epistemic figure (status: frontmatter). Exits 0 unconditionally;
-# this is a coverage report, not a build gate. The pre-commit hook at
-# tools/hooks/pre-commit-marks.sh runs the same script for newly-staged
-# .md files.
+# this is a coverage report, not a build gate. The optional pre-commit
+# hook tools/hooks/pre-commit-marks.sh (not installed by default; MARKS.md
+# § 9.3) makes its own, narrower check of newly added essays.
 audit-marks:
 	@if [ -d .venv ]; then \
 	  uv run python tools/audit-marks.py; \

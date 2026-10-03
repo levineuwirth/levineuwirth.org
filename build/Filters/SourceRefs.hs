@@ -198,7 +198,7 @@ isKnownRootFile t = t `elem`
     , "levineuwirth.cabal"
     , "cabal.project", "cabal.project.freeze"
     , "pyproject.toml", "uv.lock"
-    , "WRITING.md", "HOMEPAGE.md", "PHOTOGRAPHY.md", "README.md"
+    , "WRITING.md", "PHOTOGRAPHY.md", "README.md"
     , "LICENSE"
     -- checklist.md is deliberately absent, and must stay absent: audit
     -- S01 removed it from 'Site.sourcePreviewable' because .gitignore

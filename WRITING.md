@@ -75,6 +75,7 @@ subtitle: "An Optional Secondary Line"  # optional; rendered below the title in 
 date: 2026-03-15          # required; used for ordering, feed, and display
 abstract: >               # optional; shown in the metadata block and link previews
   A one-paragraph description of the piece.
+description: "One plain sentence."  # optional; meta/og/twitter description only — wins over abstract there (default: abstract, else first paragraph)
 summary: |                # optional; rendered in a "Summary" box near the abstract
   A structured summary. **Markdown allowed** — bold, lists, multiple paragraphs.
 tags:                     # optional; see Tags section
@@ -162,6 +163,13 @@ content/poetry/shakespeare-sonnets/
 Collection index pages (`content/poetry/*/index.md`) compile as standalone
 pages. Poems inside collections (`content/poetry/*/*.md`, excluding
 `index.md`) compile with `poetryCompiler` just like flat poems.
+
+`draft: true` in a collection's `index.md` marks a landing page that is still
+scaffolding: production builds give it no route, so it is absent from
+listings, the sitemap, feeds and search; `make dev` and `make watch` still
+build it. The poems inside the collection are unaffected and still publish.
+The key is read only on poetry and fiction collection index pages
+(`content/fiction/*/index.md`); unfinished essays go under `content/drafts/`.
 
 **External / non-original poems** — use `poet:` instead of `authors:` to credit
 an external author without generating a (broken) author index page:
@@ -459,10 +467,11 @@ everything under `static/` to `_site/` unchanged.  Reference them as
 `/papers/filename.pdf`.
 
 **Graph-theory preprints.** Their editable LaTeX sources and demonstration code
-live in `~/Repos/research/meyniel`. Build and explicitly export reviewed assets
-from that checkout using its `docs/PUBLISHING.md`; `static/papers/` holds the
-released copies. Reconcile the corresponding website articles when a theorem
-or interpretation changes. See `paper/README.md` for the migration pointer.
+live in a separate research repository, `meyniel`. Build and explicitly export
+reviewed assets from that checkout using its `docs/PUBLISHING.md`;
+`static/papers/` holds the released copies. Reconcile the corresponding website
+articles when a theorem or interpretation changes. See `paper/README.md` for
+the migration pointer.
 
 **One-time vendor setup.** PDF.js is not included in the repo.  Install it once:
 
@@ -564,7 +573,8 @@ markup needed.
 | Wikipedia | Lead section extract via MediaWiki API |
 | arXiv | Title, authors, abstract via Atom API |
 | DOI / CrossRef | Title, authors, journal, year, abstract |
-| GitHub | Repo name, description, language, stars |
+| GitHub code link (`blob` / `tree` / `commit`) | File contents, directory listing, or commit summary, from a build-time snapshot |
+| GitHub repository | Repo name, description, language, stars |
 | Forgejo (`git.levineuwirth.org`) | Repo name, description, language, stars |
 | Open Library | Book title, description |
 | bioRxiv / medRxiv | Title, authors, abstract |
@@ -589,6 +599,17 @@ to `data/annotations.json`:
 ```
 
 Annotation entries take priority over all other popup providers.
+
+**GitHub code snapshots** — `make build` runs `tools/code-refs.py fetch`,
+which stores every GitHub `blob`, `tree` or `commit` link on a published page
+under `code-refs/`; the popup reads that copy from this site, not the GitHub
+API. A link pinned to a commit hash is fetched once and kept; a branch link
+(`…/tree/main`) is re-snapshotted on every build and labeled "as of" that
+commit. Snapshots no link references any more are deleted. The store is
+tracked in Git and the build does not commit it: after a build that adds,
+changes or removes snapshots, commit `code-refs/`, or `make deploy` refuses to
+publish. Unauthenticated, the GitHub API allows 60 requests an hour; export
+`GITHUB_TOKEN` in your shell to raise that.
 
 Popups are disabled on touch-primary devices and inside nav/TOC/footer
 elements.
@@ -1539,7 +1560,7 @@ These pages are built automatically and require no content files or markup:
 | Page | URL | Description |
 |------|-----|-------------|
 | Essay index | `/essays/` | All essays, newest first |
-| Blog index | `/blog/` | Paginated blog posts |
+| Blog index | `/blog/` | Paginated blog posts (generated only once `content/blog/` has a post) |
 | New | `/new.html` | All content types sorted by date, newest first |
 | Library | `/library.html` | All content grouped by portal (AI, Fiction, Music, etc.) |
 | Build telemetry | `/build/` | Corpus stats, word-length distribution, tag frequencies, link analysis, epistemic coverage, output metrics, repository overview, build timing, and a 52-week writing activity heatmap |
@@ -1547,7 +1568,7 @@ These pages are built automatically and require no content files or markup:
 | Author indexes | `/authors/<slug>/` | All content attributed to an author |
 | Random manifest | `/random-pages.json` | JSON array of page URLs for the random-page button |
 | Atom feeds | `/feed.xml`, `/music/feed.xml` | All content feed + music-only feed |
-| Search | `/search.html` | Pagefind full-text search + client-side semantic search (`all-MiniLM-L6-v2` ONNX model) |
+| Search | `/search.html` | Pagefind full-text search + client-side semantic search (`all-MiniLM-L6-v2` ONNX model); the page itself is `content/search.md` |
 
 ---
 
@@ -1555,9 +1576,9 @@ These pages are built automatically and require no content files or markup:
 
 ```bash
 make build    # auto-commit content/, convert images, PDF thumbs, compile,
-              #   run pagefind + embeddings, clear IGNORE.txt
+              #   run embeddings + pagefind, gate (check-site), clear IGNORE.txt
 make sign     # GPG detach-sign every _site/**/*.html → .html.sig
-make deploy   # clean + build + sign + rsync to VPS + git push
+make deploy   # preflight + build + validate + sign + recheck + git push + rsync to VPS
 make watch    # Hakyll live-reload dev server (SITE_ENV=dev — includes drafts)
 make dev      # clean build + Python HTTP server (SITE_ENV=dev — includes drafts)
 make clean    # wipe _site/ and _cache/
@@ -1567,13 +1588,26 @@ make clean    # wipe _site/ and _cache/
 `content/drafts/essays/` in the build. All other targets exclude drafts.
 
 `make watch` hot-reloads changes to Markdown, CSS, JS, and templates.
-**After any change to a `.hs` file, always run `make clean && make build`** —
-Hakyll's cache is keyed to source file mtimes and will serve stale output after
-Haskell-side changes.
+Hakyll does not track the `.hs` files, but `make build` does not need a manual
+clean after editing them: `tools/build-freshness.sh` hashes `build/**/*.hs` and
+the cabal files and forces a full rebuild when the hash changes (see
+`README.md` for the other triggers). A running `make watch` keeps the old
+generator and its cache; after a `.hs` edit use `make dev`, which starts clean.
 
 `make deploy` requires `VPS_USER`, `VPS_HOST`, and `VPS_PATH` to be set in
-`.env` (see `.env.example`). It runs `clean → build → sign`, sends a desktop
-notification, rsyncs `_site/` to the VPS, and pushes to `origin main`.
+`.env` (see `.env.example`). It does not clean (`make deploy-clean` does). In
+order, it:
+
+1. refuses unless on `main`, refreshes the code-ref and archive snapshots,
+   refuses uncommitted build inputs, and checks that the score pages exist
+   (`deploy-preflight`);
+2. runs the incremental build, `make validate` (tests plus the `check-site`
+   gate) and `make sign`;
+3. checks that `HEAD` is the commit that was built and that no input changed
+   while the build ran (`deploy-recheck`);
+4. sends a desktop notification, pushes to `origin main` (Forgejo and GitHub),
+   and rsyncs `_site/` to the VPS after a dry run that refuses a wrong
+   destination or an unexpectedly large deletion.
 
 **GPG signing:** `make sign` and `make deploy` require the signing subkey
 passphrase to be cached. Run once per boot (or per 24h expiry):
@@ -1584,8 +1618,11 @@ passphrase to be cached. Run once per boot (or per 24h expiry):
 
 **Image conversion:** `make build` automatically runs `tools/convert-images.sh`
 to generate WebP companions for JPEG/PNG images (requires `cwebp`). It also
-generates first-page PDF thumbnails via `pdftoppm` (requires `poppler`).
-Both are skipped silently when the tools are not installed.
+generates responsive photo variants via `make thumbnails` (requires Pillow,
+which `uv sync` installs) and first-page PDF thumbnails via `pdftoppm`
+(requires `poppler`). When a tool is missing the build still succeeds, but it
+prints a warning and ships the heavier originals or no thumbnail;
+`make validate REQUIRE_WEBP=1` makes "JPEGs but no WebP" an error.
 
 **Python environment:** the embedding pipeline requires `uv sync` to be run
 once. After that, `make build` invokes `uv run python tools/embed.py`

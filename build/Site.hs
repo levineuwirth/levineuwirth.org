@@ -383,7 +383,6 @@ rules = do
             .||. "uv.lock"
             .||. "LICENSE"
             .||. "WRITING.md"
-            .||. "HOMEPAGE.md"
             .||. "PHOTOGRAPHY.md"
             .||. "README.md"
     match sourcePreviewable $ version "source-preview" $ do

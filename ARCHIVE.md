@@ -3,7 +3,7 @@
 Design and implementation plan for the link-archiving system of levineuwirth.org.
 This is the source of truth for how external references are preserved, hosted,
 displayed, and indexed. It sits alongside `WRITING.md`, `PHOTOGRAPHY.md`,
-`HOMEPAGE.md`, and `MARKS.md` as authoritative spec.
+and `MARKS.md` as authoritative spec.
 
 ## Status
 
@@ -397,7 +397,7 @@ does the rest.
 | Per-entry provenance | `archive/{slug}/PROVENANCE.json`, committed — immutable for the current snapshot | An immutability claim that isn't in version control isn't immutable. |
 | Mutable state | `data/archive-state.json`, gitignored — link-rot status only | Strict split: immutable facts committed, volatile status disposable. |
 | Hakyll input | `data/archive-index.json` — `url` + aliases → slug, written by the tool | Minimal stable shape for the Haskell side; treated like `data/annotations.json`. |
-| Missing-index behaviour | `Backlinks.hs` and `Filters/Archive.hs` silently no-op when `archive-index.json` is absent | Preserves the established `.venv`-gated silent-skip convention. The archive degrades to invisible, never to an error. |
+| Missing-index behaviour | `Backlinks.hs` and `Filters/Archive.hs` silently no-op when `archive-index.json` is absent | Preserves the established `.venv`-gated skip convention. The archive degrades to invisible, never to an error. |
 | `fetch` idempotence | `fetch` is keyed on `(slug, url)` together; a slug whose recorded URL has changed is refused, not overwritten. `fetch` always rewrites `archive-index.json` to mirror the manifest. | A committed artifact is replaced only by an explicit `refresh`, never as a `fetch` side effect. |
 | Artifact storage | `archive/{slug}/` at repo root, **committed to git** | A preservation guarantee that depends on an un-versioned store is weaker. Repo stays reproducible. |
 | Per-artifact size cap | 25 MB; `archive.py fetch` warns and skips above it; `git add -f` to override deliberately | A 200 MB scan must never land in an auto-commit silently. |
@@ -613,8 +613,8 @@ Haskell side flattens it into an `alias → entry` lookup on load.
 **When `archive-index.json` is absent** — `.venv` not set up, or `archive.py`
 has never run — it is treated as empty: `Backlinks.hs` and `Filters/Archive.hs`
 silently no-op, and the build succeeds unchanged. This is the same
-`.venv`-gated silent-skip convention used by `embed.py` and the photography
-extractors. (This exact phrasing recurs below; it is the canonical statement of
+`.venv`-gated skip convention used by `embed.py` and the photography
+extractors (the Makefile prints a one-line notice; nothing fails). (This exact phrasing recurs below; it is the canonical statement of
 the property.)
 
 ### Eviction & removal
@@ -738,7 +738,7 @@ of Phase 1.
 
 ## Fetch & snapshot pipeline
 
-`tools/archive.py` — a Python tool, gated on `.venv`, silent-skip when absent,
+`tools/archive.py` — a Python tool, gated on `.venv`, skipped with a notice when absent,
 matching the established `embed.py` / `extract-exif.py` pattern. Subcommands:
 
 - `archive.py fetch` — for every manifest URL without an artifact: download it,
@@ -1177,8 +1177,8 @@ the repo stays the source of truth (edits apply after
 `systemctl --user daemon-reload`):
 
 ```
-systemctl --user link   ~/Repos/levineuwirth.org/systemd/archive-check.service
-systemctl --user enable --now ~/Repos/levineuwirth.org/systemd/archive-check.timer
+systemctl --user link   ~/Repos/personal/levineuwirth.org/systemd/archive-check.service
+systemctl --user enable --now ~/Repos/personal/levineuwirth.org/systemd/archive-check.timer
 ```
 
 Cadence: daily at 12:00 (±30 min jitter) gives the hysteresis its minimum
