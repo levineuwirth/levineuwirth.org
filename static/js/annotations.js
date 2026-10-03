@@ -76,46 +76,47 @@
     /* ------------------------------------------------------------------
        Text-stream search — finds the first occurrence of searchText in
        the visible text of root, skipping existing annotation marks.
+
+       Both sides are compared with every run of whitespace as one space.
+       Pandoc keeps a paragraph's source line breaks as newlines inside its
+       text, and Selection.toString() gives them back as spaces, so a
+       selection across a line break never matched: the highlight was
+       stored but never shown (audit J02; 258 of 1,958 prose paragraphs).
+       `at` maps each character of the collapsed text back to its node and
+       offset.
     ------------------------------------------------------------------ */
+
+    function collapse(text) {
+        return text.replace(/\s+/g, ' ').trim();
+    }
 
     function findTextRange(searchText, root) {
         var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
-        var nodes  = [];
+        var full = '';
+        var at   = [];   /* at[i] = [node, offset] of full[i] */
         var node;
         while ((node = walker.nextNode())) {
             /* Skip text already inside an annotation mark */
             if (node.parentElement && node.parentElement.closest('mark.user-annotation')) continue;
-            nodes.push(node);
+            var v = node.nodeValue;
+            for (var j = 0; j < v.length; j++) {
+                var white = /\s/.test(v[j]);
+                if (white && full.charAt(full.length - 1) === ' ') continue;
+                full += white ? ' ' : v[j];
+                at.push([node, j]);
+            }
         }
 
-        /* Build one long string, tracking each node's span */
-        var full  = '';
-        var spans = [];
-        nodes.forEach(function (n) {
-            spans.push({ node: n, start: full.length, end: full.length + n.nodeValue.length });
-            full += n.nodeValue;
-        });
-
-        var idx = full.indexOf(searchText);
+        var needle = collapse(searchText);
+        if (!needle) return null;
+        var idx = full.indexOf(needle);
         if (idx === -1) return null;
-        var end = idx + searchText.length;
+        var first = at[idx];
+        var last  = at[idx + needle.length - 1];
 
-        var startNode, startOff, endNode, endOff;
-        for (var i = 0; i < spans.length; i++) {
-            var s = spans[i];
-            if (startNode === undefined && idx >= s.start && idx < s.end) {
-                startNode = s.node; startOff = idx - s.start;
-            }
-            if (endNode === undefined && end > s.start && end <= s.end) {
-                endNode = s.node; endOff = end - s.start;
-            }
-            if (startNode && endNode) break;
-        }
-
-        if (!startNode || !endNode) return null;
         var range = document.createRange();
-        range.setStart(startNode, startOff);
-        range.setEnd(endNode, endOff);
+        range.setStart(first[0], first[1]);
+        range.setEnd(last[0], last[1] + 1);
         return range;
     }
 
@@ -288,8 +289,11 @@
                 note:    note  || '',
                 created: new Date().toISOString(),
             };
+            /* Stored only once it is on the page: an annotation that could
+               not be anchored used to be saved anyway, invisible, and
+               removable only by clearing them all. */
+            if (!applyAnnotation(ann)) return null;
             addRaw(ann);
-            applyAnnotation(ann);
             return ann;
         },
         remove: removeById,

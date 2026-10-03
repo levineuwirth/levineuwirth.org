@@ -190,6 +190,14 @@ mark.user-annotation:hover { filter: brightness(0.80); }
     border-color: rgba(255, 255, 255, 0.45);
 }
 
+/* Shown when a selection cannot be anchored (annotations.js). */
+.ann-picker-error {
+    margin: 0.4rem 0 0;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    color: var(--danger);
+}
+
 .ann-picker-actions {
     display: flex;
     justify-content: flex-end;

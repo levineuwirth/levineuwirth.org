@@ -480,8 +480,18 @@
         });
 
         function commit() {
-            if (window.Annotations) {
-                window.Annotations.add(text, pickerColor, note.value.trim());
+            if (window.Annotations &&
+                !window.Annotations.add(text, pickerColor, note.value.trim())) {
+                /* Say so rather than close as if it had worked. */
+                var msg = picker.querySelector('.ann-picker-error');
+                if (!msg) {
+                    msg = document.createElement('p');
+                    msg.className = 'ann-picker-error';
+                    msg.setAttribute('role', 'alert');
+                    picker.appendChild(msg);
+                }
+                msg.textContent = 'This passage could not be highlighted.';
+                return;
             }
             hidePicker();
         }
