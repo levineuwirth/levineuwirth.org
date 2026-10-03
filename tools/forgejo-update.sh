@@ -3,8 +3,10 @@
 #
 # Follows the floating LTS tag in docker-compose.yml. When the pulled image
 # differs from the running one: refuse anything off the 15.0 line, back up,
-# recreate, wait for the new version, check the database. If the new version
-# does not come up and it ran no migrations, put the previous image back and
+# recreate, wait for the new version, watch that it stays up, check the
+# database. If the new version does not come up, or comes up and then
+# restarts or stops within $STABLE seconds, and it ran no migrations, put the
+# previous image back and
 # hold the failed one; if it ran migrations, stop and leave it to the
 # operator, because an older Forgejo cannot open a migrated database
 # (forgejo/UPGRADE.md § 5.1, with the archive this run logged).
@@ -18,6 +20,10 @@
 # one, so a hand-run `docker compose up -d` cannot recreate the forge on an
 # image that was held or refused (audit Y04).
 #
+# A run that finds nothing to apply still fails when Forgejo is not
+# answering or not running steadily, so a crash loop that starts after a
+# successful update does not pass as "unchanged" day after day.
+#
 # From $EOL_WARN_DAYS before the end of the 15.0 LTS, patches still apply
 # but every run fails with a reminder to plan the next LTS (audit Y09).
 set -euo pipefail
@@ -30,6 +36,8 @@ API=${API:-http://127.0.0.1:3000}
 BACKUP=${BACKUP:-systemctl start forgejo-backup.service}
 PULL=${PULL:-1}
 WAIT=${WAIT:-300}
+STABLE=${STABLE:-120}                   # seconds the new version must stay up after answering
+CHECK_EVERY=${CHECK_EVERY:-5}
 HOLD=${HOLD:-/var/lib/forgejo-update/hold}
 PRUNE=${PRUNE:-1}                       # drop the now-dangling previous image after a success
 ATTENTION=${ATTENTION:-/var/lib/forgejo-update/needs-operator}
@@ -43,14 +51,37 @@ image_version() {
         | sed -n 's/^forgejo version \([^+ ]*\).*/\1/p' || true
 }
 wait_for() {   # wait_for <version> — poll the API ($WAIT tries, a second apart) until it reports it
-    # One matching answer passes; whether the container then stays up or
-    # falls into a restart loop is not checked.
     local _
     for _ in $(seq "$WAIT"); do
         [ "$(version)" = "$1" ] && return 0
         sleep 1
     done
     return 1
+}
+# Status, restarting, restart count and start time: a restart under
+# `restart: unless-stopped` changes the count and the start time.
+container_state() {
+    local state
+    state=$(docker inspect -f '{{.State.Status}} {{.State.Restarting}} {{.RestartCount}} {{.State.StartedAt}}' "$CONTAINER" 2>/dev/null) || state=
+    echo "${state:-missing}"
+}
+stays_up() {   # stays_up <version> — running, unrestarted for $STABLE s, and still answering <version>
+    local first now t=0
+    first=$(container_state)
+    case "$first" in
+        "running false "*) ;;
+        *) log "container is not running steadily ($first)"; return 1 ;;
+    esac
+    while [ "$t" -lt "$STABLE" ]; do
+        sleep "$CHECK_EVERY"
+        t=$(( t + CHECK_EVERY ))
+        now=$(container_state)
+        if [ "$now" != "$first" ]; then
+            log "container restarted or stopped within ${t}s of answering ($first -> $now)"
+            return 1
+        fi
+    done
+    [ "$(version)" = "$1" ] || { log "the API stopped answering $1 within ${STABLE}s"; return 1; }
 }
 
 hold() { mkdir -p "$(dirname "$HOLD")"; echo "$pulled" > "$HOLD"; }
@@ -88,7 +119,13 @@ archive=none
 pulled=$(docker image inspect -f '{{.Id}}' "$IMAGE")
 
 if [ "$pulled" = "$running" ]; then
-    done_ok "forgejo ${before:-?} — unchanged"
+    state=$(container_state)
+    case "$state" in
+        "running false "*) ;;
+        *) log "nothing to apply, but the container is not running steadily ($state)"; exit 1 ;;
+    esac
+    [ -n "$before" ] || { log "nothing to apply, but forgejo is not answering on $API"; exit 1; }
+    done_ok "forgejo $before — unchanged"
 fi
 if [ -f "$HOLD" ] && [ "$(cat "$HOLD")" = "$pulled" ]; then
     decline "the pulled image failed before and is on hold; not applying it (remove $HOLD to retry)"
@@ -116,7 +153,7 @@ needs_operator "update to forgejo $new started; completion has not been verified
 docker tag "$pulled" "$IMAGE"           # recreate on exactly the image this run checked
 docker compose up -d 2>&1 | tail -1 || log "compose up reported an error; waiting anyway"
 
-if wait_for "$new"; then
+if wait_for "$new" && stays_up "$new"; then
     if ! integrity=$(docker exec -u git "$CONTAINER" sqlite3 -cmd '.timeout 15000' /data/gitea/gitea.db 'PRAGMA integrity_check;' 2>&1 | head -1); then
         integrity="integrity_check command failed: $integrity"
     fi
@@ -132,24 +169,24 @@ if wait_for "$new"; then
     exit 1
 fi
 
-# The new version did not come up.
+# The new version did not come up, or did not stay up.
 migrations=$(docker logs --since "$since" "$CONTAINER" 2>&1 | grep -c 'Migration\[' || true)
 docker logs --since "$since" "$CONTAINER" 2>&1 | grep -E '\[F\]|\[E\]' | tail -5 | sed 's/^/forgejo-update:   /' || true
 if [ "$migrations" != 0 ]; then
     hold
-    needs_operator "forgejo $new did not come up after $migrations migration(s)"
-    log "forgejo $new did not come up after $migrations migration(s); NOT rolling back the image."
+    needs_operator "forgejo $new did not come up or stay up after $migrations migration(s)"
+    log "forgejo $new did not come up or stay up after $migrations migration(s); NOT rolling back the image."
     log "restore the pre-update archive above by UPGRADE.md § 5.1."
     exit 1
 fi
-log "forgejo $new did not come up and ran no migrations; putting ${before:-the previous image} back"
+log "forgejo $new did not come up or stay up, and ran no migrations; putting ${before:-the previous image} back"
 hold
 docker tag "$running" "$IMAGE"
 docker compose up -d 2>&1 | tail -1 || true
-if [ -n "$before" ] && wait_for "$before"; then
+if [ -n "$before" ] && wait_for "$before" && stays_up "$before"; then
     rm -f "$ATTENTION"
     log "rolled back to $before; $new is on hold"
 else
-    log "rollback did not come up either; operator needed"
+    log "the rollback did not come up and stay up either; operator needed"
 fi
 exit 1

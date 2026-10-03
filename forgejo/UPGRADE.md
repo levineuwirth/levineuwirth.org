@@ -463,9 +463,10 @@ came from into the compose file, and a floating tag names no one image to
 come back to. The deployment itself has followed `:15` since 2026-10-01, and
 forgejo-update.sh rolls back by image ID rather than by tag. Before it
 recreates, it logs the running and the applied image IDs and the pre-update
-archive. A new version that does not come up and ran no migrations is put
-back: the local `:15` is pointed at the previous image, the forge recreated,
-and the failed image held. One that migrated, or came up with a failed
+archive. A new version that does not come up, or answers and then restarts
+or stops within `STABLE` seconds (120 by default), and ran no migrations is
+put back: the local `:15` is pointed at the previous image, the forge
+recreated, and the failed image held. One that migrated, or came up with a failed
 `integrity_check`, is held and left for the operator; § 5.1 ends with the
 restore for that case.
 
@@ -830,17 +831,21 @@ fixing that leaves the same instance drifting again from a newer number.
 * **Patches apply themselves (since 2026-10-01).** The compose file follows
   the floating `:15` tag, and `forgejo-update.timer` (daily, 05:00 UTC)
   pulls it and, when the image changed, backs up, refuses anything off the
-  15.0 line, recreates, waits for the new version and checks the database.
-  A patch that does not come up and ran no migrations is rolled back and
-  held in `/var/lib/forgejo-update/hold`. One that migrated and then
+  15.0 line, recreates, waits for the new version, watches that the
+  container stays up for two minutes without a restart, and checks the
+  database. A patch that does not come up or stay up, and ran no
+  migrations, is rolled back and held in `/var/lib/forgejo-update/hold`. One that migrated and then
   failed, or came up with a failed `integrity_check`, is held too, and
   also leaves `/var/lib/forgejo-update/needs-operator` naming the image and
   the pre-update archive; every later run fails until that file is gone,
   so the failure cannot clear itself overnight (§ 5.1, last part). Whenever
   a run declines a pulled image, the local `:15` tag is pointed back at the
   running image, so a hand-run `docker compose up -d` recreates the forge on
-  what is running, never on a held or refused image (audit Y04). The
-  failed unit shows in `tools/vps-status`. What runs, and when it changed:
+  what is running, never on a held or refused image (audit Y04). A run with
+  nothing to apply still fails if the container is not running steadily or
+  the API does not answer, so a crash loop that starts later is reported
+  every morning rather than passing as "unchanged". The failed unit shows
+  in `tools/vps-status`. What runs, and when it changed:
 
   ```bash
   curl -s https://git.levineuwirth.org/api/v1/version
@@ -850,7 +855,11 @@ fixing that leaves the same instance drifting again from a newer number.
   The script was tested on 2026-10-01 against a throwaway instance through
   each path: unchanged, a 14.0 image refused, 15.0.7 → 15.0.9 applied, a
   broken 15.0 image rolled back and held, the held image refused again,
-  and the hold cleared by the next good one.
+  and the hold cleared by the next good one. The stay-up check (added
+  2026-10-03) is covered by `tests/test_forgejo_update.py` (a release that
+  answers then crash-loops, one that migrated first, one that stops) and
+  was rehearsed against real containers under `restart: unless-stopped`:
+  a crash 5 s after start was caught on the next 2 s sample.
 * **Diarise the LTS end date: 2027-07-15.** The next LTS is 19.0
   (2028-07-13), so the move is `15.0.x → 19.0.x` and it should start in
   spring 2027, not in July. Put it in the calendar now — that is the control

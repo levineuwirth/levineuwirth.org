@@ -18,14 +18,31 @@ mode = os.environ['STUB_MODE']
 applied = root / 'applied'
 tag = root / 'tag'
 if Path(sys.argv[0]).name == 'curl':
+    if mode == 'unchanged-down':
+        sys.exit(7)
     v = '15.0.1' if applied.exists() else '15.0.0'
     if mode == 'rollback' and applied.exists():
         sys.exit(7)
     print('{"version":"' + v + '"}')
+elif args[0] == 'inspect' and 'RestartCount' in args[2]:
+    # The container's state. In crashloop modes the new image restarts on
+    # every look; the old one (after a rollback) is steady.
+    if mode.startswith('crashloop') and applied.exists():
+        n = root / 'restarts'
+        count = int(n.read_text()) + 1 if n.exists() else 1
+        n.write_text(str(count))
+        print(f'running false {count} 2026-10-04T05:00:{count:02d}Z')
+    elif mode == 'stopped' and applied.exists():
+        print('exited false 0 2026-10-04T05:00:00Z')
+    else:
+        print('running false 0 2026-10-04T05:00:00Z')
 elif args[0] == 'inspect':
     print('sha256:old')
+elif args[0] == 'logs':
+    if mode == 'crashloop-migrated' and applied.exists():
+        print('2026/10/04 05:00:01 ...Migration[302]: add a column')
 elif args[:2] == ['image', 'inspect']:
-    print('sha256:new')
+    print('sha256:old' if mode.startswith('unchanged') else 'sha256:new')
 elif args[0] == 'run':
     print('forgejo version 15.0.1')
 elif args[0] == 'tag':
@@ -62,7 +79,8 @@ class ForgejoUpdateRecovery(unittest.TestCase):
         self.env = dict(os.environ, PATH=str(bin_dir) + os.pathsep + os.environ["PATH"],
                         STUB_ROOT=str(self.root), DIR=str(self.root), BACKUP="true",
                         HOLD=str(self.hold), ATTENTION=str(self.attention),
-                        WAIT="1", PRUNE="0", PULL="0", EOL="2099-07-15")
+                        WAIT="1", STABLE="2", CHECK_EVERY="1",
+                        PRUNE="0", PULL="0", EOL="2099-07-15")
 
     def run_update(self, mode):
         return subprocess.run(["bash", str(SCRIPT)], env=dict(self.env, STUB_MODE=mode),
@@ -106,6 +124,37 @@ class ForgejoUpdateRecovery(unittest.TestCase):
         self.assertFalse(self.attention.exists(), result.stdout + result.stderr)
         self.assertEqual(self.hold.read_text().strip(), "sha256:new")
         self.assertEqual((self.root / "tag").read_text(), "sha256:old")
+
+    def test_a_release_that_answers_then_crash_loops_is_rolled_back(self):
+        result = self.run_update("crashloop")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("restarted or stopped", result.stdout)
+        self.assertEqual(self.hold.read_text().strip(), "sha256:new")
+        self.assertEqual((self.root / "tag").read_text(), "sha256:old")
+        self.assertFalse(self.attention.exists(), result.stdout + result.stderr)
+
+    def test_a_release_that_crash_loops_after_migrating_is_left_for_the_operator(self):
+        result = self.run_update("crashloop-migrated")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("NOT rolling back", result.stdout)
+        self.assertTrue(self.attention.exists())
+        self.assertEqual((self.root / "tag").read_text(), "sha256:new")
+
+    def test_a_release_whose_container_stops_is_rolled_back(self):
+        result = self.run_update("stopped")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("not running steadily", result.stdout)
+        self.assertEqual((self.root / "tag").read_text(), "sha256:old")
+
+    def test_nothing_to_apply_still_fails_when_forgejo_is_not_answering(self):
+        result = self.run_update("unchanged-down")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("not answering", result.stdout)
+
+    def test_nothing_to_apply_passes_when_forgejo_is_healthy(self):
+        result = self.run_update("unchanged")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("unchanged", result.stdout)
 
 
 if __name__ == "__main__":
