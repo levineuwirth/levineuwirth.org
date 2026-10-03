@@ -14,7 +14,12 @@
        rest of the cascade — use them consistently below instead of
        reaching for hardcoded #fff/#000 again.
     ---------------------------------------------------------------- */
+    /* :root:not([data-theme]) is the OS-dark fallback's own selector
+       (base.css), and at (0,2,0) it beat a bare :root here: with a dark
+       system setting and no saved theme, body text printed pale grey on
+       white (audit V02). Same specificity, later in the cascade, wins. */
     :root,
+    :root:not([data-theme]),
     [data-theme="dark"],
     [data-theme="cappuccino"] {
         --bg:           #ffffff;
@@ -29,8 +34,12 @@
         --rule:         #cccccc;
     }
 
-    /* Reading-mode body warm tints would otherwise repaint pages cream. */
-    body.reading-mode { --bg: #ffffff; }
+    /* Reading-mode body warm tints would otherwise repaint pages cream,
+       or dark: each theme's reading-mode rule (reading.css) is more
+       specific than a bare body.reading-mode. */
+    body.reading-mode,
+    [data-theme] body.reading-mode,
+    :root:not([data-theme]) body.reading-mode { --bg: #ffffff; }
 
     /* ----------------------------------------------------------------
        Hide chrome.
@@ -104,8 +113,8 @@
     #markdownBody,
     .page-shell > #markdownBody,
     body.reading-mode .page-shell > #markdownBody,
-    body.reading-mode.poetry > #markdownBody,
-    body.reading-mode.fiction > #markdownBody {
+    body.reading-mode.poetry .page-shell > #markdownBody,
+    body.reading-mode.fiction .page-shell > #markdownBody {
         width: 100% !important;
         max-width: 100% !important;
         grid-column: unset !important;
@@ -254,7 +263,7 @@
     ---------------------------------------------------------------- */
     #markdownBody > p:first-of-type::first-letter,
     #markdownBody .dropcap p::first-letter,
-    body.reading-mode.fiction > #markdownBody h2 + p::first-letter {
+    body.reading-mode.fiction .page-shell > #markdownBody h2 + p::first-letter {
         font-size: 2.4em;
         line-height: 0.9;
     }

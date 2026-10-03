@@ -60,12 +60,12 @@ body.reading-mode .page-shell > #markdownBody {
    ============================================================ */
 
 /* Slightly narrower measure for verse */
-body.reading-mode.poetry > #markdownBody {
+body.reading-mode.poetry .page-shell > #markdownBody {
     max-width: 52ch;
 }
 
 /* Generous line height and stanza spacing */
-body.reading-mode.poetry > #markdownBody > p {
+body.reading-mode.poetry .page-shell > #markdownBody > p {
     line-height: 1.85;
     margin-bottom: 1.6rem;
     /* Ragged right — no hyphenation, no justification */
@@ -74,7 +74,7 @@ body.reading-mode.poetry > #markdownBody > p {
 }
 
 /* Suppress the prose dropcap — poetry opens without a floated initial */
-body.reading-mode.poetry > #markdownBody > p:first-of-type::first-letter {
+body.reading-mode.poetry .page-shell > #markdownBody > p:first-of-type::first-letter {
     float: none;
     font-size: inherit;
     line-height: inherit;
@@ -83,7 +83,7 @@ body.reading-mode.poetry > #markdownBody > p:first-of-type::first-letter {
 }
 
 /* Suppress the smallcaps lead-in on the first line */
-body.reading-mode.poetry > #markdownBody > p:first-of-type::first-line {
+body.reading-mode.poetry .page-shell > #markdownBody > p:first-of-type::first-line {
     font-variant-caps: normal;
     letter-spacing: normal;
 }
@@ -93,7 +93,7 @@ body.reading-mode.poetry > #markdownBody > p:first-of-type::first-line {
    ============================================================ */
 
 /* Chapter headings: Fira Sans smallcaps, centered, spaced */
-body.reading-mode.fiction > #markdownBody h2 {
+body.reading-mode.fiction .page-shell > #markdownBody h2 {
     text-align: center;
     font-family: var(--font-sans);
     font-size: 0.85rem;
@@ -106,7 +106,7 @@ body.reading-mode.fiction > #markdownBody h2 {
 }
 
 /* Drop cap at the start of each chapter (h2 → next paragraph) */
-body.reading-mode.fiction > #markdownBody h2 + p::first-letter {
+body.reading-mode.fiction .page-shell > #markdownBody h2 + p::first-letter {
     float: left;
     font-size: 3.8em;
     line-height: 0.8;
@@ -117,12 +117,12 @@ body.reading-mode.fiction > #markdownBody h2 + p::first-letter {
 }
 
 /* Smallcaps lead-in for chapter-opening lines */
-body.reading-mode.fiction > #markdownBody h2 + p::first-line {
+body.reading-mode.fiction .page-shell > #markdownBody h2 + p::first-line {
     font-variant-caps: small-caps;
     letter-spacing: 0.05em;
 }
 
 /* Scene breaks (***) — reuse the asterism but give it more breathing room */
-body.reading-mode.fiction > #markdownBody hr {
+body.reading-mode.fiction .page-shell > #markdownBody hr {
     margin: 3rem 0;
 }
