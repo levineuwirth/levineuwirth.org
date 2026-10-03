@@ -4,11 +4,14 @@
     uv run --with fonttools --with brotli tools/subset-fonts.py
 
 Fetches Spectral and JetBrains Mono from the Google Fonts repository
-(github.com/google/fonts, main) and Fira Sans 4.301 from bBox Type's
+(github.com/google/fonts) and Fira Sans 4.301 from bBox Type's
 (github.com/bBoxType/FiraSans), each with its OFL.txt, caches them under
 ~/.cache/levineuwirth-fonts, and writes WOFF2 subsets and OFL-*.txt to
 static/fonts/. Replaces subset-fonts.sh, which read fonts from
 an Arch package path that is no longer installed (audit V08).
+Source revisions and SHA-256 digests are pinned in tools/font-sources.json.
+To upgrade, review the new upstream revision and bytes, update the pins
+and digests together, then compare font metrics and browser layout again.
 
 What changed from the shell script, and why:
   - Characters the site prints that the subsets dropped (audit V08):
@@ -47,6 +50,7 @@ from __future__ import annotations
 import collections
 import hashlib
 import io
+import json
 import re
 import sys
 import urllib.request
@@ -61,8 +65,9 @@ OUT = ROOT / "static" / "fonts"
 BASE_CSS = ROOT / "static" / "css" / "base.css"
 CONTENT = ROOT / "content"
 CACHE = Path.home() / ".cache" / "levineuwirth-fonts"
-GOOGLE = "https://raw.githubusercontent.com/google/fonts/main/ofl"
-BBOX = "https://raw.githubusercontent.com/bBoxType/FiraSans/master"
+GOOGLE = "https://raw.githubusercontent.com/google/fonts/9710da1eacb3be272583c3224dcb70f9da6eadbb/ofl"
+BBOX = "https://raw.githubusercontent.com/bBoxType/FiraSans/f54eeb3124c63fe9b5bcd36d09d1cd46788cd15e"
+SOURCE_HASHES = json.loads((ROOT / "tools" / "font-sources.json").read_text())
 FIRA_TTF = BBOX + "/Fira_Sans_4_3/Fonts/Fira_Sans_TTF_4301/Normal/Roman"
 
 # Latin-1, Latin Extended-A, the punctuation block, and the few symbols
@@ -162,12 +167,18 @@ MUST_COVER = {
 
 
 def fetch(url: str) -> bytes:
+    expected = SOURCE_HASHES[url]
     cached = CACHE / hashlib.sha256(url.encode()).hexdigest()[:16] / url.rsplit("/", 1)[1]
+    if cached.is_file():
+        data = cached.read_bytes()
+    else:
+        with urllib.request.urlopen(url, timeout=60) as r:
+            data = r.read()
+    if hashlib.sha256(data).hexdigest() != expected:
+        raise ValueError(f"font source checksum mismatch: {url}; cache: {cached}")
     if not cached.is_file():
         cached.parent.mkdir(parents=True, exist_ok=True)
-        with urllib.request.urlopen(url, timeout=60) as r:
-            cached.write_bytes(r.read())
-    data = cached.read_bytes()
+        cached.write_bytes(data)
     print(f"  {url.rsplit('/', 1)[1]}  sha256 {hashlib.sha256(data).hexdigest()[:16]}…  ({len(data) // 1024} KB)")
     return data
 
