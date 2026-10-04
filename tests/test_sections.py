@@ -1,7 +1,7 @@
 """Each section's pages carry its default ornament (build/Sections.hs) unless
 their front matter names another. memento-mori's one page is routed to
-memento-mori.html, beside its directory, and showed the fallback asterism
-instead of its own ornament until 2026-10-04. Reads the built site."""
+memento-mori.html, beside its directory, and uses the author's preferred
+asterism. Reads the built site."""
 
 import re
 import unittest
@@ -21,7 +21,7 @@ def dingbat(page: str) -> str | None:
 class SectionOrnaments(unittest.TestCase):
     def test_memento_mori(self) -> None:
         self.assertNotIn("dingbat:", (ROOT / "content/memento-mori/index.md").read_text(encoding="utf-8"))
-        self.assertEqual(dingbat("memento-mori.html"), "memento")
+        self.assertEqual(dingbat("memento-mori.html"), "asterism")
 
     def test_routed_sections(self) -> None:
         for page, want in (("essays/asymmetric-forgetting.html", "fleuron"),

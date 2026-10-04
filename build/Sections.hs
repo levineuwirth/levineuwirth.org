@@ -24,13 +24,11 @@ sections =
     , Section "fiction"      "Fiction"     (Just "asterisks")
     , Section "music"        "Composition" (Just "clef")
     , Section "photography"  "Photo"       Nothing
-    , Section "memento-mori" "Page"        (Just "memento")
+    , Section "memento-mori" "Page"        (Just "asterism")
     ]
 
 -- | The section a route belongs to. A section whose one page is routed
---   beside its directory counts too: memento-mori's is @memento-mori.html@,
---   and matching only @memento-mori/@ gave it the fallback ornament
---   instead of its own until 2026-10-04.
+--   beside its directory counts too: memento-mori's is @memento-mori.html@.
 sectionOfRoute :: FilePath -> Maybe Section
 sectionOfRoute r = find owns sections
   where

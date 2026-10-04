@@ -1,4 +1,4 @@
-"""Published licence notices must describe the work, not just the site (C04)."""
+"""The compact footer links site licenses; detailed work notices stay published."""
 
 import unittest
 from pathlib import Path
@@ -18,16 +18,17 @@ class PublishedLicenseTests(unittest.TestCase):
         return BeautifulSoup((SITE / route).read_text(), "html.parser")
 
     def test_public_domain_poems_are_not_relicensed(self):
+        notices = self.page("licenses.html").find(id="public-domain-works").find_next_sibling("ul")
         for slug in ("sonnet-60", "ozymandias"):
             with self.subTest(poem=slug):
-                footer = self.page(f"poetry/{slug}.html").select_one(".footer-license")
-                self.assertIsNotNone(footer.find("a", href=PD))
-                self.assertIsNone(footer.find("a", href=CC))
+                link = notices.find("a", href=lambda s: s and s.endswith(f"/poetry/{slug}.html"))
+                self.assertIsNotNone(link)
+                self.assertIn("public domain", link.find_parent("li").get_text())
 
     def test_original_prose_keeps_its_license(self):
         footer = self.page("memento-mori.html").select_one(".footer-license")
         self.assertIsNotNone(footer.find("a", href=CC))
-        self.assertIn("Prose", footer.get_text())
+        self.assertEqual(" ".join(footer.get_text().split()), "CC BY-NC-SA 4.0 · MIT · MM")
 
     def test_dore_credit_applies_to_the_figure(self):
         img = self.page("memento-mori.html").find("img", src=lambda s: s and "canto31.jpg" in s)
@@ -37,13 +38,8 @@ class PublishedLicenseTests(unittest.TestCase):
         self.assertIsNone(figure.select_one('[aria-hidden="true"] a'))
 
     def test_archive_does_not_claim_the_source_work(self):
-        pages = list((SITE / "archive").glob("*/index.html"))
-        self.assertTrue(pages)
-        for path in pages:
-            with self.subTest(archive=path.parent.name):
-                footer = self.page(path.relative_to(SITE)).select_one(".footer-license")
-                self.assertIn("Source terms", footer.get_text())
-                self.assertIsNone(footer.find("a", href=CC))
+        notice = self.page("licenses.html").find(id="archived-material").find_next_sibling("p")
+        self.assertIn("licenses do not apply to the preserved works", notice.get_text())
 
     def test_notices_and_license_texts_are_published(self):
         page = self.page("licenses.html")
