@@ -46,7 +46,7 @@ import           System.Exit            (exitFailure)
 import           System.IO              (hPutStrLn, readFile', stderr)
 import           System.Process         (readProcess)
 import           Hakyll
-import Utils (formatBytes, median, parseIsoDate)
+import Utils (formatBytes, inDefault, median, parseIsoDate)
 import           Contexts               (siteCtx)
 import           Backlinks              (referencedByField, backlinkMathField)
 import           SimilarLinks           (similarLinksField)
@@ -403,9 +403,7 @@ archiveEntryRule ae =
                     return ()
                 Nothing -> return ()
             makeItem ""
-                >>= loadAndApplyTemplate "templates/archive.html"  ctx
-                >>= loadAndApplyTemplate "templates/default.html"  ctx
-                >>= relativizeUrls
+                >>= inDefault "templates/archive.html" ctx
   where
     slug       = pvSlug (aeProv ae)
     provId     = fromFilePath ("archive/" ++ slug ++ "/PROVENANCE.json")
@@ -436,9 +434,7 @@ archiveIndexRule entries =
                                           else constField "has-entries" "true")
                       <> siteCtx
             makeItem ""
-                >>= loadAndApplyTemplate "templates/archive-index.html" ctx
-                >>= loadAndApplyTemplate "templates/default.html"       ctx
-                >>= relativizeUrls
+                >>= inDefault "templates/archive-index.html" ctx
 
 -- ---------------------------------------------------------------------------
 -- Contexts

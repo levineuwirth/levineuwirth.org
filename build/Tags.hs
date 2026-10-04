@@ -40,7 +40,7 @@ import qualified Data.Set as Set
 import Data.Time.Clock  (UTCTime)
 import Data.Time.Format (defaultTimeLocale)
 import Hakyll
-import Utils (writerlyDate, parseIsoDate)
+import Utils (inDefault, parseIsoDate, writerlyDate)
 import Patterns   (tagIndexable)
 import Contexts   (Revision (..), abstractField, contentKindField,
                    getRevisions, recentFirstByDisplay, revisionDateFields,
@@ -386,9 +386,7 @@ clientPaginatedRule tag pat sidecarSet saCtx baseCtx = do
                <> scCtx
                <> baseCtx
         makeItem ""
-            >>= loadAndApplyTemplate "templates/tag-index.html"  ctx
-            >>= loadAndApplyTemplate "templates/default.html"    ctx
-            >>= relativizeUrls
+            >>= inDefault "templates/tag-index.html" ctx
 
 -- | @$description$@ for a tag index, from the tag's own sidecar tooltip
 --   when it has one.
@@ -472,6 +470,4 @@ serverPaginatedRule tag pat sidecarSet saCtx baseCtx = do
                    <> scCtx
                    <> baseCtx
             makeItem ""
-                >>= loadAndApplyTemplate "templates/tag-index.html"  ctx
-                >>= loadAndApplyTemplate "templates/default.html"    ctx
-                >>= relativizeUrls
+                >>= inDefault "templates/tag-index.html" ctx

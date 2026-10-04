@@ -12,6 +12,7 @@ module Pagination
     ) where
 
 import Hakyll
+import Utils (inDefault)
 import Patterns (blogPattern)
 
 
@@ -50,6 +51,4 @@ blogPaginateRules itemCtx baseCtx = do
                    <> constField "title" "Blog"
                    <> baseCtx
             makeItem ""
-                >>= loadAndApplyTemplate "templates/blog-index.html"  ctx
-                >>= loadAndApplyTemplate "templates/default.html"     ctx
-                >>= relativizeUrls
+                >>= inDefault "templates/blog-index.html" ctx

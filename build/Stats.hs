@@ -49,7 +49,7 @@ import Contexts                   (siteCtx, authorLinksField, canonicalUrlPath)
 import Marks                      (hasMonogram, monogramSvgFieldFor,
                                    hasMonogramFieldFor)
 import qualified Patterns         as P
-import Utils                      (exposureISO, formatBytes, isDevBuild, isSafeUrl, median, outputDirFor, parseIsoDate, readingTime)
+import Utils                      (exposureISO, formatBytes, inDefault, isDevBuild, isSafeUrl, median, outputDirFor, parseIsoDate, readingTime)
 
 -- ---------------------------------------------------------------------------
 -- Types
@@ -1244,9 +1244,7 @@ statsRules tags = do
                              <> siteCtx
 
             makeItem contentString
-                >>= loadAndApplyTemplate "templates/essay.html"   ctx
-                >>= loadAndApplyTemplate "templates/default.html" ctx
-                >>= relativizeUrls
+                >>= inDefault "templates/essay.html" ctx
 
   -- -------------------------------------------------------------------------
   -- Writing statistics page (/stats/)
@@ -1345,6 +1343,4 @@ statsRules tags = do
                              <> siteCtx
 
             makeItem contentString
-                >>= loadAndApplyTemplate "templates/essay.html"   ctx
-                >>= loadAndApplyTemplate "templates/default.html" ctx
-                >>= relativizeUrls
+                >>= inDefault "templates/essay.html" ctx

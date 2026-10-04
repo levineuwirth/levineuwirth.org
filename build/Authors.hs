@@ -18,7 +18,7 @@ import Hakyll
 import Pagination           (sortAndGroup)
 import Patterns             (authorIndexable)
 import Contexts             (abstractField, tagLinksField, canonicalUrlField)
-import Utils                (authorSlugify, itemAuthors, writerlyDate)
+import Utils                (authorSlugify, inDefault, itemAuthors, writerlyDate)
 import Tags                 (anchoredTagsRules)
 
 
@@ -79,9 +79,7 @@ applyAuthorRules authors baseCtx = anchoredTagsRules "_dependencies/authors" aut
                         ("Writing on this site by " ++ name ++ ".")
                    <> baseCtx
             makeItem ""
-                >>= loadAndApplyTemplate "templates/author-index.html" ctx
-                >>= loadAndApplyTemplate "templates/default.html"      ctx
-                >>= relativizeUrls
+                >>= inDefault "templates/author-index.html" ctx
   where
     -- 'canonicalUrlField' rather than defaultContext's @$url$@: a
     -- directory-routed essay's route is @essays/x/index.html@, and the

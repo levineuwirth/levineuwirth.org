@@ -45,7 +45,7 @@ import           Contexts               (feedTitleField, photographyCtx, pageCtx
                                          recentFirstByDisplay, feedMetaFields,
                                          photoVariantName)
 import qualified Patterns               as P
-import           Utils                  (exposureISO, stripPrefixRoute)
+import           Utils                  (exposureISO, inDefault, stripPrefixRoute)
 
 -- ---------------------------------------------------------------------------
 -- Rules
@@ -181,9 +181,7 @@ photographyEntryRules seriesSlugs =
                     | otherwise       = photographyCtx
             photographyCompiler
                 >>= saveSnapshot "content"
-                >>= loadAndApplyTemplate template                         ctx
-                >>= loadAndApplyTemplate "templates/default.html"         ctx
-                >>= relativizeUrls
+                >>= inDefault template ctx
 
 -- | Sibling photos inside a series directory:
 --   @content/photography/<series>/<photo>.md@. Compiled with the
@@ -207,9 +205,7 @@ photographySeriesPhotoRules =
             in  stripped ++ "/index.html"
         compile $ photographyCompiler
             >>= saveSnapshot "content"
-            >>= loadAndApplyTemplate "templates/photography.html" photographyCtx
-            >>= loadAndApplyTemplate "templates/default.html"     photographyCtx
-            >>= relativizeUrls
+            >>= inDefault "templates/photography.html" photographyCtx
   where
     contentPrefix = "content/" :: String
 
@@ -443,9 +439,7 @@ photographyLandingRules =
                     <> constField "list-page"   "true"
                     <> pageCtx
             pageCompiler
-                >>= loadAndApplyTemplate "templates/photography-index.html" ctx
-                >>= loadAndApplyTemplate "templates/default.html"           ctx
-                >>= relativizeUrls
+                >>= inDefault "templates/photography-index.html" ctx
 
 -- ---------------------------------------------------------------------------
 -- Map data (Phase 4)
@@ -626,9 +620,7 @@ photographyMapPageRule =
                    <> constField "portal"          "true"
                    <> siteCtx
             makeItem ""
-                >>= loadAndApplyTemplate "templates/photography-map.html" ctx
-                >>= loadAndApplyTemplate "templates/default.html"          ctx
-                >>= relativizeUrls
+                >>= inDefault "templates/photography-map.html" ctx
 
 -- ---------------------------------------------------------------------------
 -- Atom feed (Phase 5)
@@ -762,10 +754,7 @@ photographyByYearIndexRule yearMap years =
                     <> constField "photography" "true"
                     <> siteCtx
             makeItem ""
-                >>= loadAndApplyTemplate
-                        "templates/photography-by-year-index.html" ctx
-                >>= loadAndApplyTemplate "templates/default.html" ctx
-                >>= relativizeUrls
+                >>= inDefault "templates/photography-by-year-index.html" ctx
 
 -- | @/photography/by-year/<year>/@ — list of photos captured that year.
 photographyByYearPageRule :: String -> [Identifier] -> Rules ()
@@ -785,10 +774,7 @@ photographyByYearPageRule yr idents =
                     <> constField "list-page"   "true"
                     <> siteCtx
             makeItem ""
-                >>= loadAndApplyTemplate
-                        "templates/photography-by-year.html" ctx
-                >>= loadAndApplyTemplate "templates/default.html" ctx
-                >>= relativizeUrls
+                >>= inDefault "templates/photography-by-year.html" ctx
 
 -- ---------------------------------------------------------------------------
 -- Contact sheet (Phase 5)
@@ -824,8 +810,5 @@ photographyContactSheetRule =
                     <> constField "portal"      "true"
                     <> siteCtx
             makeItem ""
-                >>= loadAndApplyTemplate
-                        "templates/photography-contact-sheet.html" ctx
-                >>= loadAndApplyTemplate "templates/default.html" ctx
-                >>= relativizeUrls
+                >>= inDefault "templates/photography-contact-sheet.html" ctx
 

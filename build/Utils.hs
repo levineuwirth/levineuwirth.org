@@ -35,10 +35,12 @@ module Utils
     , median
     , isSafeUrl
     , stripPrefixRoute
+    , contentPageRoute
     , loadYaml
     , pdfViewerUrl
     , encodeQueryValue
     , isPdfUrl
+    , inDefault
     , boolSpellings
     , parseBool
     , canonicalUrlPath
@@ -57,8 +59,10 @@ import           Data.Time.Format (FormatTime, ParseTime, defaultTimeLocale, for
 import           Data.Aeson (FromJSON)
 import qualified Data.Text.Encoding as TE
 import qualified Data.Yaml as Y
-import           Hakyll (Compiler, Item, Metadata, Routes, customRoute, fromFilePath, itemBody,
-                         load, lookupString, lookupStringList, toFilePath)
+import           Hakyll (Compiler, Context, Identifier, Item, Metadata, Routes, composeRoutes,
+                         customRoute, fromFilePath, itemBody, load, loadAndApplyTemplate,
+                         lookupString, lookupStringList, relativizeUrls, setExtension,
+                         toFilePath)
 import           System.Environment (lookupEnv)
 import           Text.Read (readMaybe)
 
@@ -341,3 +345,16 @@ encodeQueryValue = concatMap enc
 -- | Whether a URL names a PDF: @.pdf@, in any case, before any fragment.
 isPdfUrl :: String -> Bool
 isPdfUrl u = ".pdf" `isSuffixOf` map toLower (takeWhile (/= '#') u)
+
+-- | A Markdown page's route: its path below @content/@, as @.html@.
+contentPageRoute :: Routes
+contentPageRoute = stripPrefixRoute "content/" `composeRoutes` setExtension "html"
+
+-- | The tail every page shares: its own template, then the site frame
+-- (@templates/default.html@), with the same context, and URLs made
+-- relative.
+inDefault :: Identifier -> Context String -> Item String -> Compiler (Item String)
+inDefault tpl ctx item =
+    loadAndApplyTemplate tpl ctx item
+        >>= loadAndApplyTemplate "templates/default.html" ctx
+        >>= relativizeUrls
