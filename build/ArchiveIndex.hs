@@ -34,6 +34,7 @@ module ArchiveIndex
     , archiveStatusForSlug
     , archiveIndexIsEmpty
     , normalizeUrl
+    , trackingParams
     ) where
 
 import           Data.Map.Strict        (Map)
@@ -219,7 +220,8 @@ archiveStatusForSlug slug = Map.findWithDefault Live slug slugStatus
 
 -- | Tracking-only query parameters: their presence or absence is
 --   semantically irrelevant; the lookup strips them before matching.
---   Sync with @TRACKING_PARAMS@ in @tools/archive.py@.
+--   @TRACKING_PARAMS@ in @tools/archive.py@ is held to this list, and
+--   'normalizeUrl' to its Python twin, by tests/test_archive.py.
 trackingParams :: [Text]
 trackingParams =
     [ "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"

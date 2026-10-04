@@ -10,7 +10,10 @@ import Site                  (refusedPath, rules, siteConfigurationFor)
 import Drafts                (currentUnpublished, scanUnpublished, unpublishedSummary,
                               withoutUnpublished)
 import BibExtras             (BibExtra (..), parseBibExtras)
+import ArchiveIndex          (normalizeUrl, trackingParams)
 import Marks                 (epistemicVocabulary)
+import qualified Data.Text    as T
+import qualified Data.Text.IO as TIO
 import Patterns              (reservedSectionDirs)
 import Contexts              (photoVariantWidths)
 import qualified Data.Aeson  as Aeson
@@ -49,7 +52,9 @@ writeBuildStamp = do
 -- build withholds for @draft: true@; @site bib-extras FILE@ prints what the
 -- .bib scanner (build/BibExtras.hs) reads from a file, one key per line;
 -- @site shared-rules@ prints 'sharedRules' as JSON; @site private-paths@
--- echoes each path on stdin that the build refuses ('Site.refusedPath').
+-- echoes each path on stdin that the build refuses ('Site.refusedPath');
+-- @site normalize-url@ prints each URL on stdin as the archive matches it
+-- ('ArchiveIndex.normalizeUrl'), for tools/archive.py's parity test.
 main :: IO ()
 main = do
     args <- getArgs
@@ -58,6 +63,7 @@ main = do
         ["list-unpublished"] -> scanUnpublished "content" >>= mapM_ putStrLn . unpublishedSummary
         ["shared-rules"] -> LBS.putStrLn (Aeson.encode sharedRules)
         ["private-paths"] -> getContents >>= mapM_ putStrLn . filter refusedPath . lines
+        ["normalize-url"] -> TIO.getContents >>= mapM_ (TIO.putStrLn . normalizeUrl) . T.lines
         ["bib-extras", path] -> do
             extras <- parseBibExtras path
             mapM_ (\(k, e) -> putStrLn (intercalate "\t"
@@ -81,6 +87,7 @@ sharedRules = Map.fromList
     [ ("epistemic-vocabulary", Aeson.toJSON (Map.fromList epistemicVocabulary))
     , ("reserved-sections",    Aeson.toJSON reservedSectionDirs)
     , ("photo-variant-widths", Aeson.toJSON photoVariantWidths)
+    , ("archive-tracking-params", Aeson.toJSON trackingParams)
     , ("boolean-spellings",    Aeson.toJSON (Map.fromList
           [ (name, [s | (s, b') <- boolSpellings, b' == b])
           | (name, b) <- [("true" :: String, True), ("false", False)] ]))

@@ -4,6 +4,9 @@ has its own tests in test_archive_probe.py."""
 
 import datetime
 import importlib.util
+import json
+import shutil
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -61,6 +64,59 @@ class SlugTests(unittest.TestCase):
         for bad in ("https://doi.org/1", ["doi:10.1/x"], [3]):
             with self.assertRaises(SystemExit), mock.patch.object(archive, "err"):
                 archive.entry_aliases({"url": "u", "aliases": bad})
+
+
+# Each a case where the two normalizers once disagreed (2026-10-04), or a
+# boundary of the rules: re-encoding, bare and empty parameters, scheme
+# case, old-style arXiv ids, an empty or version-only arXiv id.
+PARITY_URLS = (
+    "http://e.com/a/?utm_medium=m#sec",
+    "https://e.com/s?q=a%20b&utm_source=x",
+    "https://e.com/s?q=a+b",
+    "https://e.com/s?flag&utm_source=x",
+    "https://e.com/s?",
+    "https://e.com/s?a=1&&b=2",
+    "https://e.com/s?q=%7Euser",
+    "HTTP://E.com/a?utm_source=x",
+    "https://e.com/x?ref=hn&id=7",
+    "https://arxiv.org/abs/hep-th/9901001v2",
+    "https://arxiv.org/pdf/math.GT/0309136v1.pdf",
+    "https://arxiv.org/pdf/2401.01234v3.pdf",
+    "http://arxiv.org/abs/2401.01234",
+    "https://arxiv.org/abs/2401.01234?context=cs",
+    "https://arxiv.org/abs/2401.01234v2?context=cs",
+    "https://arxiv.org/abs/",
+    "https://arxiv.org/abs/v2",
+    "https://arxiv.org/list/cs.CR/recent",
+)
+
+
+@unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
+class NormalizationParityTests(unittest.TestCase):
+    """archive.normalize_url against the build's ArchiveIndex.normalizeUrl
+    (`site normalize-url`): removal enforcement, duplicate detection and
+    `suggest` here must call the same URLs equal that link annotation does."""
+
+    @classmethod
+    def setUpClass(cls):
+        from tests.test_golden import site_binary
+        cls.binary = str(site_binary())
+
+    def test_tracking_parameters_are_the_builds(self):
+        done = subprocess.run([self.binary, "shared-rules"], capture_output=True,
+                              text=True, check=True)
+        self.assertEqual(sorted(archive.TRACKING_PARAMS),
+                         sorted(json.loads(done.stdout)["archive-tracking-params"]))
+
+    def test_normalize_url_is_the_builds(self):
+        urls = list(PARITY_URLS) + [f"https://e.com/a?{p}=x&keep=1" for p in sorted(archive.TRACKING_PARAMS)]
+        done = subprocess.run([self.binary, "normalize-url"], input="\n".join(urls) + "\n",
+                              capture_output=True, text=True, check=True)
+        built = done.stdout.splitlines()
+        self.assertEqual(len(built), len(urls))
+        for url, want in zip(urls, built):
+            with self.subTest(url=url):
+                self.assertEqual(archive.normalize_url(url), want)
 
 
 class UrlEquivalenceTests(unittest.TestCase):

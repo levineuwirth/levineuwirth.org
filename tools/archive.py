@@ -58,7 +58,7 @@ import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
-from urllib.parse import parse_qsl, quote, urlencode, urlparse, urlunparse
+from urllib.parse import quote, urlparse
 
 import yaml
 
@@ -616,13 +616,15 @@ _ARXIV_RE = re.compile(
 
 def strip_tracking(url: str) -> str:
     """Remove tracking query parameters, leaving every other parameter in
-    place. An empty query is preserved as empty (no trailing `?`)."""
-    p = urlparse(url)
-    if not p.query:
+    place, spelled and ordered exactly as it was. Works on the text, as
+    @stripTracking@ in @build/ArchiveIndex.hs@ does: parsing and
+    re-encoding the query turned `a%20b` into `a+b` and `flag` into
+    `flag=`, so the two sides disagreed about which URLs were the same."""
+    path, sep, query = url.partition("?")
+    if not sep:
         return url
-    kept = [(k, v) for k, v in parse_qsl(p.query, keep_blank_values=True)
-            if k not in TRACKING_PARAMS]
-    return urlunparse(p._replace(query=urlencode(kept)))
+    kept = [p for p in query.split("&") if p.split("=", 1)[0] not in TRACKING_PARAMS]
+    return f"{path}?{'&'.join(kept)}" if kept else path
 
 
 def arxiv_aliases(url: str) -> set[str]:
@@ -662,13 +664,21 @@ def url_aliases(url: str) -> list[str]:
 
 def arxiv_canonical(url: str) -> str:
     """The canonical form of an arXiv URL: @https://arxiv.org/abs/<id>@
-    with no version and no @.pdf@. Non-arXiv passes through. Mirrors the
-    Haskell-side @arxivCanonical@ in @build/ArchiveIndex.hs@."""
-    m = _ARXIV_RE.match(url)
-    if not m:
-        return url
-    _scheme_host, _kind, paper_id, _ver, _ext = m.groups()
-    return f"https://arxiv.org/abs/{paper_id}"
+    with no version and no @.pdf@. Non-arXiv passes through. Works as the
+    Haskell-side @arxivCanonical@ in @build/ArchiveIndex.hs@ does, on
+    whatever follows `abs/` or `pdf/`, so an old-style id
+    (`hep-th/9901001v2`) is canonicalized too; @_ARXIV_RE@ does not take
+    those, and it is only for listing a new-style id's aliases."""
+    for prefix in ("https://arxiv.org/", "http://arxiv.org/"):
+        if url.startswith(prefix):
+            kind, slash, paper = url[len(prefix):].partition("/")
+            if kind in ("abs", "pdf") and slash:
+                paper = paper.removesuffix(".pdf")
+                head, v, version = paper.rpartition("v")
+                if v and version.isascii() and version.isdigit():
+                    paper = head
+                return f"https://arxiv.org/abs/{paper}"
+    return url
 
 
 def normalize_url(url: str) -> str:
@@ -676,7 +686,8 @@ def normalize_url(url: str) -> str:
     fold http→https, arXiv-canonicalise, trim trailing slashes. Mirrors
     @normalizeUrl@ in @build/ArchiveIndex.hs@ so removal enforcement and
     duplicate detection use the same equivalence the link-annotation
-    filter uses; keep the two in sync."""
+    filter uses; tests/test_archive.py runs a table of URLs through both
+    (`site normalize-url`)."""
     no_frag = url.split("#", 1)[0]
     clean = strip_tracking(no_frag)
     if clean.startswith("http://"):
