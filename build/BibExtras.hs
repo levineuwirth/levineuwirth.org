@@ -97,8 +97,12 @@ parseBib input = go (dropTo '@' input)
                 | otherwise ->
                     -- '}' ends the key too: a fieldless @misc{key} must not
                     -- take the brace, and with it the next entry's fields.
-                    let (citekey, r4) = span (\c -> c /= ',' && c /= '}' && not (isSpace c)) r3
-                        r5 = dropWhile (\c -> c /= ',' && c /= '}') r4
+                    -- An '@' before the key's ',' or '}' is the next entry
+                    -- starting: this one is malformed, and the scan must
+                    -- stop there rather than read the next entry's fields
+                    -- as its own.
+                    let (citekey, r4) = span (\c -> c `notElem` (",}@{" :: String) && not (isSpace c)) r3
+                        r5 = dropWhile (\c -> c /= ',' && c /= '}' && c /= '@') r4
                     in case r5 of
                         ',':r6 ->
                             let (flds, r7) = parseFields r6

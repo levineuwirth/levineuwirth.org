@@ -9,6 +9,10 @@ import Golden                (renderFixture)
 import Site                  (rules, siteConfigurationFor)
 import Drafts                (currentUnpublished, scanUnpublished, unpublishedSummary,
                               withoutUnpublished)
+import BibExtras             (BibExtra (..), parseBibExtras)
+import qualified Data.Map.Strict as Map
+import Data.List             (intercalate)
+import Data.Maybe            (fromMaybe)
 import Utils                 (isDevBuild, outputDirFor)
 import FooterData            (writeFooterData)
 
@@ -37,13 +41,19 @@ writeBuildStamp = do
 -- (build/Golden.hs); @site footer-data@ splits the backlinks and
 -- similar-links maps into per-page files between the two compile passes
 -- (build/FooterData.hs); @site list-unpublished@ prints what a production
--- build withholds for @draft: true@.
+-- build withholds for @draft: true@; @site bib-extras FILE@ prints what the
+-- .bib scanner (build/BibExtras.hs) reads from a file, one key per line.
 main :: IO ()
 main = do
     args <- getArgs
     case args of
         ["render-fixture", path] -> renderFixture path
         ["list-unpublished"] -> scanUnpublished "content" >>= mapM_ putStrLn . unpublishedSummary
+        ["bib-extras", path] -> do
+            extras <- parseBibExtras path
+            mapM_ (\(k, e) -> putStrLn (intercalate "\t"
+                      [k, fromMaybe "" (bibFile e), intercalate "," (bibKeywords e)]))
+                  (Map.toList extras)
         ["list-unpublished", root] -> scanUnpublished root >>= mapM_ putStrLn . unpublishedSummary
         ["footer-data"] -> do
             dev <- isDevBuild
