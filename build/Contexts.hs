@@ -38,7 +38,7 @@ module Contexts
     , photoVariantWidths
     ) where
 
-import Control.Exception       (IOException, try)
+import Control.Exception       (IOException, catch, try)
 import Data.Aeson              (Value (..))
 import qualified Data.Aeson         as Aeson
 import qualified Data.Aeson.Key     as AK
@@ -54,7 +54,10 @@ import qualified Data.Set           as Set
 import Data.Time.Calendar      (toGregorian)
 import Data.Time.Clock         (UTCTime, getCurrentTime, utctDay)
 import Data.Time.Format        (formatTime, defaultTimeLocale)
-import System.Directory        (doesFileExist)
+import Data.IORef              (IORef, atomicModifyIORef', newIORef, readIORef)
+import qualified Data.Map.Strict    as Map
+import System.Directory        (doesFileExist, getModificationTime)
+import System.IO.Unsafe        (unsafePerformIO)
 import System.FilePath         (makeRelative, takeDirectory, takeFileName, (</>))
 import System.IO               (hPutStrLn, stderr)
 import Text.Read               (readMaybe)
@@ -1851,16 +1854,33 @@ photoSidecarPath suffix item = do
 -- | Load a sidecar YAML file as an Aeson Object (same shape Hakyll
 --   uses for frontmatter). Returns 'Aeson.empty' when the file is
 --   missing or fails to parse — sidecars are advisory, never fatal.
+--
+--   Parsed once per modification time: a photograph's page reads its
+--   sidecars for a dozen fields (camera, lens, exposure, palette,
+--   dimensions, …), and each used to parse the file again. Keyed on the
+--   mtime, not just the path, so a sidecar rewritten under @make watch@
+--   is read afresh.
 loadSidecar :: FilePath -> IO Aeson.Object
 loadSidecar path = do
-    exists <- doesFileExist path
-    if not exists
-        then return KM.empty
-        else do
-            decoded <- Y.decodeFileEither path
-            case decoded of
-                Right (Object obj) -> return obj
-                _                  -> return KM.empty
+    mtime <- (Just <$> getModificationTime path)
+                `catch` \(_ :: IOException) -> return Nothing
+    case mtime of
+        Nothing -> return KM.empty
+        Just t  -> do
+            seen <- Map.lookup path <$> readIORef sidecarCache
+            case seen of
+                Just (t', obj) | t' == t -> return obj
+                _ -> do
+                    decoded <- Y.decodeFileEither path
+                    let obj = case decoded of
+                            Right (Object o) -> o
+                            _                -> KM.empty
+                    atomicModifyIORef' sidecarCache (\m -> (Map.insert path (t, obj) m, ()))
+                    return obj
+
+{-# NOINLINE sidecarCache #-}
+sidecarCache :: IORef (Map.Map FilePath (UTCTime, Aeson.Object))
+sidecarCache = unsafePerformIO (newIORef Map.empty)
 
 -- | Read a sidecar object for a given suffix. Returns the empty object
 --   when the entry has no resolvable sidecar path or when the file is
