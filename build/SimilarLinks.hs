@@ -16,12 +16,10 @@
 -- has entries, and no "Related" section is rendered.
 module SimilarLinks (similarLinksField) where
 
-import qualified Data.ByteString            as BS
-import qualified Data.Text                  as T
-import qualified Data.Text.Encoding         as TE
 import qualified Data.Aeson                 as Aeson
 import           Hakyll
 import           FooterData                 (footerEntries, maxRelated)
+import           Utils                      (isPdfUrl, pdfViewerUrl)
 
 -- ---------------------------------------------------------------------------
 -- JSON schema
@@ -53,25 +51,6 @@ similarLinksField = field "similar-links" $ \item -> do
     if null entries
         then fail "no similar links"
         else return (renderSimilarLinks (take maxRelated entries))
-
--- | Percent-encode a string for use as a URI query value: RFC 3986
--- unreserved characters pass through; everything else — including @&@,
--- @?@, @#@, spaces, and non-ASCII text via its UTF-8 bytes — becomes
--- @%XX@. Hand-rolled (the moral equivalent of network-uri's
--- @escapeURIString isUnreserved@) because network-uri is not otherwise
--- a dependency. The output is also HTML-attribute-safe: it contains
--- only unreserved characters and @%XX@ escapes.
-percentEncode :: String -> String
-percentEncode = concatMap enc . BS.unpack . TE.encodeUtf8 . T.pack
-  where
-    enc b
-        | unreserved b = [toEnum (fromIntegral b)]
-        | otherwise    = ['%', hexDigit (b `div` 16), hexDigit (b `mod` 16)]
-    unreserved b =
-        let c = toEnum (fromIntegral b) :: Char
-        in     (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
-            || (c >= '0' && c <= '9') || c `elem` ("-._~" :: String)
-    hexDigit n = "0123456789ABCDEF" !! fromIntegral n
 
 -- ---------------------------------------------------------------------------
 -- HTML rendering
@@ -105,14 +84,13 @@ renderSimilarLinks entries =
         ++ "</a></li>\n"
 
     renderPdf se =
-        -- The PDF path becomes the @file=@ query value, so it must be
-        -- percent-encoded (HTML escaping alone leaves @&@/@?@/@#@/spaces
-        -- free to break the query). A @#page=N@ fragment stays a fragment
-        -- of the viewer URL itself — PDF.js reads it from location.hash.
+        -- The PDF path becomes the @file=@ query value ('pdfViewerUrl'
+        -- encodes what would break it), then HTML-escaped for the
+        -- attribute. A @#page=N@ fragment stays a fragment of the viewer
+        -- URL itself — PDF.js reads it from location.hash.
         let raw          = seUrl se
             (path, frag) = break (== '#') raw
-            viewerUrl    = "/pdfjs/web/viewer.html?file="
-                        ++ percentEncode path ++ escapeHtml frag
+            viewerUrl    = escapeHtml (pdfViewerUrl path ++ frag)
         in  "<li class=\"similar-links-item\">"
             ++ "<a class=\"similar-link pdf-link\""
             ++ " href=\"" ++ viewerUrl ++ "\""
@@ -120,8 +98,3 @@ renderSimilarLinks entries =
             ++ " data-link-icon=\"document\" data-link-icon-type=\"svg\">"
             ++ escapeHtml (seTitle se)
             ++ "</a></li>\n"
-
-    isPdfUrl u =
-        let lower = T.toLower (T.pack u)
-            (path, _) = T.break (== '#') lower
-        in  ".pdf" `T.isSuffixOf` path

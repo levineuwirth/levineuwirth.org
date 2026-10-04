@@ -14,6 +14,7 @@ import           Data.Text            (Text)
 import qualified Data.Text            as T
 import           Text.Pandoc.Definition
 import           Text.Pandoc.Walk     (walk)
+import           Utils                (isPdfUrl, pdfViewerUrl)
 
 -- | Apply link classification to the entire document.
 --   Two passes: PDF links first (rewrites href to the viewer URL and tags
@@ -35,11 +36,10 @@ apply = walk classifyLink . walk classifyPdfLink
 classifyPdfLink :: Inline -> Inline
 classifyPdfLink (Link (ident, classes, kvs) ils (url, title))
     | "/" `T.isPrefixOf` url
-    , let (path, fragment) = T.break (== '#') url
-    , ".pdf" `T.isSuffixOf` T.toLower path
+    , isPdfUrl (T.unpack url)
     , "pdf-link" `notElem` classes =
-        let viewerUrl = "/pdfjs/web/viewer.html?file="
-                        <> encodeQueryValue path <> fragment
+        let (path, fragment) = T.break (== '#') url
+            viewerUrl = T.pack (pdfViewerUrl (T.unpack path)) <> fragment
             classes'  = classes ++ ["pdf-link"]
             kvs'      = kvs ++ [("data-pdf-src", path)]
         in  Link (ident, classes', kvs') ils (viewerUrl, title)
@@ -172,16 +172,3 @@ iconForHost host
     -- of it. Never fires on a lookalike label (@notx.com@) or on text
     -- in the path or query.
     m d = host == d || ("." <> d) `T.isSuffixOf` host
-
--- | Percent-encode characters that would break a @?file=@ query-string value.
---   Slashes are intentionally left unencoded so root-relative paths remain
---   readable and work correctly with PDF.js's internal fetch.
-encodeQueryValue :: Text -> Text
-encodeQueryValue = T.concatMap enc
-  where
-    enc ' ' = "%20"
-    enc '&' = "%26"
-    enc '?' = "%3F"
-    enc '+' = "%2B"
-    enc '"' = "%22"
-    enc c   = T.singleton c

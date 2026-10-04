@@ -36,6 +36,9 @@ module Utils
     , isSafeUrl
     , stripPrefixRoute
     , loadYaml
+    , pdfViewerUrl
+    , encodeQueryValue
+    , isPdfUrl
     , boolSpellings
     , parseBool
     , canonicalUrlPath
@@ -312,3 +315,29 @@ loadYaml path = do
     case Y.decodeEither' (TE.encodeUtf8 (T.pack (itemBody raw))) of
         Left  err -> fail (path ++ ": " ++ show err)
         Right doc -> return doc
+
+-- | The vendored PDF.js viewer opening a site PDF. Takes the path without
+-- its fragment: a @#page=N@ goes after the result, where PDF.js reads it
+-- from the location hash. Prose links ("Filters.Links"), @{{pdf:…}}@ embeds
+-- ("Filters.EmbedPdf") and the related-pages list ("SimilarLinks") all
+-- build the viewer URL here; they had three encoders between them.
+pdfViewerUrl :: String -> String
+pdfViewerUrl path = "/pdfjs/web/viewer.html?file=" ++ encodeQueryValue path
+
+-- | Percent-encode the characters that would break a query-string value.
+-- Slashes are left alone, so a root-relative path stays readable and
+-- PDF.js's own fetch resolves it.
+encodeQueryValue :: String -> String
+encodeQueryValue = concatMap enc
+  where
+    enc ' ' = "%20"
+    enc '&' = "%26"
+    enc '?' = "%3F"
+    enc '+' = "%2B"
+    enc '"' = "%22"
+    enc '#' = "%23"
+    enc c   = [c]
+
+-- | Whether a URL names a PDF: @.pdf@, in any case, before any fragment.
+isPdfUrl :: String -> Bool
+isPdfUrl u = ".pdf" `isSuffixOf` map toLower (takeWhile (/= '#') u)

@@ -66,7 +66,7 @@ parsePageHash _ = ""
 -- | Render the HTML for a PDF embed.
 renderEmbed :: String -> String -> String
 renderEmbed filePath pageHash =
-    let viewerUrl = "/pdfjs/web/viewer.html?file=" ++ encodeQueryValue filePath ++ pageHash
+    let viewerUrl = U.pdfViewerUrl filePath ++ pageHash
     in  "<div class=\"pdf-embed-wrapper\">"
      ++ "<iframe class=\"pdf-embed\""
      ++ " src=\"" ++ viewerUrl ++ "\""
@@ -74,20 +74,4 @@ renderEmbed filePath pageHash =
      ++ " loading=\"lazy\""
      ++ " allowfullscreen></iframe>"
      ++ "</div>"
-
--- | Percent-encode characters that would break a query-string value.
---   Slashes are left unencoded so root-relative paths remain readable and
---   work correctly with PDF.js's internal fetch.  @#@ is encoded for
---   defense-in-depth even though the directive parser already splits on it
---   before this function is called.
-encodeQueryValue :: String -> String
-encodeQueryValue = concatMap enc
-  where
-    enc ' ' = "%20"
-    enc '&' = "%26"
-    enc '?' = "%3F"
-    enc '+' = "%2B"
-    enc '"' = "%22"
-    enc '#' = "%23"
-    enc c   = [c]
 
