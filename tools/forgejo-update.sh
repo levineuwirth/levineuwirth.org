@@ -103,6 +103,12 @@ done_ok() {   # done_ok <message>
     exit 0
 }
 
+# Serialise hand runs and the timer, as couchdb-update.sh and
+# anubis-update.py do: two runs could both recreate or roll back the forge.
+mkdir -p "$(dirname "$HOLD")"
+exec 9>"$(dirname "$HOLD")/lock"
+flock -n 9 || { log "another update is running"; exit 1; }
+
 if [ -f "$ATTENTION" ]; then
     log "a previous update needs the operator: $(cat "$ATTENTION")"
     log "restore by forgejo/UPGRADE.md § 5.1, then remove $ATTENTION"

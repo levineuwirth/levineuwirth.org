@@ -181,6 +181,16 @@ class ForgejoUpdateRecovery(unittest.TestCase):
         self.assertEqual(self.hold.read_text().strip(), "sha256:new")
         self.assertEqual((self.root / "tag").read_text(), "sha256:old")
 
+    def test_a_second_run_is_refused_while_one_holds_the_lock(self):
+        import fcntl
+        lock = self.hold.parent / "lock"
+        with open(lock, "w") as held:
+            fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            result = self.run_update("success")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("another update is running", result.stdout)
+        self.assertFalse((self.root / "applied").exists(), "the refused run touched the forge")
+
 
 if __name__ == "__main__":
     unittest.main()

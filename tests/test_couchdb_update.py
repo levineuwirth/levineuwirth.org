@@ -29,6 +29,8 @@ if name == 'curl':
     if path == '/':
         print(json.dumps({'version': '3.5.2' if applied.exists() else '3.4.2', 'uuid': 'identity'}))
     elif path == '/_up':
+        if mode == 'down':
+            sys.exit(7)
         print('{"status":"ok"}')
     elif path.endswith('/cors/origins'):
         print(json.dumps('app://obsidian.md,capacitor://localhost,http://localhost'))
@@ -40,6 +42,16 @@ elif name == 'cp':
     if mode == 'copy-failure':
         sys.exit(1)
     os.execv('/usr/bin/cp', ['cp', *args])
+elif args[0] == 'inspect' and 'RestartCount' in args[2]:
+    # The container's state; in crashloop mode the candidate restarts on
+    # every look, while the previous image (after a rollback) is steady.
+    if mode == 'crashloop' and applied.exists():
+        n = root / 'restarts'
+        count = int(n.read_text()) + 1 if n.exists() else 1
+        n.write_text(str(count))
+        print(f'running false {count} 2026-10-04T05:00:{count:02d}Z')
+    else:
+        print('running false 0 2026-10-04T05:00:00Z')
 elif args[0] == 'inspect':
     print('sha256:new' if applied.exists() else 'sha256:old')
 elif args[:2] == ['image', 'inspect']:
@@ -86,7 +98,8 @@ class CouchDBUpdateRecovery(unittest.TestCase):
         self.state = self.root / 'state'
         self.env = dict(os.environ, PATH=str(bin_dir) + os.pathsep + os.environ['PATH'],
                         STUB_ROOT=str(self.root), DIR=str(self.root), STATE=str(self.state),
-                        BACKUP='true', DBS='one two', WAIT='1', PULL='0')
+                        BACKUP='true', DBS='one two', WAIT='1', PULL='0',
+                        STABLE='2', CHECK_EVERY='1')
 
     def run_update(self, mode='success'):
         return subprocess.run(['bash', str(SCRIPT)], env=dict(self.env, STUB_MODE=mode),
@@ -163,6 +176,40 @@ class CouchDBUpdateRecovery(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse((self.root / 'stopped').exists())
 
+    def test_a_release_that_answers_then_crash_loops_is_rolled_back(self):
+        result = self.run_update('crashloop')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('restarted or stopped', result.stdout)
+        self.assertIn('rolled back', result.stdout)
+        self.assertEqual((self.root / 'tag').read_text(), 'sha256:old')
+        self.assertEqual((self.state / 'hold').read_text().strip(), 'sha256:new')
+        self.assertFalse((self.state / 'needs-operator').exists(), result.stdout + result.stderr)
+        self.assertEqual((self.root / 'couchdb-data/data').read_text(), 'original documents')
 
-if __name__ == '__main__':
+    def test_nothing_to_apply_fails_when_couchdb_is_not_answering(self):
+        (self.root / 'tag').write_text('sha256:old')
+        result = self.run_update('down')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('not answering', result.stdout)
+
+    def test_nothing_to_apply_passes_when_couchdb_is_healthy(self):
+        (self.root / 'tag').write_text('sha256:old')
+        result = self.run_update('success')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('unchanged', result.stdout)
+
+
+class UpdaterCopiesAgree(unittest.TestCase):
+    """The updaters stand alone on the VPS, so container_state is copied
+    rather than shared; the copies must not drift."""
+
+    def test_container_state_is_the_same_in_both_updaters(self):
+        import re
+        def body(path):
+            src = path.read_text()
+            return re.search(r"^container_state\(\) \{\n(.*?)^\}", src, re.M | re.S).group(1)
+        self.assertEqual(body(SCRIPT), body(SCRIPT.with_name('forgejo-update.sh')))
+
+
+if __name__ == "__main__":
     unittest.main()

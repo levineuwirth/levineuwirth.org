@@ -69,6 +69,28 @@ ssh root@vps "docker network inspect proxy-net -f '{{json .IPAM.Config}}'"   # 1
 `tools/vps-status` (run from the laptop) now lists the job and the `config`
 set's stamps, and the monthly verify restores the set.
 
+## Installing the 2026-10-04 cleanup changes
+
+The four backup scripts now source `tools/backup-pair.sh` for the
+archive-and-checksum steps and retention they each used to copy; only
+forgejo-backup's copy swept the temporaries a killed run leaves, so the
+others could keep a multi-gigabyte `.partial` forever. `couchdb-update.sh`
+gains forgejo-update's stability window and a health check on runs with
+nothing to apply, and `forgejo-update.sh` takes a lock as the other
+updaters do. Install the library before the scripts, in one go, so no
+nightly run finds one without the other:
+
+```bash
+scp tools/backup-pair.sh root@vps:/usr/local/lib/
+scp tools/{forgejo-backup,couchdb-backup,anki-sync-backup,vps-config-backup,couchdb-update,forgejo-update}.sh root@vps:/usr/local/bin/
+ssh root@vps 'chmod 644 /usr/local/lib/backup-pair.sh && chmod 755 /usr/local/bin/*.sh && bash -n /usr/local/lib/backup-pair.sh'
+```
+
+Then run one backup by hand and verify it, e.g.
+`systemctl start vps-config-backup.service && vps-config-backup.sh --verify`;
+its log ends with the retention lines from `pair_prune`. The updaters need
+no hand run; their next timer runs use the new checks.
+
 ## Installing the 2026-10-02 changes (audit phase 4)
 
 Everything below is committed and was rehearsed locally (real borg 1.4.5,

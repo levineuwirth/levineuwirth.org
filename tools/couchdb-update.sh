@@ -10,6 +10,8 @@
 # CouchDB and copy its data directory, then recreate on the new image and
 # check the version, the counts, the uuid and the effective CORS origins.
 #
+# A candidate must also stay up for $STABLE seconds without a restart, and
+# a run with nothing to apply still fails when the server is not healthy.
 # A failed candidate check puts the copied data directory and previous
 # image back and holds the failed image. Interruption or failed recovery
 # leaves $ATTENTION and every run fails until the operator
@@ -29,6 +31,8 @@ DBS=${DBS:-"universum apocrypha"}
 BACKUP=${BACKUP:-systemctl start couchdb-backup.service}
 PULL=${PULL:-1}
 WAIT=${WAIT:-120}
+STABLE=${STABLE:-120}                    # seconds CouchDB must stay up once it answers
+CHECK_EVERY=${CHECK_EVERY:-5}
 KEEP_COPIES=${KEEP_COPIES:-2}
 STATE=${STATE:-/var/lib/couchdb-update}
 HOLD=${HOLD:-$STATE/hold}
@@ -75,6 +79,32 @@ up_at() {    # up_at <image version>: answers /_up, at that version (the image's
     done
     return 1
 }
+# Status, restarting, restart count and start time: a restart under
+# `restart: unless-stopped` changes the count and the start time. The same
+# function as in forgejo-update.sh (tests/test_couchdb_update.py compares).
+container_state() {
+    local state
+    state=$(docker inspect -f '{{.State.Status}} {{.State.Restarting}} {{.RestartCount}} {{.State.StartedAt}}' "$CONTAINER" 2>/dev/null) || state=
+    echo "${state:-missing}"
+}
+stays_up() {   # running, unrestarted for $STABLE s, and still answering /_up
+    local first now t=0
+    first=$(container_state)
+    case "$first" in
+        "running false "*) ;;
+        *) log "container is not running steadily ($first)"; return 1 ;;
+    esac
+    while [ "$t" -lt "$STABLE" ]; do
+        sleep "$CHECK_EVERY"
+        t=$(( t + CHECK_EVERY ))
+        now=$(container_state)
+        if [ "$now" != "$first" ]; then
+            log "container restarted or stopped within ${t}s of answering ($first -> $now)"
+            return 1
+        fi
+    done
+    get /_up >/dev/null 2>&1 || { log "CouchDB stopped answering within ${STABLE}s"; return 1; }
+}
 ini_value() { sed -n "/^\[$1\]/,/^\[/{s/^$2[[:space:]]*=[[:space:]]*//p}" "$3" | head -1; }
 
 hold() { mkdir -p "$STATE"; echo "$pulled" > "$HOLD"; }
@@ -96,6 +126,10 @@ before=$(image_version "$running")
 pulled=$(docker image inspect -f '{{.Id}}' "$IMAGE")
 
 if [ "$pulled" = "$running" ]; then
+    # Nothing to apply still says whether the server is well: a crash loop
+    # that starts after an update must not read as "unchanged" each day.
+    get /_up >/dev/null 2>&1 || { log "nothing to apply, but CouchDB is not answering on $URL"; exit 1; }
+    stays_up || { log "nothing to apply, but CouchDB did not stay healthy"; exit 1; }
     log "couchdb ${before:-?} — unchanged"
     exit 0
 fi
@@ -125,6 +159,9 @@ healthy() {
     [ "$(get / | field uuid)" = "$uuid_want" ] || return 1
     [ "$(get /_node/_local/_config/chttpd_auth/secret | field)" = "$secret_want" ] || return 1
     [ "$(get /_node/_local/_config/cors/origins | field)" = "$origins_want" ] || return 1
+    # Answering once is not enough: a release that then crash-loops would
+    # otherwise pass, and its rollback copy and previous image be pruned.
+    stays_up || return 1
 }
 
 log "couchdb ${before:-?} -> $new: backing up first"
