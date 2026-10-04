@@ -106,20 +106,21 @@ resolveMonogramPath item =
 --   epistemic-figure column and signals "monogram not yet authored".
 --   Read failures fall back to the same placeholder.
 monogramSvgField :: Context String
-monogramSvgField = field "monogramSvg" $ \item -> do
-    mPath <- resolveMonogramPath item
-    case mPath of
-        Nothing -> return $ T.unpack monogramPlaceholder
-        Just path -> do
-            result <- unsafeCompiler $ try (TIO.readFile path)
-                        :: Compiler (Either IOException T.Text)
-            case result of
-                Left e -> do
-                    unsafeCompiler $ hPutStrLn stderr $
-                        "[Marks] " ++ toFilePath (itemIdentifier item) ++
-                        ": failed to read " ++ path ++ ": " ++ show e
-                    return $ T.unpack monogramPlaceholder
-                Right svg -> return $ T.unpack $ wrapMonogram (processSvg svg)
+monogramSvgField = field "monogramSvg" $ \item -> resolveMonogramPath item >>= monogramHtml
+
+-- | The inlined mark at a path, or the placeholder roundel when there is
+--   none or it cannot be read.
+monogramHtml :: Maybe FilePath -> Compiler String
+monogramHtml Nothing     = return (T.unpack monogramPlaceholder)
+monogramHtml (Just path) = do
+    result <- unsafeCompiler $ try (TIO.readFile path)
+                :: Compiler (Either IOException T.Text)
+    case result of
+        Left e -> do
+            unsafeCompiler $ hPutStrLn stderr $
+                "[Marks] failed to read " ++ path ++ ": " ++ show e
+            return (T.unpack monogramPlaceholder)
+        Right svg -> return $ T.unpack $ wrapMonogram (processSvg svg)
 
 -- | Empty-roundel placeholder used while a piece's monogram is still
 --   to be authored (Phase 2 of MARKS.md). The @--placeholder@ modifier
@@ -152,17 +153,7 @@ wrapMonogram svg = T.concat
 monogramSvgFieldFor :: FilePath -> Context a
 monogramSvgFieldFor path = field "monogramSvg" $ \_ -> do
     exists <- unsafeCompiler $ doesFileExist path
-    if not exists
-        then return $ T.unpack monogramPlaceholder
-        else do
-            result <- unsafeCompiler $ try (TIO.readFile path)
-                        :: Compiler (Either IOException T.Text)
-            case result of
-                Left e -> do
-                    unsafeCompiler $ hPutStrLn stderr $
-                        "[Marks] failed to read " ++ path ++ ": " ++ show e
-                    return $ T.unpack monogramPlaceholder
-                Right svg -> return $ T.unpack $ wrapMonogram (processSvg svg)
+    monogramHtml (if exists then Just path else Nothing)
 
 -- | @$has-monogram$@ override paired with 'monogramSvgFieldFor'. Present
 --   (as @"true"@) only when the path exists; 'noResult' otherwise.

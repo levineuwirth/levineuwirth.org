@@ -187,10 +187,16 @@ pageScriptsField = listFieldWith "page-scripts" ctx $ \item -> do
 --
 --   $for(essay-tags)$<a href="$tag-url$">$tag-name$</a>$endfor$
 tagLinksField :: String -> Context a
-tagLinksField fieldName = listFieldWith fieldName ctx $ \item -> do
-    ts <- getTags (itemIdentifier item)
+tagLinksField fieldName = tagLinksWhere fieldName (const True) "no tags"
+
+-- | The tag-link list the three fields here share: the item's tags that
+--   pass @keep@, as @tag-name@ / @tag-url@ objects, or 'noResult' with
+--   @why@ when none do.
+tagLinksWhere :: String -> (String -> Bool) -> String -> Context a
+tagLinksWhere fieldName keep why = listFieldWith fieldName ctx $ \item -> do
+    ts <- filter keep <$> getTags (itemIdentifier item)
     if null ts
-        then noResult "no tags"
+        then noResult why
         else return (map toItem ts)
   where
     toItem t = Item (fromFilePath (t ++ "/index.html")) t
@@ -213,16 +219,9 @@ tagLinksField fieldName = listFieldWith fieldName ctx $ \item -> do
 --   instead of rendering as an empty @<div>@.
 tagLinksFieldExcludingScope :: String -> String -> Context a
 tagLinksFieldExcludingScope fieldName scope =
-    listFieldWith fieldName ctx $ \item -> do
-        ts <- getTags (itemIdentifier item)
-        let visible = filter (not . isScopeOrAncestor) ts
-        if null visible
-            then noResult "no visible tags after scope suppression"
-            else return (map toItem visible)
+    tagLinksWhere fieldName (not . isScopeOrAncestor)
+        "no visible tags after scope suppression"
   where
-    toItem t = Item (fromFilePath (t ++ "/index.html")) t
-    ctx      = field "tag-name" (return . itemBody)
-            <> field "tag-url"  (\i -> return $ "/" ++ itemBody i ++ "/")
     -- Hide tag t when t == scope, or when t is a strict prefix-ancestor
     -- of scope (i.e., scope starts with t ++ "/"). Descendants of scope
     -- (e.g., "nonfiction/philosophy" when scope="nonfiction") are kept.
@@ -253,16 +252,9 @@ tagLinksFieldExcludingScope fieldName scope =
 --   discipline as 'tagLinksFieldExcludingScope'.
 tagLinksFieldExcludingTopSegment :: String -> String -> Context a
 tagLinksFieldExcludingTopSegment fieldName scope =
-    listFieldWith fieldName ctx $ \item -> do
-        ts <- getTags (itemIdentifier item)
-        let visible = filter (not . matchesTopSegment) ts
-        if null visible
-            then noResult "no cross-portal tags after top-segment suppression"
-            else return (map toItem visible)
+    tagLinksWhere fieldName (not . matchesTopSegment)
+        "no cross-portal tags after top-segment suppression"
   where
-    toItem t = Item (fromFilePath (t ++ "/index.html")) t
-    ctx      = field "tag-name" (return . itemBody)
-            <> field "tag-url"  (\i -> return $ "/" ++ itemBody i ++ "/")
     matchesTopSegment t = takeWhile (/= '/') t == scope
 
 -- ---------------------------------------------------------------------------
@@ -967,17 +959,16 @@ itemDisplayUTC :: Item a -> Compiler UTCTime
 itemDisplayUTC = identifierDisplayUTC . itemIdentifier
 
 -- | 'itemDisplayUTC' for a bare 'Identifier'. The sitemap works from
---   identifiers rather than items (nothing is loaded for a URL row), so
---   the revision-aware date has to be reachable without an 'Item'.
-identifierDisplayUTC :: Identifier -> Compiler UTCTime
+--   identifiers rather than items (nothing is loaded for a URL row), and
+--   the paginate grouper ("Tags") runs in 'Rules', where no 'Item's exist
+--   yet, so this needs only 'MonadMetadata'.
+identifierDisplayUTC :: (MonadMetadata m, MonadFail m) => Identifier -> m UTCTime
 identifierDisplayUTC ident = do
     meta <- getMetadata ident
     case getRevisions meta of
-        (r:_) -> case parseIsoDate
-                                  (revisionDateISO r) :: Maybe UTCTime of
-            Just utc -> return utc
-            Nothing  -> getItemUTC defaultTimeLocale ident
-        [] -> getItemUTC defaultTimeLocale ident
+        (r:_) | Just utc <- (parseIsoDate (revisionDateISO r) :: Maybe UTCTime)
+              -> return utc
+        _ -> getItemUTC defaultTimeLocale ident
 
 -- | @$date-display$@ — the date shown next to an item in list renderings.
 --   Most-recent revision date if the item has a 'revised:' entry, else
@@ -1249,22 +1240,10 @@ postCtx =
     <> dateField "date"     writerlyDate
     <> dateField "date-iso" isoDate
     -- Blog posts can opt in to the epistemic figure / chips by setting
-    -- the relevant frontmatter fields. The Marks module's epistemic SVG
-    -- field returns 'noResult' when @status:@ is absent, so unstatused
-    -- posts render unchanged. The dot / strip fields below mirror the
-    -- essay context so a status-bearing post gets the same chips.
-    <> dotsField "importance-dots" "importance"
-    <> dotsField "evidence-dots" "evidence"
-    <> confidenceField
-    <> confidenceProvedField
-    <> peerStatusField
-    <> peerStatusDisplayField
-    <> overallScoreField
-    <> confidenceTrendField
-    <> stabilityField
-    <> lastReviewedField
-    <> lastReviewedIsoField
-    <> epistemicSvgField
+    -- the relevant frontmatter fields, the same ones essays carry. The
+    -- Marks module's epistemic SVG field returns 'noResult' when
+    -- @status:@ is absent, so unstatused posts render unchanged.
+    <> epistemicCtx
     <> siteCtx
 
 -- ---------------------------------------------------------------------------

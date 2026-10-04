@@ -15,7 +15,6 @@ import qualified Data.Text as T
 import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format (defaultTimeLocale, formatTime)
 import System.Directory (listDirectory)
-import System.Environment (lookupEnv)
 import System.FilePath (splitDirectories, takeDirectory, takeFileName, takeExtension,
                         dropExtension, (</>))
 import Text.Read     (readMaybe)
@@ -48,7 +47,9 @@ import Tags       (buildAllTags, applyTagRules, sidecarIdentifier,
 import Pagination (blogPaginateRules)
 import Stability  (resolveStability)
 import Stats      (statsRules)
-import Utils      (cacheDirFor, confidencePercent, contentPageRoute, formatIso, inDefault, metadataKeywords, outputDirFor, stripPrefixRoute, trustScore)
+import Utils      (cacheDirFor, confidencePercent, contentPageRoute, formatIso, inDefault,
+                   isDevBuild, metadataKeywords, outputDirFor, stripPrefixRoute,
+                   trustScore)
 
 -- ---------------------------------------------------------------------------
 -- Publication boundary
@@ -239,7 +240,7 @@ rules = do
     -- drafts under content/drafts/**; anything else (unset, "deploy", "build")
     -- excludes them entirely from every match, listing, and asset rule below.
     -- ---------------------------------------------------------------------------
-    isDev <- preprocess $ (== Just "dev") <$> lookupEnv "SITE_ENV"
+    isDev <- preprocess isDevBuild
     let allEssays = if isDev
                     then P.essayPattern .||. P.draftEssayPattern
                     else P.essayPattern

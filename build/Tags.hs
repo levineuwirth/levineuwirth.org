@@ -37,14 +37,12 @@ import Data.Maybe (fromMaybe, isNothing, maybeToList)
 import Data.Ord   (comparing)
 import Data.Set   (Set)
 import qualified Data.Set as Set
-import Data.Time.Clock  (UTCTime)
-import Data.Time.Format (defaultTimeLocale)
 import Hakyll
-import Utils (inDefault, parseIsoDate, writerlyDate)
+import Utils (inDefault, writerlyDate)
 import Patterns   (tagIndexable)
-import Contexts   (Revision (..), abstractField, contentKindField,
-                   getRevisions, recentFirstByDisplay, revisionDateFields,
-                   siteCtx, tagLinksFieldExcludingScope)
+import Contexts   (abstractField, contentKindField, identifierDisplayUTC,
+                   recentFirstByDisplay, revisionDateFields, siteCtx,
+                   tagLinksFieldExcludingScope)
 
 
 -- ---------------------------------------------------------------------------
@@ -412,21 +410,6 @@ tagDescriptionField sidecarSet tag = do
     sidecarId  = sidecarIdentifier tag
     filed      = "Everything on this site filed under \8220" ++ tag ++ "\8221"
     nonEmpty x = if all isSpace x then Nothing else Just x
-
--- | Display date of an identifier: the most-recent @revised:@ entry's
---   date when present and parseable, else the creation date. Mirrors
---   the (unexported) @itemDisplayUTC@ behind 'Contexts.recentFirstByDisplay',
---   but needs only 'MonadMetadata' — the paginate grouper runs in
---   'Rules' over bare 'Identifier's, where no 'Item's exist yet.
-identifierDisplayUTC :: (MonadMetadata m, MonadFail m)
-                     => Identifier -> m UTCTime
-identifierDisplayUTC ident = do
-    meta <- getMetadata ident
-    case getRevisions meta of
-        (r:_) | Just utc <- (parseIsoDate
-                                 (revisionDateISO r) :: Maybe UTCTime)
-              -> return utc
-        _ -> getItemUTC defaultTimeLocale ident
 
 -- | Partition identifiers into pages of @n@, most recent first by
 --   /display/ date — the same revision-aware key
