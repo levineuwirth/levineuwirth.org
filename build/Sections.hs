@@ -11,7 +11,7 @@ module Sections
 import Data.List (find, isPrefixOf)
 
 data Section = Section
-    { sectionDir     :: String        -- ^ its pages are routed under @<dir>/@
+    { sectionDir     :: String        -- ^ its pages: @<dir>/…@, or @<dir>.html@
     , sectionKind    :: String        -- ^ @$item-kind$@
     , sectionDingbat :: Maybe String  -- ^ default ornament; 'Nothing' takes the fallback
     }
@@ -27,6 +27,11 @@ sections =
     , Section "memento-mori" "Page"        (Just "memento")
     ]
 
--- | The section a route belongs to.
+-- | The section a route belongs to. A section whose one page is routed
+--   beside its directory counts too: memento-mori's is @memento-mori.html@,
+--   and matching only @memento-mori/@ gave it the fallback ornament
+--   instead of its own until 2026-10-04.
 sectionOfRoute :: FilePath -> Maybe Section
-sectionOfRoute r = find (\s -> (sectionDir s ++ "/") `isPrefixOf` r) sections
+sectionOfRoute r = find owns sections
+  where
+    owns s = (sectionDir s ++ "/") `isPrefixOf` r || r == sectionDir s ++ ".html"
