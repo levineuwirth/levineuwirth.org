@@ -100,9 +100,10 @@ scripting.</p>
 <div class="filter-options">
 <span class="filter-prefix">&ge;</span>
 <button class="filter-btn filter-ordinal-btn" data-field="scope" data-index="0">personal</button>
-<button class="filter-btn filter-ordinal-btn" data-field="scope" data-index="1">average</button>
-<button class="filter-btn filter-ordinal-btn" data-field="scope" data-index="2">broad</button>
-<button class="filter-btn filter-ordinal-btn" data-field="scope" data-index="3">civilizational</button>
+<button class="filter-btn filter-ordinal-btn" data-field="scope" data-index="1">local</button>
+<button class="filter-btn filter-ordinal-btn" data-field="scope" data-index="2">average</button>
+<button class="filter-btn filter-ordinal-btn" data-field="scope" data-index="3">broad</button>
+<button class="filter-btn filter-ordinal-btn" data-field="scope" data-index="4">civilizational</button>
 </div>
 </div>
 <div class="filter-row">
@@ -120,9 +121,10 @@ scripting.</p>
 <div class="filter-options">
 <span class="filter-prefix">&ge;</span>
 <button class="filter-btn filter-ordinal-btn" data-field="practicality" data-index="0">abstract</button>
-<button class="filter-btn filter-ordinal-btn" data-field="practicality" data-index="1">moderate</button>
-<button class="filter-btn filter-ordinal-btn" data-field="practicality" data-index="2">high</button>
-<button class="filter-btn filter-ordinal-btn" data-field="practicality" data-index="3">exceptional</button>
+<button class="filter-btn filter-ordinal-btn" data-field="practicality" data-index="1">low</button>
+<button class="filter-btn filter-ordinal-btn" data-field="practicality" data-index="2">moderate</button>
+<button class="filter-btn filter-ordinal-btn" data-field="practicality" data-index="3">high</button>
+<button class="filter-btn filter-ordinal-btn" data-field="practicality" data-index="4">exceptional</button>
 </div>
 </div>
 <div class="filter-row">

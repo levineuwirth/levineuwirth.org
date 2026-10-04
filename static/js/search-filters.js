@@ -41,12 +41,15 @@
 (function () {
     'use strict';
 
-    var KEY = 'search-filter-state';
+    /* v2: the scope and practicality scales gained `local` and `low`
+       (they now match build/Marks.hs), which shifted the saved button
+       indices; a v1 state would silently mean something else. */
+    var KEY = 'search-filter-state-v2';
 
     var SCALES = {
-        scope:        ['personal', 'average', 'broad', 'civilizational'],
+        scope:        ['personal', 'local', 'average', 'broad', 'civilizational'],
         novelty:      ['conventional', 'moderate', 'idiosyncratic', 'innovative'],
-        practicality: ['abstract', 'moderate', 'high', 'exceptional'],
+        practicality: ['abstract', 'low', 'moderate', 'high', 'exceptional'],
         stability:    ['volatile', 'revising', 'fairly stable', 'stable', 'established']
     };
 
