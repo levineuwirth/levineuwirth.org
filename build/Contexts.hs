@@ -76,7 +76,7 @@ import Stability    (stabilityField, lastReviewedField, lastReviewedIsoField,
                      versionHistoryPrimaryField, versionHistoryRestField,
                      versionHistoryRangeField, versionHistoryRangeStartField,
                      versionHistoryRangeEndField, versionHistoryCommitsField)
-import Utils        (authorSlugify, authorNameOf, trim, canonicalUrlPath)
+import Utils        (authorUrl, canonicalUrlPath, itemAuthors, metadataKeywords, trim)
 
 -- | Returns 'True' when the @confidence:@ frontmatter value is the
 --   "proved" / "proven" sentinel — the §4.3 carve-out for formal proofs
@@ -315,49 +315,27 @@ tagLinksFieldExcludingTopSegment fieldName scope =
 --   @
 keywordLinksField :: String -> Context a
 keywordLinksField fieldName = listFieldWith fieldName ctx $ \item -> do
-    meta <- getMetadata (itemIdentifier item)
-    let kws = case lookupStringList "keywords" meta of
-            Just xs -> xs
-            Nothing -> case lookupString "keywords" meta of
-                Just s  -> filter (not . null) (map trim (splitOn ',' s))
-                Nothing -> []
-        visible = filter (not . null . trim) kws
-    if null visible
+    kws <- metadataKeywords <$> getMetadata (itemIdentifier item)
+    if null kws
         then noResult "no keywords"
-        else return (map toItem visible)
+        else return (map toItem kws)
   where
     toItem k = Item (fromFilePath (k ++ "/index.html")) k
     ctx = field "kw-name" (return . itemBody)
        <> field "kw-url"  (\i -> return $ "/bibliography/" ++ itemBody i ++ "/")
 
-    splitOn :: Char -> String -> [String]
-    splitOn c s = case break (== c) s of
-        (before, [])      -> [before]
-        (before, _ : rest) -> before : splitOn c rest
-
 -- ---------------------------------------------------------------------------
 -- Author links field
 -- ---------------------------------------------------------------------------
---
--- 'authorSlugify' and 'authorNameOf' are imported from 'Utils' so that
--- they cannot drift from the copies in 'Authors'.
 
--- | Exposes each item's authors as @author-name@ / @author-url@ pairs.
---   Defaults to Levi Neuwirth when no "authors" frontmatter key is present.
---
---   Entries that produce an empty name (e.g. @"| https://url"@) or an empty
---   slug (e.g. all-punctuation names) are dropped, so the field never emits
---   a @/authors//@ link.
+-- | Exposes each item's authors ('Utils.itemAuthors') as @author-name@ /
+--   @author-url@ pairs.
 --
 --   $for(author-links)$<a href="$author-url$">$author-name$</a>$sep$, $endfor$
 authorLinksField :: Context a
 authorLinksField = listFieldWith "author-links" ctx $ \item -> do
-    meta <- getMetadata (itemIdentifier item)
-    let entries = fromMaybe [] (lookupStringList "authors" meta)
-        rawNames = if null entries then ["Levi Neuwirth"] else map authorNameOf entries
-        validNames = filter (\n -> not (null n) && not (null (authorSlugify n))) rawNames
-        names = if null validNames then ["Levi Neuwirth"] else validNames
-    return $ map (\n -> Item (fromFilePath "") (n, "/authors/" ++ authorSlugify n ++ "/")) names
+    names <- itemAuthors <$> getMetadata (itemIdentifier item)
+    return $ map (\n -> Item (fromFilePath "") (n, authorUrl n)) names
   where
     ctx = field "author-name" (return . fst . itemBody)
        <> field "author-url"  (return . snd . itemBody)

@@ -47,7 +47,7 @@ import qualified Data.Yaml            as Y
 import           Text.Pandoc.Definition
 import qualified Text.Pandoc          as Pandoc
 import           Text.Pandoc.Options  (HTMLMathMethod (..), WriterOptions (..))
-import           Text.Pandoc.Walk     (walkM)
+import           Text.Pandoc.Walk     (walk, walkM)
 import           System.Directory     (doesFileExist)
 import           System.FilePath      (replaceExtension, takeExtension, (</>))
 import qualified Utils                as U
@@ -74,7 +74,7 @@ import qualified Utils                as U
 apply :: FilePath -> Pandoc -> IO Pandoc
 apply srcDir doc = do
     doc' <- walkM (transformBlock srcDir) doc
-    walkM (transformInline srcDir) doc'
+    walkM (transformInline srcDir) (walk markLinkedImages doc')
 
 -- ---------------------------------------------------------------------------
 -- Core transformations
@@ -128,19 +128,27 @@ synthesizeFigure srcDir figAttr caption imgAttr alt target = do
     pure $ RawBlock (Format "html") $
         renderFigure figAttr pictureHtml (renderFigcaption capInlines useAriaHide)
 
-transformInline :: FilePath -> Inline -> IO Inline
-transformInline srcDir (Link lAttr ils lTarget) = do
-    -- Recurse into link contents; images inside a link get no lightbox marker.
-    ils' <- mapM (wrapLinkedImg srcDir) ils
-    pure (Link lAttr ils' lTarget)
-transformInline srcDir (Image attr alt target) =
-    renderImg srcDir attr alt target True
-transformInline _ x = pure x
+-- | An image inside a link must not open the lightbox: the click belongs to
+--   the link. 'walkM' visits an image before the link around it, so the
+--   link case could not take back a marker the image case had already
+--   added; instead this pass marks linked images first, and
+--   'transformInline' reads the mark.
+markLinkedImages :: Inline -> Inline
+markLinkedImages (Link lAttr ils lTarget) = Link lAttr (walk mark ils) lTarget
+  where
+    mark (Image (i, cs, kvs) alt t) = Image (i, cs, (linkedKey, "") : kvs) alt t
+    mark x                          = x
+markLinkedImages x = x
 
-wrapLinkedImg :: FilePath -> Inline -> IO Inline
-wrapLinkedImg srcDir (Image iAttr alt iTarget) =
-    renderImg srcDir iAttr alt iTarget False
-wrapLinkedImg _ x = pure x
+linkedKey :: Text
+linkedKey = "data-linked-image"
+
+transformInline :: FilePath -> Inline -> IO Inline
+transformInline srcDir (Image (i, cs, kvs) alt target) =
+    let linked = any ((== linkedKey) . fst) kvs
+        attr   = (i, cs, filter ((/= linkedKey) . fst) kvs)
+    in  renderImg srcDir attr alt target (not linked)
+transformInline _ x = pure x
 
 -- | Dispatch on image type:
 --   * Local raster with webp companion on disk → @<picture>@ with WebP @<source>@

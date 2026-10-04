@@ -34,6 +34,7 @@ executable site
         Photography
         Stats
         Stability
+        SvgColor
         Tags
         Pagination
         Citations

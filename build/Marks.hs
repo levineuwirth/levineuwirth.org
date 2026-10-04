@@ -37,6 +37,7 @@ import           Text.Read              (readMaybe)
 
 import           Hakyll
 import           Stability              (resolveStability)
+import           SvgColor               (blackToCurrentColor)
 
 -- ---------------------------------------------------------------------------
 -- Monogram path resolution
@@ -168,29 +169,10 @@ hasMonogramFieldFor path = field "has-monogram" $ \_ -> do
 
 -- | Replace hardcoded black fills/strokes with @currentColor@ and strip
 --   the root @<svg>@'s @width@/@height@ attributes (presentation lives
---   in CSS via the @.frontmatter-mark svg@ selector). Mirrors the color
---   substitution in 'Filters.Score.processColors' so the two SVG
---   inliners agree on the contract.
+--   in CSS via the @.frontmatter-mark svg@ selector). Colours go through
+--   'SvgColor.blackToCurrentColor', as every inlined SVG's do.
 processSvg :: T.Text -> T.Text
-processSvg = stripRootDims . normalizeColors
-
--- | The same chain 'Filters.Score' applies, kept in sync deliberately.
---   6-digit patterns first so the 3-digit replacement doesn't match
---   the prefix of a 6-digit value.
-normalizeColors :: T.Text -> T.Text
-normalizeColors
-    = T.replace "fill=\"#000\""       "fill=\"currentColor\""
-    . T.replace "fill=\"black\""      "fill=\"currentColor\""
-    . T.replace "stroke=\"#000\""     "stroke=\"currentColor\""
-    . T.replace "stroke=\"black\""    "stroke=\"currentColor\""
-    . T.replace "fill:#000"           "fill:currentColor"
-    . T.replace "fill:black"          "fill:currentColor"
-    . T.replace "stroke:#000"         "stroke:currentColor"
-    . T.replace "stroke:black"        "stroke:currentColor"
-    . T.replace "fill=\"#000000\""    "fill=\"currentColor\""
-    . T.replace "stroke=\"#000000\""  "stroke=\"currentColor\""
-    . T.replace "fill:#000000"        "fill:currentColor"
-    . T.replace "stroke:#000000"      "stroke:currentColor"
+processSvg = stripRootDims . blackToCurrentColor
 
 -- | Remove @width="..."@ and @height="..."@ from the root @<svg>@ start
 --   tag, so the mark sizes from CSS. Only that tag: none of the marks'

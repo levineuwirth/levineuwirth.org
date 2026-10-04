@@ -31,6 +31,7 @@ import Data.List        (dropWhileEnd)
 import Data.Map.Strict  (Map)
 import qualified Data.Map.Strict as Map
 import System.IO        (readFile')
+import Utils            (splitOn, trim)
 
 
 -- | Custom fields we extract per citekey. Fields absent from the
@@ -94,7 +95,9 @@ parseBib input = go (dropTo '@' input)
                     let (_, r4) = readBraces 1 "" r3
                     in  go (dropTo '@' r4)
                 | otherwise ->
-                    let (citekey, r4) = span (\c -> c /= ',' && not (isSpace c)) r3
+                    -- '}' ends the key too: a fieldless @misc{key} must not
+                    -- take the brace, and with it the next entry's fields.
+                    let (citekey, r4) = span (\c -> c /= ',' && c /= '}' && not (isSpace c)) r3
                         r5 = dropWhile (\c -> c /= ',' && c /= '}') r4
                     in case r5 of
                         ',':r6 ->
@@ -102,7 +105,9 @@ parseBib input = go (dropTo '@' input)
                             in (trim citekey, toExtra flds) : go (dropTo '@' r7)
                         -- Fieldless entries: walk past and carry on.
                         '}':r6 -> (trim citekey, emptyBibExtra) : go (dropTo '@' r6)
-                        _ -> []
+                        -- Malformed: skip to the next entry rather than
+                        -- dropping the rest of the file.
+                        _ -> go (dropTo '@' r5)
             _ -> go (dropTo '@' r2)
     go (_:rest) = go (dropTo '@' rest)
 
@@ -168,16 +173,3 @@ toExtra flds = BibExtra
     , bibAuthor   = lookup "author" flds
     , bibYear     = lookup "year" flds
     }
-
-
--- ---------------------------------------------------------------------------
--- Utilities
--- ---------------------------------------------------------------------------
-
-trim :: String -> String
-trim = dropWhile isSpace . dropWhileEnd isSpace
-
-splitOn :: Eq a => a -> [a] -> [[a]]
-splitOn c xs = case break (== c) xs of
-    (before, [])       -> [before]
-    (before, _ : rest) -> before : splitOn c rest

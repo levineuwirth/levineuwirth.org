@@ -47,7 +47,7 @@ import Tags       (buildAllTags, applyTagRules, sidecarIdentifier,
                    portalIntroField, portalTooltipField)
 import Pagination (blogPaginateRules)
 import Stats      (statsRules)
-import Utils      (cacheDirFor, outputDirFor)
+import Utils      (cacheDirFor, metadataKeywords, outputDirFor)
 
 -- ---------------------------------------------------------------------------
 -- Publication boundary
@@ -1202,7 +1202,7 @@ rules = do
 
     writingKwPairs <- forM writingIds $ \ident -> do
         meta <- getMetadata ident
-        let kws = readKeywords meta
+        let kws = metadataKeywords meta
         return (ident, kws)
 
     let writingKwMap :: Map String [Identifier]
@@ -1801,21 +1801,6 @@ invertKeywordsBib =
     Map.fromListWith (++) . concatMap flatten . Map.toList
   where
     flatten (k, e) = [ (kw, [k]) | kw <- bibKeywords e ]
-
--- | Read a @keywords:@ frontmatter field, accepting YAML list and
---   comma-separated scalar forms. Matches 'Contexts.keywordLinksField'.
-readKeywords :: Metadata -> [String]
-readKeywords meta = filter (not . null) . map trimSpaces $
-    case lookupStringList "keywords" meta of
-        Just xs -> xs
-        Nothing -> case lookupString "keywords" meta of
-            Just s  -> splitComma s
-            Nothing -> []
-  where
-    trimSpaces = dropWhile (== ' ') . reverse . dropWhile (== ' ') . reverse
-    splitComma s = case break (== ',') s of
-        (before, [])      -> [before]
-        (before, _ : rest) -> before : splitComma rest
 
 -- | Invert a @[(Identifier, [keyword])]@ association into
 --   @keyword -> [Identifier]@. Identifiers can appear under multiple

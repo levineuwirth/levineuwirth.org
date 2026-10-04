@@ -49,7 +49,7 @@ import Contexts                   (siteCtx, authorLinksField, canonicalUrlPath)
 import Marks                      (hasMonogram, monogramSvgFieldFor,
                                    hasMonogramFieldFor)
 import qualified Patterns         as P
-import Utils                      (isDevBuild, outputDirFor, readingTime)
+import Utils                      (exposureISO, isDevBuild, outputDirFor, readingTime)
 
 -- ---------------------------------------------------------------------------
 -- Types
@@ -284,10 +284,6 @@ parseFocal = readMaybe . takeWhile isDigit . dropWhile (not . isDigit)
 parseAperture :: String -> Maybe String
 parseAperture s = listToMaybe [ w | w <- words s, "f/" `isPrefixOf` w ]
 
-parseISO :: String -> Maybe Int
-parseISO s = case dropWhile (/= "ISO") (words s) of
-    (_ : v : _) -> readMaybe v
-    _           -> Nothing
 
 -- | Numeric value of an @f/@ label, so a histogram orders by stop rather
 -- than by the string naming it (where @f/10@ sorts before @f/2@).
@@ -300,7 +296,7 @@ toPhotoInfo m = PhotoInfo
     , phLens     = lookupString "lens"         m
     , phFocal    = lookupString "focal-length" m >>= parseFocal
     , phAperture = lookupString "exposure"     m >>= parseAperture
-    , phISO      = lookupString "exposure"     m >>= parseISO
+    , phISO      = lookupString "exposure"     m >>= exposureISO
     , phLocation = lookupString "location"     m
     , phSeries   = lookupString "series"       m
     , phOrient   = lookupString "orientation"  m

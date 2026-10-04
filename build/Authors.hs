@@ -14,36 +14,17 @@ module Authors
     , applyAuthorRules
     ) where
 
-import Data.Maybe           (fromMaybe)
 import Hakyll
 import Pagination           (sortAndGroup)
 import Patterns             (authorIndexable)
 import Contexts             (abstractField, tagLinksField, canonicalUrlField)
-import Utils                (authorSlugify, authorNameOf)
+import Utils                (authorSlugify, itemAuthors)
 import Tags                 (anchoredTagsRules)
-
-
--- ---------------------------------------------------------------------------
--- Slug helpers
---
--- The slugify and nameOf helpers used to live here in their own
--- definitions; they now defer to 'Utils' so that they cannot drift from
--- the 'Contexts' versions on Unicode edge cases.
--- ---------------------------------------------------------------------------
-
-slugify :: String -> String
-slugify = authorSlugify
-
-nameOf :: String -> String
-nameOf = authorNameOf
 
 
 -- ---------------------------------------------------------------------------
 -- Constants
 -- ---------------------------------------------------------------------------
-
-defaultAuthor :: String
-defaultAuthor = "Levi Neuwirth"
 
 -- | Content patterns indexed by author. Sourced from 'Patterns.authorIndexable'
 -- so this stays in lockstep with Tags.hs and Backlinks.hs.
@@ -55,19 +36,14 @@ allContent = authorIndexable
 -- Tag-like helpers (mirror of Tags.hs)
 -- ---------------------------------------------------------------------------
 
--- | Returns all author names for an identifier.
---   Defaults to ["Levi Neuwirth"] when no "authors" key is present.
+-- | The authors an identifier credits ('Utils.itemAuthors'), the same
+--   list its byline shows.
 getAuthors :: MonadMetadata m => Identifier -> m [String]
-getAuthors ident = do
-    meta <- getMetadata ident
-    let entries = fromMaybe [] (lookupStringList "authors" meta)
-    return $ if null entries
-        then [defaultAuthor]
-        else map nameOf entries
+getAuthors ident = itemAuthors <$> getMetadata ident
 
 -- | Canonical identifier for an author's index page (page 1).
 authorIdentifier :: String -> Identifier
-authorIdentifier name = fromFilePath $ "authors/" ++ slugify name ++ "/index.html"
+authorIdentifier name = fromFilePath $ "authors/" ++ authorSlugify name ++ "/index.html"
 
 -- | Paginated identifier: page 1 → authors/{slug}/index.html
 --                         page N → authors/{slug}/page/N/index.html
@@ -85,7 +61,7 @@ buildAllAuthors = buildTagsWith getAuthors allContent authorIdentifier
 
 applyAuthorRules :: Tags -> Context String -> Rules ()
 applyAuthorRules authors baseCtx = anchoredTagsRules "_dependencies/authors" authors $ \name pat -> do
-    let slug = slugify name
+    let slug = authorSlugify name
     paginate <- buildPaginateWith sortAndGroup pat (authorPageId slug)
     paginateRules paginate $ \pageNum pat' -> do
         route idRoute

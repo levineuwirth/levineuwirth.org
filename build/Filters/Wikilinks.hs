@@ -167,16 +167,24 @@ toMarkdownLink inner =
 --   without access to Hakyll's route table — the substitution happens
 --   on the raw Markdown string, long before any route exists — so the
 --   handful of generated pages that route to a directory have to be
---   named here. Keep this in sync with the @create [\"\<slug\>\/index.html\"]@
---   rules in @build\/Stats.hs@; a slug missing from this list produces a
---   link to a page that does not exist (the @\/build.html@ 404 that
---   motivated it).
+--   named here: every @\<slug\>\/index.html@ route in @build\/@ (the
+--   telemetry pages, the section indexes, the archive and the blog) and the
+--   portal tags of 'Site.homePortals', whose tag pages are directories too.
+--   A slug missing from this list produces a link to a page that does not
+--   exist (the @\/build.html@ 404 that motivated it; @[[Essays]]@ went to
+--   @\/essays.html@ the same way). @tests\/test_wikilink_routes.py@ checks
+--   the list against the routes and the portals.
 --
 --   Authors can also bypass the table entirely by writing the directory
 --   form explicitly — @{{build\/}}@ — which 'Filters.Transclusion' maps
 --   to itself.
 directoryRouteSlugs :: [String]
-directoryRouteSlugs = ["build", "stats"]
+directoryRouteSlugs =
+    [ "build", "stats"                                     -- telemetry
+    , "essays", "poetry", "fiction", "music", "photography" -- section indexes
+    , "bibliography", "archive", "blog"
+    , "research", "nonfiction", "ai", "tech", "miscellany"  -- portal tags
+    ]
 
 -- | Root-relative path (no leading slash) for a bare slug: the
 --   directory form for 'directoryRouteSlugs', @\<slug\>.html@ otherwise.

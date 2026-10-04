@@ -14,8 +14,14 @@ module Utils
     , escapeHtml
     , escapeHtmlText
     , trim
+    , splitOn
     , authorSlugify
     , authorNameOf
+    , defaultAuthor
+    , itemAuthors
+    , authorUrl
+    , metadataKeywords
+    , exposureISO
     , canonicalUrlPath
     , isDevBuild
     , outputDirFor
@@ -24,8 +30,11 @@ module Utils
 
 import           Data.Char (isAlphaNum, isSpace, toLower)
 import           Data.List (dropWhileEnd, isSuffixOf)
+import           Data.Maybe (fromMaybe)
 import qualified Data.Text as T
+import           Hakyll (Metadata, lookupString, lookupStringList)
 import           System.Environment (lookupEnv)
+import           Text.Read (readMaybe)
 
 -- | Whether this run is a dev build: @SITE_ENV=dev@, set by @make dev@ and
 --   @make watch@ (and forced off by @make build@).
@@ -120,3 +129,46 @@ authorSlugify = map (\c -> if c == ' ' then '-' else c)
 -- which routes everything through @/authors/{slug}/@).
 authorNameOf :: String -> String
 authorNameOf s = trim (takeWhile (/= '|') s)
+
+-- | Split on every occurrence of a separator: @splitOn ',' "a,,b"@ is
+-- @["a", "", "b"]@.
+splitOn :: Eq a => a -> [a] -> [[a]]
+splitOn c xs = case break (== c) xs of
+    (before, [])       -> [before]
+    (before, _ : rest) -> before : splitOn c rest
+
+defaultAuthor :: String
+defaultAuthor = "Levi Neuwirth"
+
+-- | The authors an item credits: the name of each @authors:@ entry (the
+-- part before any @| url@), dropping entries with no usable name or slug,
+-- and the site's author when none remain. The byline and the author index
+-- pages both read this, so a malformed entry can no longer build an
+-- @/authors//@ page that no byline links to.
+itemAuthors :: Metadata -> [String]
+itemAuthors meta =
+    let entries = fromMaybe [] (lookupStringList "authors" meta)
+        usable  = filter (\n -> not (null n) && not (null (authorSlugify n)))
+                         (map authorNameOf entries)
+    in  if null usable then [defaultAuthor] else usable
+
+-- | An author's index page.
+authorUrl :: String -> String
+authorUrl name = "/authors/" ++ authorSlugify name ++ "/"
+
+-- | A page's @keywords:@, given as a YAML list or a comma-separated
+-- string, each trimmed, empties dropped. The keyword links on a page and
+-- the keyword pages that exist are both built from this, so a padded
+-- keyword can no longer link to a page that was never generated.
+metadataKeywords :: Metadata -> [String]
+metadataKeywords meta = filter (not . null) . map trim $
+    case lookupStringList "keywords" meta of
+        Just xs -> xs
+        Nothing -> maybe [] (splitOn ',') (lookupString "keywords" meta)
+
+-- | The sensitivity in an @exposure:@ string, which holds shutter,
+-- aperture and ISO as read off a camera: @"1/200 f/7.1 ISO 100"@ gives 100.
+exposureISO :: String -> Maybe Int
+exposureISO s = case dropWhile (/= "ISO") (words s) of
+    (_ : v : _) -> readMaybe v
+    _           -> Nothing

@@ -19,6 +19,7 @@ module Photography
     ( photographyRules
     ) where
 
+import           Control.Applicative    ((<|>))
 import           Control.Monad          (forM, forM_)
 import           Data.List              (intercalate, nub, sort, sortBy)
 import qualified Data.Map.Strict        as Map
@@ -30,6 +31,7 @@ import           Data.Ord               (Down (..), comparing)
 import           System.FilePath        (takeBaseName, takeDirectory, takeFileName, replaceExtension, (</>))
 import           System.Directory       (doesFileExist, getFileSize)
 import           Text.Printf            (printf)
+import           Text.Read              (readMaybe)
 import qualified Data.Aeson             as Aeson
 import           Data.Aeson             (Value (..), (.=))
 import qualified Data.Aeson.KeyMap      as KM
@@ -43,6 +45,7 @@ import           Contexts               (feedTitleField, photographyCtx, pageCtx
                                          recentFirstByDisplay, feedMetaFields,
                                          photoVariantName)
 import qualified Patterns               as P
+import           Utils                  (exposureISO)
 
 -- ---------------------------------------------------------------------------
 -- Rules
@@ -258,7 +261,7 @@ seriesStatsCtx =
     <> distinctField "series-cameras" "camera"
     <> distinctField "series-lenses"  "lens"
     <> field "series-focal-span" (spanOf "focal-length")
-    <> field "series-iso-span"   (spanOf "iso")
+    <> field "series-iso-span"   isoSpan
     <> field "series-locations" locationList
   where
     children i = loadSeriesChildrenFor i
@@ -346,9 +349,21 @@ seriesStatsCtx =
                    in  if lo == hi then return (trimNum lo ++ unit)
                        else return (trimNum lo ++ "–" ++ trimNum hi ++ unit)
 
-    numericPrefix v =
-        let digits = takeWhile (\c -> c `elem` ("0123456789." :: String)) v
-        in  if null digits then Nothing else Just (read digits :: Double)
+    -- ISO sits inside exposure: ("1/200 f/7.1 ISO 100"); a hand-written
+    -- iso: wins where present. Reading only iso:, which the importers never
+    -- write, left the row off every series page.
+    isoSpan i = do
+        ms <- childMeta i
+        let iso m = (lookupString "iso" m >>= readMaybe)
+                    <|> (lookupString "exposure" m >>= exposureISO)
+        case nub (mapMaybe iso ms) of
+            [] -> noResult "no ISO recorded"
+            xs -> let lo = minimum xs :: Int
+                      hi = maximum xs
+                  in  return (if lo == hi then show lo else show lo ++ "–" ++ show hi)
+
+    -- readMaybe: "50." or "." is not a number, and must not crash the build.
+    numericPrefix v = readMaybe (takeWhile (\c -> c `elem` ("0123456789." :: String)) v) :: Maybe Double
 
     trimNum x = let r = round x :: Integer
                 in  if fromIntegral r == x then show r else printf "%.1f" x
