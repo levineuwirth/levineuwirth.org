@@ -103,8 +103,10 @@ do it.
   produce `.webp` companions next to every JPEG/PNG. Requires `cwebp`
   (`libwebp-utils` on Arch — *not* `libwebp`, which ships only the
   library and no `cwebp` binary; `webp` on Debian/Ubuntu). Without it the
-  build still succeeds, prints a prominent warning, and serves the heavier
-  originals; `make validate REQUIRE_WEBP=1` makes that an error.
+  build still succeeds and warns; images without companions fall back to
+  JPEG/PNG. Photo variants get WebP directly from Pillow. `make deploy`
+  requires a companion for every JPEG/PNG, as does
+  `make validate REQUIRE_WEBP=1`; `make deploy REQUIRE_WEBP=` overrides it.
 
 - **PDF thumbnails.** `make pdf-thumbs` (also run by `make build`)
   generates first-page thumbnails for every PDF under `static/` except the

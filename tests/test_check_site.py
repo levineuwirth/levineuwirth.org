@@ -618,13 +618,13 @@ class CheckSiteTestCase(unittest.TestCase):
         os.unlink(self.root / "images" / "a.webp")
         code, output = self.run_gate()
         self.assertEqual(code, 0, output)
-        self.assertIn("zero .webp companions", output)
+        self.assertIn("missing .webp companion", output)
 
     def test_zero_webp_fails_with_require_webp(self):
         os.unlink(self.root / "images" / "a.webp")
         code, output = self.run_gate("--require-webp")
         self.assertEqual(code, 1)
-        self.assertIn("zero .webp companions", output)
+        self.assertIn("missing .webp companion", output)
 
     def test_a_webp_that_is_no_jpegs_companion_does_not_count(self):
         # A score thumbnail is WebP but no photograph's companion; counting
@@ -633,7 +633,7 @@ class CheckSiteTestCase(unittest.TestCase):
         self.site.write("music/piece/scores/thumb.webp", "webp-bytes")
         code, output = self.run_gate()
         self.assertEqual(code, 0, output)
-        self.assertIn("zero .webp companions", output)
+        self.assertIn("missing .webp companion", output)
 
     def test_no_jpegs_means_no_webp_complaint(self):
         os.unlink(self.root / "images" / "a.webp")
@@ -641,7 +641,29 @@ class CheckSiteTestCase(unittest.TestCase):
         self.site.write("index.html", "<html><body><p>text</p></body></html>")
         code, output = self.run_gate()
         self.assertEqual(code, 0, output)
-        self.assertNotIn("zero .webp companions", output)
+        self.assertNotIn("missing .webp companion", output)
+
+    def test_a_converted_thumbnail_does_not_hide_a_missing_full_size_webp(self):
+        # Pillow can produce variant WebPs even when cwebp is absent.
+        # The production gate must still catch the unconverted originals.
+        self.site.write("images/a.w480.jpg", "jpeg-bytes")
+        self.site.write("images/a.w480.webp", "webp-bytes")
+        os.unlink(self.root / "images" / "a.webp")
+        code, output = self.run_gate("--require-webp")
+        self.assertEqual(code, 1, output)
+        self.assertIn("images/a.jpg", output)
+
+    def test_a_png_without_webp_fails_even_when_all_jpegs_have_companions(self):
+        self.site.write("images/figure.png", "png-bytes")
+        code, output = self.run_gate("--require-webp")
+        self.assertEqual(code, 1, output)
+        self.assertIn("images/figure.png", output)
+
+    def test_partial_webp_coverage_only_warns_for_an_ordinary_build(self):
+        self.site.write("images/missing.jpg", "jpeg-bytes")
+        code, output = self.run_gate()
+        self.assertEqual(code, 0, output)
+        self.assertIn("images/missing.jpg", output)
 
     # -- vendored subtrees are not first-party ------------------------------
 

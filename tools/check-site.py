@@ -28,7 +28,7 @@ Usage
 
     --allow-missing-404   downgrade a missing 404.html to a warning
                           (needed until the 404 route lands; see F12)
-    --require-webp        make "JPEGs present but zero WebP" an error (P02)
+    --require-webp        fail on any JPEG/PNG missing its WebP companion
     --warn-only           report everything but exit 0 — diagnostic use
                           only, never for a build that will be deployed
     --max-report N        cap the number of detail lines per check
@@ -596,24 +596,21 @@ def check_webp(site_dir: str, report: Report, *, as_error: bool) -> None:
     """P02 — the WebP pipeline silently no-ops when cwebp is absent."""
     report.check("webp")
     webps: set[str] = set()
-    jpegs: list[str] = []
+    images: list[str] = []
     for _full, rel in walk_files(site_dir):
         lower = rel.lower()
         if lower.endswith(".webp"):
-            webps.add(lower)
-        elif lower.endswith((".jpg", ".jpeg")):
-            jpegs.append(lower)
-    # A companion is the JPEG's own foo.webp. Any .webp at all is not: the
-    # score thumbnails are WebP, and counting them hid this warning.
-    jpeg = len(jpegs)
-    webp = sum(1 for j in jpegs if os.path.splitext(j)[0] + ".webp" in webps)
-    if jpeg and not webp:
-        report.fail(
-            "webp",
-            f"{jpeg} JPEG(s) and zero .webp companions — cwebp is probably "
-            f"not installed (pacman -S libwebp-utils / apt install webp)",
-            as_error=as_error,
-        )
+            webps.add(rel)
+        elif lower.endswith((".jpg", ".jpeg", ".png")):
+            images.append(rel)
+    # Pillow makes photo-variant WebPs even without cwebp. Checking only
+    # for zero companions would let those hide unconverted originals.
+    # Keep path case: the production filesystem is case-sensitive.
+    for rel in sorted(images):
+        companion = os.path.splitext(rel)[0] + ".webp"
+        if companion not in webps:
+            report.fail("webp", f"{rel}: missing .webp companion ({companion}); "
+                        "run make convert-images with cwebp installed", as_error=as_error)
 
 
 def jpeg_gps(path: str) -> bool:
@@ -745,7 +742,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--require-webp",
         action="store_true",
-        help="fail when JPEGs are present but no .webp companions are",
+        help="fail when any JPEG or PNG lacks its .webp companion",
     )
     parser.add_argument(
         "--warn-only",

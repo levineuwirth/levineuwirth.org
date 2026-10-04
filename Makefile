@@ -43,7 +43,7 @@ WITH_LOCK  = ./tools/with-lock.sh $(LOCK_FILE)
 # (build/Site.hs generates it; see F12 in the audit). Pass
 # --allow-missing-404 only while bisecting a broken 404 rule.
 #
-# --require-webp makes "JPEGs present, zero WebP" fatal (P02). `make build`
+# --require-webp makes any missing JPEG/PNG WebP companion fatal. `make build`
 # only warns, so a machine without cwebp can still build; `make deploy`
 # requires it (REQUIRE_WEBP, below).
 #
@@ -522,7 +522,7 @@ deploy-guard:
 deploy:
 	@$(WITH_LOCK) $(MAKE) --no-print-directory deploy-locked
 
-# A deploy refuses a site with JPEGs but no WebP companions: without cwebp
+# A deploy requires a WebP companion for every JPEG/PNG: without cwebp
 # on the deploying machine, every photograph shipped at full JPEG weight
 # until 2026-10-04 while each build only warned. Exported so the validate
 # it runs, a sub-make, sees it. `make deploy REQUIRE_WEBP=` overrides it,
@@ -677,7 +677,7 @@ test:
 # a link into /drafts/ stops the deploy instead of reaching the VPS.
 #
 #   make validate                      gate an existing _site
-#   make validate REQUIRE_WEBP=1       also fail on zero WebP companions
+#   make validate REQUIRE_WEBP=1       also fail on missing WebP companions
 #   make validate CHECK_SITE_FLAGS='--warn-only'  report everything, exit 0
 validate:
 	@$(WITH_LOCK) $(MAKE) --no-print-directory validate-locked

@@ -27,18 +27,17 @@ if ! command -v cwebp >/dev/null 2>&1; then
     # But "correct and silently 3x heavier" is exactly the failure the
     # audit found shipped: zero WebP files site-wide, 375 JPEGs, and a
     # one-line note nobody read. So the notice is loud, and the production
-    # knob is `tools/check-site.py --require-webp`, which turns "JPEGs but
-    # no WebP" into a build failure.
+    # knob is `tools/check-site.py --require-webp`, which fails on any
+    # JPEG/PNG missing its WebP companion, including partial conversion.
     cat >&2 <<'WARN'
 
   ==============================================================
-   WARNING: cwebp not found — NO WebP images will be generated.
+   WARNING: cwebp not found — full-size WebP conversion skipped.
   ==============================================================
 
-   Every photograph and figure will be served as full-size
-   JPEG/PNG. The <picture> WebP sources are omitted entirely
-   (they are only emitted when the .webp file exists), so the
-   site stays correct — it just ships several times more bytes.
+   Existing WebPs and photo variants made by Pillow remain usable.
+   Images without WebP companions fall back to JPEG/PNG. The site
+   stays usable, but those images ship more bytes.
 
    Install the converter:
 
