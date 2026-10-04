@@ -49,6 +49,7 @@ ROOT=${CONFIG_ROOT:-/}     # a scratch tree in tests
 
 log() { echo "vps-config-backup: $*"; }
 die() { echo "vps-config-backup: $*" >&2; exit 1; }
+. "${BACKUP_PAIR_LIB:-/usr/local/lib/backup-pair.sh}" || die "backup-pair.sh is missing (install it to /usr/local/lib)"
 
 # What a restore needs before anything else works, by path inside the archive.
 REQUIRED=(etc/nginx/nginx.conf etc/letsencrypt inventory/packages.txt inventory/docker-networks.json)
@@ -135,13 +136,9 @@ tar -I 'gzip --rsyncable' -cf "$TMP_ARCHIVE" \
     -C "$STAGE" ./inventory || rc=$?
 [ "$rc" -le 1 ] || die "tar failed (exit $rc)"
 
-(cd "$DEST" && sha256sum "$(basename "$TMP_ARCHIVE")" | sed "s/\.config-$TS.tar.gz.partial/config-$TS.tar.gz/" > "$TMP_SUM")
 ARCHIVE="$DEST/config-$TS.tar.gz"
-mv "$TMP_SUM" "$ARCHIVE.sha256"
-mv "$TMP_ARCHIVE" "$ARCHIVE"
+pair_finalize "$TMP_ARCHIVE" "$TMP_SUM" "$ARCHIVE"
 verify_archive "$ARCHIVE"
-ln -sfn "$ARCHIVE" "$DEST/LATEST"
-date -u +%Y-%m-%dT%H:%M:%SZ > "$DEST/last-success"
 log "wrote $ARCHIVE ($(du -h "$ARCHIVE" | cut -f1)) + .sha256"
 
 if [ -n "${BORG_REPO:-}" ]; then
@@ -151,10 +148,5 @@ else
     log "off-host: BORG_REPO is unset — this backup exists ONLY on the host it backs up."
 fi
 
-# local retention: completed pairs only, newest first by name
-mapfile -t complete < <(find "$DEST" -maxdepth 1 -name 'config-*.tar.gz' -type f | sort -r | while read -r f; do [ -f "$f.sha256" ] && echo "$f"; done)
-for ((i = KEEP; i < ${#complete[@]}; i++)); do
-    log "retention: pruning $(basename "${complete[$i]}")"
-    rm -f "${complete[$i]}" "${complete[$i]}.sha256"
-done
+pair_prune "$DEST" config "$KEEP"
 log "done"

@@ -46,6 +46,7 @@ ANKI_PY=${ANKI_PY:-/opt/anki-sync/venv/bin/python}
 
 log() { echo "anki-sync-backup: $*"; }
 die() { echo "anki-sync-backup: $*" >&2; exit 1; }
+. "${BACKUP_PAIR_LIB:-/usr/local/lib/backup-pair.sh}" || die "backup-pair.sh is missing (install it to /usr/local/lib)"
 
 # integrity_check with Anki's collations registered; prints "ok" or the problem
 anki_integrity() {
@@ -141,12 +142,8 @@ fi
 # last one, and borg stores only the difference (audit Y19: 162.7 MB of new
 # data on a 167 MB test tree became 12.5 MB). Same .tar.gz, same checksum.
 tar -I 'gzip --rsyncable' -cf "$TMP_ARCHIVE" -C "$STAGE" . || die "tar failed"
-(cd "$DEST" && sha256sum "$(basename "$TMP_ARCHIVE")" | sed "s/\.anki-$TS.tar.gz.partial/anki-$TS.tar.gz/" > "$TMP_SUM")
 ARCHIVE="$DEST/anki-$TS.tar.gz"
-mv "$TMP_SUM" "$ARCHIVE.sha256"
-mv "$TMP_ARCHIVE" "$ARCHIVE"
-ln -sfn "$ARCHIVE" "$DEST/LATEST"
-date -u +%Y-%m-%dT%H:%M:%SZ > "$DEST/last-success"
+pair_finalize "$TMP_ARCHIVE" "$TMP_SUM" "$ARCHIVE"
 log "wrote $ARCHIVE ($(du -h "$ARCHIVE" | cut -f1)) + .sha256, $users user(s)"
 
 # the snapshot is on disk: bring the server back before the slow off-host part
@@ -162,10 +159,5 @@ else
     log "off-host: BORG_REPO is unset — this backup exists ONLY on the host it backs up."
 fi
 
-# local retention: completed pairs only, newest first by name
-mapfile -t complete < <(find "$DEST" -maxdepth 1 -name 'anki-*.tar.gz' -type f | sort -r | while read -r f; do [ -f "$f.sha256" ] && echo "$f"; done)
-for ((i = KEEP; i < ${#complete[@]}; i++)); do
-    log "retention: pruning $(basename "${complete[$i]}")"
-    rm -f "${complete[$i]}" "${complete[$i]}.sha256"
-done
+pair_prune "$DEST" anki "$KEEP"
 log "done"

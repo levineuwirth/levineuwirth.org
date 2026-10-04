@@ -72,7 +72,8 @@ class ConfigBackup(unittest.TestCase):
             (bin_ / name).chmod(0o755)
         self.dest = self.tmp / 'dest'
         self.env = dict(os.environ, PATH=f'{bin_}{os.pathsep}{os.environ["PATH"]}',
-                        CONFIG_ROOT=str(self.root), DEST=str(self.dest), TMPDIR=str(self.tmp))
+                        CONFIG_ROOT=str(self.root), DEST=str(self.dest), TMPDIR=str(self.tmp),
+                        BACKUP_PAIR_LIB=str(TOOLS / 'backup-pair.sh'))
         self.env.pop('BORG_REPO', None)
 
     def run_job(self, *args, env=None):

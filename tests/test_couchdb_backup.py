@@ -35,7 +35,8 @@ if sys.argv[1] == 'run':
             docker.chmod(0o755)
             record = root / 'record.json'
             env = dict(os.environ, PATH=str(root) + os.pathsep + os.environ['PATH'],
-                       RECORD=str(record), COUCHDB_IMAGE='test-image')
+                       RECORD=str(record), COUCHDB_IMAGE='test-image',
+                       BACKUP_PAIR_LIB=str(SCRIPT.parent / 'backup-pair.sh'))
             result = subprocess.run(['bash', str(SCRIPT), '--verify', str(archive)],
                                     env=env, text=True, capture_output=True, timeout=10)
             self.assertNotEqual(result.returncode, 0)

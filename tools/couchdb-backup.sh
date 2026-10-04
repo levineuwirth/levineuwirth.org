@@ -64,6 +64,7 @@ COUCHDB_IMAGE=${COUCHDB_IMAGE:-}
 
 log() { echo "couchdb-backup: $*"; }
 die() { echo "couchdb-backup: $*" >&2; exit 1; }
+. "${BACKUP_PAIR_LIB:-/usr/local/lib/backup-pair.sh}" || die "backup-pair.sh is missing (install it to /usr/local/lib)"
 
 # urlenc <string> — percent-encode for the credentials in COUCH_URL, which
 # couchbackup reads from its environment; a raw password containing @, :, or
@@ -323,16 +324,7 @@ log "accounts: $(wc -l < "$STAGE/users.list"), _security for each database, node
 # data on a 167 MB test tree became 12.5 MB). Same .tar.gz, same checksum.
 tar -I 'gzip --rsyncable' -cf "$TMP_ARCHIVE" -C "$STAGE" . || die "tar failed"
 
-# The checksum names the final archive, not the temporary, so `sha256sum -c`
-# works unchanged in $DEST after the renames below.
-( cd "$DEST" && sha256sum "$(basename "$TMP_ARCHIVE")" \
-    | sed "s|$(basename "$TMP_ARCHIVE")|$(basename "$ARCHIVE")|" > "$(basename "$TMP_SUM")" )
-
-# Two renames, checksum first — see forgejo-backup.sh for why.
-mv "$TMP_SUM" "$ARCHIVE.sha256"
-mv "$TMP_ARCHIVE" "$ARCHIVE"
-ln -sfn "$ARCHIVE" "$DEST/LATEST"
-date -u +%Y-%m-%dT%H:%M:%SZ > "$DEST/last-success"
+pair_finalize "$TMP_ARCHIVE" "$TMP_SUM" "$ARCHIVE"
 log "wrote $ARCHIVE ($(du -h "$ARCHIVE" | cut -f1)) + .sha256"
 
 if [ -n "${BORG_REPO:-}" ]; then
@@ -342,10 +334,5 @@ else
     log "off-host: BORG_REPO is unset — this backup exists ONLY on the host it backs up."
 fi
 
-# local retention: completed pairs only, newest first by name
-mapfile -t complete < <(find "$DEST" -maxdepth 1 -name 'couchdb-*.tar.gz' -type f | sort -r | while read -r f; do [ -f "$f.sha256" ] && echo "$f"; done)
-for ((i = KEEP; i < ${#complete[@]}; i++)); do
-    log "retention: pruning $(basename "${complete[$i]}")"
-    rm -f "${complete[$i]}" "${complete[$i]}.sha256"
-done
+pair_prune "$DEST" couchdb "$KEEP"
 log "done"

@@ -73,6 +73,7 @@ OFFHOST_VERIFY=${OFFHOST_VERIFY:-readback}
 VERIFY_TMP=""
 log() { echo "forgejo-backup: $*"; }
 die() { echo "forgejo-backup: $*" >&2; exit 1; }
+. "${BACKUP_PAIR_LIB:-/usr/local/lib/backup-pair.sh}" || die "backup-pair.sh is missing (install it to /usr/local/lib)"
 
 # ---------------------------------------------------------------------------
 # sqlite3, wherever it lives.
@@ -241,45 +242,10 @@ offhost_copy() {
 }
 
 # ---------------------------------------------------------------------------
-# Retention. Only completed pairs (archive + .sha256) are counted, so a
-# partial file from an interrupted run can never displace a good backup.
-# Local only, deliberately: a broken remote must not be able to delete
-# history here.
+# Retention: backup-pair.sh's pair_prune, which counts completed pairs only
+# and sweeps what a killed run leaves.
 # ---------------------------------------------------------------------------
-prune_retention() {
-    # Newest first by NAME, not by mtime: the timestamp is in the filename in
-    # UTC and sorts chronologically, so the order survives a copy, a restore,
-    # or a `touch` in a way `ls -1t` does not.
-    local complete=() incomplete=() f
-    while IFS= read -r f; do
-        if [ -f "$f.sha256" ]; then complete+=("$f"); else incomplete+=("$f"); fi
-    done < <(find "$DEST" -maxdepth 1 -name 'forgejo-*.tar.gz' -type f 2>/dev/null | sort -r)
-
-    for f in "${incomplete[@]+"${incomplete[@]}"}"; do
-        log "retention: $(basename "$f") has no .sha256 — NOT counted, NOT pruned; inspect by hand"
-    done
-
-    local total=${#complete[@]} i
-    log "retention: $total completed archive(s) present, keeping $KEEP"
-    if [ "$total" -gt "$KEEP" ]; then
-        for ((i = KEEP; i < total; i++)); do
-            log "retention: pruning $(basename "${complete[$i]}")"
-            rm -f "${complete[$i]}" "${complete[$i]}.sha256"
-        done
-    fi
-
-    # Sweep debris: temporaries from a killed run, and checksums whose
-    # archive never landed (the window between the two renames below).
-    while IFS= read -r f; do
-        log "retention: removing leftover $(basename "$f")"
-        rm -f "$f"
-    done < <(find "$DEST" -maxdepth 1 -name '.forgejo-*.partial' -type f 2>/dev/null)
-    while IFS= read -r f; do
-        [ -f "${f%.sha256}" ] && continue
-        log "retention: removing orphan $(basename "$f")"
-        rm -f "$f"
-    done < <(find "$DEST" -maxdepth 1 -name 'forgejo-*.tar.gz.sha256' -type f 2>/dev/null)
-}
+prune_retention() { pair_prune "$DEST" forgejo "$KEEP"; }
 
 # ---------------------------------------------------------------------------
 # Entry point.
@@ -366,19 +332,7 @@ if grep -qE "forgejo-data/gitea/gitea\.db(-wal|-shm)?\$" "$LIST"; then
     die "the live gitea.db leaked into the archive — the --exclude patterns are wrong"
 fi
 
-# The checksum names the final archive, not the temporary, so `sha256sum -c`
-# works unchanged in $DEST after the renames below.
-( cd "$DEST" && sha256sum "$(basename "$TMP_ARCHIVE")" \
-    | sed "s|$(basename "$TMP_ARCHIVE")|$(basename "$ARCHIVE")|" > "$(basename "$TMP_SUM")" )
-
-# Two renames, checksum first. A run killed between them leaves a checksum
-# with no archive — invisible to retention, swept by the next run — whereas
-# the other order would leave an archive that never becomes complete.
-mv "$TMP_SUM" "$ARCHIVE.sha256"
-mv "$TMP_ARCHIVE" "$ARCHIVE"
-
-ln -sfn "$ARCHIVE" "$DEST/LATEST"
-date -u +%Y-%m-%dT%H:%M:%SZ > "$DEST/last-success"
+pair_finalize "$TMP_ARCHIVE" "$TMP_SUM" "$ARCHIVE"
 
 SIZE=$(du -h "$ARCHIVE" | cut -f1)
 log "wrote $ARCHIVE ($SIZE) + .sha256"
