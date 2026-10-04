@@ -115,7 +115,7 @@ inv uname.txt uname -a
 # Paths that exist on this host; tar fails on one that does not.
 paths=()
 for p in etc root/forgejo-server root/couchdb-server root/anubis-server root/.ssh/config root/.ssh/known_hosts \
-         usr/local/bin usr/local/lib var/lib/forgejo-update var/lib/couchdb-update; do
+         usr/local/bin usr/local/lib var/lib/forgejo-update var/lib/couchdb-update var/lib/anubis-update; do
     [ -e "$ROOT/$p" ] && paths+=("$p")
 done
 [ -d "$ROOT/etc" ] || die "$ROOT/etc does not exist"

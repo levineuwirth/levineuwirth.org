@@ -19,10 +19,13 @@ All times UTC. `+n` is the timer's `RandomizedDelaySec`.
 | `couchdb-backup-verify` | Sun 04:45 +10m | restores the newest local CouchDB archive into a scratch container on 127.0.0.1:15984 |
 | `forgejo-update` | daily 05:00 +15m | pulls `forgejo:15`; backs up, recreates, checks (state in `/var/lib/forgejo-update/`) |
 | `couchdb-update` | daily 05:30 +15m | pulls `couchdb:3`; backs up, copies `couchdb-data` cold, recreates, checks; puts data and image back on failure (state in `/var/lib/couchdb-update/`) |
+| `anubis-update` | daily 06:00 +15m | resolves the latest stable 1.x image to a digest; backs up, saves cold challenge state, replaces, checks stability and rolls back on failure (`anubis/README.md`) |
 | `vps-offsite-verify` | 1st 05:00 +1h | `borg check`, then restores the newest archive of every set from the storage box |
 
 Containers: `forgejo` (127.0.0.1:3000, and :2222 for git over ssh) and
-`couchdb` (127.0.0.1:5984), both behind nginx.
+`couchdb` (127.0.0.1:5984), both behind nginx. The forge's HTTPS traffic first
+passes through `anubis` (127.0.0.1:8923); its private health/metrics listener
+is 127.0.0.1:9091.
 
 The four backups and the monthly verify share one borg repository on the
 storage box; every borg call waits for its lock (`BORG_LOCK_WAIT`, default

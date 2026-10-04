@@ -1,5 +1,6 @@
 # /root/anubis-server/docker-compose.yml. Separate from Forgejo so its
-# updater never recreates the filter or pulls an unreviewed filter version.
+# updater never recreates the filter. anubis-update.py follows stable 1.x
+# releases using a digest-pinned docker-compose.override.yml on the VPS.
 services:
   anubis:
     image: ghcr.io/techarohq/anubis:v1.27.0@sha256:8828275668b7bc675679f100970f9714f731388fbbf66ae94de8aca952e3fc4a

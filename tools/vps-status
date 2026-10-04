@@ -30,7 +30,7 @@ age() {   # age <file>: hours since its mtime, or "none"
 failed=$(systemctl --failed --no-legend --plain 2>/dev/null | awk '{print $1}' | paste -sd, -)
 printf 'vps %s: failed=[%s]' "$(date -u +%F)" "${failed:-none}"
 for u in forgejo-backup anki-sync-backup couchdb-backup vps-config-backup forgejo-backup-verify \
-         couchdb-backup-verify vps-offsite-verify anki-sync-upgrade forgejo-update couchdb-update; do
+         couchdb-backup-verify vps-offsite-verify anki-sync-upgrade forgejo-update couchdb-update anubis-update; do
     r=$(systemctl show -p Result --value "$u.service" 2>/dev/null || true)
     t=$(systemctl show -p ExecMainExitTimestamp --value "$u.service" 2>/dev/null | awk '{print $2}')
     e=$(systemctl is-enabled "$u.timer" 2>/dev/null || true)
@@ -45,10 +45,18 @@ if command -v docker >/dev/null 2>&1; then
     printf ' docker=[%s]' "$(docker ps -a --filter name='^forgejo$' --filter name='^couchdb$' --filter name='^anubis$' \
         --format '{{.Names}}:{{.Status}}' 2>/dev/null | tr ' ' '_' | paste -sd, -)"
 fi
-for svc in forgejo couchdb; do
-    [ -e "/var/lib/$svc-update/hold" ] && printf ' %s-hold=%s' "$svc" "$(cut -c1-19 "/var/lib/$svc-update/hold")"
+for svc in forgejo couchdb anubis; do
+    if [ -e "/var/lib/$svc-update/hold" ]; then
+        if [ "$svc" = anubis ]; then
+            held=$(jq -r '.candidate | split("@")[0]' /var/lib/anubis-update/hold)
+        else
+            held=$(cut -c1-19 "/var/lib/$svc-update/hold")
+        fi
+        printf ' %s-hold=%s' "$svc" "$held"
+    fi
     [ -e "/var/lib/$svc-update/needs-operator" ] && printf ' %s-NEEDS-OPERATOR' "$svc"
 done
+[ -e /var/lib/anubis-update/pending.json ] && printf ' anubis-RECOVERY-PENDING'
 if [ -r /var/log/pacman.log ]; then
     last=$(grep -a 'starting full system upgrade' /var/log/pacman.log | tail -1 | cut -c2-11)
     up=none; [ -n "$last" ] && up="$(( (now - $(date -u -d "$last" +%s)) / 86400 ))d"

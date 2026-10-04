@@ -284,6 +284,71 @@ http {
                     finally:
                         browser.close()
 
+    def test_z_updater_replaces_and_rolls_back_real_containers(self):
+        """Derived fixture images exercise replacement, then a startup failure.
+
+        No release is downloaded: one image only adds a label, the other
+        starts Anubis with an invalid policy path. Both use the real binary.
+        """
+        import importlib.util
+        import yaml
+        from unittest.mock import patch
+        spec = importlib.util.spec_from_file_location('anubis_update_real', ROOT / 'tools/anubis-update.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        fixture = self
+        service = yaml.safe_load((ROOT / 'anubis/docker-compose.yml').read_text())['services']['anubis']
+        base = service['image']
+        service.update(container_name=self.filter, network_mode='container:' + self.front,
+                       user=f'{os.getuid()}:{os.getgid()}', volumes=[str(self.tmp) + ':/work'])
+        service['environment'].update(POLICY_FNAME='/work/policy.yaml',
+                ED25519_PRIVATE_KEY_HEX_FILE='/work/signing.key',
+                REDIRECT_DOMAINS=self.base.removeprefix('https://'))
+        (self.tmp / 'docker-compose.yml').write_text(json.dumps({'name': self.prefix,
+                                                        'services': {'anubis': service}}))
+        images = [self.prefix + ':v1.28.0', self.prefix + ':v1.29.0']
+        type(self).derived_images = images
+        for name, extra in zip(images, ('LABEL rehearsal=accepted',
+                     'ENTRYPOINT ["/ko-app/anubis", "--policy-fname=/missing-policy"]')):
+            self.command(['docker', 'build', '-q', '-t', name, '-'],
+                         input='FROM ' + base + '\n' + extra + '\n')
+
+        class Real(module.Updater):
+            next_image = images[0]
+            def request(self, port, path, *, ua='anubis-update', address='203.0.113.1', auth=None):
+                cmd = ['docker', 'exec', fixture.front, 'curl', '--compressed', '--max-time', '5',
+                       '-sS', '-w', '\n%{http_code}', '-H', 'Host: localhost',
+                       '-H', 'X-Real-IP: ' + address, '-H', 'X-Forwarded-For: ' + address, '-A', ua]
+                if auth:
+                    cmd += ['-H', 'Authorization: ' + auth]
+                try:
+                    body, status = self.command(*cmd, f'http://127.0.0.1:{port}' + path).rsplit('\n', 1)
+                except subprocess.CalledProcessError as error:
+                    raise OSError('fixture listener is not ready') from error
+                return int(status), body.encode(), {}
+            def candidate(self, before):
+                info = json.loads(self.command('docker', 'image', 'inspect', self.next_image))[0]
+                return self.next_image, info['Id']
+            def backup(self):
+                pass  # Disposable fixture, never a production backup.
+
+        with patch.dict(os.environ, DIR=str(self.tmp), UPDATE_STATE=str(self.tmp / 'update'),
+                        PROBE_REPO='/tester/rehearsal', WAIT='3', STABLE='2', CHECK_EVERY='.2'):
+            self.command(['docker', 'rm', '-f', self.filter])
+            updater = Real()
+            updater.compose('up', '-d', '--pull', 'never')
+            updater.run()
+            good = updater.inspect()['Image']
+            self.assertIn('v1.28.0', updater.override.read_text())
+            self.assertFalse(updater.hold.exists())
+            updater.next_image = images[1]
+            with self.assertRaises(OSError):
+                updater.run()
+            self.assertEqual(updater.inspect()['Image'], good)
+            self.assertTrue(updater.hold.exists())
+            self.assertFalse(updater.journal.exists())
+            self.assertFalse(updater.attention.exists())
+            updater.probe()
 
 
 if __name__ == '__main__':

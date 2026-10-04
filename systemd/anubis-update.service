@@ -1,0 +1,15 @@
+[Unit]
+Description=Anubis: apply the latest stable 1.x release with rollback
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/anubis-update.py
+TimeoutStartSec=1h
+# On interruption the durable pending journal triggers rollback next run.
+TimeoutStopSec=5min
+UMask=0077
+Nice=10
+
