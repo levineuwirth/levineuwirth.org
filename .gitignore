@@ -51,6 +51,7 @@ _cache-dev/
 *.pyc
 *.pyo
 /.venv/
+/anubis/state/
 
 # No LaTeX globs: the only TeX built here is the CV, whose artifacts stay in
 # yaml-source/build/ (below), and the manuscripts live in their own

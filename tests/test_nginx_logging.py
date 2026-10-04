@@ -57,7 +57,7 @@ class NginxLogging(unittest.TestCase):
             text = re.sub(r'listen\s+(\[::\]:)?80 default_server;', r'listen \g<1>8088 default_server;', text)
             text = re.sub(r'listen\s+(\[::\]:)?443 ssl', r'listen \g<1>8443 ssl', text)
             # All proxied services get the same deterministic fixture backend.
-            text = re.sub(r'127\.0\.0\.1:(3000|8080|5984)', '127.0.0.1:9090', text)
+            text = re.sub(r'127\.0\.0\.1:(3000|8080|5984|8923)', '127.0.0.1:9090', text)
             (cls.tmp / 'sites-enabled' / name).write_text(text)
         config = (ROOT / 'nginx/nginx.conf').read_text()
         config = config.replace('include modules.d/*.conf;', '')

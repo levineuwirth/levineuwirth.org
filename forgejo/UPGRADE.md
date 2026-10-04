@@ -5,6 +5,12 @@ reporting `1.21.11+0` at <https://git.levineuwirth.org/api/v1/version>, a
 release line that left support in 2024. Every command below is for the
 operator to run.
 
+Since 2026-10-04 the public forge passes through Anubis. Run unauthenticated
+version probes on the VPS at `http://127.0.0.1:3000/api/v1/version`, as the
+automatic updater already does. Public API automation needs a valid token;
+plain curl of a web page receives a browser challenge. See
+[`anubis/README.md`](../anubis/README.md) for policy, tests and rollback.
+
 **Part A was executed on 2026-10-01 and production runs `15.0.9`** — see
 "Executed 2026-10-01" below for what differed from this runbook. Part B
 (§ 9) was done the same night; § 9.5 (enforcement) is due a week later.

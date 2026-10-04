@@ -29,6 +29,10 @@ FILES = {
     'root/couchdb-server/instance.ini': '[couchdb]\nuuid = u\n',
     'root/couchdb-server/couchdb-data/shards/db.couch': 'data\n',
     'root/couchdb-server/couchdb-data.pre-20261002T000000Z/shards/db.couch': 'old data\n',
+    'root/anubis-server/docker-compose.yml': 'services: {}\n',
+    'root/anubis-server/policy.yaml': 'bots: []\n',
+    'root/anubis-server/signing.key': 'SECRET SIGNING KEY\n',
+    'root/anubis-server/state/anubis.bdb': 'ephemeral challenges\n',
     'root/forgejo-server/docker-compose.yml': 'services: {}\n',
     'root/forgejo-server/forgejo-data/gitea/gitea.db': 'db\n',
     'root/.ssh/config': 'Host storagebox\n',
@@ -83,12 +87,14 @@ class ConfigBackup(unittest.TestCase):
             networks = json.load(tar.extractfile('./inventory/docker-networks.json'))
         for kept in ('etc/nginx/nginx.conf', 'etc/letsencrypt/live/levineuwirth.org/privkey.pem',
                      'root/couchdb-server/instance.ini', 'root/forgejo-server/docker-compose.yml',
+                     'root/anubis-server/policy.yaml', 'root/anubis-server/signing.key',
                      'root/.ssh/config', 'usr/local/bin/forgejo-backup.sh', 'var/lib/couchdb-update/hold',
                      'inventory/packages.txt'):
             self.assertIn(kept, names)
         for left_out in ('etc/borg/passphrase', 'root/.ssh/id_storagebox',
                          'root/couchdb-server/couchdb-data/shards/db.couch',
                          'root/couchdb-server/couchdb-data.pre-20261002T000000Z/shards/db.couch',
+                         'root/anubis-server/state/anubis.bdb',
                          'root/forgejo-server/forgejo-data/gitea/gitea.db'):
             self.assertNotIn(left_out, names)
         self.assertEqual(networks[0]['IPAM']['Config'][0]['Gateway'], '172.18.0.1')

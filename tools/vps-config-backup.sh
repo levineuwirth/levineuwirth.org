@@ -17,7 +17,7 @@
 #   etc/                       all of /etc but /etc/borg: the passphrase that
 #                              opens this archive is in the password manager,
 #                              and a copy inside it would be no use
-#   root/forgejo-server/, root/couchdb-server/
+#   root/forgejo-server/, root/couchdb-server/, root/anubis-server/
 #                              compose files, server.env, instance.ini,
 #                              local.ini; not the data directories, which are
 #                              the forgejo and couchdb sets
@@ -114,7 +114,7 @@ inv uname.txt uname -a
 
 # Paths that exist on this host; tar fails on one that does not.
 paths=()
-for p in etc root/forgejo-server root/couchdb-server root/.ssh/config root/.ssh/known_hosts \
+for p in etc root/forgejo-server root/couchdb-server root/anubis-server root/.ssh/config root/.ssh/known_hosts \
          usr/local/bin usr/local/lib var/lib/forgejo-update var/lib/couchdb-update; do
     [ -e "$ROOT/$p" ] && paths+=("$p")
 done
@@ -130,6 +130,7 @@ tar -I 'gzip --rsyncable' -cf "$TMP_ARCHIVE" \
     --exclude='./root/forgejo-server/forgejo-data' \
     --exclude='./root/couchdb-server/couchdb-data' \
     --exclude='./root/couchdb-server/couchdb-data.*' \
+    --exclude='./root/anubis-server/state' \
     -C "$ROOT" "${paths[@]/#/./}" \
     -C "$STAGE" ./inventory || rc=$?
 [ "$rc" -le 1 ] || die "tar failed (exit $rc)"

@@ -42,7 +42,7 @@ for set in forgejo:/root/forgejo-backups anki:/root/anki-sync-backups couchdb:/r
     printf ' %s:local=%s,offhost=%s' "$n" "$(age "$d/last-success")" "$(age "$d/last-offhost-success")"
 done
 if command -v docker >/dev/null 2>&1; then
-    printf ' docker=[%s]' "$(docker ps -a --filter name='^forgejo$' --filter name='^couchdb$' \
+    printf ' docker=[%s]' "$(docker ps -a --filter name='^forgejo$' --filter name='^couchdb$' --filter name='^anubis$' \
         --format '{{.Names}}:{{.Status}}' 2>/dev/null | tr ' ' '_' | paste -sd, -)"
 fi
 for svc in forgejo couchdb; do

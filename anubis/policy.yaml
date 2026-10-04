@@ -1,0 +1,59 @@
+# Ordered rules. Meta is denied before Git, API, feed or static exceptions.
+# Identifying strings are claims, not identities; disguised web clients
+# reach the final proof-of-work challenge rather than a default ALLOW.
+bots:
+  - name: deny-meta
+    user_agent_regex: '(?i:meta-externalagent|meta-externalfetcher|facebookexternalhit|facebookcatalog|facebot|facebookbot|meta-webindexer)'
+    action: DENY
+
+  # Git's smart protocol, including the initial unauthenticated request
+  # which Forgejo can answer with 401 before Git supplies credentials.
+  - name: git-discovery
+    action: ALLOW
+    expression: >-
+      method == "GET" && path.matches("^/[^/]+/[^/]+/info/refs$") &&
+      "service" in query && query["service"] in ["git-upload-pack", "git-receive-pack"]
+  - name: git-transfer
+    action: ALLOW
+    expression: >-
+      method == "POST" && "Content-Type" in headers &&
+      ((path.matches("^/[^/]+/[^/]+/git-upload-pack$") &&
+        headers["Content-Type"] == "application/x-git-upload-pack-request") ||
+       (path.matches("^/[^/]+/[^/]+/git-receive-pack$") &&
+        headers["Content-Type"] == "application/x-git-receive-pack-request"))
+
+  # Forgejo validates the token before serving its API. Merely adding a
+  # bad token must return 401; the integration rehearsal checks that.
+  - name: token-api
+    action: ALLOW
+    expression: >-
+      path.startsWith("/api/v1/") && "Authorization" in headers &&
+      headers["Authorization"].matches("^(token|Bearer) [^ ]+$")
+
+  - name: static-and-feeds
+    action: ALLOW
+    expression: >-
+      method in ["GET", "HEAD"] &&
+      (path == "/robots.txt" || path == "/favicon.ico" ||
+       path.startsWith("/assets/") || path.startsWith("/avatars/") ||
+       path.matches("^/[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)?[.](rss|atom)$"))
+
+  - name: challenge-web
+    path_regex: '.*'
+    action: CHALLENGE
+    challenge:
+      algorithm: fast
+      difficulty: 2
+
+dnsbl: false
+honeypot:
+  enabled: false
+openGraph:
+  enabled: false
+status_codes:
+  CHALLENGE: 200
+  DENY: 403
+store:
+  backend: bbolt
+  parameters:
+    path: /state/anubis.bdb

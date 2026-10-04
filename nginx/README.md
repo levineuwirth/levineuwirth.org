@@ -181,29 +181,15 @@ and has no network access. It loads the real vhosts and snippets, replacing
 certificate/root/backend paths with fixtures and omitting the stock image's
 unavailable Brotli module. Production's `nginx -t` checks the installed modules.
 
-## Evaluating Anubis for Forgejo
+## Anubis for Forgejo
 
-The logging rollout supplies the baseline for this decision. Compare at
-least 24–48 hours of forge traffic by path, status, backend duration, user
-agent, and client address. Check Forgejo's CPU/memory and responsiveness
-alongside it: request count alone does not establish overload, and a bot
-name in a user agent does not authenticate the crawler.
+The forge's HTTPS vhost proxies through Anubis on `127.0.0.1:8923`, then
+Forgejo on `127.0.0.1:3000`. Meta's declared crawlers receive 403; web
+browsing uses a short proof-of-work challenge. Git smart-protocol and
+token-authenticated API requests have narrow exceptions. All forwarding
+headers are overwritten at nginx. Other vhosts and Git over SSH are unchanged.
 
-[Anubis](https://github.com/TecharoHQ/anubis) can sit between nginx and
-Forgejo and challenge browser traffic. A prospective deployment here is
-`nginx (TLS) → Anubis → Forgejo`, scoped to `git.levineuwirth.org`; Git over
-SSH stays on its existing separate port. Upstream documents the
-[proxy arrangement](https://github.com/TecharoHQ/anubis/blob/main/docs/docs/admin/installation.mdx)
-and ships a [Git client rule](https://github.com/TecharoHQ/anubis/blob/main/data/clients/git.yaml).
-That rule checks spoofable headers; it is not authentication or proof that
-a client is harmless. Challenge policies can also impede legitimate bots
-and non-browser clients.
-
-Before routing production through it, pin a release and rehearse browser
-browsing/login, clone/fetch/push over HTTPS, Git LFS if used, API calls
-(including the site's snapshot fetcher), raw files, feeds, and the updater's
-health checks. Restrict bypasses to the necessary methods and endpoints;
-allowing all `/api/` or every `git/` user agent creates an easy crawler bypass.
-Keep its listener private and overwrite forwarded client-address headers at
-nginx. Test a direct-to-Forgejo rollback and account for the extra process's
-resource use. Anubis is not installed as part of the logging change.
+[anubis/README.md](../anubis/README.md) covers the pinned deployment, policy,
+health check, logs, backups, updates, tests and rollback. nginx backend timings
+now include Anubis, so use its policy counters to separate filter decisions
+from requests actually forwarded to Forgejo.

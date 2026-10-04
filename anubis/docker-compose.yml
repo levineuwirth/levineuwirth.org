@@ -1,0 +1,59 @@
+# /root/anubis-server/docker-compose.yml. Separate from Forgejo so its
+# updater never recreates the filter or pulls an unreviewed filter version.
+services:
+  anubis:
+    image: ghcr.io/techarohq/anubis:v1.27.0@sha256:8828275668b7bc675679f100970f9714f731388fbbf66ae94de8aca952e3fc4a
+    container_name: anubis
+    restart: unless-stopped
+    # Both listeners bind loopback. Host networking preserves the existing
+    # host -> Forgejo trust boundary; no change to proxy-net is needed.
+    network_mode: host
+    environment:
+      BIND: 127.0.0.1:8923
+      METRICS_BIND: 127.0.0.1:9091
+      TARGET: http://127.0.0.1:3000
+      POLICY_FNAME: /config/policy.yaml
+      ED25519_PRIVATE_KEY_HEX_FILE: /config/signing.key
+      # PUBLIC_URL is for centralized forward-auth. Leave it unset in this
+      # reverse-proxy deployment so challenges return to the original URL.
+      REDIRECT_DOMAINS: git.levineuwirth.org
+      COOKIE_SECURE: "true"
+      COOKIE_HTTP_ONLY: "true"
+      COOKIE_SAME_SITE: Lax
+      COOKIE_EXPIRATION_TIME: 168h
+      SLOG_LEVEL: INFO
+      GOMEMLIMIT: 128MiB
+      GOMAXPROCS: "1"
+    volumes:
+      - type: bind
+        source: ./policy.yaml
+        target: /config/policy.yaml
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./signing.key
+        target: /config/signing.key
+        read_only: true
+        bind:
+          create_host_path: false
+      - ./state:/state
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 192m
+    cpus: 0.5
+    pids_limit: 128
+    healthcheck:
+      # 1.27.0's checker prepends "http://localhost" to metrics-bind.
+      # Override it only in the checker process; the server stays loopback-only.
+      test: [CMD, /ko-app/anubis, --metrics-bind=:9091, --healthcheck]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "3"

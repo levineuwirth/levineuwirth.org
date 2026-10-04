@@ -45,6 +45,12 @@ with the command in `forgejo/docker-compose.yml` (check the subnet against
 `inventory/docker-networks.json`), then restore each service's data from its
 own set (`couchdb/RESTORE.md`, `forgejo/UPGRADE.md`).
 
+The config set also holds `/root/anubis-server` including its signing key,
+but excludes the temporary `state/` database. Recreate `state/` as UID/GID
+1000, mode 0700, and start Anubis before enabling the forge's nginx vhost;
+see `anubis/README.md`. Restoring without its temporary challenge database
+can make visitors solve the challenge again.
+
 ## Installing the configuration backup (audit Y13)
 
 ```bash
