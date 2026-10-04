@@ -24,15 +24,15 @@
 module Filters.Sidenotes (apply) where
 
 import           Control.Monad.State.Strict
-import           Data.Default               (def)
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
 import           Text.Pandoc.Class          (runPure)
 import           Text.Pandoc.Definition
-import           Text.Pandoc.Options        (WriterOptions (..),
-                                             HTMLMathMethod (KaTeX))
+import           Text.Pandoc.Shared         (stringify)
 import           Text.Pandoc.Walk           (walk, walkM)
 import           Text.Pandoc.Writers.HTML   (writeHtml5String)
+import           PandocOptions              (writerOpts)
+import           Utils                      (escapeHtmlText)
 
 -- | Accumulator: next label counter plus collected notes
 --   (newest-first; reversed before rendering the fallback section).
@@ -168,25 +168,17 @@ blocksToInlineHtml = T.concat . map renderOne
     renderOne b =
         blocksToHtml [b]
 
--- | Writer options for note bodies. Must agree with the math method in
---   'Compilers.writerOpts' (KaTeX), or math inside a footnote silently
---   degrades to the writer default (PlainMath -> italics) and the
---   client-side KaTeX pass never sees it. Defined locally because
---   importing Compilers from here would create a module cycle
---   (Compilers -> Filters -> Filters.Sidenotes).
-noteWriterOpts :: WriterOptions
-noteWriterOpts = def { writerHTMLMathMethod = KaTeX "" }
-
--- | Render a list of inlines to HTML (no surrounding @<p>@).
+-- | Render a list of inlines to HTML (no surrounding @<p>@). Should the
+--   writer ever fail, the note keeps its text, escaped, instead of
+--   rendering empty without a word.
 inlinesToHtml :: [Inline] -> Text
 inlinesToHtml inlines =
-    case runPure (writeHtml5String noteWriterOpts (Pandoc mempty [Plain inlines])) of
-        Left  _ -> T.empty
-        Right t -> t
+    either (const (escapeHtmlText (stringify inlines))) id
+        (runPure (writeHtml5String writerOpts (Pandoc mempty [Plain inlines])))
 
--- | Render a list of Pandoc blocks to an HTML fragment via a pure writer run.
+-- | Render a list of Pandoc blocks to an HTML fragment via a pure writer
+--   run, with the same fallback.
 blocksToHtml :: [Block] -> Text
 blocksToHtml blocks =
-    case runPure (writeHtml5String noteWriterOpts (Pandoc mempty blocks)) of
-        Left _  -> T.empty
-        Right t -> t
+    either (const (escapeHtmlText (stringify blocks))) id
+        (runPure (writeHtml5String writerOpts (Pandoc mempty blocks)))

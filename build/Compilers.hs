@@ -22,15 +22,14 @@ import           Text.Pandoc.Definition     (Pandoc (..), Block (..),
 import           Text.Pandoc.Class          (runPure)
 import           Text.Pandoc.Walk           (walk, query)
 import           Text.Pandoc.Writers        (writeHtml5String)
-import           Text.Pandoc.Options        (ReaderOptions (..), WriterOptions (..),
-                                             HTMLMathMethod (..))
-import           Text.Pandoc.Extensions     (enableExtension, Extension (..))
+import           Text.Pandoc.Options        (ReaderOptions)
 import qualified Data.Text                  as T
 import           Control.Monad              (forM_, void, when)
 import           Data.List                  (isInfixOf)
 import           Data.Maybe                 (fromMaybe)
 import           System.FilePath            (takeDirectory)
 import           Utils                      (wordCount, readingTime, escapeHtml, parseBool)
+import           PandocOptions              (poetryReaderOpts, readerOpts, writerOpts)
 import           Filters                    (applyAll, preprocessSource)
 import qualified Citations
 import qualified Filters.Headings           as Headings
@@ -41,23 +40,8 @@ import qualified Filters.Viz               as Viz
 -- Reader / writer options
 -- ---------------------------------------------------------------------------
 
-readerOpts :: ReaderOptions
-readerOpts = defaultHakyllReaderOptions
-
--- | Reader options with hard_line_breaks enabled — every source newline within
---   a paragraph becomes a <br>. Used for poetry so stanza lines render as-is.
-poetryReaderOpts :: ReaderOptions
-poetryReaderOpts = readerOpts
-    { readerExtensions = enableExtension Ext_hard_line_breaks
-                            (readerExtensions readerOpts) }
-
-writerOpts :: WriterOptions
-writerOpts = defaultHakyllWriterOptions
-    { writerHTMLMathMethod  = KaTeX ""
-    , writerHighlightStyle  = Nothing
-    , writerNumberSections  = False
-    , writerTableOfContents = False
-    }
+-- 'readerOpts', 'poetryReaderOpts' and 'writerOpts' live in "PandocOptions"
+-- (re-exported here), where the filters can reach them too.
 
 -- ---------------------------------------------------------------------------
 -- Inline stringification (local, avoids depending on Text.Pandoc.Shared)

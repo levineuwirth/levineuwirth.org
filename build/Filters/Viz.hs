@@ -43,7 +43,6 @@
 module Filters.Viz (inlineViz) where
 
 import           Control.Exception      (IOException, catch)
-import           Data.Default           (def)
 import           Data.Maybe             (fromMaybe)
 import qualified Data.Text              as T
 import           System.Directory       (doesFileExist)
@@ -57,10 +56,8 @@ import           System.Timeout         (timeout)
 import           Text.Read              (readMaybe)
 import qualified Text.Pandoc            as Pandoc
 import           Text.Pandoc.Definition
-import           Text.Pandoc.Extensions (pandocExtensions)
-import           Text.Pandoc.Options    (HTMLMathMethod (..), ReaderOptions (..),
-                                         WriterOptions (..))
 import           Text.Pandoc.Walk       (walkM)
+import           PandocOptions          (readerOpts, writerOpts)
 import qualified Utils                  as U
 
 -- ---------------------------------------------------------------------------
@@ -340,19 +337,13 @@ captionHtml caption
 --   spans and @$…$@ math, so readers saw literal backticks and
 --   @$\\delta$@ under each figure.
 --
---   'writerHTMLMathMethod' is pinned to @KaTeX@ to match
---   @Compilers.writerOpts@. That is load-bearing, not cosmetic:
+--   The caption is read and written with the body's own options
+--   ("PandocOptions"). Pandoc's 'def' would not do: its reader enables far
+--   less than the site's, so a caption kept its straight quotes and its
+--   @$…$@ stayed literal while body prose one line above got both; and
+--   its math method wraps TeX in @\\(…\\)@ delimiters, while
 --   @static\/js\/katex-bootstrap.js@ feeds each @\<span class="math"\>@'s
---   @textContent@ straight to @katex.render@, which wants bare TeX. The
---   default 'HTMLMathMethod' wraps it in @\\(…\\)@ delimiters that KaTeX
---   would then try to typeset.
---
---   'readerExtensions' has to be set explicitly. Pandoc's 'def' enables far
---   less than the site's reader does, so on 'def' alone a caption kept its
---   straight quotes and its @$…$@ stayed literal while body prose one line
---   above got both. @Compilers.readerOpts@ is the real source of truth, but
---   @Compilers@ imports this module, so the value is mirrored rather than
---   shared.
+--   @textContent@ straight to @katex.render@, which wants bare TeX.
 --
 --   A caption is inline content, so the reader's block wrapper is unwrapped
 --   to keep a @\<p\>@ out of the @\<figcaption\>@. On the (essentially
@@ -364,15 +355,12 @@ renderCaption caption =
         Left  _    -> escHtml caption
   where
     convert = do
-        Pandoc meta blocks <- Pandoc.readMarkdown captionReaderOpts caption
-        Pandoc.writeHtml5String captionWriterOpts (Pandoc meta (map unBlock blocks))
+        Pandoc meta blocks <- Pandoc.readMarkdown readerOpts caption
+        Pandoc.writeHtml5String writerOpts (Pandoc meta (map unBlock blocks))
 
     unBlock (Para ils) = Plain ils
     unBlock b          = b
 
-    captionReaderOpts = def { readerExtensions     = pandocExtensions }
-    captionWriterOpts = def { writerHTMLMathMethod = KaTeX ""
-                            , writerExtensions     = pandocExtensions }
 
 errorBlock :: String -> Block
 errorBlock msg = RawBlock (Format "html") $ T.concat

@@ -24,6 +24,7 @@ executable site
         Dingbat
         Drafts
         PageScan
+        PandocOptions
         Sections
         SimilarLinks
         FooterData
