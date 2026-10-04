@@ -81,6 +81,17 @@ class UnpublishedTests(unittest.TestCase):
         self.write("content/drafts/essays/g.md", DRAFT)                        # drafts/ is never published anyway
         self.assertEqual(self.unpublished(), ["file content/a.md", "file content/b.md"])
 
+    def test_fences_hakyll_reads_and_a_near_miss(self):
+        # Hakyll takes a fence of four dashes closed by four; the scanner
+        # read only three and published this draft until 2026-10-04.
+        self.write("content/a.md", "----\ndraft: true\n----\n")
+        # Hakyll takes no front matter here (trailing space on the fence)
+        # and would render the YAML as the body; the draft is withheld.
+        self.write("content/b.md", "--- \ndraft: true\n---\n")
+        self.write("content/c.md", "----\ndraft: true\n---\n")             # unclosed to both
+        self.write("content/d.md", "---\ndraft: off\n---\n")
+        self.assertEqual(self.unpublished(), ["file content/a.md", "file content/b.md"])
+
     def test_all_documented_true_values_are_withheld(self):
         for index, flag in enumerate(('true', 'yes', 'on', '1', '"1"', '" t r u e "')):
             self.write(f"content/true{index}.md", f"---\ndraft: {flag}\n---\n")

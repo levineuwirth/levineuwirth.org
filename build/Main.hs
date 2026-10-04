@@ -18,7 +18,7 @@ import qualified Data.ByteString.Lazy.Char8 as LBS
 import qualified Data.Map.Strict as Map
 import Data.List             (intercalate)
 import Data.Maybe            (fromMaybe)
-import Utils                 (isDevBuild, outputDirFor)
+import Utils                 (boolSpellings, isDevBuild, outputDirFor)
 import FooterData            (writeFooterData)
 
 -- | Stamp the start of this build into @data/build-stamp.txt@ before
@@ -81,4 +81,7 @@ sharedRules = Map.fromList
     [ ("epistemic-vocabulary", Aeson.toJSON (Map.fromList epistemicVocabulary))
     , ("reserved-sections",    Aeson.toJSON reservedSectionDirs)
     , ("photo-variant-widths", Aeson.toJSON photoVariantWidths)
+    , ("boolean-spellings",    Aeson.toJSON (Map.fromList
+          [ (name, [s | (s, b') <- boolSpellings, b' == b])
+          | (name, b) <- [("true" :: String, True), ("false", False)] ]))
     ]

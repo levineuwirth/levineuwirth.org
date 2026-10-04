@@ -50,17 +50,21 @@ import           Control.Monad.Writer.Class (censor)
 import qualified Data.Aeson           as A
 import qualified Data.Aeson.KeyMap    as KM
 import qualified Data.ByteString.Char8 as BS
-import           Data.Char            (isSpace, toLower)
+import           Data.Char            (isSpace)
 import           Data.List            (isPrefixOf, sort)
-import           Data.Maybe           (catMaybes)
+import           Data.Maybe           (catMaybes, listToMaybe)
 import qualified Data.Set             as Set
 import qualified Data.Text            as T
+import qualified Data.Text.Encoding   as TE
+import qualified Data.Text.Encoding.Error as TEE
 import qualified Data.Yaml            as Y
 import           System.Directory     (doesDirectoryExist, listDirectory)
 import           System.FilePath      (dropExtension, makeRelative, normalise,
                                        splitDirectories, takeDirectory,
                                        takeExtension, takeFileName, (</>))
 import           System.IO.Unsafe     (unsafePerformIO)
+import           Hakyll.Core.Provider.Metadata (parsePage)
+import           Utils                (parseBool)
 import           Hakyll               (Pattern, Rules, fromFilePath, fromGlob, fromList,
                                        toFilePath, (.||.))
 import           Hakyll.Core.Rules.Internal (RuleSet (..), Rules (..))
@@ -175,23 +179,41 @@ draftFlag fp = do
     r <- try (BS.readFile fp) :: IO (Either IOException BS.ByteString)
     return $ case r of
         Left _    -> Nothing
-        Right src -> case frontMatter src of
-            Nothing    -> Nothing
-            Just block -> case Y.decodeEither' block of
-                Right (A.Object o) | truthy (KM.lookup "draft" o) ->
-                    Just (case KM.lookup "photo" o of
-                              Just (A.String t) -> Just (T.unpack t)
-                              _                 -> Nothing)
-                _ -> Nothing
+        Right src -> listToMaybe
+            [ photoOf o | o <- frontMatterReadings src, truthy (KM.lookup "draft" o) ]
   where
+    photoOf o = case KM.lookup "photo" o of
+        Just (A.String t) -> Just (T.unpack t)
+        _                 -> Nothing
     truthy (Just (A.Bool b))   = b
     truthy (Just (A.Number n)) = n == 1
     -- YAML 1.1 readers (PyYAML, the tests) take yes/on as true; accept the
     -- same spellings when they arrive here as strings.
-    truthy (Just (A.String t)) = map toLower (filter (not . isSpace) (T.unpack t)) `elem` ["true", "yes", "on", "1"]
+    truthy (Just (A.String t)) = parseBool (T.unpack t) == Just True
     truthy _                   = False
 
--- | The YAML between a leading @---@ line and the next @---@ or @...@ line.
+-- | The front matter as Hakyll reads it ('parsePage': what the build will
+-- see), and as 'frontMatter' reads it. A draft flag in either withholds
+-- the page. Hakyll's alone missed nothing the build would publish as a
+-- draft, but the lenient reading also catches an opening fence with
+-- trailing whitespace, which Hakyll does not take as front matter: it
+-- would render the YAML as the page's body, and a draft must not ship
+-- that way either. Before 2026-10-04 only the lenient reading counted,
+-- and it missed fences longer than three dashes, which Hakyll accepts.
+frontMatterReadings :: BS.ByteString -> [A.Object]
+frontMatterReadings src = catMaybes [hakyll, lenient]
+  where
+    hakyll = case parsePage (T.unpack (TE.decodeUtf8With TEE.lenientDecode src)) of
+        Right (meta, _) -> Just meta
+        Left _          -> Nothing
+    lenient = do
+        block <- frontMatter src
+        case Y.decodeEither' block of
+            Right (A.Object o) -> Just o
+            _                  -> Nothing
+
+-- | The YAML between a leading @---@ line and the next @---@ or @...@
+-- line, each allowed trailing whitespace.
 frontMatter :: BS.ByteString -> Maybe BS.ByteString
 frontMatter src = case BS.lines src of
     (first : rest) | strip first == "---" ->

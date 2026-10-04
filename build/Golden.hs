@@ -19,19 +19,20 @@
 --   repository root, as the test does.
 module Golden (renderFixture) where
 
-import qualified Data.ByteString.Char8 as BS
 import qualified Data.Text             as T
 import qualified Data.Text.IO          as TIO
 import qualified Data.Yaml             as Yaml
 import           Data.Maybe            (fromMaybe)
-import           Hakyll                (Metadata, lookupString, lookupStringList)
+import           Hakyll                (lookupString, lookupStringList)
 import           System.Exit           (exitFailure)
 import           System.FilePath       (takeDirectory)
 import           System.IO             (hPutStrLn, stderr)
 import           Text.Pandoc           (readMarkdown, runPure, writeHtml5String)
 
 import           Compilers             (readerOpts, writerOpts, transformDocument,
-                                        buildTOC, parseBool)
+                                        buildTOC)
+import           Hakyll.Core.Provider.Metadata (parsePage)
+import           Utils                 (parseBool)
 import           Filters               (preprocessSource)
 import qualified Filters.Headings      as Headings
 
@@ -39,7 +40,8 @@ import qualified Filters.Headings      as Headings
 --   bibliography and the further-reading list, each under a marker line.
 renderFixture :: FilePath -> IO ()
 renderFixture path = do
-    (meta, body) <- splitFrontMatter path <$> readFile path >>= either die return
+    (meta, body) <- parsePage <$> readFile path
+                    >>= either (die . Yaml.prettyPrintParseException) return
     let frKeys        = map T.pack (fromMaybe [] (lookupStringList "further-reading" meta))
         bibPath       = T.pack (fromMaybe "data/bibliography.bib" (lookupString "bibliography" meta))
         numberFigures = fromMaybe False (lookupString "figure-numbering" meta >>= parseBool)
@@ -58,20 +60,3 @@ renderFixture path = do
         ]
   where
     die msg = hPutStrLn stderr ("render-fixture: " ++ path ++ ": " ++ msg) >> exitFailure
-
--- | Hakyll's page split: a leading @---@ line opens the YAML front matter,
---   and the next @---@ or @...@ line closes it.
-splitFrontMatter :: FilePath -> String -> Either String (Metadata, String)
-splitFrontMatter _ src = case lines src of
-    (open : rest) | isFence open ->
-        case break isClose rest of
-            (yamlLines, _ : bodyLines) ->
-                case Yaml.decodeEither' (BS.pack (unlines yamlLines)) of
-                    Left err   -> Left (Yaml.prettyPrintParseException err)
-                    Right meta -> Right (meta, unlines bodyLines)
-            _ -> Left "front matter is never closed"
-    _ -> Right (mempty, src)
-  where
-    isFence l = trimEnd l == "---"
-    isClose l = trimEnd l `elem` ["---", "..."]
-    trimEnd   = reverse . dropWhile (`elem` (" \t\r" :: String)) . reverse

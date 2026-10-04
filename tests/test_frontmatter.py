@@ -23,7 +23,11 @@ Run with: ``make test`` (or ``python3 -m unittest tests.test_frontmatter``).
 from __future__ import annotations
 
 import datetime
+import importlib.util
+import json
 import re
+import shutil
+import subprocess
 import unittest
 from functools import lru_cache
 from pathlib import Path
@@ -38,8 +42,13 @@ CONTENT = REPO_ROOT / "content"
 MARKS_HS = REPO_ROOT / "build" / "Marks.hs"
 COLOPHON = CONTENT / "colophon.md"
 
-# Hakyll's own delimiters: a leading `---` line, closed by `---` or `...`.
-FRONT_MATTER_RE = re.compile(r"\A---[ \t]*\n(.*?)\n(?:---|\.\.\.)[ \t]*(?:\n|\Z)", re.S)
+
+# Hakyll's split (a fence of three or more dashes, closed by as many dashes
+# or dots), shared with the tools.
+_spec = importlib.util.spec_from_file_location(
+    "front_matter", REPO_ROOT / "tools" / "front_matter.py")
+front_matter = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(front_matter)
 ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 # The fields that only render inside the epistemic footer, which appears
@@ -100,16 +109,10 @@ def published_front_matter() -> tuple[list[tuple[str, dict]], list[str]]:
         rel = path.relative_to(REPO_ROOT).as_posix()
         if "drafts" in path.relative_to(CONTENT).parts:
             continue
-        m = FRONT_MATTER_RE.match(path.read_text(encoding="utf-8"))
-        if not m:
-            continue
         try:
-            meta = yaml.safe_load(m.group(1))
+            pages.append((rel, front_matter.load(path.read_text(encoding="utf-8"))))
         except yaml.YAMLError as exc:
             unparsable.append(f"{rel}: {exc}".splitlines()[0])
-            continue
-        if isinstance(meta, dict):
-            pages.append((rel, meta))
     return pages, unparsable
 
 
@@ -257,12 +260,18 @@ class FrontMatterTests(unittest.TestCase):
                     bad.append(f"{rel}: revised entry {entry!r}")
         self.assertNoViolations(bad, "revisions the build drops")
 
+    @unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
     def test_draft_flags_are_ones_the_build_reads(self) -> None:
         # build/Drafts.hs withholds any page whose `draft:` is true (YAML
-        # true, or "true"/"yes"/"on"/"1") and publishes it otherwise. A value it
-        # does not read as either — `draft: maybe`, `draft: [x]` — would
-        # publish the page while looking like it holds it back (audit C06).
-        truthy, falsy = {"true", "yes", "on", "1"}, {"false", "no", "off", "0"}
+        # true, or a true spelling of Utils.boolSpellings) and publishes it
+        # otherwise. A value it does not read as either — `draft: maybe`,
+        # `draft: [x]` — would publish the page while looking like it holds
+        # it back (audit C06).
+        from tests.test_golden import site_binary
+        done = subprocess.run([str(site_binary()), "shared-rules"],
+                              capture_output=True, text=True, check=True)
+        spellings = json.loads(done.stdout)["boolean-spellings"]
+        truthy, falsy = set(spellings["true"]), set(spellings["false"])
         bad = []
         for rel, value in self.values("draft"):
             if isinstance(value, bool):

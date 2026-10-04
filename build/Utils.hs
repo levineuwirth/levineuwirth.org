@@ -22,6 +22,8 @@ module Utils
     , authorUrl
     , metadataKeywords
     , exposureISO
+    , boolSpellings
+    , parseBool
     , canonicalUrlPath
     , isDevBuild
     , outputDirFor
@@ -172,3 +174,18 @@ exposureISO :: String -> Maybe Int
 exposureISO s = case dropWhile (/= "ISO") (words s) of
     (_ : v : _) -> readMaybe v
     _           -> Nothing
+
+-- | The spellings a front-matter boolean may take, as YAML 1.1 readers
+-- (PyYAML, the tests) take them, compared without case or whitespace.
+-- @figure-numbering@ and the draft flag ("Drafts") are both read through
+-- 'parseBool'; they disagreed about @on@ until 2026-10-04. @site
+-- shared-rules@ gives the tests this list.
+boolSpellings :: [(String, Bool)]
+boolSpellings =
+    [ ("true", True), ("yes", True), ("on", True), ("1", True)
+    , ("false", False), ("no", False), ("off", False), ("0", False) ]
+
+-- | A front-matter boolean that arrives as a string; any other spelling
+-- is unset.
+parseBool :: String -> Maybe Bool
+parseBool v = lookup (map toLower (filter (not . isSpace) v)) boolSpellings

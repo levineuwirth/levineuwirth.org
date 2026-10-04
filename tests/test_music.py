@@ -64,6 +64,7 @@ if HAVE_YAML:
     music_import = importlib.util.module_from_spec(SPEC)
     sys.modules[SPEC.name] = music_import
     SPEC.loader.exec_module(music_import)
+    _front_matter = music_import.front_matter   # tools/front_matter.py
 
 HAVE_THUMB_TOOLS = bool(__import__("shutil").which("rsvg-convert"))
 if HAVE_THUMB_TOOLS:
@@ -149,8 +150,7 @@ def quiet(fn, *args, **kwargs):
 
 
 def front_matter(index: Path) -> dict:
-    parts = index.read_text(encoding="utf-8").split("---", 2)
-    return (yaml.safe_load(parts[1]) or {}) if len(parts) >= 3 else {}
+    return _front_matter.load(index.read_text(encoding="utf-8"))
 
 
 def page_number(path: Path) -> int:

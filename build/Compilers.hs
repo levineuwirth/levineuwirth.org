@@ -13,7 +13,6 @@ module Compilers
     , writerOpts
     , transformDocument
     , buildTOC
-    , parseBool
     ) where
 
 import           Hakyll
@@ -29,10 +28,9 @@ import           Text.Pandoc.Extensions     (enableExtension, Extension (..))
 import qualified Data.Text                  as T
 import           Control.Monad              (forM_, void, when)
 import           Data.List                  (isInfixOf)
-import           Data.Char                  (toLower)
 import           Data.Maybe                 (fromMaybe)
 import           System.FilePath            (takeDirectory)
-import           Utils                      (wordCount, readingTime, escapeHtml)
+import           Utils                      (wordCount, readingTime, escapeHtml, parseBool)
 import           Filters                    (applyAll, preprocessSource)
 import qualified Citations
 import qualified Filters.Headings           as Headings
@@ -64,18 +62,6 @@ writerOpts = defaultHakyllWriterOptions
 -- ---------------------------------------------------------------------------
 -- Inline stringification (local, avoids depending on Text.Pandoc.Shared)
 -- ---------------------------------------------------------------------------
-
--- | Frontmatter booleans arrive as strings; accept the spellings YAML
---   users reach for and treat anything else as unset.
-parseBool :: String -> Maybe Bool
-parseBool v = case map toLower v of
-    "true"  -> Just True
-    "yes"   -> Just True
-    "1"     -> Just True
-    "false" -> Just False
-    "no"    -> Just False
-    "0"     -> Just False
-    _       -> Nothing
 
 -- | A heading as plain text: what toc.js shows as the current section's
 --   label. Quotation marks stay (“consumed” is not consumed), math keeps

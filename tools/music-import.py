@@ -90,6 +90,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import importlib.util
 import json
 import os
 import re
@@ -102,6 +103,11 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import yaml
+
+_spec = importlib.util.spec_from_file_location(
+    "front_matter", Path(__file__).with_name("front_matter.py"))
+front_matter = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(front_matter)
 
 ROOT = Path(__file__).resolve().parent.parent
 MUSIC = ROOT / "content" / "music"
@@ -504,24 +510,14 @@ def write_manifest(slug: str, data: dict) -> None:
         tmp.unlink(missing_ok=True)
 
 
-# A leading "---" line, the YAML, and a closing "---" or "..." line, as
-# Hakyll reads it. Splitting on any "---" cut a value holding Pandoc's em
-# dash ("title: A --- B") short.
-FRONT_MATTER_RE = re.compile(r"\A---[ \t]*\n(.*?)\n(?:---|\.\.\.)[ \t]*(?:\n|\Z)", re.S)
-
-
 def frontmatter(slug: str) -> dict | None:
     f = MUSIC / slug / "index.md"
     if not f.exists():
         return None
-    m = FRONT_MATTER_RE.match(f.read_text(encoding="utf-8"))
-    if not m:
-        return {}
     try:
-        data = yaml.safe_load(m.group(1))
+        return front_matter.load(f.read_text(encoding="utf-8"))
     except yaml.YAMLError as exc:
         sys.exit(f"music-import: {f}: front matter is not valid YAML: {exc}")
-    return data if isinstance(data, dict) else {}
 
 
 def scaffold(slug: str, meta: dict, mvts: list[dict], pdf: bool, created: str,

@@ -29,6 +29,10 @@ _spec = importlib.util.spec_from_file_location(
     "shared_rules", Path(__file__).with_name("shared_rules.py"))
 shared_rules = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(shared_rules)
+_spec = importlib.util.spec_from_file_location(
+    "front_matter", Path(__file__).with_name("front_matter.py"))
+front_matter = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(front_matter)
 
 # ---------------------------------------------------------------------------
 # Types
@@ -81,10 +85,6 @@ def read_plain_text(source: Path) -> list[Document]:
     return [Document(body=body, source_path=source)]
 
 
-_FRONTMATTER_RE = re.compile(
-    r"\A---[ \t]*\r?\n(?P<frontmatter>.*?)(?:\r?\n)---[ \t]*(?:\r?\n|\Z)",
-    re.DOTALL,
-)
 
 
 @reader("file-per-document")
@@ -101,10 +101,10 @@ def read_file_per_document(patterns: list[str]) -> list[Document]:
             text = path.read_text(encoding="utf-8", errors="replace")
             meta: dict[str, Any] = {"slug": path.stem}
             body = text
-            match = _FRONTMATTER_RE.match(text)
-            if match is not None:
+            parts = front_matter.split(text)
+            if parts is not None:
                 try:
-                    frontmatter = yaml.safe_load(match.group("frontmatter"))
+                    frontmatter = yaml.safe_load(parts[0])
                 except yaml.YAMLError as exc:
                     raise ContentImportError(
                         f"{path}: invalid YAML frontmatter: {exc}"
@@ -116,7 +116,7 @@ def read_file_per_document(patterns: list[str]) -> list[Document]:
                         f"{path}: frontmatter must be a YAML mapping"
                     )
                 meta.update(frontmatter)
-                body = text[match.end():]
+                body = parts[1]
             docs.append(Document(body=body, meta=meta, source_path=path))
     return docs
 

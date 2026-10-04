@@ -46,6 +46,10 @@ _spec = importlib.util.spec_from_file_location(
     "shared_rules", Path(__file__).with_name("shared_rules.py"))
 shared_rules = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(shared_rules)
+_spec = importlib.util.spec_from_file_location(
+    "front_matter", Path(__file__).with_name("front_matter.py"))
+front_matter = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(front_matter)
 CONTENT_ROOT = Path("content")
 
 # Sections that ship marks by design — these get a coverage line in
@@ -144,17 +148,10 @@ def parse_frontmatter(md_path: Path) -> dict:
         text = md_path.read_text(encoding="utf-8", errors="replace")
     except OSError:
         return {}
-    if not text.startswith("---"):
-        return {}
-    end = text.find("\n---", 3)
-    if end == -1:
-        return {}
-    fm_block = text[3:end]
     try:
-        data = yaml.safe_load(fm_block)
+        return front_matter.load(text)
     except yaml.YAMLError:
         return {}
-    return data if isinstance(data, dict) else {}
 
 
 def monogram_path(md_path: Path) -> Path:
