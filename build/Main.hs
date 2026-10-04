@@ -12,6 +12,7 @@ import Drafts                (currentUnpublished, scanUnpublished, unpublishedSu
 import BibExtras             (BibExtra (..), parseBibExtras)
 import Marks                 (epistemicVocabulary)
 import Patterns              (reservedSectionDirs)
+import Contexts              (photoVariantWidths)
 import qualified Data.Aeson  as Aeson
 import qualified Data.ByteString.Lazy.Char8 as LBS
 import qualified Data.Map.Strict as Map
@@ -77,4 +78,5 @@ sharedRules :: Map.Map String Aeson.Value
 sharedRules = Map.fromList
     [ ("epistemic-vocabulary", Aeson.toJSON (Map.fromList epistemicVocabulary))
     , ("reserved-sections",    Aeson.toJSON reservedSectionDirs)
+    , ("photo-variant-widths", Aeson.toJSON photoVariantWidths)
     ]

@@ -76,24 +76,27 @@ problem (tools/check-site.py). A genuine conversion failure exits 1.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import os
-import re
 import sys
 from pathlib import Path
+
+_spec = importlib.util.spec_from_file_location(
+    "photo_naming", Path(__file__).with_name("photo_naming.py"))
+photo_naming = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(photo_naming)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_ROOT = REPO_ROOT / "content" / "photography"
 
-# The ladder. Fixed: build/ and templates/ hard-code these widths in the
-# srcset they emit, so adding one is a two-repo-side change, not a
-# one-line edit here.
-WIDTHS: tuple[int, ...] = (480, 960, 1440)
+# The ladder and its file names (tools/photo_naming.py, shared with the
+# sidecar extractors and held to build/Contexts.hs by a test).
+WIDTHS = photo_naming.WIDTHS
+is_variant = photo_naming.is_variant
+variant_path = photo_naming.variant_path
+source_for_variant = photo_naming.source_for_variant
 
 SOURCE_EXTS = {".jpg", ".jpeg", ".png"}
-
-# The variant marker, as an anchored suffix. Written out rather than
-# f-string-built from WIDTHS so that a grep for `.w960.` finds it.
-VARIANT_RE = re.compile(r"\.w(480|960|1440)\.(jpe?g|png)$", re.IGNORECASE)
 
 JPEG_QUALITY = 82
 WEBP_QUALITY = 80
@@ -111,30 +114,6 @@ VARIANT_COMPANION_SUFFIXES = (
 # ---------------------------------------------------------------------------
 # Path arithmetic
 # ---------------------------------------------------------------------------
-
-
-def is_variant(path: Path) -> bool:
-    """True for a file this script itself produced.
-
-    Shared shape with tools/extract-dimensions.py, which skips the same
-    set. Keep the two in step if the ladder ever changes.
-    """
-    return VARIANT_RE.search(path.name) is not None
-
-
-def variant_path(source: Path, width: int) -> Path:
-    """`photo.jpg`, 960 -> `photo.w960.jpg` (same directory)."""
-    stem = source.name[: -len(source.suffix)]
-    return source.with_name(f"{stem}.w{width}{source.suffix}")
-
-
-def source_for_variant(variant: Path) -> Path:
-    """`photo.w960.jpg` -> `photo.jpg` (the file it was derived from)."""
-    match = VARIANT_RE.search(variant.name)
-    if match is None:  # pragma: no cover — callers check is_variant first
-        raise ValueError(f"not a variant: {variant}")
-    head = variant.name[: match.start()]
-    return variant.with_name(f"{head}.{match.group(2)}")
 
 
 def _qualifies(path: Path) -> bool:
@@ -373,9 +352,7 @@ def prune(root: Path, *, dry_run: bool, counters: dict) -> None:
         if not source.exists():
             reason = "source gone"
         else:
-            match = VARIANT_RE.search(variant.name)
-            assert match is not None
-            width = int(match.group(1))
+            width = photo_naming.variant_width(variant)
             try:
                 with Image.open(source) as probe:
                     src_width = probe.size[0]

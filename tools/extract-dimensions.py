@@ -31,13 +31,18 @@ images are logged and the rest of the walk continues.
 
 from __future__ import annotations
 
+import importlib.util
 import os
-import re
 import sys
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+_spec = importlib.util.spec_from_file_location(
+    "photo_naming", Path(__file__).with_name("photo_naming.py"))
+photo_naming = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(photo_naming)
 
 REPO_ROOT = Path(__file__).parent.parent
 
@@ -60,8 +65,7 @@ IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif"}
 # browser derives their geometry from the `w` descriptor and the source's
 # aspect ratio), so a variant sidecar would never be read — while costing
 # three extra YAML files per photograph, i.e. ~1100 files of pure churn
-# on this corpus. Keep the pattern in step with VARIANT_RE there.
-VARIANT_RE = re.compile(r"\.w(480|960|1440)\.(jpe?g|png)$", re.IGNORECASE)
+# on this corpus.
 
 
 def _sidecar_path(image: Path) -> Path:
@@ -111,8 +115,8 @@ def _walk_one_root(root: Path, counters: dict[str, int]) -> None:
         if image.name.startswith(".") or image.name.endswith(".tmp"):
             continue
         # Responsive variants are derived from a source that has its own
-        # sidecar; see VARIANT_RE above.
-        if VARIANT_RE.search(image.name):
+        # sidecar; see above.
+        if photo_naming.is_variant(image):
             counters["variants"] += 1
             continue
 

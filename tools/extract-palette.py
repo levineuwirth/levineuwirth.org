@@ -23,9 +23,9 @@ a palette extraction error.
 
 from __future__ import annotations
 
+import importlib.util
 import io
 import os
-import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -33,6 +33,11 @@ from typing import Any
 import yaml
 from PIL import Image
 from colorthief import ColorThief
+
+_spec = importlib.util.spec_from_file_location(
+    "photo_naming", Path(__file__).with_name("photo_naming.py"))
+photo_naming = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(photo_naming)
 
 REPO_ROOT = Path(__file__).parent.parent
 CONTENT_DIR = REPO_ROOT / "content" / "photography"
@@ -44,9 +49,7 @@ IMAGE_EXTS = {".jpg", ".jpeg", ".png"}
 # (photo.w480.jpg / photo.w960.jpg / photo.w1440.jpg). They are pixel
 # reductions of a source that already has its own sidecar, and nothing
 # reads a sidecar for a srcset candidate — so extracting for them would
-# add ~1100 files of churn here for no consumer. Keep the pattern in step
-# with VARIANT_RE in tools/generate-thumbnails.py.
-VARIANT_RE = re.compile(r"\.w(480|960|1440)\.(jpe?g|png)$", re.IGNORECASE)
+# add ~1100 files of churn here for no consumer.
 
 # Number of swatches in the rendered strip. Five matches the design in
 # PHOTOGRAPHY.md and the existing `photo-palette` CSS, which sets
@@ -162,7 +165,7 @@ def main() -> int:
             continue
         if image.name.startswith(".") or image.name.endswith(".tmp"):
             continue
-        if VARIANT_RE.search(image.name):
+        if photo_naming.is_variant(image):
             continue
 
         sidecar = _sidecar_path(image)

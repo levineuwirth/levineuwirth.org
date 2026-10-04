@@ -36,6 +36,7 @@ module Contexts
     , Revision (..)
     , getRevisions
     , isProvedConfidence
+    , photoVariantWidths
     ) where
 
 import Control.Exception       (IOException, try)
@@ -1971,8 +1972,10 @@ sidecarLookupString key obj = yamlAsString =<< KM.lookup (AK.fromString key) obj
 -- design — a 900px source has no @.w960@ — and @.webp@ companions exist
 -- only where @cwebp@ ran.
 
--- | The widths @tools\/generate-thumbnails.py@ emits. Keep in sync with
---   @WIDTHS@ there; adding a rung is a change on both sides.
+-- | The widths @tools\/generate-thumbnails.py@ emits (@WIDTHS@ in
+--   @tools\/photo_naming.py@, held to this list through @site shared-rules@
+--   by @tests\/test_photo_naming.py@); adding a rung is a change on both
+--   sides.
 photoVariantWidths :: [Int]
 photoVariantWidths = [480, 960, 1440]
 
