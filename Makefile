@@ -43,9 +43,9 @@ WITH_LOCK  = ./tools/with-lock.sh $(LOCK_FILE)
 # (build/Site.hs generates it; see F12 in the audit). Pass
 # --allow-missing-404 only while bisecting a broken 404 rule.
 #
-# Add --require-webp to make "JPEGs present, zero WebP" fatal (P02); that is
-# the intended production setting once cwebp is installed everywhere the
-# site is built.
+# --require-webp makes "JPEGs present, zero WebP" fatal (P02). `make build`
+# only warns, so a machine without cwebp can still build; `make deploy`
+# requires it (REQUIRE_WEBP, below).
 #
 # `make build CHECK_SITE_FLAGS='--warn-only'` reports
 # every finding and still exits 0. That is for seeing the whole picture
@@ -295,7 +295,8 @@ compress-assets:
 #   Debian  apt install webp
 # The script still exits 0 when cwebp is missing (the <picture> sources are
 # only emitted for .webp files that exist, so the site stays correct), but
-# it now says so loudly. `make validate REQUIRE_WEBP=1` makes it fatal.
+# it now says so loudly. `make validate REQUIRE_WEBP=1` makes it fatal, and
+# `make deploy` sets that itself.
 convert-images:
 	@$(WITH_LOCK) ./tools/convert-images.sh
 
@@ -521,6 +522,12 @@ deploy-guard:
 deploy:
 	@$(WITH_LOCK) $(MAKE) --no-print-directory deploy-locked
 
+# A deploy refuses a site with JPEGs but no WebP companions: without cwebp
+# on the deploying machine, every photograph shipped at full JPEG weight
+# until 2026-10-04 while each build only warned. Exported so the validate
+# it runs, a sub-make, sees it. `make deploy REQUIRE_WEBP=` overrides it,
+# knowingly.
+deploy-locked: export REQUIRE_WEBP = 1
 deploy-locked: deploy-preflight build-locked validate sign
 	@$(MAKE) --no-print-directory deploy-guard
 	# The revision that was actually compiled. tools/build-freshness.sh

@@ -5,6 +5,11 @@
 # a .webp file alongside each one.  Existing .webp files are skipped (safe to
 # re-run).  If cwebp is not found the script exits 0 so the build continues.
 #
+# Photography's .w480/.w960/.w1440 variants arrive with WebP siblings that
+# tools/generate-thumbnails.py encoded from the source pixels (it runs first
+# in `make build`); they are newer than their JPEG, so this skips them. It
+# covers the full-size delivery files and every other image.
+#
 # Requires: cwebp — Arch ships it in libwebp-utils (NOT libwebp, which
 #   is library-only). Debian/Ubuntu ship it in the webp package.
 #   Install: pacman -S libwebp-utils  /  apt install webp

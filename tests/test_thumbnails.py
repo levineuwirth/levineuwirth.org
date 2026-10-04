@@ -117,6 +117,37 @@ class ThumbnailContractTests(unittest.TestCase):
                     f"w{width} must be {width}x{height} (3:2 preserved)",
                 )
 
+    def test_each_variant_gets_a_webp_sibling_from_the_source(self) -> None:
+        self.write_jpeg("series/wide.jpg", (2400, 1600))
+        run(str(self.root))
+        for width, height in ((480, 320), (960, 640), (1440, 960)):
+            jpg = self.root / "series" / f"wide.w{width}.jpg"
+            webp = self.root / "series" / f"wide.w{width}.webp"
+            with Image.open(webp) as img:
+                self.assertEqual((img.format, img.size), ("WEBP", (width, height)))
+            # Never older than its JPEG, or convert-images.sh re-encodes it.
+            self.assertGreaterEqual(webp.stat().st_mtime_ns, jpg.stat().st_mtime_ns)
+
+    def test_a_missing_webp_is_written_without_rewriting_the_jpeg(self) -> None:
+        self.write_jpeg("series/wide.jpg", (2400, 1600))
+        run(str(self.root))
+        jpg = self.root / "series" / "wide.w960.jpg"
+        os.utime(jpg, (NEWER, NEWER))
+        (self.root / "series" / "wide.w960.webp").unlink()
+
+        run(str(self.root))
+
+        self.assertTrue((self.root / "series" / "wide.w960.webp").exists())
+        self.assertEqual(jpg.stat().st_mtime, NEWER, "the current JPEG was rewritten")
+
+    def test_png_variants_get_lossless_webp_with_alpha(self) -> None:
+        self.write_png_with_alpha("series/art.png", (1000, 800))
+        run(str(self.root))
+        with Image.open(self.root / "series" / "art.w480.webp") as img:
+            img = img.convert("RGBA")
+            self.assertEqual(img.getpixel((5, 5))[3], 0)
+            self.assertEqual(img.getpixel((470, 370)), (10, 120, 200, 255))
+
     def test_small_source_gets_only_the_widths_below_it(self) -> None:
         self.write_jpeg("series/small.jpg", (800, 600))
 

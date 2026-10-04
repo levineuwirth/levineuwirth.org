@@ -28,6 +28,16 @@ NAMING CONTRACT (the Hakyll context and the templates depend on it):
     reruns cannot produce `photo.w960.w480.jpg`.
   * JPEG: quality 82, progressive, optimize. PNG: optimize, alpha
     preserved.
+  * A WebP sibling of every variant (`<name>.w960.webp`), encoded from
+    the same resized image: quality 80, method 6 (lossless for a PNG
+    source). tools/convert-images.sh used to make these with cwebp from
+    the finished JPEG variant; compressing an already-lossy 960px image a
+    second time saved about 3 % and lost detail, and a quarter of them
+    came out larger than the JPEG. From the source pixels, quality 80 is
+    22 % smaller than the JPEG at equal or better SSIM (30-photo sample,
+    2026-10-04). convert-images.sh still covers the full-size delivery
+    files and everything outside photography, and skips these because
+    they are newer than their JPEG.
   * No EXIF. The delivery sources are already stripped by
     tools/import-photo.sh (the metadata lives in the .exif.yaml
     sidecar); Pillow writes none unless asked, and we do not ask. An
@@ -86,6 +96,7 @@ SOURCE_EXTS = {".jpg", ".jpeg", ".png"}
 VARIANT_RE = re.compile(r"\.w(480|960|1440)\.(jpe?g|png)$", re.IGNORECASE)
 
 JPEG_QUALITY = 82
+WEBP_QUALITY = 80
 
 # Sidecars and companions that belong to a variant and should follow it
 # into the bin when it is pruned. All are gitignored derived files.
@@ -170,6 +181,11 @@ def iter_variants(root: Path):
             yield path
 
 
+def webp_path(variant: Path) -> Path:
+    """`photo.w960.jpg` -> `photo.w960.webp` (Contexts.photoWebpName)."""
+    return variant.with_suffix(".webp")
+
+
 def _is_current(source: Path, variant: Path) -> bool:
     """Skip rule: the variant exists and is not older than its source."""
     if not variant.exists():
@@ -236,8 +252,26 @@ def _prepare_for_format(source: Path, image):
     return image
 
 
-def render_variant(source: Path, destination: Path, width: int) -> None:
-    """Write one variant. Raises on failure; never leaves a partial file."""
+def _write(image, destination: Path, kwargs: dict) -> None:
+    """Save through a PID-unique temp name; never leaves a partial file."""
+    tmp = destination.with_name(f"{destination.name}.tmp.{os.getpid()}")
+    try:
+        image.save(tmp, **kwargs)
+        # Match the 644 that import-photo.sh sets on the delivery file;
+        # these are rsync'd to the VPS and served by nginx.
+        os.chmod(tmp, 0o644)
+        tmp.replace(destination)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
+
+
+def render_variant(source: Path, destination: Path, width: int,
+                   *, jpeg: bool = True, webp: bool = True) -> None:
+    """Write one variant and/or its WebP sibling. Raises on failure.
+
+    The JPEG (or PNG) is written first, so the WebP is never older than
+    it and tools/convert-images.sh leaves it alone."""
     from PIL import Image
 
     with Image.open(source) as image:
@@ -254,16 +288,18 @@ def render_variant(source: Path, destination: Path, width: int) -> None:
         )
         kwargs = _save_kwargs(source, image)
 
-    tmp = destination.with_name(f"{destination.name}.tmp.{os.getpid()}")
     try:
-        resized.save(tmp, **kwargs)
-        # Match the 644 that import-photo.sh sets on the delivery file;
-        # these are rsync'd to the VPS and served by nginx.
-        os.chmod(tmp, 0o644)
-        tmp.replace(destination)
-    except BaseException:
-        tmp.unlink(missing_ok=True)
-        raise
+        if jpeg:
+            _write(resized, destination, kwargs)
+        if webp:
+            webp_kwargs: dict = {"format": "WEBP", "method": 6}
+            if kwargs["format"] == "PNG":
+                webp_kwargs["lossless"] = True
+            else:
+                webp_kwargs["quality"] = WEBP_QUALITY
+            if "icc_profile" in kwargs:
+                webp_kwargs["icc_profile"] = kwargs["icc_profile"]
+            _write(resized, webp_path(destination), webp_kwargs)
     finally:
         resized.close()
 
@@ -293,7 +329,9 @@ def generate(root: Path, *, dry_run: bool, force: bool, counters: dict) -> None:
                 continue
 
             destination = variant_path(source, width)
-            if not force and _is_current(source, destination):
+            need_jpeg = force or not _is_current(source, destination)
+            need_webp = need_jpeg or not _is_current(source, webp_path(destination))
+            if not need_webp:
                 counters["skipped"] += 1
                 continue
 
@@ -304,7 +342,8 @@ def generate(root: Path, *, dry_run: bool, force: bool, counters: dict) -> None:
                 continue
 
             try:
-                render_variant(source, destination, width)
+                render_variant(source, destination, width,
+                               jpeg=need_jpeg, webp=need_webp)
             except Exception as exc:  # noqa: BLE001 — keep walking
                 print(
                     f"generate-thumbnails: {destination}: {exc}",
