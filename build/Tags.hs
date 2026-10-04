@@ -99,7 +99,7 @@ expandTag t =
 sectionOwnedTopLevelTags :: [String]
 sectionOwnedTopLevelTags =
     [ "photography", "poetry", "fiction", "music", "essays", "blog"
-    , "cv", "archive", "authors", "bibliography"
+    , "cv", "archive", "authors", "bibliography", "build", "stats"
     ]
 
 -- | All expanded tags for an item (reads the "tags" metadata field).

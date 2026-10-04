@@ -20,16 +20,16 @@
 -- Adding a new ornament:
 --
 --   1. Add its name to 'knownDingbats'.
---   2. Optionally assign a section default in 'sectionDefault'.
+--   2. Optionally make it a section's default in "Sections".
 --   3. Add a matching @body[data-dingbat="…"]@ rule in typography.css.
 module Dingbat
     ( dingbatField
     , knownDingbats
     ) where
 
-import Data.List           (isPrefixOf)
 import Data.Maybe          (fromMaybe)
 import Hakyll
+import Sections            (Section (..), sectionOfRoute)
 
 -- | Curated palette. Extend here when adding a new ornament.
 knownDingbats :: [String]
@@ -49,17 +49,10 @@ knownDingbats =
 fallbackDingbat :: String
 fallbackDingbat = "asterism"
 
--- | Section defaults matched against the item's route prefix.
---   First matching prefix wins. Unmatched routes use 'fallbackDingbat'.
+-- | The section's default ornament ("Sections"); a route in no section,
+--   or in one without a default, uses 'fallbackDingbat'.
 sectionDefault :: String -> String
-sectionDefault r
-    | "essays/"       `isPrefixOf` r = "fleuron"
-    | "blog/"         `isPrefixOf` r = "lozenge"
-    | "poetry/"       `isPrefixOf` r = "trefoil"
-    | "fiction/"      `isPrefixOf` r = "asterisks"
-    | "music/"        `isPrefixOf` r = "clef"
-    | "memento-mori/" `isPrefixOf` r = "memento"
-    | otherwise                       = fallbackDingbat
+sectionDefault r = fromMaybe fallbackDingbat (sectionOfRoute r >>= sectionDingbat)
 
 -- | @$dingbat$@: name of the ornament to use on this page.
 dingbatField :: Context a

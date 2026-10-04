@@ -70,6 +70,7 @@ import Hakyll.Core.Compiler.Internal (compilerAsk, compilerUniverse)
 import Backlinks    (backlinksField)
 import Dingbat      (dingbatField)
 import Marks        (monogramSvgField, hasMonogramField, epistemicSvgField, peerStatusValues)
+import Sections     (Section (..), sectionOfRoute)
 import SimilarLinks (similarLinksField)
 import FooterData   (footerDepsField)
 import Stability    (stabilityField, lastReviewedField, lastReviewedIsoField,
@@ -153,16 +154,7 @@ buildTimeField = field "build-time" $ \_ ->
 contentKindField :: Context String
 contentKindField = field "item-kind" $ \item -> do
     r <- getRoute (itemIdentifier item)
-    return $ case r of
-        Nothing -> "Page"
-        Just r'
-            | "essays/"      `isPrefixOf` r' -> "Essay"
-            | "blog/"        `isPrefixOf` r' -> "Post"
-            | "poetry/"      `isPrefixOf` r' -> "Poem"
-            | "fiction/"     `isPrefixOf` r' -> "Fiction"
-            | "music/"       `isPrefixOf` r' -> "Composition"
-            | "photography/" `isPrefixOf` r' -> "Photo"
-            | otherwise                       -> "Page"
+    return $ maybe "Page" sectionKind (sectionOfRoute =<< r)
 
 -- ---------------------------------------------------------------------------
 -- Site-wide context
