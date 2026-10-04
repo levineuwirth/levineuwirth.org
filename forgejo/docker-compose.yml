@@ -62,6 +62,11 @@ services:
       FORGEJO__service__DISABLE_REGISTRATION: "true"
       FORGEJO__service__NO_REPLY_ADDRESS: noreply.git.levineuwirth.org
       FORGEJO__actions__ENABLED: "false"
+      # Neither feature has stored objects (checked 2026-10-04). Their
+      # clients cannot solve Anubis's browser challenge; enable only with
+      # a rehearsed endpoint policy if either feature is needed later.
+      FORGEJO__server__LFS_START_SERVER: "false"
+      FORGEJO__packages__ENABLED: "false"
       # No zip/tar.gz/bundle downloads: crawlers fetched them commit by commit
       # and left 2,464 jobs queued (UPGRADE.md § 1.3). Clone instead. This 404s
       # the web routes only; the forge vhost's nginx 404s the API route,

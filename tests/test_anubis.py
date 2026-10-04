@@ -79,6 +79,8 @@ http {
                  '-e', 'FORGEJO__server__ROOT_URL=' + cls.base + '/',
                  '-e', 'FORGEJO__server__DISABLE_SSH=true',
                  '-e', 'FORGEJO__service__DISABLE_REGISTRATION=true',
+                 '-e', 'FORGEJO__server__LFS_START_SERVER=false',
+                 '-e', 'FORGEJO__packages__ENABLED=false',
                  '-e', 'FORGEJO__security__REVERSE_PROXY_TRUSTED_PROXIES=*',
                  'codeberg.org/forgejo/forgejo:15.0.9'])
         for _ in range(60):
@@ -89,6 +91,10 @@ http {
             time.sleep(.5)
         else:
             raise RuntimeError('Fixture Forgejo did not start')
+        robots = ROOT / 'forgejo/robots.txt'
+        if robots.exists():
+            cls.command(['docker', 'exec', cls.backend, 'mkdir', '-p', '/data/gitea/public'])
+            cls.command(['docker', 'cp', str(robots), cls.backend + ':/data/gitea/public/robots.txt'])
         cls.password = 'local-rehearsal-' + secrets.token_hex(12)
         cls.command(['docker', 'exec', '-u', 'git', cls.backend, 'gitea', 'admin', 'user', 'create',
                  '--username', 'tester', '--password', cls.password, '--email', 'test@example.invalid',
@@ -130,6 +136,9 @@ http {
             (cls.tmp / (name + '.log')).write_text(log.stdout + log.stderr)
             subprocess.run(['docker', 'rm', '-f', name], capture_output=True)
         subprocess.run(['docker', 'volume', 'rm', cls.volume], capture_output=True)
+        if getattr(cls, 'derived_images', None):
+            subprocess.run(['docker', 'image', 'rm', *cls.derived_images,
+                            cls.filter + '-rollback:previous'], capture_output=True)
         # Keep the private scratch directory for screenshots and failure logs.
         print('\nAnubis rehearsal artifacts:', cls.tmp)
 
@@ -163,18 +172,59 @@ http {
     def test_unidentified_clients_and_spoofed_git_ua_are_challenged(self):
         for ua in ('', 'curl/8.0', 'git/2.50', 'Mozilla/5.0'):
             status, _, body = self.request('/tester/rehearsal', ua=ua)
-            self.assertEqual(status, 200)
+            self.assertEqual(status, 403)
             self.assertIn('anubis', body.lower())
             self.assertIn('Making sure', body)
 
     def test_api_checks_credentials_and_feeds_work(self):
         for path in ('/api/v1/user', '/api/v1/repos/tester/rehearsal'):
-            self.assertEqual(self.request(path, token=self.token)[0], 200)
-            self.assertEqual(self.request(path, token='invalid-token')[0], 401)
+            for scheme in ('token', 'Bearer'):
+                with self.subTest(path=path, scheme=scheme):
+                    self.assertEqual(self.request(path, headers={'Authorization': scheme + ' ' + self.token})[0], 200)
+                    self.assertEqual(self.request(path, headers={'Authorization': scheme + ' invalid-token'})[0], 401)
+                    self.assertEqual(self.request(path, ua='FacebookBot', headers={'Authorization': scheme + ' ' + self.token})[0], 403)
         self.assertEqual(self.request('/api/v1/user/repos?limit=100', token=self.token)[0], 200)
         status, headers, _ = self.request('/tester/rehearsal.atom')
         self.assertEqual(status, 200)
         self.assertIn('xml', headers.get('Content-Type', ''))
+
+    def test_machine_requests_never_report_a_successful_challenge(self):
+        for path in ('/api/v1/repos/tester/rehearsal', '/api/healthz',
+                     '/tester/rehearsal/raw/branch/main/README.md',
+                     '/tester/rehearsal/releases/download/v1/example.zip',
+                     '/tester/rehearsal.git/info/lfs/objects/batch',
+                     '/tester/rehearsal?go-get=1', '/api/packages/tester/generic/test'):
+            with self.subTest(path=path):
+                status, _, body = self.request(path)
+                self.assertEqual(status, 403)
+                self.assertIn('Making sure', body)
+
+    def test_meta_can_read_robots_but_not_crawl(self):
+        import urllib.robotparser
+        for ua in ('meta-externalagent', 'FacebookBot', 'facebookexternalhit', 'curl-test'):
+            status, _, body = self.request('/robots.txt', ua=ua)
+            self.assertEqual(status, 200)
+            parser = urllib.robotparser.RobotFileParser()
+            parser.parse(body.splitlines())
+            for bot in ('meta-externalagent', 'meta-externalfetcher', 'meta-webindexer',
+                        'FacebookBot', 'Facebot', 'facebookcatalog', 'facebookexternalhit'):
+                self.assertFalse(parser.can_fetch(bot, self.base + '/tester/rehearsal'))
+
+    def test_search_crawlers_require_the_published_address(self):
+        for ua, ip in (('Googlebot (+http://www.google.com/bot.html)', '66.249.66.1'),
+                       ('bingbot (+http://www.bing.com/bingbot.htm)', '157.55.39.1')):
+            # Public clients cannot impersonate the trusted nginx hop.
+            self.assertEqual(self.request('/tester/rehearsal', ua=ua,
+                             headers={'X-Real-IP': ip, 'X-Forwarded-For': ip})[0], 403)
+            # Inside the isolated fixture only, simulate nginx's verified address.
+            def probe(agent, address):
+                return self.command(['docker', 'exec', self.front, 'curl', '--compressed', '-sS',
+                    '-o', '/dev/null', '-w', '%{http_code}', '-H', 'Host: localhost',
+                    '-H', 'X-Real-IP: ' + address, '-A', agent,
+                    'http://127.0.0.1:8923/tester/rehearsal']).stdout
+            self.assertEqual(probe(ua, ip), '200')
+            self.assertEqual(probe(ua, '203.0.113.1'), '403')
+            self.assertEqual(probe(ua + ' meta-externalagent', ip), '403')
 
     def test_git_clone_push_fetch(self):
         ask = self.tmp / 'askpass'
@@ -233,6 +283,7 @@ http {
                         raise
                     finally:
                         browser.close()
+
 
 
 if __name__ == '__main__':

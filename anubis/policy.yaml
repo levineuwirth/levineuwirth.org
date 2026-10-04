@@ -1,10 +1,20 @@
-# Ordered rules. Meta is denied before Git, API, feed or static exceptions.
+# Ordered rules. Only robots.txt is readable before the Meta denial.
 # Identifying strings are claims, not identities; disguised web clients
 # reach the final proof-of-work challenge rather than a default ALLOW.
 bots:
+  - name: robots
+    action: ALLOW
+    expression: 'method in ["GET", "HEAD"] && path == "/robots.txt"'
+
   - name: deny-meta
     user_agent_regex: '(?i:meta-externalagent|meta-externalfetcher|facebookexternalhit|facebookcatalog|facebot|facebookbot|meta-webindexer)'
     action: DENY
+
+  # Both the declared user agent AND an upstream-published address must
+  # match. nginx overwrites the client address; public headers cannot spoof it.
+  # Avoid _allow-good.yaml: it also admits other crawlers, including Common Crawl.
+  - import: (data)/crawlers/googlebot.yaml
+  - import: (data)/crawlers/bingbot.yaml
 
   # Git's smart protocol, including the initial unauthenticated request
   # which Forgejo can answer with 401 before Git supplies credentials.
@@ -34,7 +44,7 @@ bots:
     action: ALLOW
     expression: >-
       method in ["GET", "HEAD"] &&
-      (path == "/robots.txt" || path == "/favicon.ico" ||
+      (path == "/favicon.ico" ||
        path.startsWith("/assets/") || path.startsWith("/avatars/") ||
        path.matches("^/[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)?[.](rss|atom)$"))
 
@@ -51,7 +61,9 @@ honeypot:
 openGraph:
   enabled: false
 status_codes:
-  CHALLENGE: 200
+  # Browsers still solve the challenge; tools must not mistake its HTML
+  # for a successful API response or download. Use curl --fail in scripts.
+  CHALLENGE: 403
   DENY: 403
 store:
   backend: bbolt
