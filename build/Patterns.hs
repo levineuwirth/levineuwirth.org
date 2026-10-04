@@ -20,6 +20,7 @@ module Patterns
     , allPhotoEntries
     , standalonePagesPattern
     , pageCollectionPattern
+    , reservedSectionDirs
       -- * Withheld (@draft: true@)
     , unpublished
       -- * Aggregated patterns
@@ -134,18 +135,18 @@ pageCollectionPattern = published $
     "content/*/*.md" .&&. complement reservedSectionPages
   where
     reservedSectionPages =
-           "content/blog/*.md"
-      .||. "content/cv/*.md"
-      .||. "content/drafts/*.md"
-      .||. "content/essays/*.md"
-      .||. "content/fiction/*.md"
-      .||. "content/me/*.md"
-      .||. "content/memento-mori/*.md"
-      .||. "content/music/*.md"
-      .||. "content/photography/*.md"
-      .||. "content/poetry/*.md"
-      .||. "content/scripts/*.md"
-      .||. "content/tag-meta/*.md"
+        foldr1 (.||.) [fromGlob ("content/" ++ d ++ "/*.md") | d <- reservedSectionDirs]
+
+-- | The directories under @content/@ that belong to a section or its
+-- sidecars, never to a generic page collection. tools/import-content.py
+-- refuses a page collection by one of these names, reading this list
+-- through @site reserved-sections@; the two kept separate copies, and
+-- both lacked @bibliography-meta@, whose sidecars a page collection
+-- would also have compiled.
+reservedSectionDirs :: [String]
+reservedSectionDirs =
+    [ "bibliography-meta", "blog", "cv", "drafts", "essays", "fiction", "me"
+    , "memento-mori", "music", "photography", "poetry", "scripts", "tag-meta" ]
 
 -- | Top-level standalone pages, curated CV routing pages, and generic page
 -- collections.

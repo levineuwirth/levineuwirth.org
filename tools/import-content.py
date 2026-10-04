@@ -14,16 +14,23 @@ All four stages implemented.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import re
+import subprocess
 import sys
 from dataclasses import dataclass, field
 from datetime import date as date_type, datetime
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable
 
 import yaml
 
+ROOT = Path(__file__).resolve().parent.parent
+_spec = importlib.util.spec_from_file_location("unpublished", ROOT / "tools/unpublished.py")
+unpublished = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(unpublished)
 
 # ---------------------------------------------------------------------------
 # Types
@@ -672,20 +679,14 @@ def generate_collection_index(
 FileEntry = tuple[Path, str, str]
 
 
-RESERVED_PAGE_COLLECTION_SLUGS = frozenset({
-    "blog",
-    "cv",
-    "drafts",
-    "essays",
-    "fiction",
-    "me",
-    "memento-mori",
-    "music",
-    "photography",
-    "poetry",
-    "scripts",
-    "tag-meta",
-})
+@lru_cache(maxsize=1)
+def reserved_section_dirs() -> frozenset[str]:
+    """The content/ directories a page collection may not take, as the
+    generator defines them (build/Patterns.hs, `site reserved-sections`),
+    so the importer and the build cannot disagree about one."""
+    out = subprocess.check_output(
+        [unpublished.site_binary(), "reserved-sections"], text=True)
+    return frozenset(out.split())
 
 
 def validate_collection_request(
@@ -694,7 +695,7 @@ def validate_collection_request(
     cli_collection = getattr(args, "collection", None)
     collection_slug = detect_collection_slug(docs, cli_collection)
     if (collection_slug and args.type == "page"
-            and collection_slug in RESERVED_PAGE_COLLECTION_SLUGS):
+            and collection_slug in reserved_section_dirs()):
         raise ContentImportError(
             f"page collection slug {collection_slug!r} conflicts with a "
             "reserved content directory"

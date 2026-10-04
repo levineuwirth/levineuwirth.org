@@ -11,6 +11,7 @@ import Drafts                (currentUnpublished, scanUnpublished, unpublishedSu
                               withoutUnpublished)
 import BibExtras             (BibExtra (..), parseBibExtras)
 import Marks                 (epistemicVocabulary)
+import Patterns              (reservedSectionDirs)
 import qualified Data.Aeson  as Aeson
 import qualified Data.ByteString.Lazy.Char8 as LBS
 import qualified Data.Map.Strict as Map
@@ -47,7 +48,9 @@ writeBuildStamp = do
 -- build withholds for @draft: true@; @site bib-extras FILE@ prints what the
 -- .bib scanner (build/BibExtras.hs) reads from a file, one key per line;
 -- @site epistemic-vocab@ prints the epistemic fields' vocabularies as JSON
--- (build/Marks.hs), for the tools and tests that must agree with them.
+-- (build/Marks.hs), for the tools and tests that must agree with them;
+-- @site reserved-sections@ prints the content directories a page collection
+-- may not take (build/Patterns.hs), one per line.
 main :: IO ()
 main = do
     args <- getArgs
@@ -55,6 +58,7 @@ main = do
         ["render-fixture", path] -> renderFixture path
         ["list-unpublished"] -> scanUnpublished "content" >>= mapM_ putStrLn . unpublishedSummary
         ["epistemic-vocab"] -> LBS.putStrLn (Aeson.encode (Map.fromList epistemicVocabulary))
+        ["reserved-sections"] -> mapM_ putStrLn reservedSectionDirs
         ["bib-extras", path] -> do
             extras <- parseBibExtras path
             mapM_ (\(k, e) -> putStrLn (intercalate "\t"

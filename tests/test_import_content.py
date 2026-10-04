@@ -4,6 +4,7 @@ import argparse
 import contextlib
 import importlib.util
 import io
+import shutil
 import sys
 import tempfile
 import unittest
@@ -75,6 +76,8 @@ class ImportContentTests(unittest.TestCase):
             {"content/source-one.md", "content/source-two.md"},
         )
 
+    # A page collection is checked against `site reserved-sections`.
+    @unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
     def test_collections_support_every_content_type(self) -> None:
         expected = {
             "essay": (
@@ -115,16 +118,19 @@ class ImportContentTests(unittest.TestCase):
                     doc.meta["collection-url"], collection_url
                 )
 
+    @unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
     def test_page_collection_rejects_reserved_section_slug(self) -> None:
         docs = [import_content.Document("Body", {"title": "Piece"})]
 
-        with self.assertRaisesRegex(
-            import_content.ContentImportError,
-            "conflicts with a reserved content directory",
-        ):
-            import_content.assemble_file_entries(
-                docs, args_for(type="page", collection="Fiction")
-            )
+        # bibliography-meta was missing from both lists until 2026-10-04.
+        for collection in ("Fiction", "Bibliography Meta"):
+            with self.subTest(collection=collection), self.assertRaisesRegex(
+                import_content.ContentImportError,
+                "conflicts with a reserved content directory",
+            ):
+                import_content.assemble_file_entries(
+                    docs, args_for(type="page", collection=collection)
+                )
 
     def test_writing_types_require_valid_iso_dates(self) -> None:
         with self.assertRaisesRegex(
