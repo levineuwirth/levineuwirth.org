@@ -16,13 +16,12 @@ import Data.Maybe         (fromMaybe)
 import Data.Ord           (Down (..), comparing)
 import Data.Time.Calendar (Day, diffDays)
 import Data.Time.Clock    (UTCTime (..), getCurrentTime)
-import Data.Time.Format   (defaultTimeLocale, formatTime, parseTimeM)
 import qualified Data.Text             as T
 import qualified Data.Text.Encoding    as TE
 import qualified Data.Yaml             as Y
 import Hakyll hiding (escapeHtml)
 import Contexts (siteCtx)
-import Utils    (escapeHtml)
+import Utils    (escapeHtml, isoToWriterly, parseIsoDate)
 
 -- ---------------------------------------------------------------------------
 -- Entry types
@@ -114,7 +113,7 @@ statusRank s = fromMaybe 99 (lookup s statusRanks)
 --   where it is visible rather than floating silently.
 stalenessBucket :: Day -> String -> Int
 stalenessBucket today iso =
-    case parseTimeM True defaultTimeLocale "%Y-%m-%d" iso :: Maybe Day of
+    case parseIsoDate iso :: Maybe Day of
         Nothing -> 2
         Just d
             | age <= 14 -> 0
@@ -254,18 +253,9 @@ renderShippedAll items = concat
 -- Date formatters — runs at build time
 -- ---------------------------------------------------------------------------
 
--- | "2026-04-26" → "26 April 2026". Falls back to the raw ISO string
---   if the date is unparseable, so a typo in @last-updated@ surfaces
---   in the rendered page rather than blowing up the build.
-formatWriterly :: String -> String
-formatWriterly iso =
-    case parseTimeM True defaultTimeLocale "%Y-%m-%d" iso :: Maybe Day of
-        Nothing -> iso
-        Just d  -> formatTime defaultTimeLocale "%-d %B %Y" d
-
 relativeTime :: Day -> String -> String
 relativeTime today iso =
-    case parseTimeM True defaultTimeLocale "%Y-%m-%d" iso :: Maybe Day of
+    case parseIsoDate iso :: Maybe Day of
         Nothing -> ""
         Just d  -> bucket (diffDays today d)
   where
@@ -307,7 +297,7 @@ validateNowDoc doc = do
         else Right doc
   where
     parseDate label iso =
-        case parseTimeM True defaultTimeLocale "%Y-%m-%d" iso :: Maybe Day of
+        case parseIsoDate iso :: Maybe Day of
             Nothing -> Left (label ++ " is not a valid YYYY-MM-DD date: " ++ iso)
             Just d  -> Right d
 
@@ -334,7 +324,7 @@ nowCtx :: Context String
 nowCtx =
     constField "now" "true"
     <> field "now-last-updated" (\_ -> nowLastUpdated)
-    <> field "now-last-updated-display" (\_ -> formatWriterly . nLastUpdated <$> loadNow)
+    <> field "now-last-updated-display" (\_ -> isoToWriterly . nLastUpdated <$> loadNow)
     <> field "now-last-updated-relative" (\_ -> do
         doc  <- loadNow
         nowT <- unsafeCompiler getCurrentTime

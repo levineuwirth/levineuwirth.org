@@ -18,7 +18,7 @@ import Hakyll
 import Pagination           (sortAndGroup)
 import Patterns             (authorIndexable)
 import Contexts             (abstractField, tagLinksField, canonicalUrlField)
-import Utils                (authorSlugify, itemAuthors)
+import Utils                (authorSlugify, itemAuthors, writerlyDate)
 import Tags                 (anchoredTagsRules)
 
 
@@ -87,7 +87,7 @@ applyAuthorRules authors baseCtx = anchoredTagsRules "_dependencies/authors" aut
     -- directory-routed essay's route is @essays/x/index.html@, and the
     -- author index is the reader's way in to a page whose canonical
     -- link, sitemap entry and feed id all say @/essays/x/@ (audit C03).
-    itemCtx = dateField "date" "%-d %B %Y"
+    itemCtx = dateField "date" writerlyDate
            <> tagLinksField "item-tags"
            <> abstractField
            <> canonicalUrlField

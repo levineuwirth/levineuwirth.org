@@ -22,6 +22,12 @@ module Utils
     , authorUrl
     , metadataKeywords
     , exposureISO
+    , isoDate
+    , writerlyDate
+    , parseIsoDate
+    , formatIso
+    , formatWriterly
+    , isoToWriterly
     , boolSpellings
     , parseBool
     , canonicalUrlPath
@@ -33,7 +39,10 @@ module Utils
 import           Data.Char (isAlphaNum, isSpace, toLower)
 import           Data.List (dropWhileEnd, isSuffixOf)
 import           Data.Maybe (fromMaybe)
+import           Data.Time.Calendar (Day)
 import qualified Data.Text as T
+import           Data.Time.Format (FormatTime, ParseTime, defaultTimeLocale, formatTime,
+                                   parseTimeM)
 import           Hakyll (Metadata, lookupString, lookupStringList)
 import           System.Environment (lookupEnv)
 import           Text.Read (readMaybe)
@@ -189,3 +198,24 @@ boolSpellings =
 -- is unset.
 parseBool :: String -> Maybe Bool
 parseBool v = lookup (map toLower (filter (not . isSpace) v)) boolSpellings
+
+-- | The site's two date spellings: @16 March 2026@ for readers, ISO 8601
+-- for machines and front matter. Pages, feeds and sidecars all format and
+-- parse dates through these rather than repeating the format strings.
+isoDate, writerlyDate :: String
+isoDate      = "%Y-%m-%d"
+writerlyDate = "%-d %B %Y"
+
+-- | A @YYYY-MM-DD@ date, surrounding whitespace allowed, as a 'Day' or a
+-- midnight 'UTCTime'.
+parseIsoDate :: ParseTime t => String -> Maybe t
+parseIsoDate = parseTimeM True defaultTimeLocale isoDate
+
+formatIso, formatWriterly :: FormatTime t => t -> String
+formatIso      = formatTime defaultTimeLocale isoDate
+formatWriterly = formatTime defaultTimeLocale writerlyDate
+
+-- | @"2026-04-26"@ → @"26 April 2026"@. An unparseable value comes back
+-- as it was, so a typo surfaces on the page instead of failing the build.
+isoToWriterly :: String -> String
+isoToWriterly iso = maybe iso (formatWriterly :: Day -> String) (parseIsoDate iso)

@@ -24,8 +24,9 @@ import qualified Data.Vector       as V
 import qualified Data.Text         as T
 import System.FilePath (takeDirectory, (</>))
 import Data.Time.Calendar (Day)
-import Data.Time.Format   (defaultTimeLocale, formatTime, parseTimeM)
-import Hakyll
+import Data.Time.Format   (defaultTimeLocale, parseTimeM)
+import Hakyll hiding (escapeHtml)
+import Utils    (escapeHtml, formatIso, isoDate, writerlyDate)
 import Contexts (durationPrimes, scorePageList, scoreThumb, siteCtx, svgAspect)
 
 -- ---------------------------------------------------------------------------
@@ -113,10 +114,10 @@ completedKey :: Metadata -> String
 completedKey meta = case lookupString "completed" meta of
     Nothing -> ""
     Just raw ->
-        let formats = ["%-d %B %Y", "%B %Y", "%Y-%m-%d"]
+        let formats = [writerlyDate, "%B %Y", isoDate]
             parsed  = listToMaybe [ d | f <- formats
                                       , Just d <- [parseTimeM True defaultTimeLocale f raw :: Maybe Day] ]
-        in  maybe "" (formatTime defaultTimeLocale "%Y-%m-%d") parsed
+        in  maybe "" (formatIso) parsed
 
 -- | A scalar that YAML may hand over as a number or a string:
 --   @year: 2019@ and @opus: '17'@ alike.
@@ -188,18 +189,8 @@ safeHref u =
     let norm = map toLower (dropWhile isSpace u)
     in  if not ("//" `isPrefixOf` norm)
            && any (`isPrefixOf` norm) ["/", "https://", "mailto:", "#"]
-        then escAttr u
+        then escapeHtml u
         else "#"
-
-escAttr :: String -> String
-escAttr = concatMap esc
-  where
-    esc '&'  = "&amp;"
-    esc '<'  = "&lt;"
-    esc '>'  = "&gt;"
-    esc '"'  = "&quot;"
-    esc '\'' = "&#39;"
-    esc c    = [c]
 
 escText :: String -> String
 escText = concatMap esc
@@ -256,9 +247,9 @@ renderShelf entries = concat
         [ "<li><a class=\"shelf-spine\" href=\"", safeHref (ceUrl e), "\""
         , " style=\"--pages: ", show (cePages e), "\""
         , maybe "" (\p -> " data-page=\"" ++ safeHref p ++ "\"") (ceFirstPage e)
-        , maybe "" (\a -> " data-aspect=\"" ++ escAttr a ++ "\"") (ceAspect e)
+        , maybe "" (\a -> " data-aspect=\"" ++ escapeHtml a ++ "\"") (ceAspect e)
         , " data-stack=\"", show (stackOf (cePages e)), "\""
-        , " data-meta=\"", escAttr (metaLine e), "\">"
+        , " data-meta=\"", escapeHtml (metaLine e), "\">"
         , "<span class=\"shelf-spine-title\">", titleHtml e, "</span>"
         , maybe "" (\y -> "<span class=\"shelf-spine-year\">" ++ escText y ++ "</span>") (ceYear e)
         , "</a></li>"
@@ -272,7 +263,7 @@ renderShelf entries = concat
             [ "<a class=\"shelf-faceout\" href=\"", safeHref (ceUrl e), "\""
             , " tabindex=\"-1\" aria-hidden=\"true\""
             , " data-stack=\"", show (stackOf (cePages e)), "\""
-            , maybe "" (\a -> " style=\"--aspect: " ++ escAttr a ++ "\"") (ceAspect e)
+            , maybe "" (\a -> " style=\"--aspect: " ++ escapeHtml a ++ "\"") (ceAspect e)
             , ">"
             , "<img src=\"", safeHref p, "\" alt=\"\" decoding=\"async\">"
             , caption e

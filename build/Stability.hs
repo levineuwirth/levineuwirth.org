@@ -49,7 +49,6 @@ import Data.Maybe               (catMaybes, fromMaybe, listToMaybe)
 import Data.Ord                 (comparing, Down (..))
 import Data.Time.Calendar       (Day, diffDays)
 import Data.Time.Clock          (UTCTime, getCurrentTime, utctDay)
-import Data.Time.Format         (parseTimeM, formatTime, defaultTimeLocale)
 import qualified Data.Text      as T
 import qualified Data.Text.IO   as TIO
 import System.Directory         (getModificationTime)
@@ -58,6 +57,7 @@ import System.IO                (hPutStrLn, stderr)
 import System.IO.Unsafe         (unsafePerformIO)
 import System.Process           (readProcessWithExitCode)
 import Hakyll
+import Utils (parseIsoDate, isoToWriterly)
 
 -- ---------------------------------------------------------------------------
 -- IGNORE.txt
@@ -161,10 +161,6 @@ effectiveDates fp meta =
   where
     fmDates = map vhDateIso (parseFmHistory meta)
 
--- | Parse an ISO "YYYY-MM-DD" string to a 'Day'.
-parseIso :: String -> Maybe Day
-parseIso = parseTimeM True defaultTimeLocale "%Y-%m-%d"
-
 -- | Every label 'stabilityFromDates' gives, least to most settled. The
 --   figure's tick count ("Marks"), the search filters and the epistemic
 --   vocabulary (@site shared-rules@) all read this order.
@@ -193,7 +189,7 @@ stabilityFromDates today dates =
     classify (length dates) ageDays
   where
     -- 'last' is safe: the [] case is handled above.
-    ageDays = case parseIso (last dates) of
+    ageDays = case parseIsoDate (last dates) of
         Just firstDay -> fromIntegral (diffDays today firstDay)
         Nothing       -> 0
     classify n age
@@ -208,12 +204,6 @@ stabilityFromDates today dates =
     revisingAge     = 90
     fairlyStableAge = 365
     stableAge       = 730
-
--- | Format an ISO date as "%-d %B %Y" (e.g. "16 March 2026").
-fmtIso :: String -> String
-fmtIso s = case parseIso s of
-    Nothing  -> s
-    Just day -> formatTime defaultTimeLocale "%-d %B %Y" (day :: Day)
 
 -- ---------------------------------------------------------------------------
 -- Stability and last-reviewed context fields
@@ -255,8 +245,8 @@ lastReviewedField = field "last-reviewed" $ \item -> do
         if srcPath `elem` ignored
             -- Frontmatter convention is ISO; format it like the git
             -- branch so pinned pages don't render a raw "2026-05-01".
-            then return $ fmtIso <$> lookupString "last-reviewed" meta
-            else fmap fmtIso . listToMaybe <$> effectiveDates srcPath meta
+            then return $ isoToWriterly <$> lookupString "last-reviewed" meta
+            else fmap isoToWriterly . listToMaybe <$> effectiveDates srcPath meta
     case mDate of
         Nothing -> fail "no last-reviewed"
         Just d  -> return d
@@ -264,7 +254,7 @@ lastReviewedField = field "last-reviewed" $ \item -> do
 -- | Raw-ISO companion to @$last-reviewed$@ — for hover-popup
 -- @data-date-start@ attribute. Falls back to the frontmatter value for
 -- pinned files (which is expected to already be ISO, the same convention
--- used by 'lastReviewedField' before it applied 'fmtIso'). Reads the same
+-- used by 'lastReviewedField' before it applied 'isoToWriterly'). Reads the same
 -- 'effectiveDates' as @$last-reviewed$@, so the two cannot disagree (they
 -- did when a @history:@ date was newer than the last commit; audit H11).
 lastReviewedIsoField :: Context String
@@ -301,7 +291,7 @@ parseFmHistory meta =
     parseOne (Object o) =
         case getString =<< KM.lookup "date" o of
             Nothing -> Nothing
-            Just d  -> Just $ VHEntry (fmtIso d) d (getString =<< KM.lookup "note" o)
+            Just d  -> Just $ VHEntry (isoToWriterly d) d (getString =<< KM.lookup "note" o)
     parseOne _ = Nothing
 
     getString (String t) = Just (T.unpack t)
@@ -309,7 +299,7 @@ parseFmHistory meta =
 
 -- | Get git log for a file as version history entries (date-only, no message).
 gitLogHistory :: FilePath -> Metadata -> IO [VHEntry]
-gitLogHistory fp meta = map (\d -> VHEntry (fmtIso d) d Nothing) <$> effectiveDates fp meta
+gitLogHistory fp meta = map (\d -> VHEntry (isoToWriterly d) d Nothing) <$> effectiveDates fp meta
 
 -- | Maximum entries shown by default in the version-history footer block.
 -- The remainder is revealed via a <details>/<summary> expand affordance,

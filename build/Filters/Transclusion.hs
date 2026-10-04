@@ -34,7 +34,7 @@ processLine line =
     case parseDirective (U.trim line) of
         Nothing             -> line
         Just (url, secAttr) ->
-            "<div class=\"transclude\" data-src=\"" ++ escAttr url ++ "\""
+            "<div class=\"transclude\" data-src=\"" ++ U.escapeHtml url ++ "\""
             ++ secAttr ++ ">" ++ noscriptFallback url secAttr ++ "</div>"
 
 -- | No-JavaScript fallback for a transclusion placeholder.
@@ -61,8 +61,8 @@ noscriptFallback url secAttr =
     -- have shown. Its value is already attribute-escaped, so only the URL
     -- half needs escaping here — escaping the whole would double up.
     href = case sectionOf secAttr of
-        Just sec -> escAttr url ++ "#" ++ sec
-        Nothing  -> escAttr url
+        Just sec -> U.escapeHtml url ++ "#" ++ sec
+        Nothing  -> U.escapeHtml url
 
     sectionOf s = do
         rest <- stripPrefix " data-section=\"" s
@@ -83,7 +83,7 @@ parseDirective s = do
         (slug, '#' : sec)
             | null sec     -> Just (slugToUrl slug, "")
             | otherwise    -> Just (slugToUrl slug,
-                                    " data-section=\"" ++ escAttr sec ++ "\"")
+                                    " data-section=\"" ++ U.escapeHtml sec ++ "\"")
         _                  -> Nothing
 
 -- | Convert a slug (possibly with leading slash, possibly with path segments)
@@ -118,17 +118,6 @@ slugToUrl slug
     | ".html" `isSuffixOf` slug                        = "/" ++ slug
     | "/" `isPrefixOf` slug                            = "/" ++ slugUrlPath (drop 1 slug)
     | otherwise                                        = "/" ++ slugUrlPath slug
-
--- | Minimal HTML attribute-value escape.
-escAttr :: String -> String
-escAttr = concatMap esc
-  where
-    esc '&'  = "&amp;"
-    esc '<'  = "&lt;"
-    esc '>'  = "&gt;"
-    esc '"'  = "&quot;"
-    esc '\'' = "&#39;"
-    esc c    = [c]
 
 -- | Strip a suffix from a string, returning Nothing if not present.
 stripSuffix :: String -> String -> Maybe String

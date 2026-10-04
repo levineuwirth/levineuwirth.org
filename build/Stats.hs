@@ -23,7 +23,7 @@ import Data.Ord                   (comparing, Down (..))
 import qualified Data.Set         as Set
 import Data.String                (fromString)
 import Data.Time                  (getCurrentTime, formatTime, defaultTimeLocale,
-                                   Day, parseTimeM, utctDay, addDays, diffDays)
+                                   Day, utctDay, addDays, diffDays)
 import Data.Time.Calendar         (toGregorian, dayOfWeek)
 import System.Directory           (doesDirectoryExist, getFileSize, listDirectory,
                                    pathIsSymbolicLink)
@@ -49,7 +49,7 @@ import Contexts                   (siteCtx, authorLinksField, canonicalUrlPath)
 import Marks                      (hasMonogram, monogramSvgFieldFor,
                                    hasMonogramFieldFor)
 import qualified Patterns         as P
-import Utils                      (exposureISO, isDevBuild, outputDirFor, readingTime)
+import Utils                      (exposureISO, isDevBuild, outputDirFor, parseIsoDate, readingTime)
 
 -- ---------------------------------------------------------------------------
 -- Types
@@ -300,7 +300,7 @@ toPhotoInfo m = PhotoInfo
     , phLocation = lookupString "location"     m
     , phSeries   = lookupString "series"       m
     , phOrient   = lookupString "orientation"  m
-    , phCaptured = lookupString "captured"     m >>= parseDay
+    , phCaptured = lookupString "captured"     m >>= parseIsoDate
     , phGeo      = hasKey "geo" m
     }
 
@@ -308,8 +308,6 @@ toPhotoInfo m = PhotoInfo
 -- Date helpers (for /stats/ page)
 -- ---------------------------------------------------------------------------
 
-parseDay :: String -> Maybe Day
-parseDay = parseTimeM True defaultTimeLocale "%Y-%m-%d"
 
 -- | First Monday on or before 'day' (start of its ISO week).
 --   'fromEnum' on 'DayOfWeek' is ISO-numbered (Monday=1 .. Sunday=7),
@@ -1332,7 +1330,7 @@ statsRules tags = do
             datePairs <- fmap catMaybes $ forM allItems $ \item -> do
                 meta <- getMetadata (itemIdentifier item)
                 wc   <- loadWC item
-                return $ case lookupString "date" meta >>= parseDay of
+                return $ case lookupString "date" meta >>= parseIsoDate of
                     Nothing -> Nothing
                     Just d  -> Just (d, wc)
             let wordsByDay = Map.fromListWith (+) datePairs

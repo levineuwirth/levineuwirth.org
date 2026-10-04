@@ -54,7 +54,7 @@ import qualified Data.Scientific    as Sci
 import qualified Data.Set           as Set
 import Data.Time.Calendar      (toGregorian)
 import Data.Time.Clock         (UTCTime, getCurrentTime, utctDay)
-import Data.Time.Format        (formatTime, defaultTimeLocale, parseTimeM)
+import Data.Time.Format        (formatTime, defaultTimeLocale)
 import System.Directory        (doesFileExist)
 import System.FilePath         (makeRelative, takeDirectory, takeFileName, (</>))
 import System.IO               (hPutStrLn, stderr)
@@ -65,7 +65,7 @@ import qualified Data.Yaml     as Y
 import Text.Pandoc             (runPure, readMarkdown, writeHtml5String, writePlain, Pandoc(..), Block(..), Inline(..))
 import Text.Pandoc.Options     (WriterOptions(..), HTMLMathMethod(..))
 import Text.Pandoc.Extensions  (Extension(..), disableExtension)
-import Hakyll       hiding (trim)
+import Hakyll       hiding (escapeHtml, trim)
 import Hakyll.Core.Compiler.Internal (compilerAsk, compilerUniverse)
 import Backlinks    (backlinksField)
 import Dingbat      (dingbatField)
@@ -78,7 +78,7 @@ import Stability    (stabilityField, lastReviewedField, lastReviewedIsoField,
                      versionHistoryPrimaryField, versionHistoryRestField,
                      versionHistoryRangeField, versionHistoryRangeStartField,
                      versionHistoryRangeEndField, versionHistoryCommitsField)
-import Utils        (authorUrl, canonicalUrlPath, itemAuthors, metadataKeywords, trim)
+import Utils        (authorUrl, canonicalUrlPath, escapeHtml, formatIso, formatWriterly, isoDate, itemAuthors, metadataKeywords, parseIsoDate, trim, writerlyDate)
 
 -- | Returns 'True' when the @confidence:@ frontmatter value is the
 --   "proved" / "proven" sentinel — the §4.3 carve-out for formal proofs
@@ -453,7 +453,7 @@ unwrapSubSup =
 finishDescription :: T.Text -> String
 finishDescription raw =
     let collapsed = T.unwords (T.words raw)
-    in  attrEscape (T.unpack (truncateWords 155 collapsed))
+    in  escapeHtml (T.unpack (truncateWords 155 collapsed))
 
 -- | Truncate to at most @n@ characters, backing up to the last word
 --   boundary and appending an ellipsis. Text already short enough is
@@ -492,8 +492,8 @@ photoDescription meta
   where
     nonEmptyT s = if null (trim s) then Nothing else Just (T.pack (trim s))
     formatCaptured s =
-        case parseTimeM True defaultTimeLocale "%Y-%m-%d" (trim s) :: Maybe UTCTime of
-            Just d  -> Just (T.pack (formatTime defaultTimeLocale "%-d %B %Y" d))
+        case parseIsoDate (trim s) :: Maybe UTCTime of
+            Just d  -> Just (T.pack (formatWriterly d))
             Nothing -> nonEmptyT s
 
     -- Prefer the series landing page's own title ("Germany, August 2026")
@@ -629,17 +629,6 @@ htmlToText = decodeEntities . stripTags
         (x : _) -> Just x
         []      -> Nothing
 
--- | HTML-escape characters that would break out of an attribute value.
-attrEscape :: String -> String
-attrEscape = concatMap esc
-  where
-    esc '&'  = "&amp;"
-    esc '<'  = "&lt;"
-    esc '>'  = "&gt;"
-    esc '"'  = "&quot;"
-    esc '\'' = "&#39;"
-    esc c    = [c]
-
 -- | What a page needs loaded, read from its rendered body, so each script
 --   and stylesheet goes only where it does something (audit X6). Every
 --   essay and post used to load KaTeX, a render-blocking stylesheet among
@@ -680,7 +669,7 @@ plainField = functionField "plain" $ \args _ -> case args of
     _   -> fail "plain takes one field"
 
 plainText :: String -> String
-plainText = attrEscape . unwords . words . stripTags
+plainText = escapeHtml . unwords . words . stripTags
 
 -- | An Atom entry's @title@ as plain text. Hakyll's template writes
 --   @$title$@ into a text-type @<title>@, where markup is not allowed
@@ -1003,7 +992,7 @@ identifierDisplayUTC :: Identifier -> Compiler UTCTime
 identifierDisplayUTC ident = do
     meta <- getMetadata ident
     case getRevisions meta of
-        (r:_) -> case parseTimeM True defaultTimeLocale "%Y-%m-%d"
+        (r:_) -> case parseIsoDate
                                   (revisionDateISO r) :: Maybe UTCTime of
             Just utc -> return utc
             Nothing  -> getItemUTC defaultTimeLocale ident
@@ -1014,14 +1003,14 @@ identifierDisplayUTC ident = do
 --   its creation date. Formatted "17 April 2026".
 dateDisplayField :: Context String
 dateDisplayField = field "date-display" $ \item ->
-    formatTime defaultTimeLocale "%-d %B %Y" <$> itemDisplayUTC item
+    formatWriterly <$> itemDisplayUTC item
 
 -- | @$date-iso$@ — ISO-8601 form of the display date, for
 --   @<time datetime="...">@ attributes. Same revision-aware
 --   semantics as 'dateDisplayField'.
 dateDisplayIsoField :: Context String
 dateDisplayIsoField = field "date-iso" $ \item ->
-    formatTime defaultTimeLocale "%Y-%m-%d" <$> itemDisplayUTC item
+    formatIso <$> itemDisplayUTC item
 
 -- | @$date-original$@ — the item's creation date, present in the
 --   context only when the most-recent revision date differs from it.
@@ -1036,10 +1025,10 @@ dateOriginalField = field "date-original" $ \item -> do
         [] -> noResult "no revisions"
         (r:_) -> do
             created <- getItemUTC defaultTimeLocale (itemIdentifier item)
-            let createdIso = formatTime defaultTimeLocale "%Y-%m-%d" created
+            let createdIso = formatIso created
             if revisionDateISO r == createdIso
                 then noResult "revision date equals creation date"
-                else return (formatTime defaultTimeLocale "%-d %B %Y" created)
+                else return (formatWriterly created)
 
 -- | @$revision-note$@ — prose note attached to the most-recent
 --   'revised:' entry, if any. Rendered under the abstract on the item
@@ -1066,7 +1055,7 @@ hasRevisionField = field "has-revision" $ \item -> do
         [] -> noResult "no revisions"
         (r:_) -> do
             created <- getItemUTC defaultTimeLocale (itemIdentifier item)
-            let createdIso = formatTime defaultTimeLocale "%Y-%m-%d" created
+            let createdIso = formatIso created
                 hasNote    = maybe False (not . null . trim) (revisionNote r)
             if revisionDateISO r /= createdIso || hasNote
                 then return "true"
@@ -1096,7 +1085,7 @@ revisionDateFields =
 --   Deliberately *not* the build time: a rebuild is not a modification.
 dateModifiedField :: Context String
 dateModifiedField = field "date-modified" $ \item ->
-    formatTime defaultTimeLocale "%-d %B %Y" <$> itemDisplayUTC item
+    formatWriterly <$> itemDisplayUTC item
 
 -- ---------------------------------------------------------------------------
 -- Canonical URL
@@ -1257,7 +1246,7 @@ essayCtx =
     <> versionHistoryRangeStartField
     <> versionHistoryRangeEndField
     <> versionHistoryCommitsField
-    <> dateField "date-created" "%-d %B %Y"
+    <> dateField "date-created" writerlyDate
     -- "Last modified" is the revision date, not the creation date (F11).
     <> dateModifiedField
     <> revisionDateFields
@@ -1276,8 +1265,8 @@ postCtx =
     <> backlinksField
     <> similarLinksField
     <> footerDepsField
-    <> dateField "date"     "%-d %B %Y"
-    <> dateField "date-iso" "%Y-%m-%d"
+    <> dateField "date"     writerlyDate
+    <> dateField "date-iso" isoDate
     -- Blog posts can opt in to the epistemic figure / chips by setting
     -- the relevant frontmatter fields. The Marks module's epistemic SVG
     -- field returns 'noResult' when @status:@ is absent, so unstatused
@@ -2180,8 +2169,8 @@ photographyCtx =
     <> tagLinksField "photography-tags"
     <> authorLinksField
     <> affiliationField
-    <> dateField "date"     "%-d %B %Y"
-    <> dateField "date-iso" "%Y-%m-%d"
+    <> dateField "date"     writerlyDate
+    <> dateField "date-iso" isoDate
     <> revisionDateFields
     <> siteCtx
   where
@@ -2317,9 +2306,9 @@ photographyCtx =
         case mIso of
             Nothing -> noResult "no captured date in frontmatter or EXIF sidecar"
             Just iso ->
-                case parseTimeM True defaultTimeLocale "%Y-%m-%d" iso
+                case parseIsoDate iso
                        :: Maybe UTCTime of
-                    Just t  -> return (formatTime defaultTimeLocale "%-d %B %Y" t)
+                    Just t  -> return (formatWriterly t)
                     Nothing -> noResult "captured date does not parse as YYYY-MM-DD"
 
     -- ISO form passed through unchanged (after a parse-validate round-trip
@@ -2330,9 +2319,9 @@ photographyCtx =
         case mIso of
             Nothing -> noResult "no captured date in frontmatter or EXIF sidecar"
             Just iso ->
-                case parseTimeM True defaultTimeLocale "%Y-%m-%d" iso
+                case parseIsoDate iso
                        :: Maybe UTCTime of
-                    Just t  -> return (formatTime defaultTimeLocale "%Y-%m-%d" t)
+                    Just t  -> return (formatIso t)
                     Nothing -> noResult "captured date does not parse as YYYY-MM-DD"
 
     -- @palette:@ list field. Frontmatter wins; otherwise pull the

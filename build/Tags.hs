@@ -38,8 +38,9 @@ import Data.Ord   (comparing)
 import Data.Set   (Set)
 import qualified Data.Set as Set
 import Data.Time.Clock  (UTCTime)
-import Data.Time.Format (defaultTimeLocale, parseTimeM)
+import Data.Time.Format (defaultTimeLocale)
 import Hakyll
+import Utils (writerlyDate, parseIsoDate)
 import Patterns   (tagIndexable)
 import Contexts   (Revision (..), abstractField, contentKindField,
                    getRevisions, recentFirstByDisplay, revisionDateFields,
@@ -304,8 +305,8 @@ sidecarContext sidecarSet tag
 tagItemCtx :: String -> Context String
 tagItemCtx scope =
     contentKindField
-    <> dateField "date-created"  "%-d %B %Y"
-    <> dateField "date"          "%-d %B %Y"
+    <> dateField "date-created"  writerlyDate
+    <> dateField "date"          writerlyDate
     <> revisionDateFields
     <> tagLinksFieldExcludingScope "item-tags" scope
     <> abstractField
@@ -424,7 +425,7 @@ identifierDisplayUTC :: (MonadMetadata m, MonadFail m)
 identifierDisplayUTC ident = do
     meta <- getMetadata ident
     case getRevisions meta of
-        (r:_) | Just utc <- (parseTimeM True defaultTimeLocale "%Y-%m-%d"
+        (r:_) | Just utc <- (parseIsoDate
                                  (revisionDateISO r) :: Maybe UTCTime)
               -> return utc
         _ -> getItemUTC defaultTimeLocale ident

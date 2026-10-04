@@ -48,7 +48,7 @@ import Tags       (buildAllTags, applyTagRules, sidecarIdentifier,
 import Pagination (blogPaginateRules)
 import Stability  (resolveStability)
 import Stats      (statsRules)
-import Utils      (cacheDirFor, metadataKeywords, outputDirFor)
+import Utils      (cacheDirFor, formatIso, metadataKeywords, outputDirFor)
 
 -- ---------------------------------------------------------------------------
 -- Publication boundary
@@ -1657,7 +1657,7 @@ sitemapEntry ident = do
                 -- date shown in its masthead. Loading it tracks the sitemap
                 -- dependency when that date changes.
                 then Just <$> nowLastUpdated
-                else fmap Just (formatTime defaultTimeLocale "%Y-%m-%d"
+                else fmap Just (formatIso
                                     <$> identifierDisplayUTC ident)
                          `catchError` const (return Nothing)
             return (Just (canonicalUrlPath r, mDay))
