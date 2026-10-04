@@ -19,14 +19,14 @@
 --   (no page, not deployed). Artifact-integrity (SHA-256) verification
 --   runs on both sides: @archive.py fetch@ re-hashes before the Hakyll
 --   build, and 'verifyArtifactSha' (below) re-hashes again in
---   'loadArchiveEntries' — so the guarantee holds even when @archive.py@
+--   'loadArchiveEntries', once per process — so the guarantee holds even when @archive.py@
 --   does not run first (no @.venv@, a direct @cabal run site -- build@,
 --   or a deploy host without the Python toolchain).
 --
 --   See @ARCHIVE.md@ at the repo root for the full design and phase plan.
 module Archive (archiveRules, archiveBuildStats) where
 
-import           Control.Exception      (SomeException, catch)
+import           Control.Exception      (SomeException, catch, evaluate)
 import           Control.Monad          (filterM, forM, forM_, when)
 import           Data.Function          (on)
 import           Data.List              (groupBy, intercalate, sort, sortBy)
@@ -44,6 +44,7 @@ import           System.Directory       (doesDirectoryExist, doesFileExist,
                                          listDirectory)
 import           System.Exit            (exitFailure)
 import           System.IO              (hPutStrLn, readFile', stderr)
+import           System.IO.Unsafe       (unsafePerformIO)
 import           System.Process         (readProcess)
 import           Hakyll
 import Utils (formatBytes, inDefault, median, parseIsoDate)
@@ -278,6 +279,15 @@ verifyArtifactSha slug path expected = do
             ++ "halting build."
         exitFailure
 
+-- | 'loadArchiveEntries', once per process. The rules and the @/build/@
+--   page's figures read the same entries, and every read re-hashes every
+--   artifact, so the page used to repeat on each build what the rules had
+--   just done. Fixed at first use, like the rest of the archive state (see
+--   'archiveRules').
+{-# NOINLINE archiveEntries #-}
+archiveEntries :: [ArchiveEntry]
+archiveEntries = unsafePerformIO loadArchiveEntries
+
 -- | Join the authored manifest with generated provenance. A manifest
 --   entry with no matching provenance — or whose artifact is not on disk
 --   — is dropped, so it produces no page.
@@ -338,7 +348,7 @@ loadArchiveEntries = do
 --   until the process restarts. One-shot builds are unaffected.
 archiveRules :: Rules ()
 archiveRules = do
-    entries <- preprocess loadArchiveEntries
+    entries <- preprocess (evaluate archiveEntries)
 
     -- Raw artifacts: the PDF / HTML snapshot of every *public* entry,
     -- served at its own path (/archive/<slug>/...). Routing this explicit
@@ -575,7 +585,7 @@ statusNote _      = Nothing
 --   Rendered by @Stats.hs@; an empty archive yields just the count.
 archiveBuildStats :: IO [(String, String)]
 archiveBuildStats = do
-    entries <- loadArchiveEntries
+    entries <- evaluate archiveEntries
     today   <- utctDay <$> getCurrentTime
     orphans <- findOrphanDirs entries
     let n         = length entries

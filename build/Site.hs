@@ -733,8 +733,9 @@ rules = do
 
     rulesExtraDependencies [musicScoreDep] $ match "content/music/index.md" $ do
         route   $ constRoute "music/index.html"
-        compile $ pageCompiler
-            >>= inDefault "templates/music-catalog.html" musicCatalogCtx
+        compile $ do
+            ctx <- musicCatalogCtx
+            pageCompiler >>= inDefault "templates/music-catalog.html" ctx
 
     -- ---------------------------------------------------------------------------
     -- Music — composition landing pages + score reader

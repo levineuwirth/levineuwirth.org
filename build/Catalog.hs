@@ -338,17 +338,15 @@ loadEntries = do
 -- ---------------------------------------------------------------------------
 
 -- | @$music-shelf$@: the shelf of works; noResult when there are none.
-musicShelfField :: Context String
-musicShelfField = field "music-shelf" $ \_ -> do
-    entries <- loadEntries
+musicShelfField :: [CatalogEntry] -> Context String
+musicShelfField entries = field "music-shelf" $ \_ ->
     if null entries then noResult "no works" else return (renderShelf entries)
 
 -- | @$catalog-by-category$@: HTML for all category sections.
 -- Sorted by canonical category order; if no compositions exist yet,
 -- returns a placeholder paragraph.
-catalogByCategoryField :: Context String
-catalogByCategoryField = field "catalog-by-category" $ \_ -> do
-    entries <- loadEntries
+catalogByCategoryField :: [CatalogEntry] -> Context String
+catalogByCategoryField entries = field "catalog-by-category" $ \_ ->
     if null entries
         then return "<p class=\"cat-empty\">Works forthcoming.</p>"
         else do
@@ -361,9 +359,12 @@ catalogByCategoryField = field "catalog-by-category" $ \_ -> do
     renderGroup g@(e : _) = renderCategorySection (ceCategory e) g
     renderGroup []        = ""   -- unreachable; satisfies coverage checker
 
-musicCatalogCtx :: Context String
-musicCatalogCtx =
-    constField "catalog" "true"
-    <> musicShelfField
-    <> catalogByCategoryField
-    <> siteCtx
+musicCatalogCtx :: Compiler (Context String)
+musicCatalogCtx = do
+    -- Loaded once for both fields, which used to load and parse every
+    -- composition each.
+    entries <- loadEntries
+    return $ constField "catalog" "true"
+          <> musicShelfField entries
+          <> catalogByCategoryField entries
+          <> siteCtx

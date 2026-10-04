@@ -49,6 +49,7 @@ import Contexts                   (siteCtx, authorLinksField, canonicalUrlPath)
 import Marks                      (hasMonogram, monogramSvgFieldFor,
                                    hasMonogramFieldFor)
 import qualified Patterns         as P
+import FooterData                 (normaliseUrl)
 import Utils                      (exposureISO, formatBytes, inDefault, isDevBuild, isSafeUrl, median, outputDirFor, parseIsoDate, readingTime)
 
 -- ---------------------------------------------------------------------------
@@ -216,19 +217,9 @@ stripHtmlTags = go
     skipApos (_:rs)    = skipApos rs
     skipApos []        = []
 
--- | Normalise a page URL for backlink map lookup. Must mirror
--- 'FooterData.normaliseUrl': strip a trailing @index.html@ (keeping the
--- directory slash) before the bare @.html@ extension, so the keys this
--- produces match the keys written into @data/backlinks.json@.
-normUrl :: String -> String
-normUrl u
-    | "index.html" `isSuffixOf` u = take (length u - 10) u
-    | ".html" `isSuffixOf` u      = take (length u - 5) u
-    | otherwise                   = u
-
 -- | A URL for a backlinks key that matches no page in the corpus: a
 -- directory key, or one whose last segment has an extension, is already
--- the URL; any other lost its @.html@ to 'normUrl'.
+-- the URL; any other lost its @.html@ to 'normaliseUrl'.
 keyUrl :: String -> String
 keyUrl k
     | "/" `isSuffixOf` k                         = k
@@ -652,21 +643,18 @@ renderPhotography photos
         | otherwise = do subhead t
                          barChart (bucketed bands vals)
 
--- | Renamed/aliased to 'renderTagsSection' below — kept as a name for
--- legacy call sites until they are migrated. Defining it as the same
--- function (instead of an independent copy) prevents the two from
--- drifting silently.
-renderStatsTags :: [(String, Int)] -> Int -> H.Html
-renderStatsTags = renderTagsSection
+-- | A page's table of contents, from its sections' ids and headings.
+tocOf :: [(String, String)] -> H.Html
+tocOf = H.ol . mapM_ item
+  where
+    item (id_, title) =
+        H.li $ H.a H.! A.href (H.stringValue ("#" ++ id_))
+                   H.! customAttr "data-target" id_
+                 $ txt title
 
 statsTOC :: H.Html
-statsTOC = H.ol $ mapM_ item entries
-  where
-    item (i, t) =
-        H.li $ H.a H.! A.href (H.stringValue ("#" ++ i))
-                   H.! customAttr "data-target" i
-                 $ txt t
-    entries = [ ("activity",    "Writing activity")
+statsTOC = tocOf
+              [ ("activity",    "Writing activity")
               , ("volume",      "Monthly volume")
               , ("corpus",      "Corpus")
               , ("notable",     "Notable")
@@ -987,13 +975,7 @@ renderArchive metrics =
 -- ---------------------------------------------------------------------------
 
 pageTOC :: H.Html
-pageTOC = H.ol $ mapM_ item sections
-  where
-    item (id_, title) =
-        H.li $ H.a H.! A.href (H.stringValue ("#" ++ id_))
-                   H.! customAttr "data-target" id_
-                 $ txt title
-    sections =
+pageTOC = tocOf
         [ ("corpus",       "Content")
         , ("pages",        "Pages")
         , ("distribution", "Word-length distribution")
@@ -1008,6 +990,86 @@ pageTOC = H.ol $ mapM_ item sections
         ]
 
 -- ---------------------------------------------------------------------------
+-- The corpus both pages count, and the frame both pages share
+-- ---------------------------------------------------------------------------
+
+-- | One kind of writing, its pages, and their word counts.
+data WritingKind = WritingKind
+    { wkLabel :: String
+    , wkItems :: [Item String]
+    , _wkWCs  :: [Int]
+    }
+
+data Corpus = Corpus
+    { cKinds  :: [WritingKind]
+    , cPhotos :: [PhotoInfo]
+    }
+
+-- | Everything /build/ and /stats/ count. Loading data/build-stamp.txt,
+--   which Main.main rewrites on every invocation, makes both pages
+--   recompile each build: otherwise they are served from cache whenever no
+--   tracked content changed, and the heatmap's "today" and every
+--   unsafeCompiler-sourced figure (timestamp, output stats, git, LOC) go
+--   stale. The value itself is unused.
+loadCorpus :: Compiler Corpus
+loadCorpus = do
+    _ <- load (fromFilePath "data/build-stamp.txt") :: Compiler (Item String)
+    kinds <- forM writingKinds $ \(label, pat) -> do
+        items <- loadAll (pat .&&. hasNoVersion)
+        WritingKind label items <$> mapM loadWC items
+    -- 'allPhotoEntries' minus the series landings: a landing is a cover
+    -- for a roll, not a frame in it, and counting both would inflate every
+    -- figure by one per series. Patterns.hs owns the enumeration; this
+    -- only narrows it.
+    frames <- loadAll (P.allPhotoEntries
+                  .&&. complement "content/photography/*/index.md"
+                  .&&. hasNoVersion) :: Compiler [Item String]
+    photos <- map toPhotoInfo <$> mapM (getMetadata . itemIdentifier) frames
+    return (Corpus kinds photos)
+  where
+    writingKinds =
+        [ ("Essays",       P.essayPattern)
+        , ("Blog posts",   P.blogPattern)
+        , ("Poems",        P.poetryPattern)
+        , ("Fiction",      P.fictionPattern)
+        , ("Compositions", "content/music/*/index.md")
+        ]
+
+kindItems :: String -> Corpus -> [Item String]
+kindItems label c = concat [ wkItems k | k <- cKinds c, wkLabel k == label ]
+
+corpusItems :: Corpus -> [Item String]
+corpusItems = concatMap wkItems . cKinds
+
+corpusRows :: Corpus -> [TypeRow]
+corpusRows c = liveRows $
+       [ TypeRow label (length items) (sum wcs) True | WritingKind label items wcs <- cKinds c ]
+    ++ [ TypeRow "Photographs" (length (cPhotos c)) 0 False ]
+
+-- | Either page, framed as an essay: its table of contents, a word count
+--   and reading time of the rendered tables, title, abstract, and the
+--   page's mark. The abstract is a constField, not front matter, so
+--   Contexts.descriptionField cannot see it and would fall through to a
+--   body excerpt — a table cell — hence the explicit description (C01).
+statsPage :: String -> String -> FilePath -> H.Html -> H.Html -> Compiler (Item String)
+statsPage title abstract markPath toc htmlContent = do
+    let contentString = renderHtml htmlContent
+        plainText     = stripHtmlTags contentString
+        ctx           = constField "toc"          (renderHtml toc)
+                     <> constField "word-count"   (show (length (words plainText)))
+                     <> constField "reading-time" (show (readingTime plainText))
+                     <> constField "title"        title
+                     <> constField "abstract"     abstract
+                     <> constField "description"  abstract
+                     <> constField "build"        "true"
+                     <> monogramSvgFieldFor markPath
+                     <> hasMonogramFieldFor markPath
+                     <> authorLinksField
+                     <> siteCtx
+    makeItem contentString
+        >>= inDefault "templates/essay.html" ctx
+
+-- ---------------------------------------------------------------------------
 -- Rules
 -- ---------------------------------------------------------------------------
 
@@ -1020,62 +1082,12 @@ statsRules tags = do
   create ["build/index.html"] $ do
         route idRoute
         compile $ do
-            -- ----------------------------------------------------------------
-            -- Per-build stamp dependency: data/build-stamp.txt is rewritten
-            -- by Main.main on every invocation, so loading it here forces
-            -- Hakyll to recompile this page each build. Without it the page
-            -- is served from cache whenever no tracked content changed, and
-            -- every unsafeCompiler-sourced figure below (timestamp, output
-            -- stats, git, LOC) goes stale. The value itself is unused.
-            -- ----------------------------------------------------------------
-            _ <- load (fromFilePath "data/build-stamp.txt") :: Compiler (Item String)
-
-            -- ----------------------------------------------------------------
-            -- Load all content items
-            -- ----------------------------------------------------------------
-            essays  <- loadAll (P.essayPattern             .&&. hasNoVersion)
-            posts   <- loadAll (P.blogPattern              .&&. hasNoVersion)
-            poems   <- loadAll (P.poetryPattern           .&&. hasNoVersion)
-            fiction <- loadAll (P.fictionPattern          .&&. hasNoVersion)
-            comps   <- loadAll ("content/music/*/index.md" .&&. hasNoVersion)
-
-            -- ----------------------------------------------------------------
-            -- Word counts
-            -- ----------------------------------------------------------------
-            essayWCs   <- mapM loadWC essays
-            postWCs    <- mapM loadWC posts
-            poemWCs    <- mapM loadWC poems
-            fictionWCs <- mapM loadWC fiction
-            compWCs    <- mapM loadWC comps
-
-            -- ----------------------------------------------------------------
-            -- Photographs
-            --
-            -- 'allPhotoEntries' minus the series landings: a landing is a
-            -- cover for a roll, not a frame in it, and counting both would
-            -- inflate every figure below by one per series. Patterns.hs
-            -- owns the enumeration; this only narrows it.
-            -- ----------------------------------------------------------------
-            frames <- loadAll (P.allPhotoEntries
-                          .&&. complement "content/photography/*/index.md"
-                          .&&. hasNoVersion) :: Compiler [Item String]
-            photos <- map toPhotoInfo <$> mapM (getMetadata . itemIdentifier) frames
-
-            let allWCs = essayWCs ++ postWCs ++ poemWCs ++ fictionWCs ++ compWCs
-                rows = liveRows
-                    [ TypeRow "Essays"       (length essays)  (sum essayWCs)   True
-                    , TypeRow "Blog posts"   (length posts)   (sum postWCs)    True
-                    , TypeRow "Poems"        (length poems)   (sum poemWCs)    True
-                    , TypeRow "Fiction"      (length fiction) (sum fictionWCs) True
-                    , TypeRow "Compositions" (length comps)   (sum compWCs)    True
-                    , TypeRow "Photographs"  (length photos)  0                False
-                    ]
-
-            -- ----------------------------------------------------------------
-            -- Per-page info (title + URL + word count)
-            -- ----------------------------------------------------------------
-            allItems <- return (essays ++ posts ++ poems ++ fiction ++ comps)
-            allPIs   <- catMaybes <$> mapM loadPI allItems
+            corpus <- loadCorpus
+            let essays = kindItems "Essays" corpus
+                posts  = kindItems "Blog posts" corpus
+                allWCs = concat [ wcs | WritingKind _ _ wcs <- cKinds corpus ]
+                rows   = corpusRows corpus
+            allPIs <- catMaybes <$> mapM loadPI (corpusItems corpus)
 
             -- ----------------------------------------------------------------
             -- Dates (essays + posts only)
@@ -1116,25 +1128,23 @@ statsRules tags = do
                 blSet       = Set.fromList (map fst blPairs)
                 orphanCount = length
                     [ p | p <- allPIs
-                    , not (Set.member (normUrl (piUrl p)) blSet) ]
+                    , not (Set.member (normaliseUrl (piUrl p)) blSet) ]
                 mostLinked  = listToMaybe (sortBy (comparing (Down . snd)) blPairs)
                 -- The link is the page's own URL, not the backlinks key: a
                 -- key has lost its .html, so linking it 404s wherever the
                 -- server does not try $uri.html (audit X5).
                 mostLinkedInfo = mostLinked >>= \(key, ct) ->
-                    case find (\p -> normUrl (piUrl p) == key) allPIs of
+                    case find (\p -> normaliseUrl (piUrl p) == key) allPIs of
                         Just p  -> Just (piUrl p, ct, piTitle p)
                         Nothing -> Just (keyUrl key, ct, key)
 
             -- ----------------------------------------------------------------
             -- Epistemic coverage (essays + posts)
             -- ----------------------------------------------------------------
-            essayMetas   <- mapM (getMetadata . itemIdentifier) essays
-            postMetas    <- mapM (getMetadata . itemIdentifier) posts
-            poemMetas    <- mapM (getMetadata . itemIdentifier) poems
-            fictionMetas <- mapM (getMetadata . itemIdentifier) fiction
-            compMetas    <- mapM (getMetadata . itemIdentifier) comps
-            let epMetas    = essayMetas ++ postMetas
+            kindMetas <- forM (cKinds corpus) $ \k ->
+                (,) k <$> mapM (getMetadata . itemIdentifier) (wkItems k)
+            let epMetas    = concat [ ms | (k, ms) <- kindMetas
+                                         , wkLabel k `elem` ["Essays", "Blog posts"] ]
                 epTotal    = length epMetas
                 ep f       = length (filter (isJust . f) epMetas)
                 withStatus = ep (lookupString "status")
@@ -1149,30 +1159,11 @@ statsRules tags = do
             -- epistemic-figure presence is the same trigger as the figure
             -- generator itself (status: set in frontmatter).
             -- ----------------------------------------------------------------
-            essayMonos   <- mapM hasMonogram essays
-            postMonos    <- mapM hasMonogram posts
-            poemMonos    <- mapM hasMonogram poems
-            fictionMonos <- mapM hasMonogram fiction
-            compMonos    <- mapM hasMonogram comps
-            let countTrue  = length . filter id
-                countStat  = length . filter (isJust . lookupString "status")
-                markRows = liveMarkRows
-                    [ MarkRow "Essays"       (length essays)
-                                              (countTrue essayMonos)
-                                              (countStat essayMetas)
-                    , MarkRow "Blog posts"   (length posts)
-                                              (countTrue postMonos)
-                                              (countStat postMetas)
-                    , MarkRow "Poems"        (length poems)
-                                              (countTrue poemMonos)
-                                              (countStat poemMetas)
-                    , MarkRow "Fiction"      (length fiction)
-                                              (countTrue fictionMonos)
-                                              (countStat fictionMetas)
-                    , MarkRow "Compositions" (length comps)
-                                              (countTrue compMonos)
-                                              (countStat compMetas)
-                    ]
+            markRows <- fmap liveMarkRows $ forM kindMetas $ \(k, metas) -> do
+                monos <- mapM hasMonogram (wkItems k)
+                return $ MarkRow (wkLabel k) (length (wkItems k))
+                                 (length (filter id monos))
+                                 (length (filter (isJust . lookupString "status") metas))
 
             -- ----------------------------------------------------------------
             -- Output directory stats
@@ -1218,33 +1209,11 @@ statsRules tags = do
                     renderArchive archiveMetrics
                     renderRepository hf hl cf cl jf jl commits firstDate
                     renderBuild buildTimestamp lastBuildDur
-                contentString = renderHtml htmlContent
-                plainText     = stripHtmlTags contentString
-                wc            = length (words plainText)
-                rt            = readingTime plainText
-                ctx           = constField "toc"          (renderHtml pageTOC)
-                             <> constField "word-count"   (show wc)
-                             <> constField "reading-time" (show rt)
-                             <> constField "title"        "Build Telemetry"
-                             <> constField "abstract"     "Per-build corpus statistics, tag distribution, \
-                                                          \link analysis, epistemic coverage, output metrics, \
-                                                          \repository overview, and build timing."
-                             -- C01: `abstract` here is a constField, not
-                             -- frontmatter, so Contexts.descriptionField
-                             -- cannot see it and would fall through to a
-                             -- body excerpt — which on this page is a
-                             -- table cell.
-                             <> constField "description"  "Per-build corpus statistics, tag distribution, \
-                                                          \link analysis, epistemic coverage, output metrics, \
-                                                          \repository overview, and build timing."
-                             <> constField "build"        "true"
-                             <> monogramSvgFieldFor "content/build.mark.svg"
-                             <> hasMonogramFieldFor "content/build.mark.svg"
-                             <> authorLinksField
-                             <> siteCtx
-
-            makeItem contentString
-                >>= inDefault "templates/essay.html" ctx
+            statsPage "Build Telemetry"
+                "Per-build corpus statistics, tag distribution, link analysis, \
+                \epistemic coverage, output metrics, repository overview, and \
+                \build timing."
+                "content/build.mark.svg" pageTOC htmlContent
 
   -- -------------------------------------------------------------------------
   -- Writing statistics page (/stats/)
@@ -1252,46 +1221,10 @@ statsRules tags = do
   create ["stats/index.html"] $ do
         route idRoute
         compile $ do
-            -- Per-build stamp dependency — forces a recompile every build
-            -- so the heatmap's "today" and all corpus figures stay current.
-            -- See the /build/ rule above for the full rationale.
-            _ <- load (fromFilePath "data/build-stamp.txt") :: Compiler (Item String)
-
-            essays  <- loadAll (P.essayPattern             .&&. hasNoVersion)
-            posts   <- loadAll (P.blogPattern              .&&. hasNoVersion)
-            poems   <- loadAll (P.poetryPattern           .&&. hasNoVersion)
-            fiction <- loadAll (P.fictionPattern          .&&. hasNoVersion)
-            comps   <- loadAll ("content/music/*/index.md" .&&. hasNoVersion)
-
-            essayWCs   <- mapM loadWC essays
-            postWCs    <- mapM loadWC posts
-            poemWCs    <- mapM loadWC poems
-            fictionWCs <- mapM loadWC fiction
-            compWCs    <- mapM loadWC comps
-
-            -- ----------------------------------------------------------------
-            -- Photographs
-            --
-            -- 'allPhotoEntries' minus the series landings: a landing is a
-            -- cover for a roll, not a frame in it, and counting both would
-            -- inflate every figure below by one per series. Patterns.hs
-            -- owns the enumeration; this only narrows it.
-            -- ----------------------------------------------------------------
-            frames <- loadAll (P.allPhotoEntries
-                          .&&. complement "content/photography/*/index.md"
-                          .&&. hasNoVersion) :: Compiler [Item String]
-            photos <- map toPhotoInfo <$> mapM (getMetadata . itemIdentifier) frames
-
-            let allItems = essays ++ posts ++ poems ++ fiction ++ comps
-                typeRows = liveRows
-                    [ TypeRow "Essays"       (length essays)  (sum essayWCs)   True
-                    , TypeRow "Blog posts"   (length posts)   (sum postWCs)    True
-                    , TypeRow "Poems"        (length poems)   (sum poemWCs)    True
-                    , TypeRow "Fiction"      (length fiction) (sum fictionWCs) True
-                    , TypeRow "Compositions" (length comps)   (sum compWCs)    True
-                    , TypeRow "Photographs"  (length photos)  0                False
-                    ]
-
+            corpus <- loadCorpus
+            let allItems = corpusItems corpus
+                typeRows = corpusRows corpus
+                photos   = cPhotos corpus
             allPIs <- catMaybes <$> mapM loadPI allItems
 
             -- Build wordsByDay: for each item with a parseable `date`, map that
@@ -1317,30 +1250,11 @@ statsRules tags = do
                     renderCorpus typeRows allPIs
                     renderNotable allPIs
                     renderPhotography photos
-                    renderStatsTags topTags uniqueTags
-                contentString = renderHtml htmlContent
-                plainText     = stripHtmlTags contentString
-                wc            = length (words plainText)
-                rt            = readingTime plainText
-                ctx           = constField "toc"          (renderHtml statsTOC)
-                             <> constField "word-count"   (show wc)
-                             <> constField "reading-time" (show rt)
-                             -- "Statistics", matching the only link into
-                             -- this page (the portal row on the home page).
-                             -- The page stopped being about the writing
-                             -- alone once the photographs were counted.
-                             <> constField "title"        "Statistics"
-                             <> constField "abstract"     "Writing activity, corpus breakdown, \
-                                                          \photography, and tag distribution — \
-                                                          \computed at build time."
-                             <> constField "description"  "Writing activity, corpus breakdown, \
-                                                          \photography, and tag distribution — \
-                                                          \computed at build time."
-                             <> constField "build"        "true"
-                             <> monogramSvgFieldFor "content/stats.mark.svg"
-                             <> hasMonogramFieldFor "content/stats.mark.svg"
-                             <> authorLinksField
-                             <> siteCtx
-
-            makeItem contentString
-                >>= inDefault "templates/essay.html" ctx
+                    renderTagsSection topTags uniqueTags
+            -- "Statistics", matching the only link into this page (the
+            -- portal row on the home page). The page stopped being about the
+            -- writing alone once the photographs were counted.
+            statsPage "Statistics"
+                "Writing activity, corpus breakdown, photography, and tag \
+                \distribution — computed at build time."
+                "content/stats.mark.svg" statsTOC htmlContent
