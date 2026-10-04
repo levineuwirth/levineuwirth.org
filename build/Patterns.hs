@@ -24,7 +24,6 @@ module Patterns
       -- * Withheld (@draft: true@)
     , unpublished
       -- * Aggregated patterns
-    , allWritings        -- essays + blog + poetry + fiction
     , allContent         -- everything that backlinks should index
     , authorIndexable    -- everything that should appear on /authors/{slug}/
     , tagIndexable       -- everything that should appear on /<tag>/
@@ -159,10 +158,6 @@ standalonePagesPattern = published $
 -- ---------------------------------------------------------------------------
 -- Aggregations
 -- ---------------------------------------------------------------------------
-
--- | All long-form authored writings.
-allWritings :: Pattern
-allWritings = essayPattern .||. blogPattern .||. poetryPattern .||. fictionPattern
 
 -- | Every content file the backlinks pass should index. Includes music
 -- landing pages and top-level standalone pages, in addition to writings,

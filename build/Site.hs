@@ -1240,18 +1240,7 @@ rules = do
                     body <- renderBibliographyHtml bibFilePaths bibExtrasAll keys
                     return (renderLetterHeader letter <> body)
                 return (renderBibliographyAlphabet present <> T.concat parts)
-            -- C07: entry math is rendered to MathML at build time by
-            -- 'Citations.renderEntries', so this page needs no runtime
-            -- typesetter. The guard is a safety net: if the MathML writer
-            -- ever declines a construct it falls back to a raw
-            -- `class="math …"` span holding LaTeX source, and a page with
-            -- one of those does need KaTeX after all. Nothing currently in
-            -- the corpus trips it.
-            let needsKatex =
-                    any (`T.isInfixOf` html)
-                        ["class=\"math inline\"", "class=\"math display\""]
-                mathFld | needsKatex = constField "math" "true"
-                        | otherwise  = mempty
+            let mathFld = katexFallbackField html
             let ctx = constField "title"          "Bibliography"
                    <> constField "bibliography-index" "true"
                    <> constField "description"
@@ -1281,7 +1270,7 @@ rules = do
                             =<< mapM (\i -> load i :: Compiler (Item String)) wIds
                 let writingsCtx
                         | null writingItems = mempty
-                        | otherwise = listField "writings" (portalWritingCtx kw)
+                        | otherwise = listField "writings" portalWritingCtx
                                         (return writingItems)
                                    <> constField "has-writings" "true"
 
@@ -1289,12 +1278,7 @@ rules = do
                 let refKeys = keywordReferencesOrder bibExtrasAll kw
                 refsHtml <- unsafeCompiler $
                     renderBibliographyHtml bibFilePaths bibExtrasAll refKeys
-                -- Same MathML-fallback guard as the bibliography index.
-                let needsKatex =
-                        any (`T.isInfixOf` refsHtml)
-                            ["class=\"math inline\"", "class=\"math display\""]
-                    mathFld | needsKatex = constField "math" "true"
-                            | otherwise  = mempty
+                let mathFld = katexFallbackField refsHtml
                 let referencesCtx
                         | null refKeys = mempty
                         | otherwise =
@@ -1873,13 +1857,26 @@ renderLetterHeader c =
     <> "\" class=\"bibliography-letter\">"
     <> T.singleton c <> "</h2>\n"
 
+-- | @$math$@ for rendered bibliography HTML that still holds LaTeX.
+--   C07: entry math is rendered to MathML at build time by
+--   'Citations.renderEntries', so a bibliography needs no runtime
+--   typesetter. This is the safety net: if the MathML writer ever declines
+--   a construct it falls back to a raw @class="math …"@ span holding LaTeX
+--   source, and a page with one of those does need KaTeX after all.
+--   Nothing currently in the corpus trips it.
+katexFallbackField :: T.Text -> Context String
+katexFallbackField html
+    | any (`T.isInfixOf` html) ["class=\"math inline\"", "class=\"math display\""]
+                = constField "math" "true"
+    | otherwise = mempty
+
 -- | Item-level context for Writings-section cards on a keyword page.
 --   Same fields as the library's 'portalItemCtx' but with tag-footer
 --   suppression tuned to the keyword context rather than a portal
 --   (nothing to suppress here — writings keep their full tag list so
 --   readers can see the item's own portal filings).
-portalWritingCtx :: String -> Context String
-portalWritingCtx _kw =
+portalWritingCtx :: Context String
+portalWritingCtx =
     contentKindField
     <> constField "full-abstract" "true"
     <> essayCtx

@@ -722,7 +722,6 @@ siteCtx =
     <> buildTimeField
     <> pageScriptsField
     <> pageFeatureFields
-    <> pageLicenseFields
     <> abstractField
     <> descriptionField
     <> summaryField
@@ -2090,26 +2089,6 @@ canonicalLicenseUrl raw =
     toLowerC c
         | c >= 'A' && c <= 'Z' = toEnum (fromEnum c + 32)
         | otherwise            = c
-
--- | The page's own notice wins over the prose default. An unknown custom
--- notice without a URL stays plain text; it must not inherit a CC link.
--- The same license/license-url metadata is used by photography below.
-pageLicenseFields :: Context String
-pageLicenseFields = field "page-license" label <> field "page-license-url" url
-  where
-    label item = do
-        meta <- getMetadata (itemIdentifier item)
-        return $ case lookupString "license" meta of
-            Just l | not (null (trim l)) -> trim l
-            _ -> "Prose: CC BY-NC-SA 4.0"
-    url item = do
-        meta <- getMetadata (itemIdentifier item)
-        let name = case lookupString "license" meta of
-                Just l | not (null (trim l)) -> trim l
-                _ -> "CC BY-NC-SA 4.0"
-        case resolveLicenseUrl (lookupString "license-url" meta) name of
-            Just u -> return u
-            Nothing -> noResult "custom license without a URL"
 
 resolveLicenseUrl :: Maybe String -> String -> Maybe String
 resolveLicenseUrl (Just u) _ | not (null (trim u)) = Just (trim u)
