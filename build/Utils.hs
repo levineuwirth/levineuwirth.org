@@ -28,6 +28,14 @@ module Utils
     , formatIso
     , formatWriterly
     , isoToWriterly
+    , isProvedConfidence
+    , confidencePercent
+    , trustScore
+    , formatBytes
+    , median
+    , isSafeUrl
+    , stripPrefixRoute
+    , loadYaml
     , boolSpellings
     , parseBool
     , canonicalUrlPath
@@ -37,13 +45,17 @@ module Utils
     ) where
 
 import           Data.Char (isAlphaNum, isSpace, toLower)
-import           Data.List (dropWhileEnd, isSuffixOf)
+import           Data.List (dropWhileEnd, isPrefixOf, isSuffixOf, sort, stripPrefix)
 import           Data.Maybe (fromMaybe)
 import           Data.Time.Calendar (Day)
 import qualified Data.Text as T
 import           Data.Time.Format (FormatTime, ParseTime, defaultTimeLocale, formatTime,
                                    parseTimeM)
-import           Hakyll (Metadata, lookupString, lookupStringList)
+import           Data.Aeson (FromJSON)
+import qualified Data.Text.Encoding as TE
+import qualified Data.Yaml as Y
+import           Hakyll (Compiler, Item, Metadata, Routes, customRoute, fromFilePath, itemBody,
+                         load, lookupString, lookupStringList, toFilePath)
 import           System.Environment (lookupEnv)
 import           Text.Read (readMaybe)
 
@@ -219,3 +231,84 @@ formatWriterly = formatTime defaultTimeLocale writerlyDate
 -- as it was, so a typo surfaces on the page instead of failing the build.
 isoToWriterly :: String -> String
 isoToWriterly iso = maybe iso (formatWriterly :: Day -> String) (parseIsoDate iso)
+
+-- | @confidence: proved@ (or @proven@), case-insensitive: the §4.3
+-- carve-out for formal proofs that opt out of a numeric credence. The
+-- figure, the footer and the search index all treat it as 100.
+isProvedConfidence :: Maybe String -> Bool
+isProvedConfidence (Just s) = map toLower (trim s) `elem` ["proved", "proven"]
+isProvedConfidence _        = False
+
+-- | A page's @confidence:@ as a percentage, @proved@ counting as 100.
+confidencePercent :: Maybe String -> Maybe Int
+confidencePercent raw
+    | isProvedConfidence raw = Just 100
+    | otherwise              = readMaybe =<< raw
+
+-- | The trust score: a 60/40 weighted composite of confidence (0–100) and
+-- evidence (1–5), clamped to 0–100. 'Nothing' when either is missing, so
+-- nothing renders rather than a zero indistinguishable from an authored
+-- one. The epistemic figure, @$overall-score$@ and the search index's
+-- @score@ all read this.
+trustScore :: Maybe Int -> Maybe Int -> Maybe Int
+trustScore (Just c) (Just e) =
+    let raw :: Double
+        raw = fromIntegral c / 100.0 * 0.6 + fromIntegral (e - 1) / 4.0 * 0.4
+    in  Just (max 0 (min 100 (round (raw * 100.0))))
+trustScore _ _ = Nothing
+
+-- | A byte count for readers: @512 B@, @3.4 KB@, @12.0 MB@ (truncated to
+-- one decimal place).
+formatBytes :: Integer -> String
+formatBytes b
+    | b < 1024        = show b ++ " B"
+    | b < 1024 * 1024 = showD (b * 10 `div` 1024)          ++ " KB"
+    | otherwise       = showD (b * 10 `div` (1024 * 1024)) ++ " MB"
+  where
+    showD n = show (n `div` 10) ++ "." ++ show (n `mod` 10)
+
+-- | The median; 0 for an empty list. An even-length list takes the mean
+-- of the two middle elements, rounded half up.
+median :: [Int] -> Int
+median [] = 0
+median xs
+    | odd n     = upper
+    | otherwise = (lower + upper + 1) `div` 2
+  where
+    -- In range for a non-empty list: lower is forced only when n >= 2.
+    sorted = sort xs
+    n      = length sorted
+    upper  = sorted !! (n `div` 2)
+    lower  = sorted !! (n `div` 2 - 1)
+
+-- | Whether a URL from data or front matter may go into an @href@ or
+-- @src@ the generator writes by hand: site-relative, @https:@, @mailto:@
+-- or a fragment, never protocol-relative.
+isSafeUrl :: String -> Bool
+isSafeUrl u =
+    let norm = map toLower (dropWhile isSpace u)
+    in  not ("//" `isPrefixOf` norm)
+        && any (`isPrefixOf` norm) ["/", "https://", "mailto:", "#"]
+
+-- | Route that strips a literal prefix from the identifier's path.
+-- Hakyll's @gsubRoute@ replaces /every/ occurrence of its pattern, so
+-- @gsubRoute "content/"@ would also mangle a co-located directory that
+-- happened to be named @content@ deeper in the path
+-- (@content/essays/slug/content/data.csv@ → @essays/slug/data.csv@).
+-- This touches only the leading occurrence; identifiers that don't start
+-- with the prefix pass through unchanged.
+stripPrefixRoute :: String -> Routes
+stripPrefixRoute prefix = customRoute $ \ident ->
+    let fp = toFilePath ident
+    in  fromMaybe fp (stripPrefix prefix fp)
+
+-- | A YAML data file the rules have matched, decoded. Hakyll hands back a
+-- 'String' of Unicode code points and the yaml library wants UTF-8 bytes:
+-- 'Data.ByteString.Char8.pack' would truncate every 'Char' to 8 bits and
+-- silently mangle an em dash (0x2014 → control character 0x14).
+loadYaml :: FromJSON a => FilePath -> Compiler a
+loadYaml path = do
+    raw <- load (fromFilePath path) :: Compiler (Item String)
+    case Y.decodeEither' (TE.encodeUtf8 (T.pack (itemBody raw))) of
+        Left  err -> fail (path ++ ": " ++ show err)
+        Right doc -> return doc

@@ -9,12 +9,9 @@ module Commonplace
 import Data.Aeson    (FromJSON (..), withObject, (.:), (.:?), (.!=))
 import Data.List     (nub, sortBy)
 import Data.Ord      (comparing, Down (..))
-import qualified Data.Text             as T
-import qualified Data.Text.Encoding    as TE
-import qualified Data.Yaml             as Y
 import Hakyll hiding (escapeHtml, renderTags)
 import Contexts (siteCtx)
-import Utils    (escapeHtml)
+import Utils    (escapeHtml, loadYaml)
 
 -- ---------------------------------------------------------------------------
 -- Entry type
@@ -138,15 +135,7 @@ renderChronoView entries =
 -- ---------------------------------------------------------------------------
 
 loadCommonplace :: Compiler [CPEntry]
-loadCommonplace = do
-    rawItem <- load (fromFilePath "data/commonplace.yaml") :: Compiler (Item String)
-    let raw = itemBody rawItem
-    -- encodeUtf8, not Char8.pack: Char8 truncates each Char to 8 bits,
-    -- silently corrupting any codepoint above 0x7F (same hazard Now.hs
-    -- documents — em-dash 0x2014 would become control char 0x14).
-    case Y.decodeEither' (TE.encodeUtf8 (T.pack raw)) of
-        Left  err     -> fail ("commonplace.yaml: " ++ show err)
-        Right entries -> return entries
+loadCommonplace = loadYaml "data/commonplace.yaml"
 
 -- ---------------------------------------------------------------------------
 -- Context

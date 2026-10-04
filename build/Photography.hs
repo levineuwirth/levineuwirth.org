@@ -45,7 +45,7 @@ import           Contexts               (feedTitleField, photographyCtx, pageCtx
                                          recentFirstByDisplay, feedMetaFields,
                                          photoVariantName)
 import qualified Patterns               as P
-import           Utils                  (exposureISO)
+import           Utils                  (exposureISO, stripPrefixRoute)
 
 -- ---------------------------------------------------------------------------
 -- Rules
@@ -135,7 +135,7 @@ photographyAssetRules = do
            .&&. complement "content/photography/*.exif.yaml"
            .&&. complement "content/photography/*.palette.yaml"
            .&&. complement "content/photography/*.dims.yaml") $ do
-        route $ gsubRoute "content/" (const "")
+        route $ stripPrefixRoute "content/"
         compile copyFileCompiler
 
     -- Directory-form entries' co-located assets. Excludes the entry's
@@ -148,7 +148,7 @@ photographyAssetRules = do
            .&&. complement "content/photography/*/*.exif.yaml"
            .&&. complement "content/photography/*/*.palette.yaml"
            .&&. complement "content/photography/*/*.dims.yaml") $ do
-        route $ gsubRoute "content/" (const "")
+        route $ stripPrefixRoute "content/"
         compile copyFileCompiler
 
 -- ---------------------------------------------------------------------------

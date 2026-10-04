@@ -38,7 +38,8 @@ import           System.FilePath        (takeBaseName, takeDirectory,
 import           System.IO              (hPutStrLn, stderr)
 import           Text.Read              (readMaybe)
 
-import           Hakyll
+import           Hakyll hiding (trim)
+import Utils (isProvedConfidence, confidencePercent, trustScore, trim)
 import           Stability              (resolveStability, stabilityLabels)
 import           SvgColor               (blackToCurrentColor)
 
@@ -229,17 +230,17 @@ readEpistemicData item = do
     meta <- getMetadata (itemIdentifier item)
     stab <- resolveStability item
     let confRaw     = lookupString "confidence" meta
-        proved      = isProvedConfidenceM confRaw
-        confInt     = if proved then Just 100 else readMaybe . trimS =<< confRaw
+        proved      = isProvedConfidence confRaw
+        confInt     = confidencePercent confRaw
         confNumeric = if proved then Nothing else confInt
-        importance  = readMaybe . trimS =<< lookupString "importance" meta
-        evidence    = readMaybe . trimS =<< lookupString "evidence"   meta
+        importance  = readMaybe =<< lookupString "importance" meta
+        evidence    = readMaybe =<< lookupString "evidence"   meta
         scope       = validate scopeValues       =<< lookupString "scope"        meta
         novelty     = validate noveltyValues     =<< lookupString "novelty"      meta
         practical   = validate practicalityValues =<< lookupString "practicality" meta
         peer        = validatePeerStatus =<< lookupString "peer-status"  meta
         resultShape = validate resultShapeValues =<< lookupString "result-shape" meta
-        trust       = computeTrust confInt evidence
+        trust       = trustScore confInt evidence
     return EpistemicData
         { epConfidence       = confNumeric
         , epConfidenceProved = proved
@@ -253,39 +254,13 @@ readEpistemicData item = do
         , epStability        = stab
         , epTrust            = trust
         }
-  where
-    trimS = trim'
-
--- | Trust score: the same 60/40 weighted composite of confidence and
---   evidence used by 'Contexts.overallScoreField'. Returns 'Nothing'
---   when either input is missing — the figure then renders no trust
---   label at all (it collapses to the bare frame), rather than a
---   literal "0" indistinguishable from an authored zero score.
-computeTrust :: Maybe Int -> Maybe Int -> Maybe Int
-computeTrust (Just c) (Just e) =
-    let raw :: Double
-        raw = fromIntegral c / 100.0 * 0.6 + fromIntegral (e - 1) / 4.0 * 0.4
-    in  Just (max 0 (min 100 (round (raw * 100.0))))
-computeTrust _ _ = Nothing
-
--- | Same predicate as 'Contexts.isProvedConfidence' — local copy to keep
---   the module's dependency graph light (Marks → Stability only). The
---   two are tested against the same vocabulary; if either drifts the
---   build still warns via the schema validators in Contexts.hs.
-isProvedConfidenceM :: Maybe String -> Bool
-isProvedConfidenceM (Just s) = map toLower (trim' s) `elem` ["proved", "proven"]
-isProvedConfidenceM _        = False
-
-trim' :: String -> String
-trim' = f . f
-  where f = reverse . dropWhile (`elem` (" \t\n\r" :: String))
 
 -- | Validate a value against an enum list. Returns the lowercase form
 --   on hit, 'Nothing' otherwise (no warning here — Contexts.hs's parsers
 --   already warn on invalid frontmatter; the figure simply degrades).
 validate :: [String] -> String -> Maybe String
 validate vs raw =
-    let s = map toLower (trim' raw)
+    let s = map toLower (trim raw)
     in  if s `elem` vs then Just s else Nothing
 
 -- | Peer-status validator: matches @peerStatusField@ in Contexts.hs but
@@ -293,7 +268,7 @@ validate vs raw =
 --   neutral by default.
 validatePeerStatus :: String -> Maybe String
 validatePeerStatus raw =
-    let s = map toLower (trim' raw)
+    let s = map toLower (trim raw)
     in  if s `elem` peerStatusValues && s /= "unreviewed"
             then Just s
             else Nothing  -- includes "unreviewed" and any unknown value

@@ -35,8 +35,7 @@ import           Data.Maybe             (catMaybes, fromMaybe)
 import           Data.Ord               (Down (..), comparing)
 import qualified Data.Set               as Set
 import qualified Data.Text              as T
-import           Data.Time              (Day, diffDays, fromGregorian,
-                                         getCurrentTime, utctDay)
+import           Data.Time              (diffDays, getCurrentTime, utctDay)
 import qualified Data.Aeson             as A
 import           Data.Aeson             ((.:), (.:?))
 import qualified Data.ByteString.Lazy.Char8 as LBS
@@ -46,8 +45,8 @@ import           System.Directory       (doesDirectoryExist, doesFileExist,
 import           System.Exit            (exitFailure)
 import           System.IO              (hPutStrLn, readFile', stderr)
 import           System.Process         (readProcess)
-import           Text.Read              (readMaybe)
 import           Hakyll
+import Utils (formatBytes, median, parseIsoDate)
 import           Contexts               (siteCtx)
 import           Backlinks              (referencedByField, backlinkMathField)
 import           SimilarLinks           (similarLinksField)
@@ -569,14 +568,6 @@ statusNote _      = Nothing
 -- Formatting
 -- ---------------------------------------------------------------------------
 
--- | Human-readable byte count (mirrors the helper in build/Stats.hs).
-formatBytes :: Integer -> String
-formatBytes b
-    | b < 1024        = show b ++ " B"
-    | b < 1024 * 1024 = showD (b * 10 `div` 1024)            ++ " KB"
-    | otherwise       = showD (b * 10 `div` (1024 * 1024))   ++ " MB"
-  where
-    showD n = show (n `div` 10) ++ "." ++ show (n `mod` 10)
 
 -- ---------------------------------------------------------------------------
 -- /build/ telemetry
@@ -595,7 +586,7 @@ archiveBuildStats = do
         bytes     = sum (map (pvBytes . aeProv) entries)
         ages      = [ fromInteger (diffDays today d)
                     | e <- entries
-                    , Just d <- [parseIsoDay (pvArchived (aeProv e))] ]
+                    , Just d <- [parseIsoDate (pvArchived (aeProv e))] ]
         paywalled = length (filter (mePaywalled . aeManifest) entries)
     return $
         [ ("Entries", show n) ]
@@ -638,20 +629,6 @@ tallyOf xs = intercalate "  \183  "
 medianAge :: [Int] -> String
 medianAge [] = "\8212"
 medianAge xs =
-    let sorted = sort xs
-        n      = length sorted
-        upper  = sorted !! (n `div` 2)
-        lower  = sorted !! (n `div` 2 - 1)   -- forced only when n is even
-        m | odd n     = upper
-          | otherwise = (lower + upper + 1) `div` 2
+    let m = median xs
     in  show m ++ if m == 1 then " day" else " days"
 
--- | Parse a @YYYY-MM-DD@ date; 'Nothing' on malformed input.
-parseIsoDay :: String -> Maybe Day
-parseIsoDay s = case splitOnDash s of
-    [y, m, d] -> fromGregorian <$> readMaybe y <*> readMaybe m <*> readMaybe d
-    _         -> Nothing
-  where
-    splitOnDash str = case break (== '-') str of
-        (a, '-' : rest) -> a : splitOnDash rest
-        (a, _)          -> [a]

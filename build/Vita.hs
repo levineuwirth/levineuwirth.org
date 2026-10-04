@@ -32,11 +32,9 @@ import Data.Maybe         (mapMaybe)
 import Data.Scientific    (isInteger, toRealFloat)
 import qualified Data.Aeson.Key        as K
 import qualified Data.Text             as T
-import qualified Data.Text.Encoding    as TE
-import qualified Data.Yaml             as Y
 import Hakyll hiding (escapeHtml)
 import Contexts (siteCtx)
-import Utils    (escapeHtml)
+import Utils    (escapeHtml, loadYaml)
 
 -- ---------------------------------------------------------------------------
 -- Loose scalars
@@ -619,17 +617,6 @@ renderContact p = section "contact" "Contact" $ concat
 -- ---------------------------------------------------------------------------
 -- Load
 -- ---------------------------------------------------------------------------
-
--- | Same UTF-8 round-trip as "Now": Hakyll hands back a 'String' of Unicode
---   codepoints and the yaml library wants a UTF-8 'ByteString'.
---   'Data.ByteString.Char8.pack' would truncate every 'Char' to 8 bits and
---   silently mangle the em-dashes and daggers this data is full of.
-loadYaml :: FromJSON a => FilePath -> Compiler a
-loadYaml path = do
-    raw <- load (fromFilePath path) :: Compiler (Item String)
-    case Y.decodeEither' (TE.encodeUtf8 (T.pack (itemBody raw))) of
-        Left  err -> fail (path ++ ": " ++ show err)
-        Right doc -> return doc
 
 -- | Render a section, or drop the field entirely when it comes out empty so
 --   the template's @$if(...)$@ guards behave.

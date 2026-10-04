@@ -13,7 +13,7 @@ module Stats (statsRules) where
 
 import Control.Exception          (IOException, catch)
 import Control.Monad              (forM)
-import Data.Char                  (isDigit, isSpace, toLower)
+import Data.Char                  (isDigit)
 import Data.List                  (find, intercalate, isPrefixOf, isSuffixOf,
                                    sort, sortBy)
 import qualified Data.Map.Strict  as Map
@@ -49,7 +49,7 @@ import Contexts                   (siteCtx, authorLinksField, canonicalUrlPath)
 import Marks                      (hasMonogram, monogramSvgFieldFor,
                                    hasMonogramFieldFor)
 import qualified Patterns         as P
-import Utils                      (exposureISO, isDevBuild, outputDirFor, parseIsoDate, readingTime)
+import Utils                      (exposureISO, formatBytes, isDevBuild, isSafeUrl, median, outputDirFor, parseIsoDate, readingTime)
 
 -- ---------------------------------------------------------------------------
 -- Types
@@ -125,13 +125,6 @@ commaInt n
         | x < 10    = "00" ++ show x
         | x < 100   = "0"  ++ show x
         | otherwise = show x
-
-formatBytes :: Integer -> String
-formatBytes b
-    | b < 1024      = show b ++ " B"
-    | b < 1024*1024 = showD (b * 10 `div` 1024)       ++ " KB"
-    | otherwise     = showD (b * 10 `div` (1024*1024)) ++ " MB"
-  where showD n = show (n `div` 10) ++ "." ++ show (n `mod` 10)
 
 rtStr :: Int -> String
 rtStr totalWords
@@ -245,22 +238,6 @@ keyUrl k
 pad2 :: (Show a, Integral a) => a -> String
 pad2 n = if n < 10 then "0" ++ show n else show n
 
--- | Median of a non-empty list; returns 0 for empty. An even-length
---   list takes the mean of the two middle elements, rounded to the
---   nearest unit.
-median :: [Int] -> Int
-median [] = 0
-median xs
-    | odd n     = upper
-    | otherwise = (lower + upper + 1) `div` 2
-  where
-    -- Indexes are in range for non-empty xs (lower is consulted only
-    -- when n >= 2), so '(!!)' is safe here by construction. The empty
-    -- case is caught by the first equation.
-    sorted = sort xs
-    n      = length sorted
-    upper  = sorted !! (n `div` 2)
-    lower  = sorted !! (n `div` 2 - 1)
 
 
 -- ---------------------------------------------------------------------------
@@ -342,12 +319,6 @@ shortMonth m = case m of
 --
 -- Protocol-relative URLs (@//evil.com@) are rejected because the leading
 -- slash would otherwise admit them through the @\"\/\"@ prefix check.
-isSafeUrl :: String -> Bool
-isSafeUrl u =
-    let norm = map toLower (dropWhile isSpace u)
-    in  not ("//" `isPrefixOf` norm)
-        && any (`isPrefixOf` norm) ["/", "https://", "mailto:", "#"]
-
 safeHref :: String -> H.AttributeValue
 safeHref u
   | isSafeUrl u = H.stringValue u

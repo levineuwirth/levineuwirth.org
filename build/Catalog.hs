@@ -13,8 +13,7 @@ module Catalog
     ( musicCatalogCtx
     ) where
 
-import Data.Char       (isSpace, toLower)
-import Data.List       (groupBy, intercalate, isPrefixOf, sortBy, stripPrefix)
+import Data.List       (groupBy, intercalate, sortBy, stripPrefix)
 import Data.Maybe      (fromMaybe, listToMaybe)
 import Data.Ord        (Down (..), comparing)
 import Data.Aeson      (Value (..))
@@ -26,7 +25,7 @@ import System.FilePath (takeDirectory, (</>))
 import Data.Time.Calendar (Day)
 import Data.Time.Format   (defaultTimeLocale, parseTimeM)
 import Hakyll hiding (escapeHtml)
-import Utils    (escapeHtml, formatIso, isoDate, writerlyDate)
+import Utils    (escapeHtml, formatIso, isoDate, isSafeUrl, writerlyDate)
 import Contexts (durationPrimes, scorePageList, scoreThumb, siteCtx, svgAspect)
 
 -- ---------------------------------------------------------------------------
@@ -183,14 +182,10 @@ parseCatalogEntry item = do
 -- value (year, opus, duration, instrumentation) and sanitize hrefs through
 -- 'safeHref', so a stray @<@ in those fields cannot break the markup.
 
--- | Defense-in-depth href sanitiser. Mirrors 'Stats.isSafeUrl'.
+-- | Defense-in-depth href sanitiser ('Utils.isSafeUrl').
 safeHref :: String -> String
 safeHref u =
-    let norm = map toLower (dropWhile isSpace u)
-    in  if not ("//" `isPrefixOf` norm)
-           && any (`isPrefixOf` norm) ["/", "https://", "mailto:", "#"]
-        then escapeHtml u
-        else "#"
+    if isSafeUrl u then escapeHtml u else "#"
 
 escText :: String -> String
 escText = concatMap esc

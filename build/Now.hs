@@ -16,12 +16,9 @@ import Data.Maybe         (fromMaybe)
 import Data.Ord           (Down (..), comparing)
 import Data.Time.Calendar (Day, diffDays)
 import Data.Time.Clock    (UTCTime (..), getCurrentTime)
-import qualified Data.Text             as T
-import qualified Data.Text.Encoding    as TE
-import qualified Data.Yaml             as Y
 import Hakyll hiding (escapeHtml)
 import Contexts (siteCtx)
-import Utils    (escapeHtml, isoToWriterly, parseIsoDate)
+import Utils    (escapeHtml, isoToWriterly, loadYaml, parseIsoDate)
 
 -- ---------------------------------------------------------------------------
 -- Entry types
@@ -301,17 +298,10 @@ validateNowDoc doc = do
             Nothing -> Left (label ++ " is not a valid YYYY-MM-DD date: " ++ iso)
             Just d  -> Right d
 
--- | UTF-8 round-trip String → ByteString. Hakyll's @getResourceBody@
---   hands us a 'String' (Unicode codepoints); the yaml library wants
---   a UTF-8 'ByteString'. 'Data.ByteString.Char8.pack' would truncate
---   each 'Char' to 8 bits — fine for ASCII, silent corruption for any
---   codepoint above 0x7F (e.g. em-dash 0x2014 → control char 0x14).
 loadNow :: Compiler NowDoc
 loadNow = do
-    rawItem <- load (fromFilePath "data/now.yaml") :: Compiler (Item String)
-    case Y.decodeEither' (TE.encodeUtf8 (T.pack (itemBody rawItem))) of
-        Left  err -> fail ("now.yaml: " ++ show err)
-        Right doc -> either (fail . ("now.yaml: " ++)) return (validateNowDoc doc)
+    doc <- loadYaml "data/now.yaml"
+    either (fail . ("now.yaml: " ++)) return (validateNowDoc doc)
 
 -- ---------------------------------------------------------------------------
 -- Context

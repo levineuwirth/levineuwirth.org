@@ -37,7 +37,7 @@ import Now          (nowCtx, nowLastUpdated)
 import Vita         (vitaCtx, projectsCtx)
 import Contexts   (feedTitleField, siteCtx, essayCtx, postCtx, pageCtx, poetryCtx, fictionCtx, compositionCtx,
                    contentKindField, declaresScore, recentFirstByDisplay,
-                   tagLinksFieldExcludingTopSegment, isProvedConfidence,
+                   tagLinksFieldExcludingTopSegment,
                    canonicalUrlPath, feedMetaFields, identifierDisplayUTC)
 import qualified Filters.SourceRefs as SR
 import MarkdownSections (markdownSectionsCompiler)
@@ -48,7 +48,7 @@ import Tags       (buildAllTags, applyTagRules, sidecarIdentifier,
 import Pagination (blogPaginateRules)
 import Stability  (resolveStability)
 import Stats      (statsRules)
-import Utils      (cacheDirFor, formatIso, metadataKeywords, outputDirFor)
+import Utils      (cacheDirFor, confidencePercent, formatIso, metadataKeywords, outputDirFor, stripPrefixRoute, trustScore)
 
 -- ---------------------------------------------------------------------------
 -- Publication boundary
@@ -171,18 +171,6 @@ libraryShelfMax = 5
 --   page. Matched but not routed; consumed via the @"body"@ snapshot.
 libraryIntroId :: Identifier
 libraryIntroId = fromFilePath "content/library.md"
-
--- | Route that strips a literal prefix from the identifier's path.
---   Hakyll's 'gsubRoute' replaces /every/ occurrence of its pattern, so
---   @gsubRoute "content/"@ would also mangle a co-located directory that
---   happened to be named @content@ deeper in the path
---   (@content/essays/slug/content/data.csv@ → @essays/slug/data.csv@).
---   This touches only the leading occurrence; identifiers that don't
---   start with the prefix pass through unchanged.
-stripPrefixRoute :: String -> Routes
-stripPrefixRoute prefix = customRoute $ \ident ->
-    let fp = toFilePath ident
-    in  fromMaybe fp (stripPrefix prefix fp)
 
 feedConfig :: FeedConfiguration
 feedConfig = FeedConfiguration
@@ -1739,21 +1727,10 @@ epistemicEntry item = do
                     , stability
                     ]
                 obj = Map.fromList fields
-                -- Compute overall-score the same way Contexts.overallScoreField
-                -- does, including the "proved"/"proven" sentinel -> 100.
-                confRaw = lookupString "confidence" meta
-                confInt | isProvedConfidence confRaw = Just 100
-                        | otherwise = readMaybe =<< confRaw :: Maybe Int
-                obj' = case ( confInt
-                            , readMaybe =<< lookupString "evidence"   meta :: Maybe Int
-                            ) of
-                    (Just conf, Just ev) ->
-                        let raw :: Double
-                            raw   = fromIntegral conf     / 100.0 * 0.6
-                                  + fromIntegral (ev - 1) / 4.0   * 0.4
-                            score = max 0 (min 100 (round (raw * 100.0) :: Int))
-                        in  Map.insert "score" (show score) obj
-                    _ -> obj
+                obj' = case trustScore (confidencePercent (lookupString "confidence" meta))
+                                       (readMaybe =<< lookupString "evidence" meta) of
+                    Just score -> Map.insert "score" (show score) obj
+                    Nothing    -> obj
             if Map.null obj'
                 then return Nothing
                 else return (Just (url, obj'))

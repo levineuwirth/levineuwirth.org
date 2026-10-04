@@ -35,7 +35,6 @@ module Contexts
     , identifierDisplayUTC
     , Revision (..)
     , getRevisions
-    , isProvedConfidence
     , photoVariantWidths
     ) where
 
@@ -78,14 +77,7 @@ import Stability    (stabilityField, lastReviewedField, lastReviewedIsoField,
                      versionHistoryPrimaryField, versionHistoryRestField,
                      versionHistoryRangeField, versionHistoryRangeStartField,
                      versionHistoryRangeEndField, versionHistoryCommitsField)
-import Utils        (authorUrl, canonicalUrlPath, escapeHtml, formatIso, formatWriterly, isoDate, itemAuthors, metadataKeywords, parseIsoDate, trim, writerlyDate)
-
--- | Returns 'True' when the @confidence:@ frontmatter value is the
---   "proved" / "proven" sentinel — the §4.3 carve-out for formal proofs
---   that opt out of a numeric credence. Case-insensitive.
-isProvedConfidence :: Maybe String -> Bool
-isProvedConfidence (Just s) = map toLower (trim s) `elem` ["proved", "proven"]
-isProvedConfidence _        = False
+import Utils        (authorUrl, canonicalUrlPath, confidencePercent, escapeHtml, formatIso, formatWriterly, isoDate, isProvedConfidence, itemAuthors, metadataKeywords, parseIsoDate, trim, trustScore, writerlyDate)
 
 -- ---------------------------------------------------------------------------
 -- Affiliation field
@@ -852,21 +844,10 @@ confidenceTrendField = field "confidence-trend" $ \item -> do
 overallScoreField :: Context String
 overallScoreField = field "overall-score" $ \item -> do
     meta <- getMetadata (itemIdentifier item)
-    let readInt s = readMaybe s :: Maybe Int
-        confRaw   = lookupString "confidence" meta
-        confInt   = if isProvedConfidence confRaw
-                       then Just 100
-                       else readInt =<< confRaw
-    case ( confInt
-         , readInt =<< lookupString "evidence"   meta
-         ) of
-        (Just conf, Just ev) ->
-            let raw :: Double
-                raw   = fromIntegral conf       / 100.0 * 0.6
-                      + fromIntegral (ev - 1)   / 4.0   * 0.4
-                score = max 0 (min 100 (round (raw * 100.0) :: Int))
-            in  return (show score)
-        _ -> noResult "overall-score: confidence or evidence not set"
+    case trustScore (confidencePercent (lookupString "confidence" meta))
+                    (readMaybe =<< lookupString "evidence" meta) of
+        Just score -> return (show score)
+        Nothing    -> noResult "overall-score: confidence or evidence not set"
 
 -- | @$confidence$@: numeric override that suppresses the @proved@ /
 --   @proven@ sentinel. When the frontmatter value is parseable as an
