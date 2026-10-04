@@ -199,14 +199,26 @@
         }
     };
 
+    /* The link's hostname, lowercased by URL itself; '' for an href that
+       does not parse. */
+    function hostOf(href) {
+        try { return new URL(href, location.href).hostname; }
+        catch (e) { return ''; }
+    }
+
     /* Returns the appropriate provider function for a given URL, or null.
        Local annotations win over the table; otherwise the first entry in
-       PROVIDERS whose `match` regex hits is selected. */
+       PROVIDERS whose `host` regex matches the link's hostname and whose
+       `match` regex hits the href is selected. The host comes first, as
+       for the link icons (build/Filters/Links.hs): `match` alone is
+       unanchored, and took gist.github.com/user/id for a repository and
+       a path containing doi.org/10.… for a DOI. */
     function getProvider(href) {
         if (!href) return null;
         if (annotations && annotations[href]) return annotationContent;
+        var host = hostOf(href);
         for (var i = 0; i < PROVIDERS.length; i++) {
-            if (PROVIDERS[i].match.test(href)) {
+            if (PROVIDERS[i].host.test(host) && PROVIDERS[i].match.test(href)) {
                 var entry = PROVIDERS[i];
                 return function (target) { return providerContent(target, entry); };
             }
@@ -669,6 +681,7 @@
            etc. Bare wikipedia.org and www. fall through to en. */
         {
             name: 'wikipedia', label: 'Wikipedia',
+            host:  /^(?:[a-z0-9-]+\.)*wikipedia\.org$/,
             match: /wikipedia\.org\/wiki\/([^#?]+)/,
             fetchType: 'json',
             bodyLimit: 600,
@@ -722,6 +735,7 @@
            may carry a trailing .pdf, which stays outside the capture. */
         {
             name: 'arxiv', label: 'arXiv',
+            host:  /^(?:www\.)?arxiv\.org$/,
             match: /arxiv\.org\/(?:abs|pdf)\/((?:\d{4}\.\d{4,5}|[a-z-]+(?:\.[A-Z]{2})?\/\d{7})(?:v\d+)?)/,
             fetchType: 'xml',
             url: function (ctx) {
@@ -786,6 +800,7 @@
         /* DOI → CrossRef — strips upstream JATS-HTML from abstract. */
         {
             name: 'doi', label: 'CrossRef',
+            host:  /^(?:dx\.|www\.)?doi\.org$/,
             match: /(?:dx\.)?doi\.org\/(10\.[^?#\s]+)/,
             fetchType: 'json',
             url: function (ctx) {
@@ -813,6 +828,7 @@
         /* GitHub — repo description + language + stars. */
         {
             name: 'github', label: 'GitHub',
+            host:  /^(?:www\.)?github\.com$/,
             match: /github\.com\/([^/]+)\/([^/?#]+)/,
             fetchType: 'json',
             fetchInit: { headers: { 'Accept': 'application/vnd.github.v3+json' } },
@@ -835,6 +851,7 @@
         /* Open Library — works/books JSON appended to href. */
         {
             name: 'openlibrary', label: 'Open Library',
+            host:  /^(?:www\.)?openlibrary\.org$/,
             match: /openlibrary\.org\/(?:works|books)\//,
             fetchType: 'json',
             bodyLimit: 300,
@@ -850,6 +867,7 @@
         /* bioRxiv — shares schema with medRxiv via biorxivParse. */
         {
             name: 'biorxiv', label: 'bioRxiv',
+            host:  /^(?:www\.)?biorxiv\.org$/,
             match: /biorxiv\.org\/content\/(10\.\d{4,}\/[^?#\s]+)/,
             fetchType: 'json',
             url: function (ctx) {
@@ -862,6 +880,7 @@
         /* medRxiv — identical shape as bioRxiv; different upstream path. */
         {
             name: 'medrxiv', label: 'medRxiv',
+            host:  /^(?:www\.)?medrxiv\.org$/,
             match: /medrxiv\.org\/content\/(10\.\d{4,}\/[^?#\s]+)/,
             fetchType: 'json',
             url: function (ctx) {
@@ -874,6 +893,7 @@
         /* YouTube — oEmbed (no API key required). */
         {
             name: 'youtube', label: 'YouTube',
+            host:  /^(?:[a-z0-9-]+\.)?youtube\.com$|^youtu\.be$/,
             match: /youtube\.com\/watch|youtu\.be\//,
             fetchType: 'json',
             url: function (ctx) {
@@ -891,6 +911,7 @@
            provider/class name stays short — hence the `icon` override. */
         {
             name: 'archive', label: 'Internet Archive', icon: 'internet-archive',
+            host:  /^(?:www\.)?archive\.org$/,
             match: /archive\.org\/details\/([^/?#]+)/,
             fetchType: 'json',
             bodyLimit: 280,
@@ -916,6 +937,7 @@
         /* PubMed — NCBI esummary (CORS-broken upstream, proxied). */
         {
             name: 'pubmed', label: 'PubMed',
+            host:  /^pubmed\.ncbi\.nlm\.nih\.gov$/,
             match: /pubmed\.ncbi\.nlm\.nih\.gov\/(\d+)/,
             fetchType: 'json',
             url: function (ctx) {
