@@ -34,6 +34,7 @@ module Stability
     , versionHistoryRangeStartField
     , versionHistoryRangeEndField
     , versionHistoryCommitsField
+    , stabilityLabels
     ) where
 
 import Control.Exception        (catch, IOException)
@@ -163,6 +164,12 @@ effectiveDates fp meta =
 -- | Parse an ISO "YYYY-MM-DD" string to a 'Day'.
 parseIso :: String -> Maybe Day
 parseIso = parseTimeM True defaultTimeLocale "%Y-%m-%d"
+
+-- | Every label 'stabilityFromDates' gives, least to most settled. The
+--   figure's tick count ("Marks"), the search filters and the epistemic
+--   vocabulary (@site epistemic-vocab@) all read this order.
+stabilityLabels :: [String]
+stabilityLabels = ["volatile", "revising", "fairly stable", "stable", "established"]
 
 -- | Derive stability label from commit dates (newest-first), judged as
 -- of @today@.

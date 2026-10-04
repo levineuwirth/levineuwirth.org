@@ -21,10 +21,13 @@ module Marks
     , hasMonogramFieldFor
     , epistemicSvgField
     , hasMonogram
+    , peerStatusValues
+    , epistemicVocabulary
     ) where
 
 import           Control.Exception      (IOException, try)
 import           Data.Char              (toLower)
+import           Data.List              (elemIndex)
 import           Data.Maybe             (catMaybes, isJust)
 import qualified Data.Text              as T
 import qualified Data.Text.IO           as TIO
@@ -36,7 +39,7 @@ import           System.IO              (hPutStrLn, stderr)
 import           Text.Read              (readMaybe)
 
 import           Hakyll
-import           Stability              (resolveStability)
+import           Stability              (resolveStability, stabilityLabels)
 import           SvgColor               (blackToCurrentColor)
 
 -- ---------------------------------------------------------------------------
@@ -291,9 +294,29 @@ validate vs raw =
 validatePeerStatus :: String -> Maybe String
 validatePeerStatus raw =
     let s = map toLower (trim' raw)
-    in  if s `elem` ["under-review", "peer-reviewed", "published", "retracted"]
+    in  if s `elem` peerStatusValues && s /= "unreviewed"
             then Just s
             else Nothing  -- includes "unreviewed" and any unknown value
+
+-- | Every @peer-status@ the site recognizes; @unreviewed@ is the default.
+--   'Contexts.peerStatusField' validates against this list too.
+peerStatusValues :: [String]
+peerStatusValues = ["unreviewed", "under-review", "peer-reviewed", "published", "retracted"]
+
+-- | The epistemic fields' vocabularies, least to most, as
+--   @site epistemic-vocab@ prints them for the tools and tests that must
+--   agree with the generator (audit-marks.py, search-filters.js, the
+--   filter buttons on /search.html). A copy of these lists in search-filters.js
+--   once lacked @local@ and @low@, and those pages matched no filter.
+epistemicVocabulary :: [(String, [String])]
+epistemicVocabulary =
+    [ ("scope",        scopeValues)
+    , ("novelty",      noveltyValues)
+    , ("practicality", practicalityValues)
+    , ("result-shape", resultShapeValues)
+    , ("peer-status",  peerStatusValues)
+    , ("stability",    stabilityLabels)
+    ]
 
 scopeValues, noveltyValues, practicalityValues, resultShapeValues :: [String]
 scopeValues        = ["personal", "local", "average", "broad", "civilizational"]
@@ -340,19 +363,19 @@ axisValue d i = case i of
     0 -> if epConfidenceProved d
             then Just 1.0
             else fmap (\c -> fromIntegral c / 100.0) (epConfidence d)
-    1 -> normalizeOrdinal noveltyValues      4 (epNovelty d)
-    2 -> normalizeOrdinal practicalityValues 5 (epPracticality d)
-    3 -> normalizeOrdinal scopeValues        5 (epScope d)
+    1 -> normalizeOrdinal noveltyValues      (epNovelty d)
+    2 -> normalizeOrdinal practicalityValues (epPracticality d)
+    3 -> normalizeOrdinal scopeValues        (epScope d)
     4 -> normalizeIntScale 5 (epEvidence d)
     5 -> normalizeIntScale 5 (epImportance d)
     _ -> Nothing
 
 -- | Map a 1..n ordinal-name value to a [0,1] value via @(rank-1)/(n-1)@.
-normalizeOrdinal :: [String] -> Int -> Maybe String -> Maybe Double
-normalizeOrdinal vs n (Just s) = do
+normalizeOrdinal :: [String] -> Maybe String -> Maybe Double
+normalizeOrdinal vs (Just s) = do
     r <- ordinalRank vs s
-    return $ fromIntegral (r - 1) / fromIntegral (n - 1)
-normalizeOrdinal _ _ Nothing = Nothing
+    return $ fromIntegral (r - 1) / fromIntegral (length vs - 1)
+normalizeOrdinal _ Nothing = Nothing
 
 -- | Map a 1..n integer to [0,1] via @(v-1)/(n-1)@.
 normalizeIntScale :: Int -> Maybe Int -> Maybe Double
@@ -481,13 +504,7 @@ vertexMark d i = do
 --   'renderPeerStatusOverlay'.
 renderTicks :: String -> Maybe String -> T.Text
 renderTicks stability peerStatus =
-    let activeCount = case stability of
-            "volatile"      -> 1
-            "revising"      -> 2
-            "fairly stable" -> 3
-            "stable"        -> 4
-            "established"   -> 5
-            _               -> 1
+    let activeCount = maybe 1 (+ 1) (elemIndex stability stabilityLabels)
         tickAngles :: [Double]
         tickAngles = [0, -15, 15, -30, 30]
         tickOne :: Int -> Double -> T.Text

@@ -15,7 +15,7 @@ page under content/ (drafts excepted: they never ship) and fails instead.
 
 Each vocabulary is read from where the site defines it rather than copied
 here: status from the colophon, which is the published contract; the
-orientation fields from build/Marks.hs; peer-status from build/Contexts.hs.
+orientation fields and peer-status from build/Marks.hs.
 
 Run with: ``make test`` (or ``python3 -m unittest tests.test_frontmatter``).
 """
@@ -36,7 +36,6 @@ except ImportError:  # pragma: no cover - `make validate` requires .venv
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CONTENT = REPO_ROOT / "content"
 MARKS_HS = REPO_ROOT / "build" / "Marks.hs"
-CONTEXTS_HS = REPO_ROOT / "build" / "Contexts.hs"
 COLOPHON = CONTENT / "colophon.md"
 
 # Hakyll's own delimiters: a leading `---` line, closed by `---` or `...`.
@@ -82,7 +81,7 @@ VOCABULARIES = {
     "novelty": lambda: haskell_string_list(MARKS_HS, "noveltyValues"),
     "practicality": lambda: haskell_string_list(MARKS_HS, "practicalityValues"),
     "result-shape": lambda: haskell_string_list(MARKS_HS, "resultShapeValues"),
-    "peer-status": lambda: haskell_string_list(CONTEXTS_HS, "knownPeerStatuses"),
+    "peer-status": lambda: haskell_string_list(MARKS_HS, "peerStatusValues"),
 }
 
 

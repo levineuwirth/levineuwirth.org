@@ -68,7 +68,7 @@ import Hakyll       hiding (trim)
 import Hakyll.Core.Compiler.Internal (compilerAsk, compilerUniverse)
 import Backlinks    (backlinksField)
 import Dingbat      (dingbatField)
-import Marks        (monogramSvgField, hasMonogramField, epistemicSvgField)
+import Marks        (monogramSvgField, hasMonogramField, epistemicSvgField, peerStatusValues)
 import SimilarLinks (similarLinksField)
 import FooterData   (footerDepsField)
 import Stability    (stabilityField, lastReviewedField, lastReviewedIsoField,
@@ -930,7 +930,7 @@ peerStatusField = field "peer-status" $ \item -> do
         Nothing -> noResult "no peer-status"
         Just raw ->
             let s = map toLower (trim raw)
-            in  if s `elem` knownPeerStatuses
+            in  if s `elem` peerStatusValues
                     then if s == "unreviewed"
                              then noResult "peer-status is unreviewed (default)"
                              else return s
@@ -940,9 +940,6 @@ peerStatusField = field "peer-status" $ \item -> do
                             ": invalid peer-status value \"" ++ raw ++
                             "\"; treating as unreviewed"
                         noResult "invalid peer-status"
-  where
-    knownPeerStatuses = ["unreviewed", "under-review", "peer-reviewed",
-                         "published", "retracted"]
 
 -- | @$peer-status-display$@: human-readable form of the @peer-status@
 --   value, suitable for the compact-row chip text. Per MARKS.md §4.1 the

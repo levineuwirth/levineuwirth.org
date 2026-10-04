@@ -10,6 +10,9 @@ import Site                  (rules, siteConfigurationFor)
 import Drafts                (currentUnpublished, scanUnpublished, unpublishedSummary,
                               withoutUnpublished)
 import BibExtras             (BibExtra (..), parseBibExtras)
+import Marks                 (epistemicVocabulary)
+import qualified Data.Aeson  as Aeson
+import qualified Data.ByteString.Lazy.Char8 as LBS
 import qualified Data.Map.Strict as Map
 import Data.List             (intercalate)
 import Data.Maybe            (fromMaybe)
@@ -42,13 +45,16 @@ writeBuildStamp = do
 -- similar-links maps into per-page files between the two compile passes
 -- (build/FooterData.hs); @site list-unpublished@ prints what a production
 -- build withholds for @draft: true@; @site bib-extras FILE@ prints what the
--- .bib scanner (build/BibExtras.hs) reads from a file, one key per line.
+-- .bib scanner (build/BibExtras.hs) reads from a file, one key per line;
+-- @site epistemic-vocab@ prints the epistemic fields' vocabularies as JSON
+-- (build/Marks.hs), for the tools and tests that must agree with them.
 main :: IO ()
 main = do
     args <- getArgs
     case args of
         ["render-fixture", path] -> renderFixture path
         ["list-unpublished"] -> scanUnpublished "content" >>= mapM_ putStrLn . unpublishedSummary
+        ["epistemic-vocab"] -> LBS.putStrLn (Aeson.encode (Map.fromList epistemicVocabulary))
         ["bib-extras", path] -> do
             extras <- parseBibExtras path
             mapM_ (\(k, e) -> putStrLn (intercalate "\t"
