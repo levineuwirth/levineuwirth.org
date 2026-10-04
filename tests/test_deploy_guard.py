@@ -19,8 +19,13 @@ GUARD = Path(__file__).resolve().parent.parent / "tools" / "deploy-guard.sh"
 
 
 def guard(*args: str, **env: str) -> subprocess.CompletedProcess:
+    # The deploy's own overrides (DEPLOY_ALLOW_DELETE, DEPLOY_NEW_DOCROOT,
+    # DEPLOY_MAX_DELETE) reach this suite when `make deploy` runs it; left
+    # in place they made the refusal tests fail and blocked the very deploy
+    # the override was meant to allow. Each test sets what it needs.
+    clean = {k: v for k, v in os.environ.items() if not k.startswith("DEPLOY_")}
     return subprocess.run(["bash", str(GUARD), *args], capture_output=True, text=True,
-                          env={**os.environ, **env})
+                          env={**clean, **env})
 
 
 class Docroot(unittest.TestCase):

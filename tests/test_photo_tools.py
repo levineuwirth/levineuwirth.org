@@ -43,8 +43,12 @@ class ScaffoldTests(unittest.TestCase):
 
     def test_tags_are_filed_under_photography(self):
         self.assertEqual(scaffold.build_tags("travel, denmark/copenhagen, ,travel"),
-                         "photography, photography/travel, denmark/copenhagen")
-        self.assertEqual(scaffold.build_tags(""), "photography")
+                         ["photography", "photography/travel", "denmark/copenhagen"])
+        self.assertEqual(scaffold.build_tags(""), ["photography"])
+
+    def test_tags_line_parses_back_whatever_the_tags_hold(self):
+        tags = scaffold.build_tags("travel: denmark, «Nyhavn», [x]")
+        self.assertEqual(yaml.safe_load(scaffold.tags_line(tags)), {"tags": tags})
 
     def test_title_from_slug(self):
         self.assertEqual(scaffold.title_from_slug("from-the-belt-bridge"), "From The Belt Bridge")

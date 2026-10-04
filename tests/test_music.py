@@ -657,6 +657,31 @@ def scored_pieces() -> list[Path]:
 
 @unittest.skipUnless(HAVE_YAML and published_pieces(),
                      "no score pages on disk — run `tools/music-import.py refresh`")
+@unittest.skipUnless(HAVE_YAML, "PyYAML not installed")
+class FrontMatterTests(unittest.TestCase):
+    def setUp(self):
+        import tempfile
+        self.root = Path(tempfile.mkdtemp(prefix="music-fm-"))
+        self.addCleanup(__import__("shutil").rmtree, self.root)
+        patcher = mock.patch.object(music_import, "MUSIC", self.root)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def write(self, text):
+        (self.root / "w").mkdir(exist_ok=True)
+        (self.root / "w" / "index.md").write_text(text, encoding="utf-8")
+
+    def test_an_em_dash_in_a_value_is_not_a_delimiter(self):
+        self.write("---\ntitle: A --- B\nopus: 3\n---\nBody --- more.\n")
+        self.assertEqual(music_import.frontmatter("w"), {"title": "A --- B", "opus": 3})
+
+    def test_invalid_yaml_is_a_clear_error(self):
+        self.write("---\ntitle: [unclosed\n---\n")
+        with self.assertRaises(SystemExit) as cm:
+            music_import.frontmatter("w")
+        self.assertIn("not valid YAML", str(cm.exception))
+
+
 class ScoreDataTests(unittest.TestCase):
     """The files score-reader.js and score-follow.js consume, checked
     against each other and against the manifest and index.md."""

@@ -185,7 +185,9 @@ done | RESIZER="$RESIZER" xargs -0 -n 2 -P "$JOBS" bash -c '
         # ImageMagick -auto-orient. Its module warnings on stderr concern
         # openslide and poppler, neither of which has anything to do with
         # JPEG, so they are dropped rather than alarming anyone.
-        vipsthumbnail "$0" --size "2400x2400" -o "$1[Q=85]" 2>/dev/null \
+        # ">": shrink only, as the magick branch below and import-photo.sh
+        # do. Without it vipsthumbnail also enlarges a smaller original.
+        vipsthumbnail "$0" --size "2400x2400>" -o "$1[Q=85]" 2>/dev/null \
             || { echo "  resize FAILED: $0" >&2; exit 0; }
     else
         magick "$0" -auto-orient -resize "2400x2400>" -colorspace sRGB -quality 85 "$1" \

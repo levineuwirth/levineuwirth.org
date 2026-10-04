@@ -49,6 +49,11 @@ class SlugTests(unittest.TestCase):
         self.assertEqual(archive.entry_slug({"url": "https://example.com/x", "slug": "mine"}), "mine")
         self.assertEqual(archive.entry_slug({"url": "https://example.com/x"}), "example-x")
 
+    def test_every_derived_slug_is_a_valid_one(self):
+        for url in ("https://www.example.com/papers/Foo_Bar.pdf", "https://example.org/",
+                    "https://example.com/" + "word-" * 30, "https://例え.テスト/記事"):
+            self.assertRegex(archive.derive_slug(url), archive.SLUG_RE)
+
     def test_aliases_must_be_http_urls(self):
         self.assertEqual(archive.entry_aliases({"url": "u", "aliases": ["https://doi.org/1"]}),
                          ["https://doi.org/1"])
@@ -150,6 +155,44 @@ class BibCitationTests(unittest.TestCase):
         self.assertEqual(archive.bib_citations(self.BIB),
                          [("Smith2020", "https://journal.example/a"),
                           ("Doe2021", "https://doi.org/10.1000/abc")])
+
+
+class ManifestPreScanTests(unittest.TestCase):
+    """Manifest errors are refused before any fetch."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="archive-manifest-"))
+        self.addCleanup(lambda: __import__("shutil").rmtree(self.tmp))
+        (self.tmp / "removed.yaml").write_text("[]\n")
+        patches = [mock.patch.object(archive, "REMOVED", self.tmp / "removed.yaml"),
+                   mock.patch.object(archive, "err")]
+        for p in patches:
+            p.start()
+            self.addCleanup(p.stop)
+
+    def refused(self, entries):
+        import yaml
+        manifest = self.tmp / "manifest.yaml"
+        manifest.write_text(yaml.safe_dump(entries))
+        with mock.patch.object(archive, "MANIFEST", manifest), \
+             mock.patch.object(archive, "fetch_pdf", side_effect=AssertionError("fetched")), \
+             mock.patch.object(archive, "fetch_html", side_effect=AssertionError("fetched")):
+            with self.assertRaises(SystemExit):
+                archive.cmd_fetch()
+
+    def test_two_hosts_deriving_one_slug(self):
+        self.refused([{"url": "https://alice.github.io/"}, {"url": "https://bob.github.io/"}])
+
+    def test_a_slug_override_that_leaves_archive(self):
+        self.refused([{"url": "https://example.com/x", "slug": "../x"}])
+
+    def test_the_live_manifest_passes(self):
+        import yaml
+        entries = yaml.safe_load((archive.MANIFEST).read_text()) or []
+        slugs = [archive.entry_slug(e) for e in entries if e.get("url")]
+        self.assertEqual(len(slugs), len(set(slugs)))
+        for slug in slugs:
+            self.assertRegex(slug, archive.SLUG_RE)
 
 
 @unittest.skipUnless(HAVE_BS4, "beautifulsoup4 not installed")

@@ -504,12 +504,24 @@ def write_manifest(slug: str, data: dict) -> None:
         tmp.unlink(missing_ok=True)
 
 
+# A leading "---" line, the YAML, and a closing "---" or "..." line, as
+# Hakyll reads it. Splitting on any "---" cut a value holding Pandoc's em
+# dash ("title: A --- B") short.
+FRONT_MATTER_RE = re.compile(r"\A---[ \t]*\n(.*?)\n(?:---|\.\.\.)[ \t]*(?:\n|\Z)", re.S)
+
+
 def frontmatter(slug: str) -> dict | None:
     f = MUSIC / slug / "index.md"
     if not f.exists():
         return None
-    parts = f.read_text().split("---", 2)
-    return yaml.safe_load(parts[1]) if len(parts) >= 3 else {}
+    m = FRONT_MATTER_RE.match(f.read_text(encoding="utf-8"))
+    if not m:
+        return {}
+    try:
+        data = yaml.safe_load(m.group(1))
+    except yaml.YAMLError as exc:
+        sys.exit(f"music-import: {f}: front matter is not valid YAML: {exc}")
+    return data if isinstance(data, dict) else {}
 
 
 def scaffold(slug: str, meta: dict, mvts: list[dict], pdf: bool, created: str,

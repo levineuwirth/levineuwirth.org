@@ -75,6 +75,21 @@ class PrivateNamesAreIgnored(unittest.TestCase):
                    if path not in ignored]
         self.assertEqual(missing, [], "add a .gitignore rule for each")
 
+    def test_the_artifact_gate_knows_every_name_the_build_refuses(self):
+        # check-site is the last gate before publishing; a name the build's
+        # boundary refuses but check-site does not know would ship from any
+        # path that bypasses that boundary. The lists had drifted: nine
+        # names (id_rsa*, .netrc, *.swo, ...) were missing from check-site.
+        import fnmatch
+        globs = _check_site().PRIVATE_FILE_GLOBS
+        np = never_publish()
+        names = ([("suffix " + s, "sample.md~" if s == "~" else "sample" + s) for s in np["suffixes"]]
+                 + [("prefix " + p, p + "sample") for p in np["prefixes"]]
+                 + [("name " + n, n) for n in np["exactNames"]])
+        missing = [f"{rule} ({name})" for rule, name in names
+                   if not any(fnmatch.fnmatch(name, g) for g in globs)]
+        self.assertEqual(missing, [], "add each to PRIVATE_FILE_GLOBS in tools/check-site.py")
+
     def test_ordinary_content_is_not_ignored(self):
         for name in ("index.md", "figure.svg", "data.csv", "notes.md"):
             done = subprocess.run(

@@ -24,6 +24,7 @@ The --title-prefix controls per-poem title generation:
 """
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
@@ -193,29 +194,12 @@ def first_content_line(lines: list[str]) -> str:
 # ---------------------------------------------------------------------------
 
 def yaml_str(s: str) -> str:
-    """Quote a string for YAML if it needs it.
+    """A YAML scalar for any string: always a double-quoted JSON string.
 
-    Always quote (and escape) when the string contains characters that
-    can break YAML parsing — including newlines, carriage returns, and
-    YAML's reserved indicators. Newlines and carriage returns are escaped
-    using YAML's double-quoted backslash escapes.
-    """
-    needs_quote = (
-        not s
-        or s[0] in " \t"
-        or s[-1] in " \t"
-        or any(c in s for c in ':{}[]|>&*!,#?@`\'"\n\r\t')
-    )
-    if needs_quote:
-        escaped = (
-            s.replace("\\", "\\\\")
-             .replace('"', '\\"')
-             .replace("\n", "\\n")
-             .replace("\r", "\\r")
-             .replace("\t", "\\t")
-        )
-        return '"' + escaped + '"'
-    return s
+    Quoting only "when needed" missed the plain scalars YAML reads as
+    something else (true, null, 2026-10-04, - x), so a poem titled "True"
+    came back a boolean. A JSON string is valid YAML and means one thing."""
+    return json.dumps(s, ensure_ascii=False)
 
 # ---------------------------------------------------------------------------
 # File generation

@@ -165,6 +165,9 @@ def load_yaml_list(path: Path) -> list[dict]:
     return data
 
 
+SLUG_RE = re.compile(r"[a-z0-9][a-z0-9-]{0,63}")
+
+
 def derive_slug(url: str) -> str:
     """Auto-derive a slug as {domain-label}-{path-tail}, slugified and
     truncated. A manifest `slug:` override is preferred over this."""
@@ -776,10 +779,27 @@ def cmd_fetch(wayback_fallback: bool = True) -> int:
     # normalises to its own entry's URL is merely redundant: deduped here,
     # never an error.)
     seen: dict[str, str] = {}
+    slugs: dict[str, str] = {}
     for entry in manifest:
         url = entry.get("url")
         if not url:
             continue
+        # A slug names a directory under archive/. Two hosts can derive the
+        # same one (alice.github.io/ and bob.github.io/ are both
+        # "github-index"), and a `slug:` override could climb out of
+        # archive/ ("../x"); either is a manifest error, caught before any
+        # fetch rather than as a confusing "URL changed" failure later.
+        slug = entry_slug(entry)
+        if not SLUG_RE.fullmatch(slug):
+            err(f"manifest entry {url!r}: slug {slug!r} must be lowercase "
+                f"letters, digits and hyphens (at most 64), starting with a "
+                f"letter or digit")
+            sys.exit(1)
+        if slug in slugs:
+            err(f"manifest: {url!r} and {slugs[slug]!r} both archive under "
+                f"slug {slug!r}; give one of them a `slug:`")
+            sys.exit(1)
+        slugs[slug] = url
         keys = {normalize_url(url)}
         keys |= {normalize_url(a) for a in entry_aliases(entry)}
         for norm in sorted(keys):

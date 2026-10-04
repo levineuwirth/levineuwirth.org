@@ -65,7 +65,7 @@ def exif_lines(sidecar: Path) -> list[str]:
     return [render(k, data[k]) for k in keys if data.get(k) not in (None, "")]
 
 
-def build_tags(extra: str) -> str:
+def build_tags(extra: str) -> list[str]:
     tags = ["photography"]
     for raw in (extra or "").split(","):
         t = raw.strip()
@@ -74,7 +74,13 @@ def build_tags(extra: str) -> str:
         # Anything not already hierarchical is filed beneath photography/,
         # matching import-photo.sh. A slash is the escape hatch.
         tags.append(t if ("/" in t or t == "photography") else f"photography/{t}")
-    return ", ".join(dict.fromkeys(tags))
+    return list(dict.fromkeys(tags))
+
+
+def tags_line(tags: list[str]) -> str:
+    """`tags:` as a flow list of JSON strings: "travel: denmark" stays one
+    tag instead of breaking the front matter."""
+    return "tags: [" + ", ".join(json.dumps(t, ensure_ascii=False) for t in tags) + "]"
 
 
 def title_from_slug(slug: str) -> str:
@@ -108,11 +114,11 @@ def main() -> int:
             f"date: {TODAY}",
             # No abstract: individual photographs don't carry one — the
             # caption is the title, and only the series landing has prose.
-            f"tags: [{tags}]",
+            tags_line(tags),
             f"photo: {photo.name}",
         ]
         if series:
-            body.append(f"series: {series}")
+            body.append(render("series", series))
         body.append(f"orientation: {orientation}")
         body += exif_lines(Path(str(photo) + ".exif.yaml"))
         if location:
