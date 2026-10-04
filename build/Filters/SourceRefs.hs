@@ -20,17 +20,17 @@
 --   syntax-highlighted snippet via Prism.
 --
 --   Conservative-by-design: the trigger only fires on paths the
---   @/source/@ serving rule actually publishes ('isServedPath', a
---   mirror of @sourcePreviewable@ in 'Site.rules'), or a small set of
---   named root files. This keeps the parser cheap, avoids false
---   positives on words that happen to contain a slash and a dot, and
---   guarantees every wrapped path has a fetchable @/source/…@ copy.
+--   @/source/@ serving rule actually publishes ('sourcePreviewGlobs',
+--   from which that rule builds its pattern). This keeps the parser
+--   cheap, avoids false positives on words that happen to contain a
+--   slash and a dot, and guarantees every wrapped path has a fetchable
+--   @/source/…@ copy.
 module Filters.SourceRefs
     ( apply
     , isSourcePath
     , forgejoSourceUrl
       -- * Shared with 'Site.rules'
-    , publicDataJson
+    , sourcePreviewGlobs
     ) where
 
 import           Control.Monad        (when)
@@ -38,6 +38,7 @@ import           Data.IORef           (IORef, atomicModifyIORef', newIORef, read
 import qualified Data.Map.Strict      as Map
 import           Data.Text            (Text)
 import qualified Data.Text            as T
+import           Hakyll               (Pattern, fromFilePath, fromGlob, matches)
 import           System.Directory     (doesFileExist)
 import           System.IO.Unsafe     (unsafePerformIO)
 import           Text.Pandoc.Definition
@@ -100,8 +101,8 @@ sourceHref path
 
 -- | Paths that exist on disk during a build but are not tracked by Git —
 --   the @data\/@ artifacts named in @.gitignore@'s \"generated at build
---   time\" block that are also in 'publicDataJson' (anything not in that
---   allowlist is never wrapped in the first place).
+--   time\" block that are also in 'sourcePreviewGlobs' (anything not in
+--   that allowlist is never wrapped in the first place).
 isGeneratedPath :: Text -> Bool
 isGeneratedPath path = path `elem` [ "data/similar-links.json" ]
 
@@ -129,16 +130,17 @@ classifyExistingLink x = pure x
 -- ---------------------------------------------------------------------------
 
 -- | True when the text looks like a repo-relative path that the
---   @/source/@ serving rule actually publishes (or is a whitelisted
---   root file), ends in a known source extension, and contains only
---   safe path characters. Conservative by design — the goal is no
+--   @/source/@ serving rule actually publishes, ends in a known source
+--   extension (a root file such as @Makefile@ need not), and contains
+--   only safe path characters. Conservative by design — the goal is no
 --   false positives on prose that incidentally contains a slash and a
 --   dot, and no wrapped path whose popup fetch would 404.
 isSourcePath :: Text -> Bool
 isSourcePath t = and
     [ not (T.null t)
     , T.all safeChar t
-    , (isServedPath t && hasKnownExt t) || isKnownRootFile t
+    , any (`matches` fromFilePath (T.unpack t)) sourcePreviewPatterns
+    , hasKnownExt t || not ("/" `T.isInfixOf` t)
     ]
   where
     safeChar c =
@@ -147,40 +149,52 @@ isSourcePath t = and
         || ('0' <= c && c <= '9')
         || c == '/' || c == '.' || c == '_' || c == '-' || c == '+'
 
--- | Mirror of the @sourcePreviewable@ whitelist in 'Site.rules' (the
---   rule that copies files to @/source/<path>@) — the two must stay
---   aligned so every link this filter emits has a corresponding
---   @/source/…@ target for the popup to fetch. Directories Site.hs
---   does not serve (e.g. @content/@) are deliberately absent here:
---   wrapping them would emit popups that are guaranteed to 404.
-isServedPath :: Text -> Bool
-isServedPath t = or
-    [ "build/"      `T.isPrefixOf` t && hasExt ".hs"
-    , "static/js/"  `T.isPrefixOf` t
-    , "static/css/" `T.isPrefixOf` t
-    , "templates/"  `T.isPrefixOf` t
-    , "tools/"      `T.isPrefixOf` t && (hasExt ".sh" || hasExt ".py")
-    , "nginx/"      `T.isPrefixOf` t && hasExt ".conf"
-    , "data/"       `T.isPrefixOf` t
-        && not ("/" `T.isInfixOf` T.drop 5 t)   -- top-level data files only
-        && (hasExt ".yaml" || hasExt ".md" || hasExt ".bib")
-    , T.drop 5 t `elem` map T.pack publicDataJson && "data/" `T.isPrefixOf` t
-    ]
-  where
-    hasExt e = e `T.isSuffixOf` T.toLower t
-
--- | The JSON files under @data\/@ that the @\/source\/@ rule publishes.
+-- | Everything the source-preview rule in 'Site.rules' copies to
+--   @/source/<path>@, as Hakyll globs. The rule builds its pattern from
+--   this list and 'isSourcePath' wraps only what it matches, so every
+--   link the filter emits has a target for the popup to fetch; the two
+--   used to keep separate copies. Directories not listed (@content/@, for
+--   one) are deliberately absent: anything unmatched 404s on hover, which
+--   is the right failure if the heuristic ever wraps a path we did not
+--   mean to expose.
 --
---   Named one by one rather than globbed: @data\/@ also holds build state
---   and generated indexes that nothing should link to, and a future tool
+--   The JSON under @data\/@ is named file by file rather than globbed:
+--   @data\/@ also holds build state and generated indexes that nothing
+--   should link to (the former @data\/*.json@ published
+--   @archive-state.json@ and the search metadata), and a future tool
 --   dropping private JSON there must not become publishable by accident.
---   'Site.rules' builds its @sourcePreviewable@ pattern from this same
---   list, so the two cannot drift apart.
-publicDataJson :: [FilePath]
-publicDataJson =
-    [ "annotations.json"      -- author-written link previews; also served at /data/
-    , "similar-links.json"    -- generated by tools/embed.py; referenced in prose
+--
+--   checklist.md is deliberately absent, and must stay absent: audit S01
+--   removed it because .gitignore calls it a local planning document and
+--   it was being served in full at /source/checklist.md.
+sourcePreviewGlobs :: [String]
+sourcePreviewGlobs =
+    [ "build/**.hs"
+    , "static/js/**"
+    , "static/css/**"
+    , "templates/**"
+    , "tools/**.sh"
+    , "tools/**.py"
+    , "nginx/**.conf"
+    , "data/*.yaml"
+    , "data/*.md"
+    , "data/*.bib"
+    , "data/annotations.json"      -- author-written link previews; also served at /data/
+    , "data/similar-links.json"    -- generated by tools/embed.py; referenced in prose
+    , "*.cabal"
+    , "cabal.project"
+    , "cabal.project.freeze"
+    , "Makefile"
+    , "pyproject.toml"
+    , "uv.lock"
+    , "LICENSE"
+    , "WRITING.md"
+    , "PHOTOGRAPHY.md"
+    , "README.md"
     ]
+
+sourcePreviewPatterns :: [Pattern]
+sourcePreviewPatterns = map fromGlob sourcePreviewGlobs
 
 hasKnownExt :: Text -> Bool
 hasKnownExt t =
@@ -192,21 +206,6 @@ hasKnownExt t =
             , ".json", ".ini", ".tex", ".bib"
             ]
 
-isKnownRootFile :: Text -> Bool
-isKnownRootFile t = t `elem`
-    [ "Makefile"
-    , "levineuwirth.cabal"
-    , "cabal.project", "cabal.project.freeze"
-    , "pyproject.toml", "uv.lock"
-    , "WRITING.md", "PHOTOGRAPHY.md", "README.md"
-    , "LICENSE"
-    -- checklist.md is deliberately absent, and must stay absent: audit
-    -- S01 removed it from 'Site.sourcePreviewable' because .gitignore
-    -- calls it a local planning document and it was being served in full
-    -- at /source/checklist.md. This list and that one have to agree —
-    -- naming a file here that no rule copies produces a prose link to a
-    -- /source/ URL that 404s on hover.
-    ]
 
 -- ---------------------------------------------------------------------------
 -- File existence cache

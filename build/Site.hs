@@ -358,51 +358,14 @@ rules = do
     -- @/source/<path>@, fetched on hover by the popup provider in
     -- @static/js/popups.js@ (sourceContent → Prism highlighting).
     --
-    -- Conservative whitelist: must stay aligned with 'isSourcePath' in
-    -- @build/Filters/SourceRefs.hs@ so that every link the filter
-    -- emits has a corresponding @/source/…@ target. Files in @static/@
-    -- are also served under their normal /js/, /css/ paths via a
-    -- separate rule above; the @"source-preview"@ version lets Hakyll
-    -- compile the same identifier twice without conflict.
-    --
-    -- Anything not matched here will silently 404 on hover and the
-    -- popup will simply not appear, which is the right failure mode
-    -- if the heuristic ever wraps a path we did not mean to expose.
-    --
-    -- @data/@ is named file-by-file rather than by glob. The former
-    -- @data/*.json@ swept in whatever happened to be sitting in that
-    -- directory — build state (@archive-state.json@), the search index
-    -- metadata, and any private JSON a future tool drops there — and
-    -- published it under @/source/@. 'publicDataJson' is the explicit
-    -- allowlist; 'Filters.SourceRefs.publicDataJson' is the same list, so
-    -- the link-emitting heuristic and the serving rule cannot drift.
-    --
-    -- @checklist.md@ is deliberately absent: it is a local planning
-    -- document (.gitignore, check-site's PRIVATE_FILE_GLOBS), and it was
-    -- once served in full at /source/checklist.md.
+    -- The whitelist is 'Filters.SourceRefs.sourcePreviewGlobs', which is
+    -- also what 'isSourcePath' matches, so every link the filter emits has
+    -- a @/source/…@ target. Files in @static/@ are also served under their
+    -- normal /js/, /css/ paths via a separate rule above; the
+    -- @"source-preview"@ version lets Hakyll compile the same identifier
+    -- twice without conflict.
     -- ---------------------------------------------------------------------------
-    let sourcePreviewable =
-                 "build/**.hs"
-            .||. "static/js/**"
-            .||. "static/css/**"
-            .||. "templates/**"
-            .||. "tools/**.sh"
-            .||. "tools/**.py"
-            .||. "nginx/**.conf"
-            .||. fromList (map (fromFilePath . ("data/" ++)) SR.publicDataJson)
-            .||. "data/*.yaml"
-            .||. "data/*.md"
-            .||. "data/*.bib"
-            .||. "*.cabal"
-            .||. "cabal.project"
-            .||. "cabal.project.freeze"
-            .||. "Makefile"
-            .||. "pyproject.toml"
-            .||. "uv.lock"
-            .||. "LICENSE"
-            .||. "WRITING.md"
-            .||. "PHOTOGRAPHY.md"
-            .||. "README.md"
+    let sourcePreviewable = foldr1 (.||.) (map fromGlob SR.sourcePreviewGlobs)
     match sourcePreviewable $ version "source-preview" $ do
         route   $ customRoute (\ident -> "source/" ++ toFilePath ident)
         compile copyFileCompiler
