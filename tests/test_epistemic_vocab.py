@@ -17,6 +17,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SEARCH_FILTERS_JS = REPO_ROOT / "static" / "js" / "search-filters.js"
 SEARCH_MD = REPO_ROOT / "content" / "search.md"
+SEARCH_META = REPO_ROOT / "_site" / "data" / "epistemic-meta.json"
 
 _spec = importlib.util.spec_from_file_location("golden", Path(__file__).with_name("test_golden.py"))
 _golden = importlib.util.module_from_spec(_spec)
@@ -68,6 +69,26 @@ class EpistemicVocabularyTests(unittest.TestCase):
         # Contexts.peerStatusField treats "unreviewed" as the default and
         # validates against the same list.
         self.assertEqual(self.vocab["peer-status"][0], "unreviewed")
+
+
+    @unittest.skipUnless(SEARCH_META.is_file(), "no _site — run `make build`")
+    def test_indexed_values_are_filterable(self) -> None:
+        # Every page the footer gives a stability (those with a status) must
+        # carry it in the index: read from front matter, which no page sets,
+        # it was missing from all of them, and the stability filter hid
+        # every page. And each ordinal value must be on its scale, or no
+        # filter at any level can match it.
+        meta = json.loads(SEARCH_META.read_text(encoding="utf-8"))
+        self.assertTrue(meta)
+        scales = js_scales()
+        bad = []
+        for url, fields in sorted(meta.items()):
+            if "status" in fields and "stability" not in fields:
+                bad.append(f"{url}: status but no stability")
+            for field in scales:
+                if field in fields and fields[field].lower() not in self.vocab[field]:
+                    bad.append(f"{url}: {field} {fields[field]!r}")
+        self.assertEqual(bad, [])
 
 
 if __name__ == "__main__":

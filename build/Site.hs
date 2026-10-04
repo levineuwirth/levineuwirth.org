@@ -46,6 +46,7 @@ import Photography (photographyRules)
 import Tags       (buildAllTags, applyTagRules, sidecarIdentifier,
                    portalIntroField, portalTooltipField)
 import Pagination (blogPaginateRules)
+import Stability  (resolveStability)
 import Stats      (statsRules)
 import Utils      (cacheDirFor, metadataKeywords, outputDirFor)
 
@@ -1754,6 +1755,14 @@ epistemicEntry item = do
         Nothing -> return Nothing
         Just r  -> do
             meta <- getMetadata ident
+            -- Stability is derived from history, not written in front
+            -- matter, so it must be resolved as the footer resolves it,
+            -- and for the same pages: those with a status. Read from front
+            -- matter it was absent from every entry, and the stability
+            -- filter hid every page.
+            stability <- case lookupString "status" meta of
+                Just _  -> Just . (,) "stability" <$> resolveStability item
+                Nothing -> return Nothing
             let url = "/" ++ r
                 fields = catMaybes
                     [ grab "status"       meta
@@ -1763,7 +1772,7 @@ epistemicEntry item = do
                     , grab "scope"        meta
                     , grab "novelty"      meta
                     , grab "practicality" meta
-                    , grab "stability"    meta
+                    , stability
                     ]
                 obj = Map.fromList fields
                 -- Compute overall-score the same way Contexts.overallScoreField
