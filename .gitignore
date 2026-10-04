@@ -100,8 +100,9 @@ data/archive-state.json
 # IGNORE.txt is for the local build and need not be synced.
 /IGNORE.txt
 
-# Drafts, and planning checklists at any depth (tools/check-site.py and
-# tools/code-refs.py treat the name as private wherever it appears).
+# Drafts, and planning checklists at any depth (build/Site.hs,
+# tools/check-site.py and tools/code-refs.py treat the name as private
+# wherever it appears).
 content/drafts/
 checklist.md
 

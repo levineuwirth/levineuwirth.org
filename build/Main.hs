@@ -6,7 +6,7 @@ import System.Directory      (createDirectoryIfMissing)
 import System.Environment    (getArgs)
 import Hakyll                (hakyllWith)
 import Golden                (renderFixture)
-import Site                  (rules, siteConfigurationFor)
+import Site                  (refusedPath, rules, siteConfigurationFor)
 import Drafts                (currentUnpublished, scanUnpublished, unpublishedSummary,
                               withoutUnpublished)
 import BibExtras             (BibExtra (..), parseBibExtras)
@@ -48,7 +48,8 @@ writeBuildStamp = do
 -- (build/FooterData.hs); @site list-unpublished@ prints what a production
 -- build withholds for @draft: true@; @site bib-extras FILE@ prints what the
 -- .bib scanner (build/BibExtras.hs) reads from a file, one key per line;
--- @site shared-rules@ prints 'sharedRules' as JSON.
+-- @site shared-rules@ prints 'sharedRules' as JSON; @site private-paths@
+-- echoes each path on stdin that the build refuses ('Site.refusedPath').
 main :: IO ()
 main = do
     args <- getArgs
@@ -56,6 +57,7 @@ main = do
         ["render-fixture", path] -> renderFixture path
         ["list-unpublished"] -> scanUnpublished "content" >>= mapM_ putStrLn . unpublishedSummary
         ["shared-rules"] -> LBS.putStrLn (Aeson.encode sharedRules)
+        ["private-paths"] -> getContents >>= mapM_ putStrLn . filter refusedPath . lines
         ["bib-extras", path] -> do
             extras <- parseBibExtras path
             mapM_ (\(k, e) -> putStrLn (intercalate "\t"

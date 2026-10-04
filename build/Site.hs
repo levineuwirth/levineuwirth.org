@@ -1,11 +1,11 @@
 {-# LANGUAGE GHC2021 #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Site (rules, siteConfiguration, siteConfigurationFor) where
+module Site (rules, siteConfiguration, siteConfigurationFor, refusedPath) where
 
 import Control.Monad (forM, forM_, void, when)
 import Control.Monad.Except (catchError)
 import Data.Char     (isSpace, toUpper)
-import Data.List     (groupBy, isPrefixOf, isSuffixOf, sort, sortBy, stripPrefix)
+import Data.List     (groupBy, isInfixOf, isPrefixOf, isSuffixOf, sort, sortBy, stripPrefix)
 import Data.Map.Strict (Map)
 import Data.Maybe    (catMaybes, fromMaybe, listToMaybe)
 import Data.Ord      (Down (..), comparing)
@@ -90,20 +90,31 @@ siteConfigurationFor dev = defaultConfiguration
     , tmpDirectory         = cacheDirFor dev ++ "/tmp"
     }
 
+-- | Whether the build refuses a path: Hakyll applies 'ignoreFile' to each
+--   file and directory name as it walks the tree, so one refused component
+--   keeps everything beneath it out. @site private-paths@ answers this for
+--   the tools and tests, which used to approximate it with copies of the
+--   lists below.
+refusedPath :: FilePath -> Bool
+refusedPath = any (ignoreFile siteConfiguration) . splitDirectories
+
 -- | Paths that must never become Hakyll identifiers. See
---   'siteConfiguration'.
+--   'siteConfiguration'. Everything tools/check-site.py refuses at the end
+--   is refused here first, so a private file fails the build where it
+--   starts, not the gate after it has been rendered.
 neverPublish :: FilePath -> Bool
 neverPublish path =
        "__pycache__" `elem` splitDirectories path
     || any (`isSuffixOf` name) suffixes
     || any (`isPrefixOf` name) prefixes
+    || any (`isInfixOf` name) infixes
     || name `elem` exactNames
   where
     name = takeFileName path
 
     suffixes =
-        -- Private working notes and unfinished drafts.
-        [ ".local.md", ".draft.md"
+        -- Private working notes.
+        [ ".local.md", ".local.html"
         -- Key material and credential bundles.
         , ".key", ".pem", ".p12", ".pfx", ".env"
         -- Editor and interpreter junk.
@@ -116,10 +127,16 @@ neverPublish path =
         -- id_rsa, id_rsa.pub, id_ed25519, credentials.json, .env.local, …
         [ "id_rsa", "id_dsa", "id_ecdsa", "id_ed25519", "credentials", ".env." ]
 
+    infixes =
+        -- Unfinished drafts, whatever their type: notes.draft.md, fig.draft.svg.
+        [ ".draft." ]
+
     -- Dotfiles are already covered by Hakyll's default predicate; naming
     -- them keeps the intent legible if that default ever changes.
     exactNames =
-        [ ".env", ".DS_Store", ".netrc", ".npmrc", ".pypirc" ]
+        [ ".env", ".DS_Store", ".netrc", ".npmrc", ".pypirc"
+        -- Planning checklists, at any depth.
+        , "checklist.md" ]
 
 -- | Home-page portal grid order. Canonical ordering authority for every
 -- rendering of the portals (currently: the home page; future
