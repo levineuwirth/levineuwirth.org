@@ -252,7 +252,7 @@ prune_retention() { pair_prune "$DEST" forgejo "$KEEP"; }
 # ---------------------------------------------------------------------------
 case "${1:-}" in
     --verify)  verify_archive "${2:-}"; exit 0 ;;
-    --prune)   prune_retention; exit 0 ;;
+    --prune)   pair_lock "$DEST"; prune_retention; exit 0 ;;
     -h|--help) sed -n '2,50p' "$0"; exit 0 ;;
     "")        ;;
     *)         die "unknown argument: $1 (try --help)" ;;
@@ -266,6 +266,7 @@ TMP_ARCHIVE="$DEST/.forgejo-$TS.tar.gz.partial"
 TMP_SUM="$DEST/.forgejo-$TS.tar.gz.sha256.partial"
 
 mkdir -p "$DEST"
+pair_lock "$DEST"
 
 # Remove the in-data snapshot and any temporaries on any exit path, success
 # or failure, so a crashed run cannot leave stray database copies inside the
@@ -333,6 +334,7 @@ if grep -qE "forgejo-data/gitea/gitea\.db(-wal|-shm)?\$" "$LIST"; then
 fi
 
 pair_finalize "$TMP_ARCHIVE" "$TMP_SUM" "$ARCHIVE"
+pair_publish "$ARCHIVE"
 
 SIZE=$(du -h "$ARCHIVE" | cut -f1)
 log "wrote $ARCHIVE ($SIZE) + .sha256"

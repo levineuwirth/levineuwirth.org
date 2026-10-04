@@ -13,6 +13,7 @@ import shutil
 import stat
 import subprocess
 import tarfile
+import time
 import tempfile
 import unittest
 
@@ -104,6 +105,32 @@ class ConfigBackup(unittest.TestCase):
                          'root/forgejo-server/forgejo-data/gitea/gitea.db'):
             self.assertNotIn(left_out, names)
         self.assertEqual(networks[0]['IPAM']['Config'][0]['Gateway'], '172.18.0.1')
+
+    def test_a_backup_that_fails_verification_leaves_the_markers_alone(self):
+        # LATEST and last-success name the newest GOOD backup; a run whose
+        # archive fails verify must not move them (a review caught the
+        # shared library publishing before the check).
+        self.assertEqual(self.run_job().returncode, 0)
+        latest, stamp = self.archive(), (self.dest / 'last-success').read_text()
+        time.sleep(1.1)   # a new archive gets a new timestamped name
+        (self.root / 'etc/nginx/nginx.conf').unlink()
+        done = self.run_job()
+        self.assertNotEqual(done.returncode, 0)
+        self.assertIn('missing from the archive', done.stderr)
+        self.assertEqual(self.archive(), latest)
+        self.assertEqual((self.dest / 'last-success').read_text(), stamp)
+
+    def test_a_second_run_into_the_same_dest_is_refused_and_harms_nothing(self):
+        import fcntl
+        self.dest.mkdir(parents=True)
+        partial = self.dest / '.config-20261004T000000Z.tar.gz.partial'
+        partial.write_text('a running backup')
+        with open(self.dest / '.backup.lock', 'w') as held:
+            fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            done = self.run_job()
+        self.assertNotEqual(done.returncode, 0)
+        self.assertIn('another backup', done.stderr)
+        self.assertTrue(partial.exists(), "the refused run swept the other run's archive")
 
     def test_the_archive_and_its_directory_are_private(self):
         self.assertEqual(self.run_job().returncode, 0)

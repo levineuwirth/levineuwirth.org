@@ -279,6 +279,7 @@ command -v couchbackup >/dev/null 2>&1 || die "couchbackup is not installed (npm
 AUTH_URL="${COUCHDB_URL/:\/\//:\/\/$(urlenc "$COUCHDB_USER"):$(urlenc "$COUCHDB_PASSWORD")@}"
 
 mkdir -p "$DEST"
+pair_lock "$DEST"
 TS=$(date -u +%Y%m%dT%H%M%SZ)
 STAGE=$(mktemp -d -t couchdb-backup-XXXXXX)
 TMP_ARCHIVE="$DEST/.couchdb-$TS.tar.gz.partial"
@@ -325,6 +326,7 @@ log "accounts: $(wc -l < "$STAGE/users.list"), _security for each database, node
 tar -I 'gzip --rsyncable' -cf "$TMP_ARCHIVE" -C "$STAGE" . || die "tar failed"
 
 pair_finalize "$TMP_ARCHIVE" "$TMP_SUM" "$ARCHIVE"
+pair_publish "$ARCHIVE"
 log "wrote $ARCHIVE ($(du -h "$ARCHIVE" | cut -f1)) + .sha256"
 
 if [ -n "${BORG_REPO:-}" ]; then

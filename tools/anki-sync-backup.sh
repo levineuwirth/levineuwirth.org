@@ -94,6 +94,7 @@ esac
 
 [ -d "$SYNC_BASE" ] || die "$SYNC_BASE does not exist — is the sync server installed?"
 mkdir -p "$DEST"
+pair_lock "$DEST"
 TS=$(date -u +%Y%m%dT%H%M%SZ)
 STAGE=$(mktemp -d -t anki-backup-XXXXXX)
 TMP_ARCHIVE="$DEST/.anki-$TS.tar.gz.partial"
@@ -144,6 +145,7 @@ fi
 tar -I 'gzip --rsyncable' -cf "$TMP_ARCHIVE" -C "$STAGE" . || die "tar failed"
 ARCHIVE="$DEST/anki-$TS.tar.gz"
 pair_finalize "$TMP_ARCHIVE" "$TMP_SUM" "$ARCHIVE"
+pair_publish "$ARCHIVE"
 log "wrote $ARCHIVE ($(du -h "$ARCHIVE" | cut -f1)) + .sha256, $users user(s)"
 
 # the snapshot is on disk: bring the server back before the slow off-host part

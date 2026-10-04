@@ -80,6 +80,7 @@ esac
 
 mkdir -p "$DEST"
 chmod 700 "$DEST"
+pair_lock "$DEST"
 TS=$(date -u +%Y%m%dT%H%M%SZ)
 STAGE=$(mktemp -d -t config-backup-XXXXXX)
 TMP_ARCHIVE="$DEST/.config-$TS.tar.gz.partial"
@@ -139,6 +140,7 @@ tar -I 'gzip --rsyncable' -cf "$TMP_ARCHIVE" \
 ARCHIVE="$DEST/config-$TS.tar.gz"
 pair_finalize "$TMP_ARCHIVE" "$TMP_SUM" "$ARCHIVE"
 verify_archive "$ARCHIVE"
+pair_publish "$ARCHIVE"     # only once the archive has verified
 log "wrote $ARCHIVE ($(du -h "$ARCHIVE" | cut -f1)) + .sha256"
 
 if [ -n "${BORG_REPO:-}" ]; then

@@ -16,9 +16,24 @@
 # EXIT traps clean up everything else): the other three kept a temporary
 # archive, possibly gigabytes, in DEST forever (cleanup pass, 2026-10-04).
 
+# pair_lock <dest>
+#   Hold an exclusive lock on <dest>/.backup.lock for the rest of the run,
+#   or fail at once. pair_prune sweeps temporaries, so two runs into one
+#   DEST — a hand run overlapping the timer's — must never overlap: the
+#   second would delete the first's archive in progress. Call it before
+#   writing any temporary.
+pair_lock() {
+    local dest=$1
+    mkdir -p "$dest"
+    exec 8>"$dest/.backup.lock" || die "cannot open $dest/.backup.lock"
+    flock -n 8 || die "another backup into $dest is running; not starting a second"
+}
+
 # pair_finalize <tmp-archive> <tmp-sum> <archive>
-#   Checksum the temporary under the final name, rename both into place,
-#   point LATEST at the new archive and stamp last-success.
+#   Checksum the temporary under the final name and rename both into place.
+#   It does not announce the backup: a script that checks the archive
+#   further calls pair_publish only once that check passes, so a failed
+#   backup never moves LATEST or last-success.
 pair_finalize() {
     local tmp=$1 tmp_sum=$2 archive=$3 dest
     dest=$(dirname "$archive")
@@ -32,6 +47,14 @@ pair_finalize() {
     # the other order would leave an archive that never becomes complete.
     mv "$tmp_sum" "$archive.sha256"
     mv "$tmp" "$archive"
+}
+
+# pair_publish <archive>
+#   Point LATEST at the archive and stamp last-success: what vps-status and
+#   the restore runbooks read as "the newest good backup".
+pair_publish() {
+    local archive=$1 dest
+    dest=$(dirname "$archive")
     ln -sfn "$archive" "$dest/LATEST"
     date -u +%Y-%m-%dT%H:%M:%SZ > "$dest/last-success"
 }
