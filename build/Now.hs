@@ -167,37 +167,30 @@ renderStatusChip s = concat
 --   item-card.css so the Now page picks up the existing typographic
 --   register; the .now-* classes layer status-chip + spacing on top.
 renderEntry :: NowEntry -> String
-renderEntry e = concat
-    [ "<li class=\"item-card now-card\">"
-    , "<span class=\"item-card-kind now-kind\">"
-    , renderStatusChip (neStatus e)
-    , "</span>"
-    , "<div class=\"item-card-main\">"
-    , "<div class=\"item-card-header\">"
-    , renderTitle (neLink e) (neTitle e)
-    , "<time class=\"item-card-date\" datetime=\"", escapeHtml (neUpdated e), "\">"
-    , escapeHtml (neUpdated e)
-    , "</time>"
-    , "</div>"
-    , maybe "" (\n -> "<p class=\"item-card-abstract is-full\">" ++ escapeHtml n ++ "</p>") (neNote e)
-    , "</div>"
-    , "</li>"
-    ]
+renderEntry e =
+    nowCard "item-card now-card" (neStatus e) (neLink e) (neTitle e) (neUpdated e) (neNote e)
 
 renderShippedEntry :: NowShipped -> String
-renderShippedEntry s = concat
-    [ "<li class=\"item-card now-card now-card--shipped\">"
+renderShippedEntry s =
+    nowCard "item-card now-card now-card--shipped" "shipped"
+            (nsLink s) (nsTitle s) (nsCompleted s) (nsNote s)
+
+-- | The card both kinds of entry render as: classes, status chip, title
+--   (linked when there is a URL), its ISO date, and an optional note.
+nowCard :: String -> String -> Maybe String -> String -> String -> Maybe String -> String
+nowCard classes status link title date note = concat
+    [ "<li class=\"", classes, "\">"
     , "<span class=\"item-card-kind now-kind\">"
-    , renderStatusChip "shipped"
+    , renderStatusChip status
     , "</span>"
     , "<div class=\"item-card-main\">"
     , "<div class=\"item-card-header\">"
-    , renderTitle (nsLink s) (nsTitle s)
-    , "<time class=\"item-card-date\" datetime=\"", escapeHtml (nsCompleted s), "\">"
-    , escapeHtml (nsCompleted s)
+    , renderTitle link title
+    , "<time class=\"item-card-date\" datetime=\"", escapeHtml date, "\">"
+    , escapeHtml date
     , "</time>"
     , "</div>"
-    , maybe "" (\n -> "<p class=\"item-card-abstract is-full\">" ++ escapeHtml n ++ "</p>") (nsNote s)
+    , maybe "" (\n -> "<p class=\"item-card-abstract is-full\">" ++ escapeHtml n ++ "</p>") note
     , "</div>"
     , "</li>"
     ]

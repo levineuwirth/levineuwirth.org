@@ -219,18 +219,10 @@ photographySeriesPhotoRules =
 seriesCtx :: Context String
 seriesCtx =
     constField "is-series" "true"
-    <> listFieldWith "series-photos" photographyCtx loadSeriesChildren
+    <> listFieldWith "series-photos" photographyCtx
+           (\parent -> recentFirstByDisplay =<< loadSeriesChildrenFor parent)
     <> seriesStatsCtx
     <> photographyCtx
-  where
-    loadSeriesChildren parent = do
-        let ident = itemIdentifier parent
-            slug  = takeFileName (takeDirectory (toFilePath ident))
-            pat   = fromGlob ("content/photography/" ++ slug ++ "/*.md")
-                .&&. complement
-                        (fromGlob ("content/photography/" ++ slug ++ "/index.md"))
-                .&&. hasNoVersion
-        recentFirstByDisplay =<< loadAll pat
 
 
 -- | Statistics for a series landing, in the register of @/build/@ and
@@ -364,8 +356,8 @@ seriesStatsCtx =
     trimNum x = let r = round x :: Integer
                 in  if fromIntegral r == x then show r else printf "%.1f" x
 
--- | The same children 'seriesCtx' lists, loadable from a bare item so the
---   statistics fields can reach them without duplicating the glob.
+-- | A series landing's children: the photographs 'seriesCtx' lists and the
+--   statistics fields count.
 loadSeriesChildrenFor :: Item a -> Compiler [Item String]
 loadSeriesChildrenFor parent = do
     let ident = itemIdentifier parent

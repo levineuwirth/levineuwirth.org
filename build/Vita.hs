@@ -436,38 +436,37 @@ section slug heading inner = concat
 -- Section renderers
 -- ---------------------------------------------------------------------------
 
+-- | A vita section's list of cards.
+cardList :: String -> String
+cardList items = "<ul class=\"item-card-list vita-list\">" ++ items ++ "</ul>"
+
+-- | One card in it, from its parts in order.
+card :: [String] -> String
+card parts = concat $
+    ["<li class=\"item-card vita-card\">", "<div class=\"item-card-main\">"]
+    ++ parts ++ ["</div>", "</li>"]
+
 renderEducation :: [Edu] -> String
 renderEducation es
     | null visible = ""
-    | otherwise    = section "education" "Education" $ concat
-        [ "<ul class=\"item-card-list vita-list\">"
-        , concatMap one visible
-        , "</ul>"
-        ]
+    | otherwise    = section "education" "Education" $
+        cardList (concatMap one visible)
   where
     visible = filter edWeb es
-    one e = concat
-        [ "<li class=\"item-card vita-card\">"
-        , "<div class=\"item-card-main\">"
-        , headerRow (tex (edInstitution e)) (dateRange (edStart e) (edEnd e))
+    one e = card
+        [ headerRow (tex (edInstitution e)) (dateRange (edStart e) (edEnd e))
         , subLine (Just (edDegree e))
             (  maybe [] (\g -> ["GPA " ++ tex g]) (edGpa e)
             ++ locationPart (edLocation e) Nothing
             )
         , maybe "" (\n -> "<p class=\"vita-note\">" ++ tex n ++ "</p>") (edNotes e)
-        , "</div>"
-        , "</li>"
         ]
 
 renderPublications :: [Pub] -> String
 renderPublications ps
     | null visible = ""
-    | otherwise    = section "publications" "Publications and Preprints" $ concat
-        [ "<ul class=\"item-card-list vita-list\">"
-        , concatMap one visible
-        , "</ul>"
-        , footnote
-        ]
+    | otherwise    = section "publications" "Publications and Preprints" $
+        cardList (concatMap one visible) ++ footnote
   where
     visible = filter pbWeb ps
     -- The dagger legend lives on whichever entry declares it, but reads as a
@@ -476,10 +475,8 @@ renderPublications ps
         (n:_) -> "<p class=\"vita-footnote\">" ++ tex n ++ "</p>"
         []    -> ""
     dateOf p = tex (pbYear p) ++ maybe "" (\m -> ", " ++ tex m) (pbMonth p)
-    one p = concat
-        [ "<li class=\"item-card vita-card\">"
-        , "<div class=\"item-card-main\">"
-        , case pbTitle p of
+    one p = card
+        [ case pbTitle p of
             -- Entries without a title (work in preparation) put the label in
             -- the authors field; the CV template makes the same distinction.
             Nothing -> concat
@@ -494,33 +491,24 @@ renderPublications ps
                 , "<p class=\"vita-venue\">", tex (pbVenue p), "</p>"
                 ]
         , renderLinks (pbLinks p)
-        , "</div>"
-        , "</li>"
         ]
 
 renderPresentations :: [Pres] -> String
 renderPresentations ps
     | null visible = ""
-    | otherwise    = section "presentations" "Presentations" $ concat
-        [ "<ul class=\"item-card-list vita-list\">"
-        , concatMap one visible
-        , "</ul>"
-        ]
+    | otherwise    = section "presentations" "Presentations" $
+        cardList (concatMap one visible)
   where
     visible = filter prWeb ps
     dateOf p = maybe "" (\m -> tex m ++ " ") (prMonth p) ++ tex (prYear p)
-    one p = concat
-        [ "<li class=\"item-card vita-card\">"
-        , "<div class=\"item-card-main\">"
-        , headerRow (tex (prTitle p)) (dateOf p)
+    one p = card
+        [ headerRow (tex (prTitle p)) (dateOf p)
         , "<p class=\"vita-authors\">", tex (prAuthors p), "</p>"
         , "<p class=\"vita-venue\">"
         , maybe "" (\k -> tex k ++ ", ") (prKind p)
         , tex (prVenue p)
         , maybe "" (\st -> "<span class=\"vita-status\">" ++ tex st ++ "</span>") (prStatus p)
         , "</p>"
-        , "</div>"
-        , "</li>"
         ]
 
 -- | Experience keeps the CV's research/industry split — that division is
@@ -535,20 +523,13 @@ renderExperience xs = research ++ industry
     industry = group "experience-industry" "Industry Experience" (filter (not . isRes) visible)
     group slug heading es
         | null es   = ""
-        | otherwise = section slug heading $ concat
-            [ "<ul class=\"item-card-list vita-list\">"
-            , concatMap one es
-            , "</ul>"
-            ]
-    one e = concat
-        [ "<li class=\"item-card vita-card\">"
-        , "<div class=\"item-card-main\">"
-        , headerRow (tex (exOrg e)) (dateRange (exStart e) (exEnd e))
+        | otherwise = section slug heading $
+            cardList (concatMap one es)
+    one e = card
+        [ headerRow (tex (exOrg e)) (dateRange (exStart e) (exEnd e))
         , subLine (exRole e) (locationPart (exLocation e) (exLocUrl e))
         , maybe "" (\p -> "<p class=\"vita-note\">" ++ tex p ++ "</p>") (exPreamble e)
         , renderBullets (exBullets e)
-        , "</div>"
-        , "</li>"
         ]
 
 -- | The @/cv/projects/@ index. Groups render in first-appearance order, the
@@ -575,23 +556,16 @@ renderProjects ps = concatMap one (groupOrder visible)
             | c `elem` ['A'..'Z']                 = toLower c : acc
             | null acc || head acc == '-'         = acc
             | otherwise                           = '-' : acc
-    one g = section ("projects-" ++ slugify g) (escapeHtml g) $ concat
-        [ "<ul class=\"item-card-list vita-list\">"
-        , concatMap entry (filter ((== g) . pjGroup) visible)
-        , "</ul>"
-        ]
-    entry p = concat
-        [ "<li class=\"item-card vita-card\">"
-        , "<div class=\"item-card-main\">"
-        , headerRow
+    one g = section ("projects-" ++ slugify g) (escapeHtml g) $
+        cardList (concatMap entry (filter ((== g) . pjGroup) visible))
+    entry p = card
+        [ headerRow
             (case pjEssay p of
                 Just u  -> "<a href=\"" ++ escapeHtml u ++ "\">" ++ tex (pjName p) ++ "</a>"
                 Nothing -> tex (pjName p))
             (dateRange (pjStart p) (pjEnd p))
         , "<p class=\"vita-note\">", tex (pjDescription p), "</p>"
         , renderLinks (pjLinks p)
-        , "</div>"
-        , "</li>"
         ]
 
 renderContact :: Person -> String

@@ -296,9 +296,7 @@ compositionCompiler = essayCompiler
 --   'essayCtx' don't apply here.
 photographyCompiler :: Compiler (Item String)
 photographyCompiler = do
-    body <- getResourceBody
-    let src   = itemBody body
-        body' = itemSetBody (preprocessSource src) body
+    (src, htmlItem) <- filteredPage
     -- Filters.Images reads a *.dims.yaml sidecar for each Markdown image,
     -- inside unsafeCompiler where Hakyll cannot see it. Only a page whose
     -- own Markdown has an image needs the dependency, and today no
@@ -308,12 +306,7 @@ photographyCompiler = do
         void $ getMatches (   "content/photography/*.dims.yaml"
                          .||. "content/photography/*/*.dims.yaml"
                          .||. "static/**/*.dims.yaml")
-    filePath   <- getResourceFilePath
-    let srcDir  = takeDirectory filePath
-    pandocItem <- readPandocWith readerOpts body'
-    pandocFiltered <- unsafeCompiler $ applyAll False srcDir (itemBody pandocItem)
-    let pandocItem' = itemSetBody pandocFiltered pandocItem
-    return (writePandocWith writerOpts pandocItem')
+    return htmlItem
 
 -- | Reduced pipeline for tag-meta sidecar markdown files. Applies
 --   source-level preprocessors and AST filters (wikilinks, sidenotes,
@@ -325,30 +318,27 @@ photographyCompiler = do
 --   loads by the tag-index rule and the home-page grid.
 sidecarCompiler :: Compiler (Item String)
 sidecarCompiler = do
-    body <- getResourceBody
-    let src   = itemBody body
-        body' = itemSetBody (preprocessSource src) body
-    filePath   <- getResourceFilePath
-    let srcDir  = takeDirectory filePath
-    pandocItem <- readPandocWith readerOpts body'
-    pandocFiltered <- unsafeCompiler $ applyAll False srcDir (itemBody pandocItem)
-    let pandocItem' = itemSetBody pandocFiltered pandocItem
-    let htmlItem    = writePandocWith writerOpts pandocItem'
-    _ <- saveSnapshot "body" htmlItem
-    return htmlItem
+    (_, htmlItem) <- filteredPage
+    saveSnapshot "body" htmlItem
 
 -- | Compiler for simple pages: filters applied, no TOC snapshot.
 pageCompiler :: Compiler (Item String)
 pageCompiler = do
-    body <- getResourceBody
-    let src   = itemBody body
-        body' = itemSetBody (preprocessSource src) body
-    filePath   <- getResourceFilePath
-    let srcDir  = takeDirectory filePath
-    pandocItem <- readPandocWith readerOpts body'
-    pandocFiltered <- unsafeCompiler $ applyAll False srcDir (itemBody pandocItem)
-    let pandocItem' = itemSetBody pandocFiltered pandocItem
-    let htmlItem    = writePandocWith writerOpts pandocItem'
+    (src, htmlItem) <- filteredPage
     _ <- saveSnapshot "word-count"   (itemSetBody (show (wordCount src))   htmlItem)
     _ <- saveSnapshot "reading-time" (itemSetBody (show (readingTime src)) htmlItem)
     return htmlItem
+
+-- | The lighter pipeline the photography, sidecar and page compilers
+--   share: the source preprocessors, the reader, the AST filters (no
+--   citations, scores, visualizations or figure numbering) and the
+--   writer. Returns the raw source too, for the word count.
+filteredPage :: Compiler (String, Item String)
+filteredPage = do
+    body     <- getResourceBody
+    filePath <- getResourceFilePath
+    let src = itemBody body
+    pandocItem <- readPandocWith readerOpts (itemSetBody (preprocessSource src) body)
+    filtered   <- unsafeCompiler $
+        applyAll False (takeDirectory filePath) (itemBody pandocItem)
+    return (src, writePandocWith writerOpts (itemSetBody filtered pandocItem))

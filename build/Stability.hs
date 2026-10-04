@@ -237,19 +237,10 @@ stabilityField = field "stability" resolveStability
 -- Returns the formatted date of the most-recent commit, or @noResult@ when
 -- unavailable (making @$if(last-reviewed)$@ false in templates).
 lastReviewedField :: Context String
-lastReviewedField = field "last-reviewed" $ \item -> do
-    let srcPath = toFilePath (itemIdentifier item)
-    meta <- getMetadata (itemIdentifier item)
-    mDate <- unsafeCompiler $ do
-        ignored <- readIgnore
-        if srcPath `elem` ignored
-            -- Frontmatter convention is ISO; format it like the git
-            -- branch so pinned pages don't render a raw "2026-05-01".
-            then return $ isoToWriterly <$> lookupString "last-reviewed" meta
-            else fmap isoToWriterly . listToMaybe <$> effectiveDates srcPath meta
-    case mDate of
-        Nothing -> fail "no last-reviewed"
-        Just d  -> return d
+lastReviewedField = field "last-reviewed" $ \item ->
+    -- Formatted the same way for a pinned page, whose front-matter value
+    -- is ISO, so it doesn't render a raw "2026-05-01".
+    maybe (fail "no last-reviewed") (return . isoToWriterly) =<< lastReviewedIso item
 
 -- | Raw-ISO companion to @$last-reviewed$@ — for hover-popup
 -- @data-date-start@ attribute. Falls back to the frontmatter value for
@@ -258,17 +249,21 @@ lastReviewedField = field "last-reviewed" $ \item -> do
 -- 'effectiveDates' as @$last-reviewed$@, so the two cannot disagree (they
 -- did when a @history:@ date was newer than the last commit; audit H11).
 lastReviewedIsoField :: Context String
-lastReviewedIsoField = field "last-reviewed-iso" $ \item -> do
+lastReviewedIsoField = field "last-reviewed-iso" $ \item ->
+    maybe (fail "no last-reviewed ISO") return =<< lastReviewedIso item
+
+-- | The page's last-reviewed date, ISO: its front-matter @last-reviewed:@
+-- when the file is pinned in IGNORE.txt, else the newest 'effectiveDates'
+-- entry. Both fields read this, so they cannot disagree.
+lastReviewedIso :: Item a -> Compiler (Maybe String)
+lastReviewedIso item = do
     let srcPath = toFilePath (itemIdentifier item)
     meta <- getMetadata (itemIdentifier item)
-    mIso <- unsafeCompiler $ do
-        ignored <- readIgnore
-        if srcPath `elem` ignored
+    unsafeCompiler $ do
+        pinned <- (srcPath `elem`) <$> readIgnore
+        if pinned
             then return $ lookupString "last-reviewed" meta
             else listToMaybe <$> effectiveDates srcPath meta
-    case mIso of
-        Nothing -> fail "no last-reviewed ISO"
-        Just d  -> return d
 
 -- ---------------------------------------------------------------------------
 -- Version history
