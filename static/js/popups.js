@@ -138,9 +138,11 @@
 
         /* Source-file references — wrapped at build time by
            build/Filters/SourceRefs.hs around inline `path` and Forgejo
-           links. Bind before the generic external-link loop so the
-           idempotent guard in bind() prevents the Forgejo provider
-           from also claiming these. */
+           links. Bound before the generic external-link loop, whose
+           idempotent guard in bind() then leaves them alone. Other
+           git.levineuwirth.org links get no popup: the forge sits behind
+           Anubis, which refuses anonymous API requests, and Forgejo sends
+           no CORS headers in any case. */
         root.querySelectorAll('a.source-ref[data-source-path]').forEach(function (el) {
             bind(el, sourceContent);
         });
@@ -820,29 +822,6 @@
             parse: function (data) {
                 if (!data || !data.full_name) return null;
                 var stars = data.stargazers_count;
-                return {
-                    title:    data.full_name,
-                    abstract: data.description || '',
-                    stats:    [data.language,
-                               stars != null ? '\u2605\u00a0' + stars : null]
-                              .filter(Boolean).join(' \u00b7 ')
-                };
-            }
-        },
-
-        /* Forgejo (self-hosted git) — same shape as GitHub, but field
-           naming differs (`stars_count` vs `stargazers_count`). */
-        {
-            name: 'forgejo', label: 'Forgejo',
-            match: /git\.levineuwirth\.org\/([^/]+)\/([^/?#]+)/,
-            fetchType: 'json',
-            url: function (ctx) {
-                return 'https://git.levineuwirth.org/api/v1/repos/'
-                     + ctx.match[1] + '/' + ctx.match[2];
-            },
-            parse: function (data) {
-                if (!data || !data.full_name) return null;
-                var stars = data.stars_count;
                 return {
                     title:    data.full_name,
                     abstract: data.description || '',

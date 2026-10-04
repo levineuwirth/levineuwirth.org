@@ -189,10 +189,6 @@
     mask-image: url('/images/link-icons/github.svg');
     -webkit-mask-image: url('/images/link-icons/github.svg');
 }
-.popup-source[data-popup-source="forgejo"]::before {
-    mask-image: url('/images/link-icons/forgejo.svg');
-    -webkit-mask-image: url('/images/link-icons/forgejo.svg');
-}
 .popup-source[data-popup-source="youtube"]::before {
     mask-image: url('/images/link-icons/youtube.svg');
     -webkit-mask-image: url('/images/link-icons/youtube.svg');

@@ -603,7 +603,6 @@ markup needed.
 | DOI / CrossRef | Title, authors, journal, year, abstract |
 | GitHub code link (`blob` / `tree` / `commit`) | File contents, directory listing, or commit summary, from a build-time snapshot |
 | GitHub repository | Repo name, description, language, stars |
-| Forgejo (`git.levineuwirth.org`) | Repo name, description, language, stars |
 | Open Library | Book title, description |
 | bioRxiv / medRxiv | Title, authors, abstract |
 | YouTube | Video title, channel name (oEmbed) |
@@ -638,6 +637,11 @@ tracked in Git and the build does not commit it: after a build that adds,
 changes or removes snapshots, commit `code-refs/`, or `make deploy` refuses to
 publish. Unauthenticated, the GitHub API allows 60 requests an hour; export
 `GITHUB_TOKEN` in your shell to raise that.
+
+Links to `git.levineuwirth.org` show a popup only when they point at a file
+in this repository (a source-file preview served from this site). Other forge
+links have none: the forge is behind Anubis, which refuses anonymous API
+requests.
 
 Popups are disabled on touch-primary devices and inside nav/TOC/footer
 elements.
