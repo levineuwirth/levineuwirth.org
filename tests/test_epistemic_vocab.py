@@ -1,6 +1,6 @@
 """The search page's filters against the generator's epistemic vocabularies.
 
-`site epistemic-vocab` prints build/Marks.hs's lists. search-filters.js keeps
+`site shared-rules` prints build/Marks.hs's lists. search-filters.js keeps
 its own copy of the ordinal scales, and content/search.md numbers a button
 for each value: a filter by button index matches a page only while all three
 agree. The JS copy once lacked `local` and `low` (fixed 2026-10-04), so a
@@ -47,9 +47,9 @@ def ordinal_buttons() -> dict[str, list[tuple[int, str]]]:
 class EpistemicVocabularyTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        out = subprocess.run([str(_golden.site_binary()), "epistemic-vocab"],
+        out = subprocess.run([str(_golden.site_binary()), "shared-rules"],
                              capture_output=True, text=True, check=True)
-        cls.vocab = json.loads(out.stdout)
+        cls.vocab = json.loads(out.stdout)["epistemic-vocabulary"]
 
     def test_search_scales_are_the_generators(self) -> None:
         scales = js_scales()

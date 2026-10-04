@@ -167,7 +167,7 @@ parseIso = parseTimeM True defaultTimeLocale "%Y-%m-%d"
 
 -- | Every label 'stabilityFromDates' gives, least to most settled. The
 --   figure's tick count ("Marks"), the search filters and the epistemic
---   vocabulary (@site epistemic-vocab@) all read this order.
+--   vocabulary (@site shared-rules@) all read this order.
 stabilityLabels :: [String]
 stabilityLabels = ["volatile", "revising", "fairly stable", "stable", "established"]
 

@@ -17,20 +17,18 @@ import argparse
 import importlib.util
 import json
 import re
-import subprocess
 import sys
 from dataclasses import dataclass, field
 from datetime import date as date_type, datetime
-from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable
 
 import yaml
 
-ROOT = Path(__file__).resolve().parent.parent
-_spec = importlib.util.spec_from_file_location("unpublished", ROOT / "tools/unpublished.py")
-unpublished = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(unpublished)
+_spec = importlib.util.spec_from_file_location(
+    "shared_rules", Path(__file__).with_name("shared_rules.py"))
+shared_rules = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(shared_rules)
 
 # ---------------------------------------------------------------------------
 # Types
@@ -679,14 +677,12 @@ def generate_collection_index(
 FileEntry = tuple[Path, str, str]
 
 
-@lru_cache(maxsize=1)
-def reserved_section_dirs() -> frozenset[str]:
+def reserved_section_dirs() -> list[str]:
     """The content/ directories a page collection may not take, as the
-    generator defines them (build/Patterns.hs, `site reserved-sections`),
-    so the importer and the build cannot disagree about one."""
-    out = subprocess.check_output(
-        [unpublished.site_binary(), "reserved-sections"], text=True)
-    return frozenset(out.split())
+    generator defines them (build/Patterns.hs, through
+    tools/shared_rules.py), so the importer and the build cannot disagree
+    about one."""
+    return shared_rules.shared_rules()["reserved-sections"]
 
 
 def validate_collection_request(

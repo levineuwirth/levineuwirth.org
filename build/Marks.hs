@@ -304,7 +304,7 @@ peerStatusValues :: [String]
 peerStatusValues = ["unreviewed", "under-review", "peer-reviewed", "published", "retracted"]
 
 -- | The epistemic fields' vocabularies, least to most, as
---   @site epistemic-vocab@ prints them for the tools and tests that must
+--   @site shared-rules@ prints them for the tools and tests that must
 --   agree with the generator (audit-marks.py, search-filters.js, the
 --   filter buttons on /search.html). A copy of these lists in search-filters.js
 --   once lacked @local@ and @low@, and those pages matched no filter.

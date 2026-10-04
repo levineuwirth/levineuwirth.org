@@ -36,19 +36,16 @@ epistemic figures by design (see PHOTOGRAPHY.md).
 from __future__ import annotations
 
 import importlib.util
-import json
-import subprocess
 import sys
 from dataclasses import dataclass
-from functools import lru_cache
 from pathlib import Path
 
 import yaml
 
-ROOT = Path(__file__).resolve().parent.parent
-_spec = importlib.util.spec_from_file_location("unpublished", ROOT / "tools/unpublished.py")
-unpublished = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(unpublished)
+_spec = importlib.util.spec_from_file_location(
+    "shared_rules", Path(__file__).with_name("shared_rules.py"))
+shared_rules = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(shared_rules)
 CONTENT_ROOT = Path("content")
 
 # Sections that ship marks by design — these get a coverage line in
@@ -63,14 +60,11 @@ SKIPPED_DIRS = ("photography", "drafts", "tag-meta")
 
 
 # Epistemic-figure field vocabularies, from the generator itself
-# (``site epistemic-vocab`` prints build/Marks.hs's lists). The generator
-# silently drops any value not on them, so a hand copy here that drifted
-# would stop catching exactly the class of bug this audit was added for.
-@lru_cache(maxsize=1)
+# (build/Marks.hs, through tools/shared_rules.py). The generator silently
+# drops any value not on them, so a hand copy here that drifted would stop
+# catching exactly the class of bug this audit was added for.
 def enum_fields() -> dict[str, list[str]]:
-    vocab = subprocess.check_output(
-        [unpublished.site_binary(), "epistemic-vocab"], text=True)
-    return json.loads(vocab)
+    return shared_rules.shared_rules()["epistemic-vocabulary"]
 
 # Numeric axes, as (low, high) inclusive bounds. Same silent-drop
 # hazard: build/Marks.hs reads these with ``readMaybe``, so a

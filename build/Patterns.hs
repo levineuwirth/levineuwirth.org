@@ -140,7 +140,7 @@ pageCollectionPattern = published $
 -- | The directories under @content/@ that belong to a section or its
 -- sidecars, never to a generic page collection. tools/import-content.py
 -- refuses a page collection by one of these names, reading this list
--- through @site reserved-sections@; the two kept separate copies, and
+-- through @site shared-rules@; the two kept separate copies, and
 -- both lacked @bibliography-meta@, whose sidecars a page collection
 -- would also have compiled.
 reservedSectionDirs :: [String]

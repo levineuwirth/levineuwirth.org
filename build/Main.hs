@@ -47,18 +47,14 @@ writeBuildStamp = do
 -- (build/FooterData.hs); @site list-unpublished@ prints what a production
 -- build withholds for @draft: true@; @site bib-extras FILE@ prints what the
 -- .bib scanner (build/BibExtras.hs) reads from a file, one key per line;
--- @site epistemic-vocab@ prints the epistemic fields' vocabularies as JSON
--- (build/Marks.hs), for the tools and tests that must agree with them;
--- @site reserved-sections@ prints the content directories a page collection
--- may not take (build/Patterns.hs), one per line.
+-- @site shared-rules@ prints 'sharedRules' as JSON.
 main :: IO ()
 main = do
     args <- getArgs
     case args of
         ["render-fixture", path] -> renderFixture path
         ["list-unpublished"] -> scanUnpublished "content" >>= mapM_ putStrLn . unpublishedSummary
-        ["epistemic-vocab"] -> LBS.putStrLn (Aeson.encode (Map.fromList epistemicVocabulary))
-        ["reserved-sections"] -> mapM_ putStrLn reservedSectionDirs
+        ["shared-rules"] -> LBS.putStrLn (Aeson.encode sharedRules)
         ["bib-extras", path] -> do
             extras <- parseBibExtras path
             mapM_ (\(k, e) -> putStrLn (intercalate "\t"
@@ -73,3 +69,12 @@ main = do
             writeBuildStamp
             dev <- isDevBuild
             hakyllWith (siteConfigurationFor dev) (withoutUnpublished currentUnpublished rules)
+
+-- | The lists the Python tools and tests must agree with the generator on,
+--   read through @site shared-rules@ (tools/shared_rules.py) rather than
+--   copied: each list is defined once, in its module, because copies drifted.
+sharedRules :: Map.Map String Aeson.Value
+sharedRules = Map.fromList
+    [ ("epistemic-vocabulary", Aeson.toJSON (Map.fromList epistemicVocabulary))
+    , ("reserved-sections",    Aeson.toJSON reservedSectionDirs)
+    ]

@@ -76,7 +76,7 @@ class ImportContentTests(unittest.TestCase):
             {"content/source-one.md", "content/source-two.md"},
         )
 
-    # A page collection is checked against `site reserved-sections`.
+    # A page collection is checked against `site shared-rules`.
     @unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
     def test_collections_support_every_content_type(self) -> None:
         expected = {
