@@ -12,6 +12,7 @@ import Drafts                (currentUnpublished, scanUnpublished, unpublishedSu
 import BibExtras             (BibExtra (..), parseBibExtras)
 import ArchiveIndex          (normalizeUrl, trackingParams)
 import Marks                 (epistemicVocabulary)
+import PageScan              (pageLinks, publishedPages)
 import qualified Data.Text    as T
 import qualified Data.Text.IO as TIO
 import Patterns              (reservedSectionDirs)
@@ -19,6 +20,7 @@ import Contexts              (photoVariantWidths)
 import qualified Data.Aeson  as Aeson
 import qualified Data.ByteString.Lazy.Char8 as LBS
 import qualified Data.Map.Strict as Map
+import qualified Data.Set    as Set
 import Data.List             (intercalate)
 import Data.Maybe            (fromMaybe)
 import Utils                 (boolSpellings, isDevBuild, outputDirFor)
@@ -54,7 +56,9 @@ writeBuildStamp = do
 -- @site shared-rules@ prints 'sharedRules' as JSON; @site private-paths@
 -- echoes each path on stdin that the build refuses ('Site.refusedPath');
 -- @site normalize-url@ prints each URL on stdin as the archive matches it
--- ('ArchiveIndex.normalizeUrl'), for tools/archive.py's parity test.
+-- ('ArchiveIndex.normalizeUrl'), for tools/archive.py's parity test;
+-- @site list-links ROOT@ prints each distinct link target on the published
+-- pages under ROOT ("PageScan"), for tools/code-refs.py.
 main :: IO ()
 main = do
     args <- getArgs
@@ -64,6 +68,9 @@ main = do
         ["shared-rules"] -> LBS.putStrLn (Aeson.encode sharedRules)
         ["private-paths"] -> getContents >>= mapM_ putStrLn . filter refusedPath . lines
         ["normalize-url"] -> TIO.getContents >>= mapM_ (TIO.putStrLn . normalizeUrl) . T.lines
+        ["list-links", root] -> do
+            urls <- concat <$> (publishedPages root >>= mapM pageLinks)
+            mapM_ TIO.putStrLn (Set.toAscList (Set.fromList urls))
         ["bib-extras", path] -> do
             extras <- parseBibExtras path
             mapM_ (\(k, e) -> putStrLn (intercalate "\t"

@@ -69,6 +69,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 import urllib.error
 import urllib.parse
@@ -141,45 +142,20 @@ def parse_link(match: re.Match) -> dict | None:
     }
 
 
-# File names the build never publishes (build/Site.hs `neverPublish`), and
-# a front-matter `draft:` that is true (the values build/Drafts.hs accepts).
-PRIVATE_SUFFIXES = (
-    ".local.md", ".local.html", ".draft.md", ".key", ".pem", ".p12", ".pfx", ".env",
-    "~", ".swp", ".swo", ".pyc", ".pyo", ".tmp", ".part", ".partial", ".log",
-)
-PRIVATE_PREFIXES = ("id_rsa", "id_dsa", "id_ecdsa", "id_ed25519", "credentials")
-PRIVATE_NAMES = {"__pycache__", "checklist.md"}
-def publishable(md: Path, content_dir: Path, boundary=None) -> bool:
-    """Whether the site can publish this page: only those may give a link a
-    (public) snapshot."""
-    rel = md.relative_to(content_dir)
-    if rel.parts[0] == "drafts":
-        return False
-    # Hakyll applies its provider predicate to directory names as well as
-    # files. No link beneath a private directory may enter the public store.
-    if any(p.startswith((".", *PRIVATE_PREFIXES)) or p.endswith(PRIVATE_SUFFIXES)
-           or p in PRIVATE_NAMES or ".draft." in p for p in rel.parts):
-        return False
-    if boundary is None:
-        boundary = unpublished.load_boundary(content_dir)
-    return not unpublished.withheld(md, boundary)
-
-
 def discover_links(content_dir: Path | None = None) -> dict[str, dict]:
+    """The GitHub code links on the published pages, as the build reads
+    them (`site list-links`, build/PageScan.hs): the pages it publishes,
+    and only real links, so a URL in a code block or in prose is not
+    snapshotted for a tag that would never use it."""
     content_dir = content_dir or CONTENT_DIR
-    boundary = unpublished.load_boundary(content_dir)
+    targets = subprocess.check_output(
+        [unpublished.site_binary(), "list-links", str(content_dir.resolve())], text=True)
     links: dict[str, dict] = {}
-    for md in sorted(content_dir.rglob("*.md")):
-        if not publishable(md, content_dir, boundary):
-            continue
-        try:
-            text = md.read_text(encoding="utf-8")
-        except (OSError, UnicodeDecodeError):
-            continue
-        for m in URL_RE.finditer(text):
-            link = parse_link(m)
-            if link:
-                links.setdefault(link["url"], link)
+    for target in targets.splitlines():
+        m = URL_RE.match(target)
+        link = parse_link(m) if m else None
+        if link:
+            links.setdefault(link["url"], link)
     return links
 
 

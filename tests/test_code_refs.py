@@ -9,6 +9,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import shutil
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
@@ -70,6 +71,8 @@ class ParseLink(unittest.TestCase):
         self.assertIsNone(parse("https://github.com/o/r"))
 
 
+# Discovery asks the generator (`site list-links`, build/PageScan.hs).
+@unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
 class Discover(unittest.TestCase):
     def test_markdown_links_deduplicated(self):
         with tempfile.TemporaryDirectory() as d:
@@ -80,7 +83,22 @@ class Discover(unittest.TestCase):
             links = code_refs.discover_links(Path(d))
         self.assertEqual(list(links), [f"https://github.com/o/r/blob/{SHA}/f.py"])
 
+    def test_only_links_are_discovered(self):
+        # A URL in code or in prose is not a link, so no tag would use its
+        # snapshot; the old regex scan of the raw Markdown took both.
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "a.md").write_text(
+                f"[x](https://github.com/o/r/blob/{SHA}/link.py)\n\n"
+                f"`https://github.com/o/r/blob/{SHA}/inline.py`\n\n"
+                f"```\nhttps://github.com/o/r/blob/{SHA}/block.py\n```\n\n"
+                f"See https://github.com/o/r/blob/{SHA}/prose.py for more.\n"
+                f"<https://github.com/o/r/blob/{SHA}/autolink.py>\n"
+            )
+            found = {u.rsplit("/", 1)[-1] for u in code_refs.discover_links(Path(d))}
+        self.assertEqual(found, {"link.py", "autolink.py"})
 
+
+@unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
 class Eligibility(unittest.TestCase):
     """Everything under code-refs/ is published, so only links on pages the
     site publishes may be snapshotted (audit X1, T07)."""
@@ -140,11 +158,12 @@ class Eligibility(unittest.TestCase):
     def test_publication_name_lists_also_guard_code_ref_discovery(self):
         from tests.test_gitignore import samples
 
-        root = Path("/example/content")
-        for rule, name in samples():
-            with self.subTest(rule=rule):
-                self.assertFalse(code_refs.publishable(root / "essays" / name, root))
-                self.assertFalse(code_refs.publishable(root / "essays" / name / "index.md", root))
+        files = {"essays/public.md": self.link("public.py")}
+        for index, (_, name) in enumerate(samples()):
+            files[f"essays/{name}/index.md"] = self.link(f"dir{index}.py")
+            if name.endswith(".md"):
+                files[f"poetry/{name}"] = self.link(f"file{index}.py")
+        self.assertEqual(self.discover(files), {"public.py"})
 
 
 class Fetch(unittest.TestCase):

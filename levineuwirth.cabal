@@ -23,6 +23,7 @@ executable site
         Backlinks
         Dingbat
         Drafts
+        PageScan
         Sections
         SimilarLinks
         FooterData

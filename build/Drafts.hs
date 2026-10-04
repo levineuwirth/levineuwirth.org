@@ -42,6 +42,7 @@ module Drafts
     , unpublishedPattern
     , withoutUnpublished
     , unpublishedSummary
+    , markdownUnder
     ) where
 
 import           Control.Exception    (IOException, try)
@@ -155,6 +156,8 @@ norm fp = case normalise fp of
     '.' : '/' : rest -> rest
     other            -> other
 
+-- | Every Markdown file under @root@, sorted, outside dot-directories and
+-- @root/drafts/@.
 markdownUnder :: FilePath -> IO [FilePath]
 markdownUnder root = go root
   where
