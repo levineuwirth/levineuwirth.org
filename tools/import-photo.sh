@@ -157,6 +157,11 @@ if [ -z "$SERIES" ] && [ -e "$ENTRY_DIR" ]; then
     exit 1
 fi
 
+# The namespace guard (scaffold-photos.py --check), on the tags as they will
+# be written, before anything is copied.
+SERIES="$SERIES" TAGS="$EXTRA_TAGS" \
+    "$REPO_ROOT/.venv/bin/python" "$REPO_ROOT/tools/scaffold-photos.py" --check || exit 2
+
 mkdir -p "$ENTRY_DIR"
 
 # ---------------------------------------------------------------------------
@@ -263,11 +268,11 @@ echo "import-photo: generating responsive variants..."
 # public repository around that gate.
 # ---------------------------------------------------------------------------
 
-PLAN="$(mktemp)"
-trap 'rm -f -- "$PLAN"' EXIT
-printf '%s\t%s\t%s\t%s\n' "$INDEX_MD" "$TARGET" "$SLUG" "$TITLE" > "$PLAN"
+# The entry goes as arguments, not a plan row: a title may hold a tab or a
+# newline, which a tab-separated row would cut short or split.
 SERIES="$SERIES" TAGS="$EXTRA_TAGS" LOCATION="" \
-    "$REPO_ROOT/.venv/bin/python" "$REPO_ROOT/tools/scaffold-photos.py" "$PLAN" \
+    "$REPO_ROOT/.venv/bin/python" "$REPO_ROOT/tools/scaffold-photos.py" \
+        --entry "$INDEX_MD" "$TARGET" "$SLUG" "$TITLE" \
     || { echo "import-photo: could not write $INDEX_MD" >&2; exit 1; }
 
 GEO_PRESENT=""

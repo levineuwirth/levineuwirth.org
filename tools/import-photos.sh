@@ -75,25 +75,11 @@ done
 #
 # Cheaper to refuse here, where the offending tag is still on the command line.
 # ---------------------------------------------------------------------------
-collides=0
-for t in $(echo "$TAGS" | tr ',' ' '); do
-    t="$(echo "$t" | tr -d '[:space:]')"
-    [ -z "$t" ] && continue
-    bare="${t##*/}"
-    if [ -d "$REPO_ROOT/content/photography/$bare" ] && [ "$bare" != "$SERIES" ]; then
-        echo "import-photos: tag '$bare' collides with the series of the same name." >&2
-        echo "  Both would claim /photography/$bare/ and the build would refuse." >&2
-        echo "  Use a different tag, or rename the series." >&2
-        collides=1
-    fi
-done
-if [ -n "$SERIES" ] && grep -rqs "photography/$SERIES\b" "$REPO_ROOT/content/photography" \
-        --include='*.md' 2>/dev/null; then
-    echo "import-photos: series '$SERIES' collides with an existing tag of the same name." >&2
-    echo "  Both would claim /photography/$SERIES/ and the build would refuse." >&2
-    collides=1
-fi
-[ "$collides" -eq 0 ] || exit 2
+# The check is scaffold-photos.py --check, which judges the tags as they
+# will be written; a check here in the shell split "street art" into two
+# words that were never the tag written ("streetart").
+SERIES="$SERIES" TAGS="$TAGS" \
+    "$REPO_ROOT/.venv/bin/python" "$REPO_ROOT/tools/scaffold-photos.py" --check || exit 2
 
 # ---------------------------------------------------------------------------
 # Parse and validate the whole manifest before writing anything. A batch that
