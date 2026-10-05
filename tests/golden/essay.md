@@ -63,7 +63,8 @@ A heading with quotation marks, an abbreviation Typography wraps in
 
 ![A plate with a WebP companion and recorded dimensions.](plate.png){#fig-plate}
 
-An inline image ![a small square](plain.png) without a WebP companion.
+An inline image ![a small square](plain.png) without a WebP companion, and
+one with: ![the "plate" in 'quotes', e.g. this one](plate.png).
 
 A decorative one, ![](plain.png){.decorative}, and one in a picture, ![](plate.png){.decorative}.
 

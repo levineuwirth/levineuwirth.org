@@ -17,8 +17,8 @@ module Compilers
 
 import           Hakyll
 import           Text.Pandoc.Definition     (Pandoc (..), Block (..),
-                                             Inline (..), QuoteType (..), Citation (..),
-                                             Format (..), nullAttr, nullMeta)
+                                             Inline (..), Citation (..),
+                                             nullAttr, nullMeta)
 import           Text.Pandoc.Class          (runPure)
 import           Text.Pandoc.Walk           (walk, query)
 import           Text.Pandoc.Writers        (writeHtml5String)
@@ -28,7 +28,7 @@ import           Control.Monad              (forM_, void, when)
 import           Data.List                  (isInfixOf)
 import           Data.Maybe                 (fromMaybe)
 import           System.FilePath            (takeDirectory)
-import           Utils                      (wordCount, readingTime, escapeHtml, parseBool)
+import           Utils                      (wordCount, readingTime, escapeHtml, inlinesText, parseBool)
 import           PandocOptions              (poetryReaderOpts, readerOpts, writerOpts)
 import           Filters                    (applyAll, preprocessSource)
 import qualified Citations
@@ -44,39 +44,8 @@ import qualified Filters.Viz               as Viz
 -- (re-exported here), where the filters can reach them too.
 
 -- ---------------------------------------------------------------------------
--- Inline stringification (local, avoids depending on Text.Pandoc.Shared)
+-- Table of contents
 -- ---------------------------------------------------------------------------
-
--- | A heading as plain text: what toc.js shows as the current section's
---   label. Quotation marks stay (“consumed” is not consumed), math keeps
---   its source, and raw HTML keeps its text but not its tags: Typography
---   wraps "e.g." in an <abbr>, which used to reach the TOC escaped and
---   visible (audit H03).
-stringify :: [Inline] -> T.Text
-stringify = T.concat . map inlineToText
-  where
-    inlineToText (Str t)           = t
-    inlineToText Space             = " "
-    inlineToText SoftBreak         = " "
-    inlineToText LineBreak         = " "
-    inlineToText (Emph ils)        = stringify ils
-    inlineToText (Strong ils)      = stringify ils
-    inlineToText (Underline ils)   = stringify ils
-    inlineToText (Strikeout ils)   = stringify ils
-    inlineToText (Superscript ils) = stringify ils
-    inlineToText (Subscript ils)   = stringify ils
-    inlineToText (SmallCaps ils)   = stringify ils
-    inlineToText (Quoted DoubleQuote ils) = "\8220" <> stringify ils <> "\8221"
-    inlineToText (Quoted SingleQuote ils) = "\8216" <> stringify ils <> "\8217"
-    inlineToText (Cite _ ils)      = stringify ils
-    inlineToText (Code _ t)        = t
-    inlineToText (Math _ t)        = t
-    inlineToText (RawInline (Format "html") t) = T.pack (stripTags (T.unpack t))
-    inlineToText (RawInline _ _)   = ""
-    inlineToText (Link _ ils _)    = stringify ils
-    inlineToText (Image _ ils _)   = stringify ils
-    inlineToText (Note _)          = ""
-    inlineToText (Span _ ils)      = stringify ils
 
 -- | A heading's inlines as the body renders them, for its TOC entry: the
 --   site's writer, so quotation marks, math (typeset by KaTeX like the
@@ -84,7 +53,7 @@ stringify = T.concat . map inlineToText
 --   Notes go; a link becomes its text, an anchor cannot hold another; and
 --   a span loses its id, which the heading already has.
 tocHtml :: [Inline] -> String
-tocHtml ils = either (const (T.unpack (escapeText (stringify clean)))) (T.unpack . T.strip)
+tocHtml ils = either (const (T.unpack (escapeText (inlinesText clean)))) (T.unpack . T.strip)
     (runPure (writeHtml5String writerOpts (Pandoc nullMeta [Plain clean])))
   where
     clean = walk unlink (walk (filter (not . isNote)) ils)
@@ -106,7 +75,7 @@ collectHeadings (Pandoc _ blocks) = concatMap go blocks
   where
     go (Header lvl (ident, _, _) inlines)
         | lvl == 2 || lvl == 3
-        = [(lvl, ident, tocHtml inlines, T.unpack (stringify inlines))]
+        = [(lvl, ident, tocHtml inlines, T.unpack (inlinesText inlines))]
     go _ = []
 
 -- ---------------------------------------------------------------------------

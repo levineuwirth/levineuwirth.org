@@ -122,8 +122,8 @@ synthesizeFigure srcDir figAttr caption imgAttr alt target = do
     dims <- readDims srcDir (fst target)
     let pictureHtml = renderPicture imgAttr alt target True dims
         capInlines  = captionInlines caption
-        capText     = stringify capInlines
-        altText     = stringify alt
+        capText     = U.inlinesText capInlines
+        altText     = U.inlinesText alt
         useAriaHide = capText == altText && not (T.null altText)
     pure $ RawBlock (Format "html") $
         renderFigure figAttr pictureHtml (renderFigcaption capInlines useAriaHide)
@@ -338,13 +338,13 @@ captionInlines (Caption _ blocks) = concatMap go blocks
 --   Wrapping the inlines in a @Plain@ block (rather than @Para@)
 --   avoids the surrounding @<p>@ tag the writer would otherwise emit.
 --   On writer failure (extremely unlikely for inline-only input),
---   falls back to the plain-text 'stringify' rendering — a worse but
---   still safe figcaption.
+--   falls back to the escaped plain text — a worse but still safe
+--   figcaption.
 renderInlinesToHtml :: [Inline] -> Text
 renderInlinesToHtml ils =
     case Pandoc.runPure (Pandoc.writeHtml5String captionWriterOpts doc) of
         Right t -> T.strip t
-        Left  _ -> stringify ils
+        Left  _ -> esc (U.inlinesText ils)
   where
     doc = Pandoc mempty [Plain ils]
 
@@ -365,7 +365,7 @@ attrClasses [] = ""
 attrClasses cs = " class=\"" <> T.intercalate " " (map esc cs) <> "\""
 
 attrAlt :: [Inline] -> Text
-attrAlt ils = let t = stringify ils
+attrAlt ils = let t = U.inlinesText ils
               in  if T.null t then "" else " alt=\"" <> esc t <> "\""
 
 attrTitle :: Text -> Text
@@ -399,31 +399,6 @@ addAttr :: Text -> Text -> Attr -> Attr
 addAttr k v (i, cs, kvs)
     | any ((== k) . fst) kvs = (i, cs, kvs)
     | otherwise               = (i, cs, (k, v) : kvs)
-
--- | Plain-text content of a list of inlines (for alt text).
-stringify :: [Inline] -> Text
-stringify = T.concat . map go
-  where
-    go (Str t)            = t
-    go Space              = " "
-    go SoftBreak          = " "
-    go LineBreak          = " "
-    go (Emph ils)         = stringify ils
-    go (Strong ils)       = stringify ils
-    go (Strikeout ils)    = stringify ils
-    go (Superscript ils)  = stringify ils
-    go (Subscript ils)    = stringify ils
-    go (SmallCaps ils)    = stringify ils
-    go (Underline ils)    = stringify ils
-    go (Quoted _ ils)     = stringify ils
-    go (Cite _ ils)       = stringify ils
-    go (Code _ t)         = t
-    go (Math _ t)         = t
-    go (RawInline _ _)    = ""
-    go (Link _ ils _)     = stringify ils
-    go (Image _ ils _)    = stringify ils
-    go (Span _ ils)       = stringify ils
-    go (Note _)           = ""
 
 -- | HTML-escape a text value for use in attribute values.
 --   Defers to the canonical 'Utils.escapeHtmlText'.

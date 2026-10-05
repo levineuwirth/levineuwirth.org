@@ -13,6 +13,7 @@ module Utils
     , readingTime
     , escapeHtml
     , escapeHtmlText
+    , inlinesText
     , trim
     , splitOn
     , authorSlugify
@@ -62,8 +63,9 @@ import qualified Data.Yaml as Y
 import           Hakyll (Compiler, Context, Identifier, Item, Metadata, Routes, composeRoutes,
                          customRoute, fromFilePath, itemBody, load, loadAndApplyTemplate,
                          lookupString, lookupStringList, relativizeUrls, setExtension,
-                         toFilePath)
+                         stripTags, toFilePath)
 import           System.Environment (lookupEnv)
+import           Text.Pandoc.Definition (Format (..), Inline (..), QuoteType (..))
 import           Text.Printf (printf)
 import           Text.Read (readMaybe)
 
@@ -135,6 +137,37 @@ escapeHtmlText = T.concatMap escChar
     escChar '"'  = "&quot;"
     escChar '\'' = "&#39;"
     escChar c    = T.singleton c
+
+-- | Inlines as plain text, as a reader sees them: a heading's label in the
+--   TOC, an image's alt text. Quotation marks stay (“consumed” is not
+--   consumed), math keeps its source, and raw HTML keeps its text but not
+--   its tags: Typography wraps "e.g." in an <abbr>, which used to reach the
+--   TOC escaped and visible (audit H03) and dropped out of alt text.
+inlinesText :: [Inline] -> T.Text
+inlinesText = T.concat . map go
+  where
+    go (Str t)                     = t
+    go Space                       = " "
+    go SoftBreak                   = " "
+    go LineBreak                   = " "
+    go (Emph ils)                  = inlinesText ils
+    go (Strong ils)                = inlinesText ils
+    go (Underline ils)             = inlinesText ils
+    go (Strikeout ils)             = inlinesText ils
+    go (Superscript ils)           = inlinesText ils
+    go (Subscript ils)             = inlinesText ils
+    go (SmallCaps ils)             = inlinesText ils
+    go (Quoted DoubleQuote ils)    = "\8220" <> inlinesText ils <> "\8221"
+    go (Quoted SingleQuote ils)    = "\8216" <> inlinesText ils <> "\8217"
+    go (Cite _ ils)                = inlinesText ils
+    go (Code _ t)                  = t
+    go (Math _ t)                  = t
+    go (RawInline (Format "html") t) = T.pack (stripTags (T.unpack t))
+    go (RawInline _ _)             = ""
+    go (Link _ ils _)              = inlinesText ils
+    go (Image _ ils _)             = inlinesText ils
+    go (Note _)                    = ""
+    go (Span _ ils)                = inlinesText ils
 
 -- | Strip leading and trailing whitespace.
 trim :: String -> String
