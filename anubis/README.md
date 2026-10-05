@@ -145,7 +145,10 @@ briefly to copy its challenge state, then replaces it. It checks health,
 challenge/deny status, robots, invalid token/Bearer rejection, Git discovery,
 feeds and Google/Bing address matching. The container must remain running
 without restarting for two minutes and pass the checks again. There is a
-brief HTTPS interruption during replacement; SSH is unaffected.
+brief HTTPS interruption during replacement; SSH is unaffected. After a
+verified update it removes every other Anubis image except the rollback copy
+(`PRUNE=0` keeps them); old releases keep their version tags, so nothing else
+would.
 
 Failures restore both the previous image and its cold state copy, then verify
 the rollback. The signing key is never replaced. Failed images are held;

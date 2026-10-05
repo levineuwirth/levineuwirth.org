@@ -69,6 +69,7 @@ class Updater:
         self.interval = float(os.environ.get('CHECK_EVERY', '5'))
         self.wait = int(os.environ.get('WAIT', '60'))
         self.repo = os.environ.get('PROBE_REPO', '/neuwirth/levineuwirth.org')
+        self.prune_old = os.environ.get('PRUNE', '1') == '1'
         self.container = 'anubis'
 
     def command(self, *args, timeout=300):
@@ -161,6 +162,20 @@ class Updater:
             raise RuntimeError('could not resolve an unambiguous registry digest')
         return ref + '@' + digests[0].split('@')[1], image['Id']
 
+    def prune(self, keep):
+        """Drop every Anubis image but `keep` (the new one and the rollback
+        copy). Each release stays tagged with its version, so no dangling-
+        image prune ever removed one, and they accumulated. A removal that
+        fails (an image still in use) is logged, not fatal: the update has
+        already been applied and verified."""
+        listing = self.command('docker', 'image', 'ls', '--no-trunc', '--format', '{{.ID}}', REGISTRY)
+        for image_id in sorted(set(listing.split()) - set(keep)):
+            try:
+                self.command('docker', 'image', 'rm', image_id)
+                log('removed old image ' + image_id)
+            except subprocess.CalledProcessError as error:
+                log('could not remove old image ' + image_id + ': ' + (error.stderr or '').strip())
+
     def select(self, reference):
         atomic(self.override, {'services': {'anubis': {'image': reference}}})
 
@@ -239,6 +254,8 @@ class Updater:
         self.journal.unlink()
         self.hold.unlink(missing_ok=True)
         log('applied and stable: ' + candidate)
+        if self.prune_old:
+            self.prune({image_id, running})
 
 
 def hold_stack_lock(stream, wait):

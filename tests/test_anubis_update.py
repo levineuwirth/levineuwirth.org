@@ -27,6 +27,10 @@ class Fake(update.Updater):
         self.calls.append(args)
         if args[:3] == ('docker', 'image', 'inspect'):
             return json.dumps([{'Id': 'old'}])
+        if args[:3] == ('docker', 'image', 'ls'):
+            return 'new\nold\nolder\noldest\n'
+        if args[:3] == ('docker', 'image', 'rm') and args[3] == 'oldest' and self.mode == 'rm-fails':
+            raise update.subprocess.CalledProcessError(1, args, stderr='image is being used by a container')
         if args[0] == 'cp':
             return super().command(*args, **kw)
         return ''
@@ -91,6 +95,31 @@ class Recovery(unittest.TestCase):
         self.assertFalse(self.up.journal.exists())
         self.assertFalse(self.up.hold.exists())
         self.assertEqual((self.up.saved / 'anubis.bdb').read_text(), 'old cookies')
+
+    def removed(self, up=None):
+        return [c[3] for c in (up or self.up).calls if c[:3] == ('docker', 'image', 'rm')]
+
+    def test_success_removes_all_but_the_new_and_the_rollback_image(self):
+        self.up.run()
+        self.assertEqual(self.removed(), ['older', 'oldest'])
+
+    def test_a_failed_removal_is_logged_not_fatal(self):
+        self.up.mode = 'rm-fails'
+        self.up.run()
+        self.assertEqual(self.removed(), ['older', 'oldest'])
+        self.assertEqual(json.loads(self.up.override.read_text())['services']['anubis']['image'], NEW)
+
+    def test_nothing_is_removed_after_a_failed_update(self):
+        self.up.mode = 'bad'
+        with self.assertRaisesRegex(RuntimeError, 'bad candidate'):
+            self.up.run()
+        self.assertEqual(self.removed(), [])
+
+    def test_prune_off_keeps_every_image(self):
+        with patch.dict(os.environ, PRUNE='0'):
+            quiet = Fake()
+        quiet.run()
+        self.assertEqual(self.removed(quiet), [])
 
     def test_failed_candidate_restores_image_and_state_and_is_held(self):
         self.up.mode = 'bad'
