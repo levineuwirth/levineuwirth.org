@@ -43,6 +43,8 @@ PRUNE=${PRUNE:-1}                       # drop the now-dangling previous image a
 ATTENTION=${ATTENTION:-/var/lib/forgejo-update/needs-operator}
 EOL=${EOL:-2027-07-15}                  # end of the 15.0 LTS (forgejo.org release schedule)
 EOL_WARN_DAYS=${EOL_WARN_DAYS:-90}
+STACK_LOCK=${STACK_LOCK:-/run/lock/git-stack-update.lock}   # shared with anubis-update.py
+STACK_WAIT=${STACK_WAIT:-1800}          # seconds to wait for it before giving up
 log() { echo "forgejo-update: $*"; }
 
 version() { curl -s --max-time 5 "$API/api/v1/version" | sed -n 's/.*"version":"\([^"+]*\).*/\1/p' || true; }
@@ -108,6 +110,18 @@ done_ok() {   # done_ok <message>
 mkdir -p "$(dirname "$HOLD")"
 exec 9>"$(dirname "$HOLD")/lock"
 flock -n 9 || { log "another update is running"; exit 1; }
+
+# And one update of the git stack at a time, waiting for the other rather
+# than failing: anubis-update.py probes the forge through Anubis (Git
+# discovery, feeds, the API, crawler pages), so a forge being backed up
+# and recreated fails those probes and rolls back, and holds, a good
+# Anubis image. A slow run here (up to its hour) reaches 06:00.
+mkdir -p "$(dirname "$STACK_LOCK")"
+exec 7>"$STACK_LOCK"
+if ! flock -n 7; then
+    log "waiting for another update of the git stack (anubis-update) to finish"
+    flock -w "$STACK_WAIT" 7 || { log "the git stack was still being updated after ${STACK_WAIT}s; not starting"; exit 1; }
+fi
 
 if [ -f "$ATTENTION" ]; then
     log "a previous update needs the operator: $(cat "$ATTENTION")"

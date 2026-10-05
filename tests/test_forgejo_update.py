@@ -75,6 +75,7 @@ class ForgejoUpdateRecovery(unittest.TestCase):
         self.attention = self.root / "needs-operator"
         self.env = script_env(bin_dir, STUB_ROOT=str(self.root), DIR=str(self.root), BACKUP="true",
                         HOLD=str(self.hold), ATTENTION=str(self.attention),
+                        STACK_LOCK=str(self.root / "stack.lock"), STACK_WAIT="1",
                         WAIT="1", STABLE="2", CHECK_EVERY="1",
                         PRUNE="0", PULL="0", EOL="2099-07-15")
 
@@ -174,6 +175,30 @@ class ForgejoUpdateRecovery(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("another update is running", result.stdout)
         self.assertFalse((self.root / "applied").exists(), "the refused run touched the forge")
+
+    def test_it_waits_for_an_anubis_update_and_gives_up_after_the_bound(self):
+        # anubis-update.py probes the forge through Anubis; the two must not
+        # overlap. Held for longer than STACK_WAIT: refused, forge untouched.
+        import fcntl
+        with open(self.root / "stack.lock", "w") as held:
+            fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            result = self.run_update("success")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("waiting for another update of the git stack", result.stdout)
+        self.assertIn("still being updated after 1s", result.stdout)
+        self.assertFalse((self.root / "applied").exists(), "the refused run touched the forge")
+
+    def test_it_proceeds_once_the_anubis_update_finishes(self):
+        import fcntl
+        import threading
+        held = open(self.root / "stack.lock", "w")
+        fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        threading.Timer(1.5, held.close).start()
+        result = subprocess.run(["bash", str(SCRIPT)], timeout=120, capture_output=True, text=True,
+                                env=dict(self.env, STUB_MODE="success", STACK_WAIT="30"))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("waiting for another update of the git stack", result.stdout)
+        self.assertTrue((self.root / "applied").exists())
 
 
 if __name__ == "__main__":

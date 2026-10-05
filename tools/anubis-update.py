@@ -241,11 +241,37 @@ class Updater:
         log('applied and stable: ' + candidate)
 
 
+def hold_stack_lock(stream, wait):
+    """One update of the git stack at a time, shared with forgejo-update.sh
+    and waited for rather than failed: the probes go through Anubis to the
+    forge, so a forge being backed up and recreated fails them, and a good
+    image would be rolled back and held."""
+    deadline = time.monotonic() + wait
+    waiting = False
+    while True:
+        try:
+            fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return
+        except BlockingIOError:
+            if time.monotonic() >= deadline:
+                raise RuntimeError(f'the git stack was still being updated after {wait}s; not starting')
+            if not waiting:
+                log('waiting for another update of the git stack (forgejo-update) to finish')
+                waiting = True
+            time.sleep(min(5, max(0.0, deadline - time.monotonic())))
+
+
 def main():
     os.umask(0o077)
     updater = Updater()
-    with (updater.state / 'lock').open('w') as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    stack = Path(os.environ.get('STACK_LOCK', '/run/lock/git-stack-update.lock'))
+    stack.parent.mkdir(parents=True, exist_ok=True)
+    with (updater.state / 'lock').open('w') as lock, stack.open('w') as stack_lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise RuntimeError('another update is running') from None
+        hold_stack_lock(stack_lock, float(os.environ.get('STACK_WAIT', '1800')))
         def interrupted(signum, frame):
             raise RuntimeError('interrupted by signal ' + str(signum))
         signal.signal(signal.SIGTERM, interrupted)

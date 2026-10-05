@@ -1,8 +1,10 @@
 """Stateful failure rehearsals; no real Docker, services, or network."""
+import fcntl
 import json
 import os
 from pathlib import Path
 import tempfile
+import threading
 import unittest
 from unittest.mock import patch
 from tests._helpers import load_tool
@@ -162,6 +164,53 @@ class Recovery(unittest.TestCase):
                      {'tag_name': 'v1.28.0', 'draft': True}, {'tag_name': 'v1.28.0;echo bad'}, {}):
             with self.assertRaises(RuntimeError):
                 update.release_tag(data)
+
+
+
+class StackLock(unittest.TestCase):
+    """One update of the git stack at a time, shared with forgejo-update.sh:
+    the probes go through Anubis to the forge, so a forge being recreated
+    would fail them and a good image would be rolled back and held."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        self.stack = self.root / 'stack.lock'
+        env = patch.dict(os.environ, DIR=str(self.root), UPDATE_STATE=str(self.root / 'update'),
+                         STACK_LOCK=str(self.stack), STACK_WAIT='0.5')
+        env.start()
+        self.addCleanup(env.stop)
+        self.ran = []
+        run = patch.object(update.Updater, 'run', lambda _self: self.ran.append(True))
+        run.start()
+        self.addCleanup(run.stop)
+
+    def hold(self, path):
+        stream = open(path, 'w')
+        self.addCleanup(stream.close)
+        fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return stream
+
+    def test_gives_up_while_the_forge_is_being_updated(self):
+        self.hold(self.stack)
+        with self.assertRaisesRegex(RuntimeError, 'still being updated after 0.5s'):
+            update.main()
+        self.assertEqual(self.ran, [])
+
+    def test_proceeds_once_the_forge_update_finishes(self):
+        held = self.hold(self.stack)
+        threading.Timer(0.2, held.close).start()
+        with patch.dict(os.environ, STACK_WAIT='10'):
+            update.main()
+        self.assertEqual(self.ran, [True])
+
+    def test_a_second_anubis_run_is_refused_at_once(self):
+        (self.root / 'update').mkdir(mode=0o700)
+        self.hold(self.root / 'update' / 'lock')
+        with self.assertRaisesRegex(RuntimeError, 'another update is running'):
+            update.main()
+        self.assertEqual(self.ran, [])
 
 
 if __name__ == '__main__':

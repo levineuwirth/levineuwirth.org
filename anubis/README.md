@@ -135,6 +135,9 @@ health status. Docker reports an unhealthy state but does not automatically
 restart a process solely because its health check fails.
 
 The `anubis-update.timer` runs daily at 06:00 UTC plus up to 15 minutes.
+It shares a lock with `forgejo-update` (`/run/lock/git-stack-update.lock`)
+and waits up to 30 minutes for it: its checks pass through Anubis to the
+forge, so a forge being recreated would fail them and roll back a good image.
 It obtains the latest non-prerelease 1.x release from GitHub, pulls the official
 image and resolves its digest. It checks the running service, takes a config
 backup, saves the old image under `anubis-rollback:previous`, stops the filter
