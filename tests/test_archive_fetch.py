@@ -80,6 +80,14 @@ class Downloads(unittest.TestCase):
                 self.assertEqual(result, "skip")
                 self.assertFalse(dest.exists())
 
+    def test_a_failed_rename_is_a_skip_and_leaves_no_partial(self):
+        # The final rename once sat inside the download's error handling;
+        # moved out of it, a failure there raised and left the .part file.
+        with mock.patch.object(Path, "replace", side_effect=OSError("disk full")):
+            result, dest = self.fetch("/a.pdf")
+        self.assertEqual(result, "skip")
+        self.assertEqual(list(self.dir.iterdir()), [])
+
     def test_no_debris(self):
         for path in ("/a.pdf", "/missing.pdf", "/big.pdf", "/noarchive.pdf"):
             self.fetch(path)
@@ -129,6 +137,17 @@ class Refresh(unittest.TestCase):
         self.assertEqual(index["https://a.example/a.pdf"]["slug"], "a")
         self.assertIn("https://b.example/b.pdf", index)      # left as it was
         self.assertFalse((self.arch / "b" / "document.pdf").exists())
+
+    def test_refresh_drops_the_records_its_slug_had_under_an_old_url(self):
+        # The manifest's URL for `a` changed; the index still holds the
+        # record under the old one, whose aliases would keep resolving.
+        self.index.write_text(json.dumps({
+            "https://a.example/old.pdf": {"slug": "a", "aliases": ["http://a.example/old.pdf"]},
+            "https://b.example/b.pdf": {"slug": "b"},
+        }))
+        self.assertEqual(archive.cmd_refresh(["a"]), 0)
+        index = json.loads(self.index.read_text())
+        self.assertEqual(sorted(index), ["https://a.example/a.pdf", "https://b.example/b.pdf"])
 
     def test_a_failed_refresh_restores_the_index(self):
         before = self.index.read_text()

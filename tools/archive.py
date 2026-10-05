@@ -311,7 +311,12 @@ def fetch_pdf(url: str, dest: Path) -> str:
     tmp = dest.with_suffix(dest.suffix + ".part")
     result, _ = download(url, tmp)
     if result == "ok":
-        tmp.replace(dest)
+        try:
+            tmp.replace(dest)
+        except Exception as exc:                   # noqa: BLE001 — a local failure
+            tmp.unlink(missing_ok=True)
+            err(f"{url}: fetch failed — {exc}")
+            return "skip"
     return result
 
 
@@ -1108,6 +1113,11 @@ def cmd_refresh(argv: list[str]) -> int:
         if record is not None:
             index = (json.loads(INDEX_OUT.read_text(encoding="utf-8"))
                      if INDEX_OUT.exists() else {})
+            # Drop every record this slug had first: after a change of the
+            # manifest URL its old record is keyed by the old URL, and its
+            # aliases would go on resolving to the slug. Other entries stay.
+            index = {u: r for u, r in index.items()
+                     if not (isinstance(r, dict) and r.get("slug") == slug)}
             index[entry["url"]] = record
             atomic_write_json(INDEX_OUT, index)
 
