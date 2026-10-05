@@ -26,27 +26,18 @@ from __future__ import annotations
 import io
 import sys
 from pathlib import Path
-from typing import Any
 
-import yaml
 from PIL import Image
 from colorthief import ColorThief
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import photo_naming  # noqa: E402
-import sitelib  # noqa: E402
+import photo_sidecars  # noqa: E402
 
 REPO_ROOT = Path(__file__).parent.parent
 CONTENT_DIR = REPO_ROOT / "content" / "photography"
 TOOL = "extract-palette"
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png"}
-
-# Responsive delivery variants written by tools/generate-thumbnails.py
-# (photo.w480.jpg / photo.w960.jpg / photo.w1440.jpg). They are pixel
-# reductions of a source that already has its own sidecar, and nothing
-# reads a sidecar for a srcset candidate — so extracting for them would
-# add ~1100 files of churn here for no consumer.
 
 # Number of swatches in the rendered strip. Five matches the design in
 # PHOTOGRAPHY.md and the existing `photo-palette` CSS, which sets
@@ -62,23 +53,6 @@ QUALITY = 10
 
 def _hex(rgb: tuple[int, int, int]) -> str:
     return "#{:02x}{:02x}{:02x}".format(*rgb)
-
-
-def _sidecar_path(image: Path) -> Path:
-    return image.with_suffix(image.suffix + ".palette.yaml")
-
-
-def _is_stale(image: Path, sidecar: Path) -> bool:
-    if not sidecar.exists():
-        return True
-    return image.stat().st_mtime > sidecar.stat().st_mtime
-
-
-def _atomic_write_yaml(path: Path, data: dict[str, Any]) -> None:
-    # Not durable: sidecars are regenerated from the photo on the next
-    # build, so a lost rename costs one re-extraction, not data.
-    with sitelib.atomic_path(path, durable=False) as tmp, tmp.open("w", encoding="utf-8") as f:
-        yaml.safe_dump(data, f, sort_keys=False, allow_unicode=True)
 
 
 # Longest edge, in pixels, that the palette is computed from.
@@ -117,27 +91,6 @@ def _extract_palette(image: Path) -> list[str]:
     return [_hex(rgb) for rgb in palette[:N_SWATCHES]]
 
 
-def _candidates(argv: list[str]) -> list[Path]:
-    """Images to consider: the ones named, or the whole section.
-
-    `make build` calls this with no arguments and wants the full walk.
-    import-photo.sh names the single file it just wrote, which keeps a bulk
-    import linear instead of quadratic.
-    """
-    if argv:
-        out = []
-        for a in argv:
-            p = Path(a)
-            if not p.is_absolute():
-                p = REPO_ROOT / p
-            if p.exists():
-                out.append(p)
-            else:
-                print(f"{TOOL}: no such file: {p}", file=sys.stderr)
-        return out
-    return sorted(CONTENT_DIR.rglob("*"))
-
-
 def main() -> int:
     if not CONTENT_DIR.exists():
         print(
@@ -145,38 +98,12 @@ def main() -> int:
             file=sys.stderr,
         )
         return 0
-
-    written = 0
-    skipped = 0
-    failed = 0
-
-    for image in _candidates(sys.argv[1:]):
-        if image.suffix.lower() not in IMAGE_EXTS:
-            continue
-        if image.name.startswith(".") or image.name.endswith(".tmp"):
-            continue
-        if photo_naming.is_variant(image):
-            continue
-
-        sidecar = _sidecar_path(image)
-        if not _is_stale(image, sidecar):
-            skipped += 1
-            continue
-
-        try:
-            palette = _extract_palette(image)
-        except Exception as e:  # noqa: BLE001 — keep walking
-            import traceback
-            print(f"extract-palette: {image}: {e}", file=sys.stderr)
-            traceback.print_exc(file=sys.stderr)
-            failed += 1
-            continue
-
-        _atomic_write_yaml(sidecar, {"palette": palette})
-        written += 1
-
+    counts = photo_sidecars.run(
+        TOOL, ".palette.yaml", lambda image: {"palette": _extract_palette(image)},
+        roots=[CONTENT_DIR], image_exts=IMAGE_EXTS, argv=sys.argv[1:])
     print(
-        f"extract-palette: {written} written, {skipped} skipped, {failed} failed",
+        f"extract-palette: {counts['written']} written, {counts['skipped']} skipped, "
+        f"{counts['failed']} failed",
         file=sys.stderr,
     )
     return 0

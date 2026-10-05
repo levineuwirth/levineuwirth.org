@@ -33,13 +33,10 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Any
 
-import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import photo_naming  # noqa: E402
-import sitelib  # noqa: E402
+import photo_sidecars  # noqa: E402
 
 REPO_ROOT = Path(__file__).parent.parent
 
@@ -54,36 +51,6 @@ WALK_ROOTS = [
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif"}
 
-# Responsive delivery variants written by tools/generate-thumbnails.py:
-# photo.jpg -> photo.w480.jpg / photo.w960.jpg / photo.w1440.jpg.
-#
-# They get no sidecar. The <img> that carries width / height attributes
-# always points at the SOURCE (the variants ride in its srcset, where the
-# browser derives their geometry from the `w` descriptor and the source's
-# aspect ratio), so a variant sidecar would never be read — while costing
-# three extra YAML files per photograph, i.e. ~1100 files of pure churn
-# on this corpus.
-
-
-def _sidecar_path(image: Path) -> Path:
-    return image.with_suffix(image.suffix + ".dims.yaml")
-
-
-def _is_stale(image: Path, sidecar: Path) -> bool:
-    if not sidecar.exists():
-        return True
-    return image.stat().st_mtime > sidecar.stat().st_mtime
-
-
-def _atomic_write_yaml(path: Path, data: dict[str, Any]) -> None:
-    # Not durable: sidecars are regenerated from the photo on the next
-    # build, so a lost rename costs one re-extraction, not data.
-    with sitelib.atomic_path(path, durable=False) as tmp, tmp.open("w", encoding="utf-8") as f:
-        # Preserve a stable key order (width before height) so a manual
-        # diff stays easy to read across regenerations.
-        ordered = {k: data[k] for k in ("width", "height") if k in data}
-        yaml.safe_dump(ordered, f, sort_keys=False, allow_unicode=True)
-
 
 def _read_dimensions(image: Path) -> dict[str, int]:
     from PIL import Image
@@ -93,53 +60,18 @@ def _read_dimensions(image: Path) -> dict[str, int]:
         return {"width": int(width), "height": int(height)}
 
 
-def _walk_one_root(root: Path, counters: dict[str, int]) -> None:
-    if not root.exists():
-        return
-    for image in sorted(root.rglob("*")):
-        if image.suffix.lower() not in IMAGE_EXTS:
-            continue
-        # Skip dotfiles, tmp files, and the .webp companions produced
-        # by tools/convert-images.sh (their extension is .webp so they
-        # already wouldn't match IMAGE_EXTS, but be explicit).
-        if image.name.startswith(".") or image.name.endswith(".tmp"):
-            continue
-        # Responsive variants are derived from a source that has its own
-        # sidecar; see above.
-        if photo_naming.is_variant(image):
-            counters["variants"] += 1
-            continue
-
-        sidecar = _sidecar_path(image)
-        if not _is_stale(image, sidecar):
-            counters["skipped"] += 1
-            continue
-
-        try:
-            data = _read_dimensions(image)
-        except Exception as e:  # noqa: BLE001 — keep walking
-            import traceback
-            print(f"extract-dimensions: {image}: {e}", file=sys.stderr)
-            traceback.print_exc(file=sys.stderr)
-            counters["failed"] += 1
-            continue
-
-        _atomic_write_yaml(sidecar, data)
-        counters["written"] += 1
-
-
 def main() -> int:
-    counters = {"written": 0, "skipped": 0, "failed": 0, "variants": 0}
-
-    for root in WALK_ROOTS:
-        _walk_one_root(root, counters)
-
+    counts = photo_sidecars.run(
+        "extract-dimensions", ".dims.yaml", _read_dimensions,
+        roots=WALK_ROOTS, image_exts=IMAGE_EXTS, argv=[],
+        # Width before height, so a diff reads the same way every time.
+        keys=("width", "height"))
     print(
         "extract-dimensions: "
-        f"{counters['written']} written, "
-        f"{counters['skipped']} skipped, "
-        f"{counters['variants']} responsive variants ignored, "
-        f"{counters['failed']} failed",
+        f"{counts['written']} written, "
+        f"{counts['skipped']} skipped, "
+        f"{counts['variants']} responsive variants ignored, "
+        f"{counts['failed']} failed",
         file=sys.stderr,
     )
     return 0

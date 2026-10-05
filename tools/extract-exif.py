@@ -44,23 +44,15 @@ from fractions import Fraction
 from pathlib import Path
 from typing import Any
 
-import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import photo_naming  # noqa: E402
-import sitelib  # noqa: E402
+import photo_sidecars  # noqa: E402
 
 REPO_ROOT = Path(__file__).parent.parent
 CONTENT_DIR = REPO_ROOT / "content" / "photography"
 TOOL = "extract-exif"
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png"}
-
-# Responsive delivery variants written by tools/generate-thumbnails.py
-# (photo.w480.jpg / photo.w960.jpg / photo.w1440.jpg). They are pixel
-# reductions of a source that already has its own sidecar, and nothing
-# reads a sidecar for a srcset candidate — so extracting for them would
-# add ~1100 files of churn here for no consumer.
 
 # ---------------------------------------------------------------------------
 # Field normalisation
@@ -452,27 +444,8 @@ def _read_exif_via_pillow(image: Path) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# Walk + write
+# Walk + write (tools/photo_sidecars.py)
 # ---------------------------------------------------------------------------
-
-
-def _sidecar_path(image: Path) -> Path:
-    return image.with_suffix(image.suffix + ".exif.yaml")
-
-
-def _is_stale(image: Path, sidecar: Path) -> bool:
-    if not sidecar.exists():
-        return True
-    return image.stat().st_mtime > sidecar.stat().st_mtime
-
-
-def _atomic_write_yaml(path: Path, data: dict[str, Any]) -> None:
-    # Not durable: sidecars are regenerated from the photo on the next
-    # build, so a lost rename costs one re-extraction, not data.
-    with sitelib.atomic_path(path, durable=False) as tmp, tmp.open("w", encoding="utf-8") as f:
-        # Preserve the SIDECAR_KEYS order so a manual diff is easy to read.
-        ordered = {k: data[k] for k in SIDECAR_KEYS if k in data}
-        yaml.safe_dump(ordered, f, sort_keys=False, allow_unicode=True)
 
 
 def _read_one(image: Path) -> dict[str, Any]:
@@ -481,27 +454,6 @@ def _read_one(image: Path) -> dict[str, Any]:
         if data:
             return data
     return _read_exif_via_pillow(image)
-
-
-def _candidates(argv: list[str]) -> list[Path]:
-    """Images to consider: the ones named, or the whole section.
-
-    `make build` calls this with no arguments and wants the full walk.
-    import-photo.sh names the single file it just wrote, which keeps a bulk
-    import linear instead of quadratic.
-    """
-    if argv:
-        out = []
-        for a in argv:
-            p = Path(a)
-            if not p.is_absolute():
-                p = REPO_ROOT / p
-            if p.exists():
-                out.append(p)
-            else:
-                print(f"{TOOL}: no such file: {p}", file=sys.stderr)
-        return out
-    return sorted(CONTENT_DIR.rglob("*"))
 
 
 def main() -> int:
@@ -516,51 +468,17 @@ def main() -> int:
         file=sys.stderr,
     )
 
-    written = 0
-    skipped = 0
-    failed = 0
-
-    candidates = [
-        i for i in _candidates(sys.argv[1:])
-        if i.suffix.lower() in IMAGE_EXTS
-        and not i.name.startswith(".")
-        and not i.name.endswith(".tmp")
-        and not photo_naming.is_variant(i)
-    ]
-    if using_exiftool:
-        prefetch_exiftool([i for i in candidates if _is_stale(i, _sidecar_path(i))])
-
-    for image in candidates:
-        if image.suffix.lower() not in IMAGE_EXTS:
-            continue
-        # Skip the WebP companions (extension wouldn't match anyway, but
-        # be explicit) and any tmp / hidden files.
-        if image.name.startswith(".") or image.name.endswith(".tmp"):
-            continue
-
-        sidecar = _sidecar_path(image)
-        if not _is_stale(image, sidecar):
-            skipped += 1
-            continue
-
-        try:
-            data = _read_one(image)
-        except Exception as e:  # noqa: BLE001 — keep walking
-            import traceback
-            print(f"extract-exif: {image}: {e}", file=sys.stderr)
-            traceback.print_exc(file=sys.stderr)
-            failed += 1
-            continue
-
-        # Always write a sidecar — even if it's empty — so the consumer
-        # doesn't need to branch on existence. An empty sidecar is the
-        # explicit signal that "we tried; nothing to extract" (typical
-        # for film scans).
-        _atomic_write_yaml(sidecar, data)
-        written += 1
-
+    # A sidecar is written even when it is empty, so the consumer need not
+    # branch on existence: an empty one says "we tried; nothing to
+    # extract" (typical for film scans). Keys in SIDECAR_KEYS order, so a
+    # diff reads the same way every time.
+    counts = photo_sidecars.run(
+        TOOL, ".exif.yaml", _read_one,
+        roots=[CONTENT_DIR], image_exts=IMAGE_EXTS, argv=sys.argv[1:],
+        keys=SIDECAR_KEYS, prefetch=prefetch_exiftool if using_exiftool else None)
     print(
-        f"extract-exif: {written} written, {skipped} skipped, {failed} failed",
+        f"extract-exif: {counts['written']} written, {counts['skipped']} skipped, "
+        f"{counts['failed']} failed",
         file=sys.stderr,
     )
     return 0

@@ -88,11 +88,32 @@ class PaletteTests(unittest.TestCase):
         self.assertEqual(palette._hex((255, 0, 16)), "#ff0010")
         img = self.tmp / "a.jpg"
         Image.new("RGB", (8, 8)).save(img)
-        side = palette._sidecar_path(img)
+        sidecars = palette.photo_sidecars
+        side = sidecars.sidecar_path(img, ".palette.yaml")
         self.assertEqual(side.name, "a.jpg.palette.yaml")
-        self.assertTrue(palette._is_stale(img, side))
-        palette._atomic_write_yaml(side, {"palette": ["#000000"]})
-        self.assertFalse(palette._is_stale(img, side))
+        self.assertTrue(sidecars.is_stale(img, side))
+        sidecars.write_yaml(side, {"palette": ["#000000"]})
+        self.assertFalse(sidecars.is_stale(img, side))
+
+    def test_run_writes_stale_sidecars_and_skips_the_rest(self):
+        sidecars = palette.photo_sidecars
+        for name in ("a.jpg", "a.w480.jpg", ".hidden.jpg", "b.png"):
+            Image.new("RGB", (8, 8)).save(self.tmp / name, format="PNG" if name.endswith("png") else "JPEG")
+        (self.tmp / "notes.txt").write_text("x")
+        calls = []
+        def read(image):
+            calls.append(image.name)
+            if image.name == "b.png":
+                raise ValueError("unreadable")
+            return {"z": 1, "a": 2}
+        counts = sidecars.run("test", ".t.yaml", read, roots=[self.tmp],
+                              image_exts={".jpg", ".png"}, argv=[], keys=("a", "z"))
+        self.assertEqual(counts, {"written": 1, "skipped": 0, "failed": 1, "variants": 1})
+        self.assertEqual(sorted(calls), ["a.jpg", "b.png"])
+        self.assertEqual((self.tmp / "a.jpg.t.yaml").read_text(), "a: 2\nz: 1\n")
+        again = sidecars.run("test", ".t.yaml", read, roots=[self.tmp],
+                             image_exts={".jpg", ".png"}, argv=[])
+        self.assertEqual(again["skipped"], 1)
 
 
 if __name__ == "__main__":
