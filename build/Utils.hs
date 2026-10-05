@@ -330,10 +330,12 @@ pdfViewerUrl path = "/pdfjs/web/viewer.html?file=" ++ encodeQueryValue path
 
 -- | Percent-encode the characters that would break a query-string value.
 -- Slashes are left alone, so a root-relative path stays readable and
--- PDF.js's own fetch resolves it.
+-- PDF.js's own fetch resolves it. Percent signs must be encoded too:
+-- decoding the viewer's @file=@ parameter must preserve the original path.
 encodeQueryValue :: String -> String
 encodeQueryValue = concatMap enc
   where
+    enc '%' = "%25"
     enc ' ' = "%20"
     enc '&' = "%26"
     enc '?' = "%3F"
