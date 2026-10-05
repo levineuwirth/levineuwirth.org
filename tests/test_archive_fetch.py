@@ -83,10 +83,12 @@ class Downloads(unittest.TestCase):
     def test_a_failed_rename_is_a_skip_and_leaves_no_partial(self):
         # The final rename once sat inside the download's error handling;
         # moved out of it, a failure there raised and left the .part file.
+        (self.dir / "document.pdf").write_bytes(b"previous")
         with mock.patch.object(Path, "replace", side_effect=OSError("disk full")):
             result, dest = self.fetch("/a.pdf")
         self.assertEqual(result, "skip")
-        self.assertEqual(list(self.dir.iterdir()), [])
+        self.assertEqual(dest.read_bytes(), b"previous")
+        self.assertEqual(list(self.dir.iterdir()), [dest])
 
     def test_no_debris(self):
         for path in ("/a.pdf", "/missing.pdf", "/big.pdf", "/noarchive.pdf"):
@@ -139,15 +141,20 @@ class Refresh(unittest.TestCase):
         self.assertFalse((self.arch / "b" / "document.pdf").exists())
 
     def test_refresh_drops_the_records_its_slug_had_under_an_old_url(self):
-        # The manifest's URL for `a` changed; the index still holds the
-        # record under the old one, whose aliases would keep resolving.
+        # The manifest's URL for `a` lost a tracking parameter and an
+        # alias. The old record normalizes like the new URL, so the build's
+        # manifest filter keeps it, and the dropped alias would go on
+        # resolving to `a` unless the refresh removes it.
         self.index.write_text(json.dumps({
-            "https://a.example/old.pdf": {"slug": "a", "aliases": ["http://a.example/old.pdf"]},
+            "https://a.example/a.pdf?utm_source=old": {
+                "slug": "a", "aliases": ["https://doi.org/10.1/dropped"]},
             "https://b.example/b.pdf": {"slug": "b"},
         }))
         self.assertEqual(archive.cmd_refresh(["a"]), 0)
         index = json.loads(self.index.read_text())
         self.assertEqual(sorted(index), ["https://a.example/a.pdf", "https://b.example/b.pdf"])
+        self.assertNotIn("https://doi.org/10.1/dropped",
+                         [a for r in index.values() for a in r.get("aliases", [])])
 
     def test_a_failed_refresh_restores_the_index(self):
         before = self.index.read_text()
