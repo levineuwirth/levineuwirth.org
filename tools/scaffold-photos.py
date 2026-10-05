@@ -23,47 +23,17 @@ commit exact positions to a public repository and route around it.
 
 from __future__ import annotations
 
-import json
 import os
-import re
 import sys
 from pathlib import Path
 
-import yaml
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import front_matter  # noqa: E402
+import photo_sidecars  # noqa: E402
 
 REPO_ROOT = Path(__file__).parent.parent
 TODAY = __import__("datetime").date.today().isoformat()
-
-# Order matters: this is the order they appear in the file.
-EXIF_KEYS_BASE = ["captured", "camera", "lens", "focal-length"]
-
-
-def render(key: str, value) -> str:
-    if isinstance(value, bool):
-        return f"{key}: {'true' if value else 'false'}"
-    if isinstance(value, (int, float)):
-        return f"{key}: {value}"
-    text = str(value)
-    if key == "captured" and re.fullmatch(r"\d{4}-\d{2}-\d{2}", text):
-        return f"{key}: {text}"
-    # A JSON string is a valid YAML double-quoted scalar: quotes and
-    # backslashes in a title, location or lens name are escaped, not fatal.
-    return f"{key}: {json.dumps(text, ensure_ascii=False)}"
-
-
-def exif_lines(sidecar: Path) -> list[str]:
-    if not sidecar.exists():
-        return []
-    try:
-        data = yaml.safe_load(sidecar.read_text()) or {}
-    except Exception:
-        return []
-    keys = list(EXIF_KEYS_BASE)
-    # extract-exif composes `exposure` only when shutter, aperture and ISO are
-    # all present; prefer it, and fall back to whichever parts were readable.
-    keys += ["exposure"] if data.get("exposure") else ["shutter", "aperture", "iso"]
-    return [render(k, data[k]) for k in keys if data.get(k) not in (None, "")]
-
 
 def build_tags(extra: str) -> list[str]:
     tags = ["photography"]
@@ -75,12 +45,6 @@ def build_tags(extra: str) -> list[str]:
         # matching import-photo.sh. A slash is the escape hatch.
         tags.append(t if ("/" in t or t == "photography") else f"photography/{t}")
     return list(dict.fromkeys(tags))
-
-
-def tags_line(tags: list[str]) -> str:
-    """`tags:` as a flow list of JSON strings: "travel: denmark" stays one
-    tag instead of breaking the front matter."""
-    return "tags: [" + ", ".join(json.dumps(t, ensure_ascii=False) for t in tags) + "]"
 
 
 def title_from_slug(slug: str) -> str:
@@ -110,19 +74,19 @@ def main() -> int:
 
         body = [
             "---",
-            render("title", title or title_from_slug(slug)),
+            front_matter.field("title", title or title_from_slug(slug)),
             f"date: {TODAY}",
             # No abstract: individual photographs don't carry one — the
             # caption is the title, and only the series landing has prose.
-            tags_line(tags),
+            front_matter.tags_field(tags),
             f"photo: {photo.name}",
         ]
         if series:
-            body.append(render("series", series))
+            body.append(front_matter.field("series", series))
         body.append(f"orientation: {orientation}")
-        body += exif_lines(Path(str(photo) + ".exif.yaml"))
+        body += photo_sidecars.exif_front_matter(Path(str(photo) + ".exif.yaml"))
         if location:
-            body.append(render("location", location))
+            body.append(front_matter.field("location", location))
         body += [
             '# license: "CC BY-SA 4.0"   # uncomment + set; canonical URL auto-resolves',
             "# The camera fields above were read from EXIF at import and written",

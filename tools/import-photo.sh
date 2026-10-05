@@ -292,42 +292,14 @@ fi
 # author, at the precision the author chooses.
 # ---------------------------------------------------------------------------
 
-EXIF_FRONTMATTER="$( cd "$REPO_ROOT" && .venv/bin/python - "$EXIF_SIDECAR" <<'PY' 2>/dev/null || true
-import json, re, sys, pathlib
-
-try:
-    import yaml
-except ImportError:
-    sys.exit(0)
-
-path = pathlib.Path(sys.argv[1])
-if not path.exists():
-    sys.exit(0)
-
-data = yaml.safe_load(path.read_text()) or {}
-
-keys = ["captured", "camera", "lens", "focal-length"]
-# extract-exif.py composes `exposure` only when shutter, aperture and ISO
-# are all present. Prefer it when it exists; otherwise fall back to whichever
-# components were readable. Emitting both would say the same thing twice.
-keys += ["exposure"] if data.get("exposure") else ["shutter", "aperture", "iso"]
-
-def render(key, value):
-    if isinstance(value, bool):
-        return f"{key}: {'true' if value else 'false'}"
-    if isinstance(value, (int, float)):
-        return f"{key}: {value}"
-    text = str(value)
-    if key == "captured" and re.fullmatch(r"\d{4}-\d{2}-\d{2}", text):
-        return f"{key}: {text}"
-    # A JSON string is a valid YAML double-quoted scalar: quotes and
-    # backslashes in a lens name or title are escaped, not fatal.
-    return f"{key}: {json.dumps(text, ensure_ascii=False)}"
-
-for key in keys:
-    value = data.get(key)
-    if value not in (None, ""):
-        print(render(key, value))
+# The lines come from tools/photo_sidecars.py, which scaffold-photos.py
+# uses too, so a single import and a bulk scaffold write the same fields.
+EXIF_FRONTMATTER="$( cd "$REPO_ROOT" && .venv/bin/python - "$EXIF_SIDECAR" <<'PY' || true
+import sys
+from pathlib import Path
+sys.path.insert(0, "tools")
+import photo_sidecars
+print("\n".join(photo_sidecars.exif_front_matter(Path(sys.argv[1]))))
 PY
 )"
 

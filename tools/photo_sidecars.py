@@ -20,6 +20,7 @@ from typing import Any
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import front_matter  # noqa: E402
 import photo_naming  # noqa: E402
 import sitelib  # noqa: E402
 
@@ -102,3 +103,30 @@ def run(tool: str, suffix: str, read: Callable[[Path], dict[str, Any]], *,
         write_yaml(sidecar, data, keys)
         counts["written"] += 1
     return counts
+
+
+# The EXIF fields a photograph's front matter carries, in file order. The
+# sidecar is gitignored and the front matter is tracked, so the importers
+# copy these across once, where they stay editable.
+EXIF_FRONT_MATTER_KEYS = ["captured", "camera", "lens", "focal-length"]
+
+
+def exif_front_matter(sidecar: Path) -> list[str]:
+    """The front-matter lines for a photograph's EXIF sidecar, for
+    scaffold-photos.py and import-photo.sh. `geo` is deliberately not among
+    them: the sidecar holds full-precision coordinates, and Hakyll rounds
+    them at render time, which is the privacy gate."""
+    if not sidecar.exists():
+        return []
+    try:
+        data = yaml.safe_load(sidecar.read_text()) or {}
+    except (OSError, yaml.YAMLError) as e:
+        print(f"photo_sidecars: {sidecar}: unreadable, no camera fields copied: {e}",
+              file=sys.stderr)
+        return []
+    keys = list(EXIF_FRONT_MATTER_KEYS)
+    # extract-exif composes `exposure` only when shutter, aperture and ISO are
+    # all present; prefer it, and fall back to whichever parts were readable.
+    # Emitting both would say the same thing twice.
+    keys += ["exposure"] if data.get("exposure") else ["shutter", "aperture", "iso"]
+    return [front_matter.field(k, data[k]) for k in keys if data.get(k) not in (None, "")]

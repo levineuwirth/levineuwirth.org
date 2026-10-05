@@ -57,6 +57,14 @@ class SlugTests(unittest.TestCase):
                     "https://example.com/" + "word-" * 30, "https://例え.テスト/記事"):
             self.assertRegex(archive.derive_slug(url), archive.SLUG_RE)
 
+    def test_a_manifest_that_is_not_yaml_is_named(self):
+        with tempfile.TemporaryDirectory() as d:
+            manifest = Path(d) / "manifest.yaml"
+            manifest.write_text("- url: [unclosed\n")
+            with self.assertRaises(SystemExit), mock.patch.object(archive, "err") as err:
+                archive.load_yaml_list(manifest)
+        self.assertIn("manifest.yaml: not valid YAML", err.call_args[0][0])
+
     def test_aliases_must_be_http_urls(self):
         self.assertEqual(archive.entry_aliases({"url": "u", "aliases": ["https://doi.org/1"]}),
                          ["https://doi.org/1"])

@@ -24,13 +24,13 @@ The --title-prefix controls per-poem title generation:
 """
 
 import argparse
-import json
 import re
 import sys
 from pathlib import Path
 from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from front_matter import scalar, tags_field  # noqa: E402
 from sitelib import slugify  # noqa: E402
 
 REPO_ROOT   = Path(__file__).parent.parent
@@ -174,18 +174,6 @@ def first_content_line(lines: list[str]) -> str:
     return ""
 
 # ---------------------------------------------------------------------------
-# YAML helpers
-# ---------------------------------------------------------------------------
-
-def yaml_str(s: str) -> str:
-    """A YAML scalar for any string: always a double-quoted JSON string.
-
-    Quoting only "when needed" missed the plain scalars YAML reads as
-    something else (true, null, 2026-10-04, - x), so a poem titled "True"
-    came back a boolean. A JSON string is valid YAML and means one thing."""
-    return json.dumps(s, ensure_ascii=False)
-
-# ---------------------------------------------------------------------------
 # File generation
 # ---------------------------------------------------------------------------
 
@@ -203,19 +191,18 @@ def make_poem_file(
     slug      = slugify(title)
     norm      = normalize_stanzas(poem["lines"])
     abstract  = first_content_line(norm)
-    tag_yaml  = "[" + ", ".join(tags) + "]"
     col_url   = f"/poetry/{collection_slug}/"
 
     fm = f"""\
 ---
-title: {yaml_str(title)}
+title: {scalar(title)}
 number: {poem['number']}
-poet: {yaml_str(poet)}
-collection: {yaml_str(collection)}
+poet: {scalar(poet)}
+collection: {scalar(collection)}
 collection-url: {col_url}
 date: {date}
-tags: {tag_yaml}
-abstract: {yaml_str(abstract)}
+{tags_field(tags)}
+abstract: {scalar(abstract)}
 ---
 
 """
@@ -231,7 +218,6 @@ def make_collection_index(
     title_prefix:    str,
     poems:           list[dict],
 ) -> str:
-    tag_yaml   = "[" + ", ".join(tags) + "]"
     count      = len(poems)
     abstract   = f"{count} poem{'s' if count != 1 else ''}"
 
@@ -242,11 +228,11 @@ def make_collection_index(
 
     return f"""\
 ---
-title: {yaml_str(collection)}
-poet: {yaml_str(poet)}
+title: {scalar(collection)}
+poet: {scalar(poet)}
 date: {date}
-tags: {tag_yaml}
-abstract: {yaml_str(abstract)}
+{tags_field(tags)}
+abstract: {scalar(abstract)}
 ---
 
 *{poet}* · {date}

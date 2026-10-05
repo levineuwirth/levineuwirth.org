@@ -1,6 +1,8 @@
 """tools/scaffold-photos.py and tools/extract-palette.py (audit T14)."""
 
+import contextlib
 import importlib.util
+import io
 import shutil
 import tempfile
 import unittest
@@ -19,6 +21,7 @@ def load(name, file):
 try:
     import yaml
     scaffold = load("scaffold_photos", "scaffold-photos.py")
+    fm = scaffold.front_matter
 except ImportError:
     scaffold = None
 
@@ -34,12 +37,15 @@ class ScaffoldTests(unittest.TestCase):
     def test_rendered_values_parse_back_unchanged(self):
         for value in ('Nikon "Z" 6', "back\\slash", "a: b", "København", "#hash", "2024-07-11"):
             with self.subTest(value=value):
-                self.assertEqual(yaml.safe_load(scaffold.render("title", value)), {"title": value})
+                self.assertEqual(yaml.safe_load(fm.field("title", value)), {"title": value})
 
     def test_numbers_booleans_and_dates_stay_unquoted(self):
-        self.assertEqual(scaffold.render("iso", 400), "iso: 400")
-        self.assertEqual(scaffold.render("draft", False), "draft: false")
-        self.assertEqual(scaffold.render("captured", "2024-07-11"), "captured: 2024-07-11")
+        self.assertEqual(fm.field("iso", 400), "iso: 400")
+        self.assertEqual(fm.field("draft", False), "draft: false")
+        self.assertEqual(fm.field("captured", "2024-07-11"), "captured: 2024-07-11")
+        self.assertEqual(fm.field("date", "2024-07-11"), "date: 2024-07-11")
+        # Only under a date key: a title that looks like a date is a string.
+        self.assertEqual(fm.field("title", "2024-07-11"), 'title: "2024-07-11"')
 
     def test_tags_are_filed_under_photography(self):
         self.assertEqual(scaffold.build_tags("travel, denmark/copenhagen, ,travel"),
@@ -48,7 +54,7 @@ class ScaffoldTests(unittest.TestCase):
 
     def test_tags_line_parses_back_whatever_the_tags_hold(self):
         tags = scaffold.build_tags("travel: denmark, «Nyhavn», [x]")
-        self.assertEqual(yaml.safe_load(scaffold.tags_line(tags)), {"tags": tags})
+        self.assertEqual(yaml.safe_load(fm.tags_field(tags)), {"tags": tags})
 
     def test_title_from_slug(self):
         self.assertEqual(scaffold.title_from_slug("from-the-belt-bridge"), "From The Belt Bridge")
@@ -60,11 +66,18 @@ class ScaffoldTests(unittest.TestCase):
         side.write_text(yaml.safe_dump({"captured": "2024-07-11", "camera": "X100V", "lens": "",
                                         "shutter": "1/125", "aperture": "f/8", "iso": 400,
                                         "exposure": "1/125 f/8 ISO 400"}))
-        self.assertEqual(scaffold.exif_lines(side),
+        self.assertEqual(scaffold.photo_sidecars.exif_front_matter(side),
                          ["captured: 2024-07-11", 'camera: "X100V"', 'exposure: "1/125 f/8 ISO 400"'])
         side.write_text(yaml.safe_dump({"shutter": "1/60", "iso": 800}))
-        self.assertEqual(scaffold.exif_lines(side), ['shutter: "1/60"', "iso: 800"])
-        self.assertEqual(scaffold.exif_lines(tmp / "missing.yaml"), [])
+        self.assertEqual(scaffold.photo_sidecars.exif_front_matter(side), ['shutter: "1/60"', "iso: 800"])
+        self.assertEqual(scaffold.photo_sidecars.exif_front_matter(tmp / "missing.yaml"), [])
+        # A broken sidecar copies nothing, but says so instead of failing
+        # silently.
+        side.write_text("camera: [unclosed\n")
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.assertEqual(scaffold.photo_sidecars.exif_front_matter(side), [])
+        self.assertIn("unreadable", err.getvalue())
 
 
 @unittest.skipIf(palette is None, "Pillow or colorthief not installed")

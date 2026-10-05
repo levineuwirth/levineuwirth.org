@@ -135,7 +135,12 @@ def load_yaml_list(path: Path) -> list[dict]:
     absent file yields an empty list."""
     if not path.exists():
         return []
-    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    try:
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as exc:
+        # Named, like the shape errors below, rather than a traceback.
+        err(f"{path.name}: not valid YAML: {exc}")
+        sys.exit(1)
     if data is None:
         return []
     if not isinstance(data, list):

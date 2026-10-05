@@ -11,6 +11,7 @@ fence is allowed, as build/Drafts.hs allows it.
 
 from __future__ import annotations
 
+import json
 import re
 
 import yaml
@@ -39,3 +40,40 @@ def load(text: str) -> dict:
         return {}
     data = yaml.safe_load(parts[0])
     return data if isinstance(data, dict) else {}
+
+
+# ---------------------------------------------------------------------------
+# Writing: the importers and scaffolders build front matter line by line
+# ---------------------------------------------------------------------------
+
+_ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+# Keys whose ISO date is written bare, as the site's front matter has them.
+DATE_KEYS = ("date", "captured")
+
+
+def scalar(value) -> str:
+    """A YAML scalar for one value. Booleans and numbers stay bare; anything
+    else becomes a JSON string, which YAML reads as a double-quoted scalar
+    and as nothing else. Quoting only "when needed" missed the plain
+    scalars YAML reads as something else (true, null, 2026-10-04, - x), so
+    a poem titled "True" came back a boolean, and a quote or backslash in a
+    title or lens name broke the file."""
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        return str(value)
+    return json.dumps(str(value), ensure_ascii=False)
+
+
+def field(key: str, value) -> str:
+    """`key: value`, with an ISO date under a date key left bare."""
+    if key in DATE_KEYS and isinstance(value, str) and _ISO_DATE.fullmatch(value):
+        return f"{key}: {value}"
+    return f"{key}: {scalar(value)}"
+
+
+def tags_field(tags: list[str]) -> str:
+    """`tags:` as a flow list of JSON strings: "travel: denmark" stays one
+    tag instead of breaking the front matter."""
+    return "tags: [" + ", ".join(scalar(t) for t in tags) + "]"
