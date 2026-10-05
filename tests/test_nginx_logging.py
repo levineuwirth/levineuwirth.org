@@ -83,6 +83,8 @@ class NginxLogging(unittest.TestCase):
         (cls.tmp / 'site/index.html').write_text('home\n')
         (cls.tmp / 'site/404.html').write_text('custom missing page\n')
         (cls.tmp / 'site/fast.css').write_text('body {}\n')
+        (cls.tmp / 'site/archive/kept').mkdir(parents=True)
+        (cls.tmp / 'site/archive/kept/index.html').write_text('snapshot\n')
         (cls.tmp / 'site/fonts').mkdir()
         (cls.tmp / 'site/fonts/fast.woff2').write_text('font\n')
         site = cls.tmp / 'sites-enabled/levineuwirth.conf'
@@ -121,6 +123,40 @@ class NginxLogging(unittest.TestCase):
         if r.returncode not in (0, 52):
             self.fail(r.stderr)
         return r.stdout
+
+    def headers(self, path, host='levineuwirth.org'):
+        r = subprocess.run(['docker', 'exec', self.container, 'curl', '-sk', '-o', '/dev/null',
+                            '-D', '-', '--resolve', f'{host}:8443:127.0.0.1',
+                            f'https://{host}:8443{path}'],
+                           text=True, capture_output=True, timeout=15)
+        lines = r.stdout.strip().splitlines()
+        out = {}
+        for line in lines[1:]:
+            k, _, v = line.partition(':')
+            out.setdefault(k.strip().lower(), []).append(v.strip())
+        return lines[0].split()[1], out
+
+    def test_pages_are_revalidated_and_keep_the_security_headers(self):
+        # HTML had no Cache-Control, so browsers reused a page under its old
+        # headers for a heuristic while; the location that now sets one must
+        # still send the baseline it would otherwise drop.
+        # A missing archive page is redirected to /404.html too, so it gets
+        # the site's headers, not the archive's.
+        for path, status, framing in (('/', '200', 'DENY'), ('/does-not-exist', '404', 'DENY'),
+                                      ('/archive/missing/', '404', 'DENY'),
+                                      ('/archive/kept/', '200', 'SAMEORIGIN')):
+            with self.subTest(path=path):
+                code, h = self.headers(path)
+                self.assertEqual(code, status)
+                self.assertEqual(h.get('cache-control'), ['no-cache'])
+                self.assertEqual(len(h.get('content-security-policy-report-only', [])), 2)
+                self.assertIn('strict-transport-security', h)
+                self.assertEqual(h.get('x-frame-options'), [framing])
+        code, h = self.headers('/archive/kept/')
+        self.assertEqual(h.get('x-robots-tag'), ['noindex, noarchive'])
+        code, h = self.headers('/fast.css')
+        self.assertEqual(h.get('cache-control'), ['public, max-age=3600, must-revalidate'])
+        self.assertEqual(len(h.get('content-security-policy-report-only', [])), 2)
 
     def records(self, file):
         # USR1 flushes buffered logs, just as rotation does.

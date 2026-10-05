@@ -70,6 +70,9 @@ From anywhere:
 curl -s -o /dev/null -w '%{http_code} %{size_download}\n' https://levineuwirth.org/x-missing   # 404 and ~10 KB: the site's page
 curl -s -o /dev/null -w '%{http_code}\n' https://levineuwirth.org/404.html                     # 404
 curl -s -o /dev/null -w '%{http_code}\n' https://levineuwirth.org/about                        # 200
+curl -sI https://levineuwirth.org/ https://levineuwirth.org/x-missing https://levineuwirth.org/archive/ \
+  | grep -ci '^cache-control: no-cache'                                                          # 3: pages revalidate
+curl -sI https://levineuwirth.org/ | grep -ci '^content-security-policy-report-only'            # 2: the baseline survives
 curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' https://levineuwirth.org/essays/proof-broker   # 301 …/proof-broker/
 curl -s --http2 -o /dev/null -w '%{http_version}\n' https://levineuwirth.org/ https://git.levineuwirth.org/   # 2, 2
 curl -sI https://git.levineuwirth.org/ | grep -i 'strict-transport\|nosniff\|referrer\|^server'

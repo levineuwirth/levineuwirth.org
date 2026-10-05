@@ -1053,23 +1053,39 @@ ssh root@<vps> cat /var/log/nginx/csp-report.log \
   | sort | uniq -c | sort -rn | head -30
 ```
 
-Already known on 2026-10-01, from the browser pass: Wikipedia popup
-images now come from `https://thumb.wikimedia.org`, which `img-src` does
-not allow (it names `upload.wikimedia.org`). Two things about that pass
-worth keeping:
+The `thumb.wikimedia.org` gap found on 2026-10-01 was closed on
+2026-10-02; both Report-Only policies allow it. Two things about that
+first pass worth keeping:
 
 * **A hardened browser reports nothing.** LibreWolf showed the
   `[Report Only]` warnings in its console and sent no report; a stock
   Firefox profile sent the same one at once. Do the pass in a stock
   browser, or read the blocked URIs off the console.
-* **Hard-reload first.** The HTML has no `Cache-Control`, so browsers
-  reuse a page under its old headers for a heuristic while (about a tenth
-  of its age). Until `location /` sends `Cache-Control: no-cache`,
-  enforcement also reaches returning visitors only as their copies expire.
+* **Hard-reload first.** Until 2026-10-05 the HTML had no
+  `Cache-Control`, so browsers reused a page under its old headers for a
+  heuristic while: a tenth of the age its `Last-Modified` gave it, days
+  for a page untouched for months. `location /`, `/404.html` and
+  `/archive/` now send `Cache-Control: no-cache` (nginx/README.md,
+  "Checking"). Install that well before enforcing: copies fetched before
+  it still expire on the old heuristic.
 
-Ignore reports whose `source-file` is a browser extension
-(`moz-extension:`, `chrome-extension:`). Allow anything else the site
-really uses, in the repo's `security-headers.conf` first. Then swap the
-commented enforcing line for the Report-Only line (its comment block
-explains why it adds `worker-src 'self' blob:`), deploy, and repeat § 9.4's
-browser pass. Record the date here.
+Reports to expect, none of them the site's own:
+
+* **Extensions:** `source-file` is `moz-extension:` or `chrome-extension:`.
+* **transformers.js:** `blocked-uri` `eval` from
+  `cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2`, line 34, on
+  `/search.html`: a feature probe it survives, two per semantic search,
+  one per policy.
+* **Automation:** `source-file` `debugger eval code` (Playwright in
+  Firefox) or an anonymous eval at line 4 (its helper in Chromium). Every
+  route enforced in a stock Chromium and Firefox reports nothing else.
+
+Explain any other `eval` report before enforcing, a source-less one
+included; group them by user agent and position, not by path.
+
+Allow anything else the site really uses, in the repo's
+`security-headers.conf` first. Then swap the commented enforcing line
+for the first Report-Only line only; the second, narrower one stays
+Report-Only until its own promotion (the file's "Promotion" block). The
+enforcing line is the first policy plus `upgrade-insecure-requests`.
+Deploy, repeat § 9.4's browser pass, and record the date here.
