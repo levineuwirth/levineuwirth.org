@@ -135,15 +135,11 @@ fi
 if [ -n "$SERIES" ]; then
     ENTRY_DIR="$REPO_ROOT/content/photography/$SERIES"
     TARGET="$ENTRY_DIR/$SLUG.jpg"
-    PHOTO_FIELD="$SLUG.jpg"
     INDEX_MD="$ENTRY_DIR/$SLUG.md"
-    SERIES_LANDING="$ENTRY_DIR/index.md"
 else
     ENTRY_DIR="$REPO_ROOT/content/photography/$SLUG"
     TARGET="$ENTRY_DIR/photo.jpg"
-    PHOTO_FIELD="photo.jpg"
     INDEX_MD="$ENTRY_DIR/index.md"
-    SERIES_LANDING=""
 fi
 
 EXIF_SIDECAR="$TARGET.exif.yaml"
@@ -248,145 +244,42 @@ echo "import-photo: generating responsive variants..."
     || echo "import-photo: variant generation failed (make build will retry)" >&2
 
 # ---------------------------------------------------------------------------
-# Step 5: scaffold index.md
-# ---------------------------------------------------------------------------
-
-if [ -z "$TITLE" ]; then
-    TITLE="$(echo "$SLUG" | tr '-' ' ' | awk '{
-        for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2);
-        print
-    }')"
-fi
-
-TODAY="$(date -u +%Y-%m-%d)"
-
-# Probe the resized file's pixel dimensions so we can suggest an
-# orientation; the author can override in frontmatter.
-DIMS="$(magick identify -format '%w %h' "$TARGET")"
-WIDTH="${DIMS%% *}"
-HEIGHT="${DIMS##* }"
-
-if [ "$WIDTH" -gt "$HEIGHT" ]; then
-    ORIENTATION="landscape"
-elif [ "$HEIGHT" -gt "$WIDTH" ]; then
-    ORIENTATION="portrait"
-else
-    ORIENTATION="square"
-fi
-
-# ---------------------------------------------------------------------------
-# Carry the extracted metadata into the frontmatter.
+# Step 5: scaffold index.md (and the series landing, the first time)
 #
-# The sidecar is gitignored and is regenerated from the delivered JPEG —
-# which this script has just stripped. So on any other machine, and on the
-# VPS, regeneration yields width and height and nothing else: camera, lens,
-# and exposure would never survive a clone. Frontmatter is tracked, is what
-# PHOTOGRAPHY.md already calls the authoritative layer ("author-written
-# values always win"), and is editable afterwards. It is the durable home.
+# tools/scaffold-photos.py writes it, from a one-row plan, exactly as a bulk
+# import (tools/import-photos.sh) does: the title (from the slug when
+# --title is absent), today's date, the tags (--tags filed beneath
+# photography/ unless they contain a slash: the series says which trip a
+# frame belongs to, the tags what it is of), the photo, the orientation,
+# and the camera fields from the EXIF sidecar.
 #
-# `geo` is deliberately NOT carried across. The sidecar holds coordinates at
-# full precision on purpose, and Hakyll applies the geo-precision rounding at
-# render time — that is the privacy gate. Writing coordinates into
-# frontmatter would commit exact positions to a public repository and route
-# around the gate entirely. Adding `geo:` stays a deliberate act by the
-# author, at the precision the author chooses.
+# Those camera fields are carried into the frontmatter because the sidecar
+# is gitignored and is regenerated from the delivered JPEG, which this
+# script has just stripped: on any other machine regeneration yields width
+# and height and nothing else. Frontmatter is tracked and authoritative
+# (PHOTOGRAPHY.md). `geo` is deliberately NOT carried across: the sidecar
+# holds coordinates at full precision, Hakyll rounds them at render time,
+# and writing them into frontmatter would commit exact positions to a
+# public repository around that gate.
 # ---------------------------------------------------------------------------
 
-# The lines come from tools/photo_sidecars.py, which scaffold-photos.py
-# uses too, so a single import and a bulk scaffold write the same fields.
-EXIF_FRONTMATTER="$( cd "$REPO_ROOT" && .venv/bin/python - "$EXIF_SIDECAR" <<'PY' || true
-import sys
-from pathlib import Path
-sys.path.insert(0, "tools")
-import photo_sidecars
-print("\n".join(photo_sidecars.exif_front_matter(Path(sys.argv[1]))))
-PY
-)"
+PLAN="$(mktemp)"
+trap 'rm -f -- "$PLAN"' EXIT
+printf '%s\t%s\t%s\t%s\n' "$INDEX_MD" "$TARGET" "$SLUG" "$TITLE" > "$PLAN"
+SERIES="$SERIES" TAGS="$EXTRA_TAGS" LOCATION="" \
+    "$REPO_ROOT/.venv/bin/python" "$REPO_ROOT/tools/scaffold-photos.py" "$PLAN" \
+    || { echo "import-photo: could not write $INDEX_MD" >&2; exit 1; }
 
 GEO_PRESENT=""
 if [ -f "$EXIF_SIDECAR" ] && grep -q '^geo:' "$EXIF_SIDECAR" 2>/dev/null; then
     GEO_PRESENT="yes"
 fi
-
-# Tags. `photography` is always present. Anything passed via --tags that is
-# not already hierarchical is filed beneath it, so `--tags architecture,germany`
-# becomes photography/architecture and photography/germany. A tag containing a
-# slash is taken verbatim, which is the escape hatch for anything that should
-# not live under photography/.
-#
-# These cut ACROSS series on purpose: the series says which trip a frame
-# belongs to, the tags say what it is of, and the two indexes answer different
-# questions. A frame can be in germany-2026 and still turn up under
-# photography/architecture next to something shot years earlier.
-TAGS="photography"
-if [ -n "$EXTRA_TAGS" ]; then
-    IFS=',' read -ra _raw <<< "$EXTRA_TAGS"
-    for t in "${_raw[@]}"; do
-        t="$(echo "$t" | tr -d '[:space:]')"
-        [ -z "$t" ] && continue
-        case "$t" in
-            */*|photography) TAGS="$TAGS, $t" ;;
-            *)               TAGS="$TAGS, photography/$t" ;;
-        esac
-    done
-fi
-
-SERIES_FIELD=""
-if [ -n "$SERIES" ]; then
-    SERIES_FIELD="series: $SERIES"
-fi
-
-# Quoted as a JSON string (valid YAML), so a title containing " or \ still parses.
-TITLE_YAML="$(python3 -c 'import json, sys; print(json.dumps(sys.argv[1], ensure_ascii=False))' "$TITLE")"
-
-cat > "$INDEX_MD" <<EOF
----
-title: $TITLE_YAML
-date: $TODAY
-tags: [$TAGS]
-photo: $PHOTO_FIELD
-$SERIES_FIELD
-orientation: $ORIENTATION
-$EXIF_FRONTMATTER
-# license: "CC BY-SA 4.0"   # uncomment + set; canonical URL auto-resolves
-# location: ""              # human-readable, e.g. "Reykjavík, Iceland"
-# The camera fields above were read from the file's EXIF at import and
-# written here because frontmatter is tracked and the sidecar is not. Edit
-# freely — these values are authoritative from now on.
-#
-# geo: [00.000, 00.000]     # add deliberately; pair with geo-precision
-# geo-precision: city       # exact | km | city | hidden  (default: city)
----
-
-EOF
-chmod 644 "$INDEX_MD"
-
-# A series needs a landing page. Create one the first time a photograph is
-# filed under a new series slug; leave an existing landing untouched so
-# repeated imports only ever add frames.
-if [ -n "$SERIES_LANDING" ] && [ ! -f "$SERIES_LANDING" ]; then
-    SERIES_TITLE="$(echo "$SERIES" | tr '-' ' ' | awk '{
-        for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2);
-        print
-    }')"
-    cat > "$SERIES_LANDING" <<EOF
----
-title: "$SERIES_TITLE"
-date: $TODAY
-abstract: >
-  TODO — what this series is, in a sentence or two.
-tags: [photography]
----
-
-EOF
-    chmod 644 "$SERIES_LANDING"
-    echo "import-photo: created series landing $SERIES_LANDING"
-fi
+DIMS="$(magick identify -format '%w × %h' "$TARGET")"
 
 echo
 echo "import-photo: done."
 echo "  Entry:   $INDEX_MD"
-echo "  Photo:   $TARGET ($WIDTH × $HEIGHT, $ORIENTATION)"
+echo "  Photo:   $TARGET ($DIMS)"
 echo "  Sidecars: $(basename "$EXIF_SIDECAR"), $(basename "$PALETTE_SIDECAR")"
 echo
 if [ -n "$GEO_PRESENT" ]; then

@@ -2,15 +2,16 @@
 """
 scaffold-photos.py — write every entry of a batch import in one process.
 
-Called by tools/import-photos.sh with a tab-separated plan:
+Called by tools/import-photos.sh, and by tools/import-photo.sh with a
+one-row plan, with a tab-separated plan:
 
     md_path <TAB> target_jpg <TAB> slug <TAB> title
 
-and reads SERIES, TAGS and LOCATION from the environment.
-
-This exists because the single-file importer spent a Python interpreter
-start per photograph just to turn one sidecar into one block of frontmatter.
-At batch sizes that is most of the runtime and none of the work.
+and reads SERIES, TAGS and LOCATION from the environment. It also writes the
+series landing the first time a photograph is filed under a new series. A
+batch takes one Python start rather than one per photograph; the single
+importer used to write its own copy of all this, which had drifted (its
+tags went unquoted).
 
 The frontmatter written here is the durable copy of the camera metadata: the
 sidecars are gitignored and are regenerated from delivery files that have had
@@ -33,12 +34,13 @@ import front_matter  # noqa: E402
 import photo_sidecars  # noqa: E402
 
 REPO_ROOT = Path(__file__).parent.parent
-TODAY = __import__("datetime").date.today().isoformat()
+TODAY = __import__("datetime").datetime.now(__import__("datetime").timezone.utc).date().isoformat()
 
 def build_tags(extra: str) -> list[str]:
     tags = ["photography"]
     for raw in (extra or "").split(","):
-        t = raw.strip()
+        # All whitespace goes, not only the ends: a tag is a URL path.
+        t = "".join(raw.split())
         if not t:
             continue
         # Anything not already hierarchical is filed beneath photography/,
@@ -87,10 +89,13 @@ def main() -> int:
         body += photo_sidecars.exif_front_matter(Path(str(photo) + ".exif.yaml"))
         if location:
             body.append(front_matter.field("location", location))
+        body.append('# license: "CC BY-SA 4.0"   # uncomment + set; canonical URL auto-resolves')
+        if not location:
+            body.append('# location: ""              # human-readable, e.g. "Reykjavík, Iceland"')
         body += [
-            '# license: "CC BY-SA 4.0"   # uncomment + set; canonical URL auto-resolves',
-            "# The camera fields above were read from EXIF at import and written",
-            "# here because frontmatter is tracked and the sidecar is not.",
+            "# The camera fields above were read from the file's EXIF at import and",
+            "# written here because frontmatter is tracked and the sidecar is not. Edit",
+            "# freely — these values are authoritative from now on.",
             "#",
             "# geo: [00.000, 00.000]     # add deliberately; pair with geo-precision",
             "# geo-precision: city       # exact | km | city | hidden  (default: city)",
@@ -102,7 +107,29 @@ def main() -> int:
         written += 1
 
     print(f"scaffold-photos: {written} written", file=sys.stderr)
+    if series:
+        write_series_landing(REPO_ROOT / "content" / "photography" / series / "index.md", series)
     return 0
+
+
+def write_series_landing(landing: Path, series: str) -> None:
+    """A series needs a landing page: write one the first time a photograph
+    is filed under a new series, and leave an existing one alone, so
+    repeated imports only ever add frames."""
+    if landing.exists():
+        return
+    landing.write_text("\n".join([
+        "---",
+        front_matter.field("title", title_from_slug(series)),
+        f"date: {TODAY}",
+        "abstract: >",
+        "  TODO — what this series is, in a sentence or two.",
+        "tags: [photography]",
+        "---",
+        "",
+    ]) + "\n")
+    landing.chmod(0o644)
+    print(f"scaffold-photos: created series landing {landing}", file=sys.stderr)
 
 
 if __name__ == "__main__":

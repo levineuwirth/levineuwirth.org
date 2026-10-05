@@ -49,6 +49,22 @@ class ScaffoldTests(unittest.TestCase):
         tags = scaffold.build_tags("travel: denmark, «Nyhavn», [x]")
         self.assertEqual(yaml.safe_load(fm.tags_field(tags)), {"tags": tags})
 
+    def test_a_tag_loses_its_inner_whitespace(self):
+        # A tag is a URL path; import-photo.sh already did this.
+        self.assertEqual(scaffold.build_tags("street art"), ["photography", "photography/streetart"])
+
+    def test_series_landing_is_written_once(self):
+        tmp = Path(tempfile.mkdtemp(prefix="scaffold-"))
+        self.addCleanup(shutil.rmtree, tmp)
+        landing = tmp / "index.md"
+        with contextlib.redirect_stderr(io.StringIO()):
+            scaffold.write_series_landing(landing, "germany-2026")
+            first = landing.read_text()
+            self.assertEqual(yaml.safe_load(first.split("---")[1])["title"], "Germany 2026")
+            landing.write_text(first + "An edited landing.\n")
+            scaffold.write_series_landing(landing, "germany-2026")
+        self.assertTrue(landing.read_text().endswith("An edited landing.\n"))
+
     def test_title_from_slug(self):
         self.assertEqual(scaffold.title_from_slug("from-the-belt-bridge"), "From The Belt Bridge")
 

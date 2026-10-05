@@ -99,7 +99,9 @@ fi
 # Parse and validate the whole manifest before writing anything. A batch that
 # fails halfway leaves a half-imported series that has to be unpicked by hand.
 # ---------------------------------------------------------------------------
-declare -a SRCS SLUGS TITLES TARGETS MDS
+# Empty, not merely declared: under `set -u` a declared but unset array has
+# no length, and a manifest whose every line was refused crashed on it.
+SRCS=() SLUGS=() TITLES=() TARGETS=() MDS=()
 errors=0
 seen=""
 
@@ -247,7 +249,8 @@ done
 for pid in "${pal_pids[@]}"; do wait "$pid" || true; done
 
 # ---------------------------------------------------------------------------
-# 5. Scaffold every entry in one Python process.
+# 5. Scaffold every entry, and the series landing if this is the first
+#    import into one, in one Python process.
 # ---------------------------------------------------------------------------
 echo "  writing entries (1 call)…"
 plan="$(mktemp)"; trap 'rm -f "$plan"' EXIT
@@ -257,28 +260,6 @@ done > "$plan"
 
 SERIES="$SERIES" TAGS="$TAGS" LOCATION="$LOCATION" \
     "$REPO_ROOT/.venv/bin/python" "$REPO_ROOT/tools/scaffold-photos.py" "$plan" || exit 1
-
-# ---------------------------------------------------------------------------
-# 6. Series landing, if this is the first import into one.
-# ---------------------------------------------------------------------------
-if [ -n "$SERIES" ]; then
-    landing="$REPO_ROOT/content/photography/$SERIES/index.md"
-    if [ ! -f "$landing" ]; then
-        st="$(echo "$SERIES" | tr '-' ' ' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2); print}')"
-        cat > "$landing" <<EOF
----
-title: "$st"
-date: $(date -u +%Y-%m-%d)
-abstract: >
-  TODO — what this series is, in a sentence or two.
-tags: [photography]
----
-
-EOF
-        chmod 644 "$landing"
-        echo "  created series landing $landing"
-    fi
-fi
 
 echo "import-photos: $n imported."
 echo "Next: titles and captions are placeholders — edit, then 'make dev'."
