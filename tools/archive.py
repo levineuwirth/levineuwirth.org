@@ -263,15 +263,17 @@ def detect_type(url: str, override) -> str | None:
 # PDF fetch + text extraction
 # ---------------------------------------------------------------------------
 
-def fetch_pdf(url: str, dest: Path) -> str:
-    """Download `url` to `dest`, enforcing the size cap. Returns "ok" on
-    success, "dead" when the document itself could not be retrieved (DNS
-    failure, refused connection, timeout, HTTP error status — the cases
-    where a Wayback fallback is legitimate), or "skip" for a policy or
-    local failure (noarchive directive, size cap, disk) that a fallback
-    must not circumvent. A partial / over-cap download leaves no file."""
+def download(url: str, dest: Path, what: str = "",
+             cap_hint: str = " (commit deliberately with `git add -f`)") -> tuple[str, str]:
+    """Stream `url` into `dest` under the size cap, honouring an
+    X-Robots-Tag: noarchive on the response. Returns the result and the URL
+    the response came from (after redirects). The result is "ok"; "dead"
+    when the document itself could not be retrieved (DNS failure, refused
+    connection, timeout, HTTP error status — the cases where a Wayback
+    fallback is legitimate); or "skip" for a policy or local failure
+    (noarchive, the cap, disk) that a fallback must not circumvent. Only
+    "ok" leaves a file. `what` and `cap_hint` complete the cap message."""
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    tmp = dest.with_suffix(dest.suffix + ".part")
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
             # X-Robots-Tag: noarchive — honour the archiving-specific
@@ -279,28 +281,38 @@ def fetch_pdf(url: str, dest: Path) -> str:
             robots = (resp.headers.get("X-Robots-Tag") or "").lower()
             if "noarchive" in robots:
                 err(f"{url}: response carries X-Robots-Tag: noarchive — skipped")
-                return "skip"
+                return "skip", url
+            final = resp.geturl()
             total = 0
-            with tmp.open("wb") as fh:
+            with dest.open("wb") as fh:
                 for chunk in iter(lambda: resp.read(1 << 16), b""):
                     total += len(chunk)
                     if total > SIZE_CAP:
                         fh.close()
-                        tmp.unlink(missing_ok=True)
-                        err(f"{url}: exceeds {SIZE_CAP // (1024*1024)} MB cap "
-                            f"— skipped (commit deliberately with `git add -f`)")
-                        return "skip"
+                        dest.unlink(missing_ok=True)
+                        err(f"{url}: {what}exceeds {SIZE_CAP // (1024*1024)} MB cap "
+                            f"— skipped{cap_hint}")
+                        return "skip", url
                     fh.write(chunk)
-        tmp.replace(dest)
-        return "ok"
+        return "ok", final
     except (urllib.error.URLError, TimeoutError) as exc:
-        tmp.unlink(missing_ok=True)
+        dest.unlink(missing_ok=True)
         err(f"{url}: fetch failed — {exc}")
-        return "dead"                  # HTTPError is a URLError subclass
+        return "dead", url             # HTTPError is a URLError subclass
     except Exception as exc:                       # noqa: BLE001 — report any failure
-        tmp.unlink(missing_ok=True)
+        dest.unlink(missing_ok=True)
         err(f"{url}: fetch failed — {exc}")
-        return "skip"
+        return "skip", url
+
+
+def fetch_pdf(url: str, dest: Path) -> str:
+    """Download a PDF to `dest` ('download' says what the result means). A
+    partial or over-cap download leaves no file."""
+    tmp = dest.with_suffix(dest.suffix + ".part")
+    result, _ = download(url, tmp)
+    if result == "ok":
+        tmp.replace(dest)
+    return result
 
 
 def extract_text_pdf(pdf: Path, txt: Path) -> None:
@@ -448,34 +460,9 @@ def fetch_html(url: str, dest: Path) -> str:
 
     source = dest.with_suffix(dest.suffix + ".source.part")
     tmp = dest.with_suffix(dest.suffix + ".part")
-    effective_url = url
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-        with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
-            robots = (resp.headers.get("X-Robots-Tag") or "").lower()
-            if "noarchive" in robots:
-                err(f"{url}: response carries X-Robots-Tag: noarchive — skipped")
-                return "skip"
-            effective_url = resp.geturl()
-            total = 0
-            with source.open("wb") as fh:
-                for chunk in iter(lambda: resp.read(1 << 16), b""):
-                    total += len(chunk)
-                    if total > SIZE_CAP:
-                        fh.close()
-                        source.unlink(missing_ok=True)
-                        err(f"{url}: source HTML exceeds "
-                            f"{SIZE_CAP // (1024*1024)} MB cap — skipped")
-                        return "skip"
-                    fh.write(chunk)
-    except (urllib.error.URLError, TimeoutError) as exc:
-        source.unlink(missing_ok=True)
-        err(f"{url}: fetch failed — {exc}")
-        return "dead"                  # HTTPError is a URLError subclass
-    except Exception as exc:                           # noqa: BLE001
-        source.unlink(missing_ok=True)
-        err(f"{url}: fetch failed — {exc}")
-        return "skip"
+    result, effective_url = download(url, source, "source HTML ", cap_hint="")
+    if result != "ok":
+        return result
 
     if body_noarchive(source):
         source.unlink(missing_ok=True)
@@ -768,13 +755,14 @@ def fetch_from_wayback(url: str, entry: dict, slug_dir: Path
     return (atype, art, capture, raw)
 
 
-def cmd_fetch(wayback_fallback: bool = True) -> int:
-    manifest = load_yaml_list(MANIFEST)
-    # Removed URLs are compared in normalised form so a tracking-laden
-    # variant cannot bypass a takedown the author already recorded.
-    removed_norms = {normalize_url(r["url"])
-                     for r in load_yaml_list(REMOVED) if r.get("url")}
+def removed_canonical_forms() -> set[str]:
+    """The takedowns in removed.yaml, in normalised form, so a
+    tracking-laden variant cannot bypass one the author already recorded."""
+    return {normalize_url(r["url"]) for r in load_yaml_list(REMOVED) if r.get("url")}
 
+
+def validate_manifest(manifest: list[dict], removed_norms: set[str]) -> None:
+    """Refuse a malformed manifest before any fetch I/O (exits on error)."""
     # Pre-scan validation: reject canonical-form duplicates *before* any
     # fetch I/O, so a first colliding entry never gets partially processed
     # while a second's duplicate check halts. The canonical URL and every
@@ -828,155 +816,172 @@ def cmd_fetch(wayback_fallback: bool = True) -> int:
                 f"removed.yaml first.")
             sys.exit(1)
 
+
+def archive_entry(entry: dict, removed_norms: set[str], *,
+                  wayback_fallback: bool = True) -> dict | None:
+    """Archive one manifest entry with a `url:`: fetch its artifact if it is
+    not present, verify a committed one, refresh its text, write its
+    provenance once. Returns its archive-index.json record, or None when it
+    was skipped this run (network, cap, undetectable type: retried next
+    build). Integrity failures exit."""
+    url = entry["url"]
+    norm = normalize_url(url)
+
+    # A manifest URL whose canonical form matches a removed entry is a
+    # deliberate takedown; never silently re-archive it. The author
+    # either removes the line from removed.yaml ("I want it back") or
+    # from the manifest.
+    if norm in removed_norms:
+        err(f"manifest URL {url!r} (canonical {norm!r}) is recorded in "
+            f"archive/removed.yaml as a deliberate takedown. To re-archive "
+            f"it, remove the corresponding line from removed.yaml first.")
+        sys.exit(1)
+
+    slug = entry_slug(entry)
+    slug_dir = ARCHIVE_DIR / slug
+    prov_path = slug_dir / "PROVENANCE.json"
+
+    # --- resolve the artifact type ------------------------------------
+    # An archived entry's type is fixed in PROVENANCE.json; a new entry
+    # is detected from the manifest / URL / Content-Type.
+    prov = None
+    if prov_path.exists():
+        prov = json.loads(prov_path.read_text(encoding="utf-8"))
+        if prov.get("url") != url:
+            err(f"{slug}: manifest URL changed "
+                f"({prov.get('url')!r} -> {url!r}). A committed artifact "
+                f"is never silently re-fetched; to deliberately "
+                f"re-snapshot, run `archive.py refresh {slug}`.")
+            sys.exit(1)
+        atype = prov.get("type", "pdf")
+    else:
+        atype = detect_type(url, entry.get("type"))
+        if atype is None:
+            return None
+
+    art       = slug_dir / ARTIFACT[atype]
+    txt       = slug_dir / TEXTFILE[atype]
+    txt_stamp = slug_dir / (TEXTFILE[atype] + ".sha256")
+
+    # --- integrity guard (fatal): a committed artifact must verify,
+    #     and a lost artifact must not be silently re-fetched. -------
+    if prov is not None:
+        if art.exists():
+            live = sha256_of(art)
+            if live != prov.get("sha256"):
+                err(f"{slug}: {art.name} SHA-256 mismatch "
+                    f"(recorded {prov.get('sha256')}, found {live}) "
+                    f"— the committed artifact is corrupt or was replaced")
+                sys.exit(1)
+        else:
+            err(f"{slug}: PROVENANCE.json is committed but {art.name} "
+                f"is missing. The committed artifact has been lost; "
+                f"restore it from git before rebuilding. A refresh "
+                f"requires a present, verified prior snapshot.")
+            sys.exit(1)
+
+    # --- fetch the artifact if it is not already present --------------
+    wb_capture: str | None = None    # Wayback capture used, if any
+    wb_raw: str | None = None        # ... and its raw id_ form
+    if not art.exists():
+        slug_dir.mkdir(parents=True, exist_ok=True)
+        log(f"fetching {url}  [{atype}]")
+        result = (fetch_pdf(url, art) if atype == "pdf"
+                  else fetch_html(url, art))
+        if result == "dead" and wayback_fallback:
+            # The original is already gone at first fetch — pull the
+            # most recent existing Wayback capture instead. Only for
+            # *dead* originals: a noarchive refusal or an over-cap
+            # skip must never be circumvented via a third-party copy.
+            fb = fetch_from_wayback(url, entry, slug_dir)
+            if fb is not None:
+                atype, art, wb_capture, wb_raw = fb
+                txt       = slug_dir / TEXTFILE[atype]
+                txt_stamp = slug_dir / (TEXTFILE[atype] + ".sha256")
+                result = "ok"
+        if result != "ok":
+            return None
+    else:
+        log(f"{slug}: artifact present, skipping fetch")
+
+    digest = sha256_of(art)
+
+    # --- regenerate text when the artifact changed (or .txt absent) ---
+    stale = (not txt.exists()
+             or not txt_stamp.exists()
+             or txt_stamp.read_text(encoding="utf-8").strip() != digest)
+    if stale:
+        if atype == "pdf":
+            extract_text_pdf(art, txt)
+        else:
+            extract_text_html(art, txt)
+        txt_stamp.write_text(digest + "\n", encoding="utf-8")
+
+    # --- write PROVENANCE.json (once; stable thereafter) --------------
+    if prov is None:
+        quality = "ok" if atype == "pdf" else classify_snapshot(art)
+        prov = {
+            "url": url,
+            "slug": slug,
+            "title": entry.get("title") or slug,
+            "type": atype,
+            "artifact": ARTIFACT[atype],
+            "sha256": digest,
+            "previous-sha256": None,
+            "bytes": art.stat().st_size,
+            "archived": datetime.date.today().isoformat(),
+            "source-date": entry.get("source-date"),
+            "snapshot-quality": quality,
+            # When the fallback fired, the capture is already known —
+            # cmd_wayback (which targets `wayback: null`) skips it,
+            # correctly: a dead original cannot be re-submitted.
+            "wayback": wb_capture,
+        }
+        if wb_raw is not None:
+            # The snapshot's bytes came from the Wayback capture, not
+            # the (dead) original. Recorded so the provenance never
+            # implies a first-hand fetch that did not happen.
+            prov["fetched-from"] = wb_raw
+        atomic_write_json(prov_path, prov)
+        origin = " via Wayback" if wb_raw else ""
+        log(f"{slug}: archived{origin} [{atype}, {quality}] "
+            f"({prov['bytes']} bytes)")
+
+    # --- contribute to the Hakyll index -------------------------------
+    # Generated equivalents of the canonical URL, plus the authored
+    # `aliases:` (each with its own generated equivalents) — so a DOI
+    # alias's http:// form matches just like the canonical's would.
+    alias_set = set(url_aliases(url))
+    for authored in entry_aliases(entry):
+        alias_set.add(authored)
+        alias_set.update(url_aliases(authored))
+    alias_set.discard(url)
+    return {
+        "slug": slug,
+        "type": prov.get("type", atype),
+        "title": prov.get("title", slug),
+        "aliases": sorted(alias_set),
+    }
+
+
+def cmd_fetch(wayback_fallback: bool = True) -> int:
+    manifest = load_yaml_list(MANIFEST)
+    removed_norms = removed_canonical_forms()
+    validate_manifest(manifest, removed_norms)
+
     index: dict[str, dict] = {}
     skipped = 0
-
     for entry in manifest:
         url = entry.get("url")
         if not url:
             err("manifest entry without a `url:` — skipped")
             skipped += 1
             continue
-
-        norm = normalize_url(url)
-
-        # A manifest URL whose canonical form matches a removed entry is a
-        # deliberate takedown; never silently re-archive it. The author
-        # either removes the line from removed.yaml ("I want it back") or
-        # from the manifest.
-        if norm in removed_norms:
-            err(f"manifest URL {url!r} (canonical {norm!r}) is recorded in "
-                f"archive/removed.yaml as a deliberate takedown. To re-archive "
-                f"it, remove the corresponding line from removed.yaml first.")
-            sys.exit(1)
-
-        slug = entry_slug(entry)
-        slug_dir = ARCHIVE_DIR / slug
-        prov_path = slug_dir / "PROVENANCE.json"
-
-        # --- resolve the artifact type ------------------------------------
-        # An archived entry's type is fixed in PROVENANCE.json; a new entry
-        # is detected from the manifest / URL / Content-Type.
-        prov = None
-        if prov_path.exists():
-            prov = json.loads(prov_path.read_text(encoding="utf-8"))
-            if prov.get("url") != url:
-                err(f"{slug}: manifest URL changed "
-                    f"({prov.get('url')!r} -> {url!r}). A committed artifact "
-                    f"is never silently re-fetched; to deliberately "
-                    f"re-snapshot, run `archive.py refresh {slug}`.")
-                sys.exit(1)
-            atype = prov.get("type", "pdf")
+        record = archive_entry(entry, removed_norms, wayback_fallback=wayback_fallback)
+        if record is None:
+            skipped += 1
         else:
-            atype = detect_type(url, entry.get("type"))
-            if atype is None:
-                skipped += 1
-                continue
-
-        art       = slug_dir / ARTIFACT[atype]
-        txt       = slug_dir / TEXTFILE[atype]
-        txt_stamp = slug_dir / (TEXTFILE[atype] + ".sha256")
-
-        # --- integrity guard (fatal): a committed artifact must verify,
-        #     and a lost artifact must not be silently re-fetched. -------
-        if prov is not None:
-            if art.exists():
-                live = sha256_of(art)
-                if live != prov.get("sha256"):
-                    err(f"{slug}: {art.name} SHA-256 mismatch "
-                        f"(recorded {prov.get('sha256')}, found {live}) "
-                        f"— the committed artifact is corrupt or was replaced")
-                    sys.exit(1)
-            else:
-                err(f"{slug}: PROVENANCE.json is committed but {art.name} "
-                    f"is missing. The committed artifact has been lost; "
-                    f"restore it from git before rebuilding. A refresh "
-                    f"requires a present, verified prior snapshot.")
-                sys.exit(1)
-
-        # --- fetch the artifact if it is not already present --------------
-        wb_capture: str | None = None    # Wayback capture used, if any
-        wb_raw: str | None = None        # ... and its raw id_ form
-        if not art.exists():
-            slug_dir.mkdir(parents=True, exist_ok=True)
-            log(f"fetching {url}  [{atype}]")
-            result = (fetch_pdf(url, art) if atype == "pdf"
-                      else fetch_html(url, art))
-            if result == "dead" and wayback_fallback:
-                # The original is already gone at first fetch — pull the
-                # most recent existing Wayback capture instead. Only for
-                # *dead* originals: a noarchive refusal or an over-cap
-                # skip must never be circumvented via a third-party copy.
-                fb = fetch_from_wayback(url, entry, slug_dir)
-                if fb is not None:
-                    atype, art, wb_capture, wb_raw = fb
-                    txt       = slug_dir / TEXTFILE[atype]
-                    txt_stamp = slug_dir / (TEXTFILE[atype] + ".sha256")
-                    result = "ok"
-            if result != "ok":
-                skipped += 1
-                continue
-        else:
-            log(f"{slug}: artifact present, skipping fetch")
-
-        digest = sha256_of(art)
-
-        # --- regenerate text when the artifact changed (or .txt absent) ---
-        stale = (not txt.exists()
-                 or not txt_stamp.exists()
-                 or txt_stamp.read_text(encoding="utf-8").strip() != digest)
-        if stale:
-            if atype == "pdf":
-                extract_text_pdf(art, txt)
-            else:
-                extract_text_html(art, txt)
-            txt_stamp.write_text(digest + "\n", encoding="utf-8")
-
-        # --- write PROVENANCE.json (once; stable thereafter) --------------
-        if prov is None:
-            quality = "ok" if atype == "pdf" else classify_snapshot(art)
-            prov = {
-                "url": url,
-                "slug": slug,
-                "title": entry.get("title") or slug,
-                "type": atype,
-                "artifact": ARTIFACT[atype],
-                "sha256": digest,
-                "previous-sha256": None,
-                "bytes": art.stat().st_size,
-                "archived": datetime.date.today().isoformat(),
-                "source-date": entry.get("source-date"),
-                "snapshot-quality": quality,
-                # When the fallback fired, the capture is already known —
-                # cmd_wayback (which targets `wayback: null`) skips it,
-                # correctly: a dead original cannot be re-submitted.
-                "wayback": wb_capture,
-            }
-            if wb_raw is not None:
-                # The snapshot's bytes came from the Wayback capture, not
-                # the (dead) original. Recorded so the provenance never
-                # implies a first-hand fetch that did not happen.
-                prov["fetched-from"] = wb_raw
-            atomic_write_json(prov_path, prov)
-            origin = " via Wayback" if wb_raw else ""
-            log(f"{slug}: archived{origin} [{atype}, {quality}] "
-                f"({prov['bytes']} bytes)")
-
-        # --- contribute to the Hakyll index -------------------------------
-        # Generated equivalents of the canonical URL, plus the authored
-        # `aliases:` (each with its own generated equivalents) — so a DOI
-        # alias's http:// form matches just like the canonical's would.
-        alias_set = set(url_aliases(url))
-        for authored in entry_aliases(entry):
-            alias_set.add(authored)
-            alias_set.update(url_aliases(authored))
-        alias_set.discard(url)
-        index[url] = {
-            "slug": slug,
-            "type": prov.get("type", atype),
-            "title": prov.get("title", slug),
-            "aliases": sorted(alias_set),
-        }
+            index[url] = record
 
     # archive-index.json is always rewritten to mirror the manifest exactly.
     atomic_write_json(INDEX_OUT, index)
@@ -1004,7 +1009,7 @@ def cmd_refresh(argv: list[str]) -> int:
 
       * The replacement is *atomic across every exit path* — slug dir and
         @data/archive-index.json@ are both staged aside; any failure
-        (transient fetch error, fatal @cmd_fetch@ exit, exception,
+        (transient fetch error, fatal integrity exit, exception,
         interruption) restores both. We never end up with no snapshot
         and never leave the index pointing at a discarded state.
 
@@ -1061,7 +1066,7 @@ def cmd_refresh(argv: list[str]) -> int:
             return 2
 
     # Stage the old snapshot AND the current archive-index.json aside —
-    # cmd_fetch rewrites the index unconditionally, so a failed refresh
+    # the refresh rewrites the index's record, so a failed refresh
     # must roll both back.
     backup: Path | None = None
     if slug_dir.exists():
@@ -1087,18 +1092,28 @@ def cmd_refresh(argv: list[str]) -> int:
 
     succeeded = False
     try:
+        # This entry alone: a full fetch would also fetch every other
+        # entry's missing artifact, and an unrelated entry's integrity
+        # failure would roll this refresh back. The manifest is still
+        # checked whole, as a fetch would.
+        removed_norms = removed_canonical_forms()
+        validate_manifest(manifest, removed_norms)
         # No Wayback fallback during a refresh: the author asked for a
         # fresh first-hand snapshot. If the original turns out to be dead,
         # the right outcome is "refresh fails, prior snapshot restored" —
         # not a silent downgrade of a committed first-hand snapshot to
         # third-party bytes. Adopting a Wayback copy stays a deliberate
         # act (a new entry whose original is already dead).
-        rc = cmd_fetch(wayback_fallback=False)
+        record = archive_entry(entry, removed_norms, wayback_fallback=False)
+        if record is not None:
+            index = (json.loads(INDEX_OUT.read_text(encoding="utf-8"))
+                     if INDEX_OUT.exists() else {})
+            index[entry["url"]] = record
+            atomic_write_json(INDEX_OUT, index)
 
         # Success requires a new PROVENANCE.json *and* its declared
-        # artifact on disk. `cmd_fetch` returns 0 even when individual
-        # entries skip, so the return code alone is not enough.
-        if rc == 0 and prov_path.exists():
+        # artifact on disk.
+        if record is not None and prov_path.exists():
             try:
                 new_prov = json.loads(prov_path.read_text(encoding="utf-8"))
                 art_name = new_prov.get("artifact", "")
@@ -1113,7 +1128,7 @@ def cmd_refresh(argv: list[str]) -> int:
                 succeeded = False
     finally:
         # Runs on every exit path — normal return, exception, SystemExit
-        # from cmd_fetch, KeyboardInterrupt. We always end with either a
+        # from an integrity failure, KeyboardInterrupt. We always end with either a
         # complete new snapshot or the prior one restored, never neither.
         if succeeded:
             if backup is not None:
@@ -1185,8 +1200,7 @@ def cmd_wayback() -> int:
     line is still present during the documented eviction sequence.
     """
     manifest = load_yaml_list(MANIFEST)
-    removed_norms = {normalize_url(r["url"])
-                     for r in load_yaml_list(REMOVED) if r.get("url")}
+    removed_norms = removed_canonical_forms()
     backfilled = pending = 0
 
     for entry in manifest:
@@ -1302,8 +1316,7 @@ def cmd_check() -> int:
     URLs listed in removed.yaml are skipped — the link-rot scanner should
     not keep probing a deliberately-removed work."""
     manifest = load_yaml_list(MANIFEST)
-    removed_norms = {normalize_url(r["url"])
-                     for r in load_yaml_list(REMOVED) if r.get("url")}
+    removed_norms = removed_canonical_forms()
     old = {}
     if STATE_OUT.exists():
         try:
