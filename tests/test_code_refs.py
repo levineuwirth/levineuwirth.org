@@ -281,6 +281,46 @@ class Fetch(unittest.TestCase):
                 self.assertFalse((self.store / "github/o/secret").exists())
 
 
+class CommitSnapshots(unittest.TestCase):
+    """ensure_commit against a temporary store, with the API stubbed."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        p = mock.patch.object(code_refs, "STORE_DIR", Path(tmp.name))
+        p.start()
+        self.addCleanup(p.stop)
+
+    def answer(self, files: int):
+        return {"sha": SHA, "parents": [],
+                "commit": {"message": "m", "author": {"name": "a"},
+                           "committer": {"date": "2026-10-01T00:00:00Z"}},
+                "stats": {"total": files, "additions": files, "deletions": 0},
+                "files": [{"filename": f"f{i}", "status": "added", "additions": 1,
+                           "deletions": 0} for i in range(files)]}
+
+    def stored(self) -> dict:
+        return json.loads((code_refs.sha_dir("o", "r", SHA) / "commit.json").read_text())
+
+    def test_an_incomplete_answer_does_not_replace_a_full_snapshot(self):
+        # GitHub sometimes answers a very large commit before computing its
+        # diff; a branch link asks again every build.
+        with mock.patch.object(code_refs, "api_json", lambda _: self.answer(3)):
+            code_refs.ensure_commit("o", "r", "main")
+        with mock.patch.object(code_refs, "api_json", lambda _: self.answer(0)):
+            commit = code_refs.ensure_commit("o", "r", "main")
+        self.assertEqual(commit["files_total"], 3)
+        self.assertEqual(self.stored()["files_total"], 3)
+
+    def test_an_unchanged_snapshot_is_not_rewritten(self):
+        with mock.patch.object(code_refs, "api_json", lambda _: self.answer(2)):
+            code_refs.ensure_commit("o", "r", "main")
+            path = code_refs.sha_dir("o", "r", SHA) / "commit.json"
+            os.utime(path, (1, 1))
+            code_refs.ensure_commit("o", "r", "main")
+        self.assertEqual(path.stat().st_mtime, 1)
+
+
 class RepositoryStore(unittest.TestCase):
     """The committed store: every file is referenced, every reference
     exists, and every entry comes from a page the site publishes."""

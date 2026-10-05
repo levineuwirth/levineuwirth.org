@@ -217,7 +217,12 @@ def public(path: Path) -> str:
 
 
 def write_json(path: Path, obj) -> None:
-    sitelib.atomic_write_bytes(path, (json.dumps(obj, indent=1, ensure_ascii=False) + "\n").encode())
+    # Unchanged bytes are left alone: every file here is copied into the
+    # site, and a rewrite moves its mtime, which recopies, recompresses and
+    # re-signs it.
+    sitelib.atomic_write_bytes(
+        path, (json.dumps(obj, indent=1, ensure_ascii=False) + "\n").encode(),
+        skip_if_unchanged=True)
 
 
 def ensure_commit(owner: str, repo: str, ref: str) -> dict:
@@ -247,7 +252,20 @@ def ensure_commit(owner: str, repo: str, ref: str) -> dict:
             for f in files[:MAX_COMMIT_FILES]
         ],
     }
-    write_json(sha_dir(owner, repo, commit["sha"]) / "commit.json", commit)
+    path = sha_dir(owner, repo, commit["sha"]) / "commit.json"
+    # A commit is immutable, but GitHub's answer about it is not: for a very
+    # large commit the API sometimes answers before it has computed the
+    # diff, with no files and zero stats. A branch link resolves again on
+    # every build, so that answer used to replace the stored snapshot (and
+    # the next build put the full one back). Only an answer listing at
+    # least as many files replaces what is stored.
+    try:
+        stored = json.loads(path.read_text())
+    except (OSError, ValueError):
+        stored = None
+    if isinstance(stored, dict) and stored.get("files_total", 0) > commit["files_total"]:
+        return stored
+    write_json(path, commit)
     return commit
 
 
