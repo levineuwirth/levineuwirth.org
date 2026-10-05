@@ -20,7 +20,8 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
-from tests._helpers import site_binary
+
+from tests._helpers import script_env, site_binary
 
 REPO = Path(__file__).resolve().parent.parent
 SCRIPT = REPO / "tools" / "build-freshness.sh"
@@ -106,11 +107,8 @@ class BuildFreshnessTestCase(unittest.TestCase):
         (self.root / "_cache").mkdir(exist_ok=True)
 
     def run_script(self, arg: str) -> subprocess.CompletedProcess:
-        env = dict(os.environ)
-        env["CLEAN_CMD"] = f"touch {self.root}/CLEANED"
-        env["STATE_DIR"] = "data"
-        env["CACHE_DIR"] = "_cache"
-        env["SITE_DRAFTS_BINARY"] = str(self.binary)
+        env = script_env(CLEAN_CMD=f"touch {self.root}/CLEANED", STATE_DIR="data",
+                         CACHE_DIR="_cache", SITE_DRAFTS_BINARY=str(self.binary))
         return subprocess.run(
             ["bash", str(self.root / "tools" / SCRIPT.name), arg],
             cwd=self.root,

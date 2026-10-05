@@ -20,6 +20,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tests._helpers import script_env, stub_bin
+
 SCRIPT = Path(__file__).resolve().parent.parent / "tools" / "compress-assets.sh"
 HAVE_BROTLI = shutil.which("brotli") is not None
 
@@ -44,9 +46,7 @@ class CompressAssets(unittest.TestCase):
         self.kinds = [".gz", ".br"] if HAVE_BROTLI else [".gz"]
 
     def run_script(self, path_prefix: str | None = None) -> subprocess.CompletedProcess:
-        env = dict(os.environ, COMPRESS_CACHE=str(self.cache))
-        if path_prefix:
-            env["PATH"] = path_prefix + os.pathsep + env["PATH"]
+        env = script_env(path_prefix, COMPRESS_CACHE=str(self.cache))
         return subprocess.run(["bash", str(SCRIPT), str(self.site)], capture_output=True, text=True, env=env)
 
     def sidecars(self, src: Path) -> dict[str, tuple[int, int]]:
@@ -81,12 +81,9 @@ class CompressAssets(unittest.TestCase):
         self.run_script()
         for k in self.kinds:
             Path(f"{self.page}{k}").unlink()
-        shim = self.root / "shim"
-        shim.mkdir()
-        for tool in ("gzip", "brotli"):
-            (shim / tool).write_text("#!/bin/sh\necho 'compressor called' >&2\nexit 1\n")
-            (shim / tool).chmod(0o755)
-        done = self.run_script(str(shim))
+        shim = stub_bin(self.root / "shim", ("gzip", "brotli"),
+                        "#!/bin/sh\necho 'compressor called' >&2\nexit 1\n")
+        done = self.run_script(shim)
         self.assertEqual(done.returncode, 0, done.stderr)
         self.assertNotIn("compressor called", done.stderr)
         self.assert_sidecars_match(self.page)
@@ -114,7 +111,7 @@ class CompressAssets(unittest.TestCase):
         exec bash "$1" "$2"
         '''
         done = subprocess.run(["bash", "-c", shell, "test", str(SCRIPT), str(self.site)],
-                              env=dict(os.environ, COMPRESS_CACHE=str(self.cache)),
+                              env=script_env(COMPRESS_CACHE=str(self.cache)),
                               capture_output=True, text=True)
         self.assertEqual(done.returncode, 0, done.stderr)
         self.assertFalse(Path(f"{self.page}.br").exists())

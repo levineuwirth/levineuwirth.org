@@ -1,6 +1,5 @@
 """tools/with-lock.sh: exclusive between sessions, re-entrant within one (audit D13)."""
 
-import os
 import shutil
 import subprocess
 import tempfile
@@ -8,15 +7,10 @@ import time
 import unittest
 from pathlib import Path
 
+from tests._helpers import script_env
+
 ROOT = Path(__file__).resolve().parents[1]
 WITH_LOCK = str(ROOT / "tools" / "with-lock.sh")
-
-
-def env_without_lock():
-    env = dict(os.environ)
-    env.pop("SITE_LOCK_HELD", None)
-    env.pop("LOCK_TIMEOUT", None)
-    return env
 
 
 @unittest.skipUnless(shutil.which("flock"), "flock(1) not installed")
@@ -27,7 +21,7 @@ class WithLockTests(unittest.TestCase):
         self.lock = str(self.tmp / "site.lock")
 
     def run_locked(self, *cmd, env=None):
-        return subprocess.run([WITH_LOCK, self.lock, *cmd], env=env or env_without_lock(),
+        return subprocess.run([WITH_LOCK, self.lock, *cmd], env=env or script_env(),
                               capture_output=True, text=True, timeout=30)
 
     def test_a_target_run_by_the_holder_passes_through(self):
@@ -39,7 +33,7 @@ class WithLockTests(unittest.TestCase):
     def test_a_second_session_is_refused_while_the_lock_is_held(self):
         ready = self.tmp / "ready"
         holder = subprocess.Popen([WITH_LOCK, self.lock, "sh", "-c", f'touch "{ready}"; sleep 5'],
-                                  env=env_without_lock())
+                                  env=script_env())
         self.addCleanup(holder.kill)
         for _ in range(100):
             if ready.exists():
@@ -51,7 +45,7 @@ class WithLockTests(unittest.TestCase):
         self.assertIn("already holds", r.stderr)
 
     def test_a_different_lock_is_not_passed_through(self):
-        env = env_without_lock()
+        env = script_env()
         env["SITE_LOCK_HELD"] = str(self.tmp / "other.lock")
         r = self.run_locked("sh", "-c", 'echo "$SITE_LOCK_HELD"', env=env)
         self.assertEqual(r.returncode, 0, r.stderr)

@@ -3,12 +3,13 @@
 import hashlib
 import io
 import json
-import os
 from pathlib import Path
 import subprocess
 import tarfile
 import tempfile
 import unittest
+
+from tests._helpers import script_env
 
 SCRIPT = Path(__file__).resolve().parents[1] / 'tools/couchdb-backup.sh'
 
@@ -34,8 +35,7 @@ if sys.argv[1] == 'run':
 ''')
             docker.chmod(0o755)
             record = root / 'record.json'
-            env = dict(os.environ, PATH=str(root) + os.pathsep + os.environ['PATH'],
-                       RECORD=str(record), COUCHDB_IMAGE='test-image',
+            env = script_env(root, RECORD=str(record), COUCHDB_IMAGE='test-image',
                        BACKUP_PAIR_LIB=str(SCRIPT.parent / 'backup-pair.sh'))
             result = subprocess.run(['bash', str(SCRIPT), '--verify', str(archive)],
                                     env=env, text=True, capture_output=True, timeout=10)

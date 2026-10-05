@@ -1,13 +1,13 @@
 """Exercise the real Stability module's IO caches in one long-lived process."""
 
 import json
-import os
 from pathlib import Path
 import shutil
 import subprocess
 import tempfile
 import unittest
-from tests._helpers import requires_cabal
+
+from tests._helpers import requires_cabal, script_env
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -33,8 +33,7 @@ else:
     print('2026-10-03')
 ''')
             stub.chmod(0o755)
-            env = dict(os.environ, CACHE_PROBE=directory, REAL_GIT=shutil.which("git"),
-                       PATH=directory + os.pathsep + os.environ["PATH"])
+            env = script_env(directory, CACHE_PROBE=directory, REAL_GIT=shutil.which("git"))
             setup = [":module *Stability", "import Control.Concurrent", "import Control.Monad",
                      "import Data.Time.Clock (addUTCTime)",
                      "import System.Directory", f"setCurrentDirectory {json.dumps(directory)}"]

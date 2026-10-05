@@ -1,12 +1,11 @@
 """CouchDB recovery decisions without touching Docker or a real database."""
 
-import os
 from pathlib import Path
-import signal
 import subprocess
 import tempfile
-import time
 import unittest
+
+from tests._helpers import interrupt_when, script_env, stub_bin
 
 SCRIPT = Path(__file__).resolve().parents[1] / "tools/couchdb-update.sh"
 STUB = r'''#!/usr/bin/env python3
@@ -82,12 +81,7 @@ class CouchDBUpdateRecovery(unittest.TestCase):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.root = Path(tmp.name)
-        bin_dir = self.root / 'bin'
-        bin_dir.mkdir()
-        for name in ('docker', 'curl', 'cp'):
-            path = bin_dir / name
-            path.write_text(STUB)
-            path.chmod(0o755)
+        bin_dir = stub_bin(self.root / 'bin', ('docker', 'curl', 'cp'), STUB)
         (self.root / 'docker-compose.yml').write_text('image: couchdb:3\n')
         (self.root / 'server.env').write_text('COUCHDB_USER=admin\nCOUCHDB_PASSWORD=test-secret\n')
         (self.root / 'instance.ini').write_text('[couchdb]\nuuid = identity\n\n[chttpd_auth]\nsecret = cookie-secret\n')
@@ -96,8 +90,7 @@ class CouchDBUpdateRecovery(unittest.TestCase):
         (self.root / 'couchdb-data/data').write_text('original documents')
         (self.root / 'tag').write_text('sha256:new')
         self.state = self.root / 'state'
-        self.env = dict(os.environ, PATH=str(bin_dir) + os.pathsep + os.environ['PATH'],
-                        STUB_ROOT=str(self.root), DIR=str(self.root), STATE=str(self.state),
+        self.env = script_env(bin_dir, STUB_ROOT=str(self.root), DIR=str(self.root), STATE=str(self.state),
                         BACKUP='true', DBS='one two', WAIT='1', PULL='0',
                         STABLE='2', CHECK_EVERY='1')
 
@@ -106,17 +99,8 @@ class CouchDBUpdateRecovery(unittest.TestCase):
                               capture_output=True, text=True, timeout=15)
 
     def test_interruption_leaves_recovery_details_and_blocks_retry(self):
-        with subprocess.Popen(['bash', str(SCRIPT)], env=dict(self.env, STUB_MODE='interrupt'),
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                              start_new_session=True) as process:
-            try:
-                deadline = time.monotonic() + 10
-                while not (self.root / 'applied').exists() and time.monotonic() < deadline:
-                    time.sleep(0.02)
-                self.assertTrue((self.root / 'applied').exists())
-            finally:
-                os.killpg(process.pid, signal.SIGTERM)
-                process.communicate(timeout=5)
+        self.assertTrue(interrupt_when(['bash', str(SCRIPT)], dict(self.env, STUB_MODE='interrupt'),
+                                       self.root / 'applied'))
         self.assertTrue((self.state / 'needs-operator').exists())
         self.assertIn('sha256:old', (self.state / 'needs-operator').read_text())
         self.assertTrue((self.state / 'maintenance').exists())
@@ -125,6 +109,7 @@ class CouchDBUpdateRecovery(unittest.TestCase):
     def test_count_failure_refuses_before_stopping(self):
         result = self.run_update('bad-count')
         self.assertNotEqual(result.returncode, 0)
+        self.assertIn('could not count documents; not updating', result.stdout)
         self.assertFalse((self.root / 'stopped').exists(), result.stdout + result.stderr)
         self.assertFalse((self.state / 'maintenance').exists())
 
@@ -138,12 +123,14 @@ class CouchDBUpdateRecovery(unittest.TestCase):
     def test_missing_proxy_guard_refuses_before_stopping(self):
         result = self.run_update('unguarded')
         self.assertNotEqual(result.returncode, 0)
+        self.assertIn('sync proxy did not return maintenance 503', result.stdout)
         self.assertFalse((self.root / 'stopped').exists())
         self.assertFalse((self.state / 'maintenance').exists())
 
     def test_failed_cold_copy_resumes_verified_old_server(self):
         result = self.run_update('copy-failure')
         self.assertNotEqual(result.returncode, 0)
+        self.assertIn('could not copy the data directory; not updating', result.stdout)
         self.assertFalse((self.root / 'stopped').exists())
         self.assertFalse((self.state / 'maintenance').exists())
         self.assertFalse((self.state / 'needs-operator').exists())
@@ -151,6 +138,7 @@ class CouchDBUpdateRecovery(unittest.TestCase):
     def test_failed_candidate_stop_never_moves_live_data(self):
         result = self.run_update('rollback-stop-error')
         self.assertNotEqual(result.returncode, 0)
+        self.assertIn('could not stop candidate; operator needed', result.stdout)
         self.assertTrue((self.state / 'needs-operator').exists())
         self.assertTrue((self.state / 'maintenance').exists())
         self.assertFalse(list(self.root.glob('couchdb-data.failed-*')))
@@ -174,6 +162,7 @@ class CouchDBUpdateRecovery(unittest.TestCase):
         (self.root / 'instance.ini').write_text('; incomplete file\n')
         result = self.run_update()
         self.assertNotEqual(result.returncode, 0)
+        self.assertIn('instance.ini or local.ini is incomplete; refusing', result.stdout)
         self.assertFalse((self.root / 'stopped').exists())
 
     def test_a_release_that_answers_then_crash_loops_is_rolled_back(self):

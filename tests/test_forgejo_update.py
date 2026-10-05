@@ -1,12 +1,11 @@
 """Updater failure recovery, with no real Docker or service operations."""
 
-import os
 from pathlib import Path
-import signal
 import subprocess
 import tempfile
-import time
 import unittest
+
+from tests._helpers import interrupt_when, script_env, stub_bin
 
 SCRIPT = Path(__file__).resolve().parents[1] / "tools/forgejo-update.sh"
 STUB = r'''#!/usr/bin/env python3
@@ -70,17 +69,11 @@ class ForgejoUpdateRecovery(unittest.TestCase):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.root = Path(tmp.name)
-        bin_dir = self.root / "bin"
-        bin_dir.mkdir()
-        for name in ("docker", "curl"):
-            path = bin_dir / name
-            path.write_text(STUB)
-            path.chmod(0o755)
+        bin_dir = stub_bin(self.root / "bin", ("docker", "curl"), STUB)
         (self.root / "docker-compose.yml").write_text("image: codeberg.org/forgejo/forgejo:15\n")
         self.hold = self.root / "hold"
         self.attention = self.root / "needs-operator"
-        self.env = dict(os.environ, PATH=str(bin_dir) + os.pathsep + os.environ["PATH"],
-                        STUB_ROOT=str(self.root), DIR=str(self.root), BACKUP="true",
+        self.env = script_env(bin_dir, STUB_ROOT=str(self.root), DIR=str(self.root), BACKUP="true",
                         HOLD=str(self.hold), ATTENTION=str(self.attention),
                         WAIT="1", STABLE="2", CHECK_EVERY="1",
                         PRUNE="0", PULL="0", EOL="2099-07-15")
@@ -100,17 +93,8 @@ class ForgejoUpdateRecovery(unittest.TestCase):
         self.assertIn("previous update needs the operator", retry.stdout)
 
     def test_interrupted_replacement_leaves_a_sticky_failure(self):
-        with subprocess.Popen(["bash", str(SCRIPT)], env=dict(self.env, STUB_MODE="interrupt"),
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                              start_new_session=True) as process:
-            try:
-                deadline = time.monotonic() + 10
-                while not (self.root / "applied").exists() and time.monotonic() < deadline:
-                    time.sleep(0.02)
-                self.assertTrue((self.root / "applied").exists())
-            finally:
-                os.killpg(process.pid, signal.SIGTERM)
-                process.communicate(timeout=5)
+        self.assertTrue(interrupt_when(["bash", str(SCRIPT)], dict(self.env, STUB_MODE="interrupt"),
+                                       self.root / "applied"))
         self.assertTrue(self.attention.exists())
         self.assertEqual(self.hold.read_text().strip(), "sha256:new")
 

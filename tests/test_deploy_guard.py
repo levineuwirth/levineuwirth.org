@@ -8,24 +8,22 @@ Run with: ``python3 -m unittest tests.test_deploy_guard``.
 
 from __future__ import annotations
 
-import os
 import shutil
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 
+from tests._helpers import script_env
+
 GUARD = Path(__file__).resolve().parent.parent / "tools" / "deploy-guard.sh"
 
 
 def guard(*args: str, **env: str) -> subprocess.CompletedProcess:
-    # The deploy's own overrides (DEPLOY_ALLOW_DELETE, DEPLOY_NEW_DOCROOT,
-    # DEPLOY_MAX_DELETE) reach this suite when `make deploy` runs it; left
-    # in place they made the refusal tests fail and blocked the very deploy
-    # the override was meant to allow. Each test sets what it needs.
-    clean = {k: v for k, v in os.environ.items() if not k.startswith("DEPLOY_")}
+    # script_env drops the deploy's own DEPLOY_* overrides, which reach this
+    # suite when `make deploy` runs it; each test sets what it needs.
     return subprocess.run(["bash", str(GUARD), *args], capture_output=True, text=True,
-                          env={**clean, **env})
+                          env=script_env(**env))
 
 
 class Docroot(unittest.TestCase):

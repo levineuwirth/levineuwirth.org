@@ -14,14 +14,13 @@ does not notice an identifier going away.
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 
-from tests._helpers import requires_cabal, site_binary
+from tests._helpers import requires_cabal, script_env, site_binary
 
 
 def entry(url: str, score: float) -> dict:
@@ -55,7 +54,7 @@ class FooterDataTests(unittest.TestCase):
         (self.dir / "data/similar-links.json").write_text(json.dumps(self.similar))
         return subprocess.run([str(self.binary), "footer-data"], cwd=self.dir,
                               capture_output=True, text=True,
-                              env={**os.environ, "SITE_ENV": "production", **(env or {})})
+                              env=script_env(**{"SITE_ENV": "production", **(env or {})}))
 
     def read(self, name: str) -> dict:
         return json.loads((self.dir / "data/footer" / name).read_text())
@@ -115,7 +114,7 @@ class FooterDataTests(unittest.TestCase):
     def test_missing_inputs_count_as_empty(self) -> None:
         done = subprocess.run([str(self.binary), "footer-data"], cwd=self.dir,
                               capture_output=True, text=True,
-                              env={**os.environ, "SITE_ENV": "production"})
+                              env=script_env(SITE_ENV="production"))
         self.assertEqual(done.returncode, 0, done.stderr)
         self.assertEqual(list((self.dir / "data/footer").iterdir()), [])
 

@@ -17,6 +17,8 @@ import time
 import tempfile
 import unittest
 
+from tests._helpers import script_env, stub_bin
+
 TOOLS = Path(__file__).resolve().parents[1] / 'tools'
 SCRIPT = TOOLS / 'vps-config-backup.sh'
 
@@ -67,15 +69,11 @@ class ConfigBackup(unittest.TestCase):
             p.parent.mkdir(parents=True, exist_ok=True)
             p.write_text(text)
         bin_ = self.tmp / 'bin'
-        bin_.mkdir()
         for name, body in STUBS.items():
-            (bin_ / name).write_text('#!/bin/sh\n' + body + '\n')
-            (bin_ / name).chmod(0o755)
+            stub_bin(bin_, [name], '#!/bin/sh\n' + body + '\n')
         self.dest = self.tmp / 'dest'
-        self.env = dict(os.environ, PATH=f'{bin_}{os.pathsep}{os.environ["PATH"]}',
-                        CONFIG_ROOT=str(self.root), DEST=str(self.dest), TMPDIR=str(self.tmp),
+        self.env = script_env(bin_, CONFIG_ROOT=str(self.root), DEST=str(self.dest), TMPDIR=str(self.tmp),
                         BACKUP_PAIR_LIB=str(TOOLS / 'backup-pair.sh'))
-        self.env.pop('BORG_REPO', None)
 
     def run_job(self, *args, env=None):
         return subprocess.run(['bash', str(SCRIPT), *args], env=env or self.env,

@@ -4,6 +4,7 @@ has its own tests in test_archive_probe.py."""
 
 import datetime
 import json
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -221,7 +222,7 @@ class ManifestPreScanTests(unittest.TestCase):
 
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp(prefix="archive-manifest-"))
-        self.addCleanup(lambda: __import__("shutil").rmtree(self.tmp))
+        self.addCleanup(shutil.rmtree, self.tmp)
         (self.tmp / "removed.yaml").write_text("[]\n")
         patches = [mock.patch.object(archive, "REMOVED", self.tmp / "removed.yaml"),
                    mock.patch.object(archive, "err")]
@@ -258,7 +259,7 @@ class ManifestPreScanTests(unittest.TestCase):
 class SnapshotTests(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp(prefix="archive-"))
-        self.addCleanup(lambda: [p.unlink() for p in self.tmp.iterdir()] and self.tmp.rmdir())
+        self.addCleanup(shutil.rmtree, self.tmp)
 
     def page(self, body, head=""):
         p = self.tmp / "snapshot.html"
