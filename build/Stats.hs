@@ -127,11 +127,25 @@ commaInt n
         | x < 100   = "0"  ++ show x
         | otherwise = show x
 
+-- | Reading time at 200 words a minute, rounded up like a page's own
+--   ('readingTime'), so a total never reads shorter than its parts.
 rtStr :: Int -> String
 rtStr totalWords
     | mins < 60 = show mins ++ " min"
     | otherwise = show (mins `div` 60) ++ "h " ++ show (mins `mod` 60) ++ "m"
-  where mins = totalWords `div` 200
+  where mins = (totalWords + 199) `div` 200
+
+-- | The pages that count when describing length: average, median, longest
+--   and shortest, on /stats/ and /build/ alike. Below 50 words are
+--   placeholder pages ("a fuller write-up follows"), which are real pages
+--   but are not what a reader means by the shortest thing here.
+substantial :: [PageInfo] -> [PageInfo]
+substantial = filter ((> 50) . piWC)
+
+-- | Mean words per page; 0 for none.
+averageWords :: [PageInfo] -> Int
+averageWords [] = 0
+averageWords ps = sum (map piWC ps) `div` length ps
 
 pctStr :: Int -> Int -> String
 pctStr _ 0     = "—"
@@ -517,12 +531,11 @@ renderCorpus typeRows allPIs =
                     , txt (rtStr totalWords)
                     ])
   where
-    hasSomeWC      = filter (\p -> piWC p > 0) allPIs
     totalWords     = sum (map trWords typeRows)
     writtenPages   = sum [ trCount r | r <- typeRows,       trProse r ]
     unwrittenPages = sum [ trCount r | r <- typeRows, not (trProse r) ]
-    avgWC          = if null hasSomeWC then 0 else totalWords `div` length hasSomeWC
-    medWC          = median (map piWC hasSomeWC)
+    avgWC          = averageWords (substantial allPIs)
+    medWC          = median (map piWC (substantial allPIs))
 
 renderNotable :: [PageInfo] -> H.Html
 renderNotable allPIs =
@@ -532,7 +545,7 @@ renderNotable allPIs =
         H.p (H.strong "Shortest")
         pageList (take 5 (sortBy (comparing piWC) hasSomeWC))
   where
-    hasSomeWC = filter (\p -> piWC p > 50) allPIs
+    hasSomeWC = substantial allPIs
     pageList ps = H.ol H.! A.class_ "build-page-list" $
         mapM_ (\p -> H.li $ do
                   pageLink (piUrl p) (piTitle p)
@@ -811,12 +824,8 @@ renderPages allPIs mOldest mNewest =
         H.p (H.strong "Shortest")
         pageList (take 3 (sortBy (comparing piWC)         hasSomeWC))
   where
-    -- Same floor as 'renderNotable' on /stats/. Below it are placeholder
-    -- pages ("a fuller write-up follows"), which are real pages but are not
-    -- what a reader means by the shortest thing here.
-    hasSomeWC = filter (\p -> piWC p > 50) allPIs
-    avgWC     = if null hasSomeWC then 0
-                else sum (map piWC hasSomeWC) `div` length hasSomeWC
+    hasSomeWC = substantial allPIs
+    avgWC     = averageWords hasSomeWC
     datedLink d t u = do
         txt (d ++ " \x2014 ")
         pageLink u t
