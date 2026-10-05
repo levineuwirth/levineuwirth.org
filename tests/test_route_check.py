@@ -60,6 +60,16 @@ class RouteCheckTests(unittest.TestCase):
                               "photography/denmark/harbor/index.html"])
             self.assertEqual(claims["essays/a.html"], ["content/essays/a.md"])
 
+    def test_expand_tags_is_the_build_expansion(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            done = subprocess.run([str(site_binary()), "expand-tags"], cwd=directory,
+                                  input="photography//denmark/harbor\nmusic\nnotes/a/\n",
+                                  env=script_env(), capture_output=True, text=True, timeout=60)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        # Ancestors added, empty segments dropped, section names left out.
+        self.assertEqual(done.stdout.splitlines(),
+                         ["photography/denmark", "photography/denmark/harbor", "notes", "notes/a"])
+
     def test_build_refuses_before_writing_anything(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

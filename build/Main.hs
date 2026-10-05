@@ -26,7 +26,7 @@ import Data.Maybe            (fromMaybe)
 import Utils                 (boolSpellings, isDevBuild, outputDirFor)
 import FooterData            (writeFooterData)
 import RouteCheck            (siteRoutes, siteRulesValue, withUniqueRoutes)
-import Tags                  (buildAllTags, sectionOwnedTopLevelTags)
+import Tags                  (buildAllTags, pagedTags)
 import Hakyll                (tagsMap)
 
 -- | Stamp the start of this build into @data/build-stamp.txt@ before
@@ -63,8 +63,9 @@ writeBuildStamp = do
 -- @site list-links ROOT@ prints each distinct link target on the published
 -- pages under ROOT ("PageScan"), for tools/code-refs.py; @site list-routes@
 -- prints every output path and the item routed there, tab-separated, for
--- tools/import-content.py (build/RouteCheck.hs), and @site list-tags@ each
--- tag that gets a page, for tools/scaffold-photos.py. A build refuses to
+-- tools/import-content.py (build/RouteCheck.hs); @site list-tags@ each tag
+-- that gets a page, and @site expand-tags@ the pages the tags on stdin would
+-- get ('Tags.pagedTags'), for tools/scaffold-photos.py. A build refuses to
 -- run when two items share an output path ('withUniqueRoutes').
 main :: IO ()
 main = do
@@ -88,6 +89,7 @@ main = do
             dev <- isDevBuild
             routed <- siteRoutes (siteConfigurationFor dev) (withoutUnpublished currentUnpublished rules)
             mapM_ (\(path, ident) -> putStrLn (path ++ "\t" ++ toFilePath ident)) routed
+        ["expand-tags"] -> getContents >>= mapM_ putStrLn . pagedTags . lines
         ["list-tags"] -> do
             dev <- isDevBuild
             tags <- siteRulesValue (siteConfigurationFor dev) buildAllTags
@@ -109,7 +111,6 @@ sharedRules :: Map.Map String Aeson.Value
 sharedRules = Map.fromList
     [ ("epistemic-vocabulary", Aeson.toJSON (Map.fromList epistemicVocabulary))
     , ("reserved-sections",    Aeson.toJSON reservedSectionDirs)
-    , ("section-owned-tags",   Aeson.toJSON sectionOwnedTopLevelTags)
     , ("photo-variant-widths", Aeson.toJSON photoVariantWidths)
     , ("archive-tracking-params", Aeson.toJSON trackingParams)
     , ("boolean-spellings",    Aeson.toJSON (Map.fromList

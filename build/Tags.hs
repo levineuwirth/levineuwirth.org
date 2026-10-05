@@ -20,7 +20,7 @@
 --   and the corresponding @$if$@ blocks render nothing.
 module Tags
     ( buildAllTags
-    , sectionOwnedTopLevelTags
+    , pagedTags
     , applyTagRules
     , anchoredTagsRules
     , tagPaginationThreshold
@@ -105,12 +105,16 @@ sectionOwnedTopLevelTags =
     ]
 
 -- | All expanded tags for an item (reads the "tags" metadata field).
---   Filters out any 'sectionOwnedTopLevelTags' to prevent route
---   collisions with section landings.
 getExpandedTags :: MonadMetadata m => Identifier -> m [String]
-getExpandedTags ident =
-    filter (`notElem` sectionOwnedTopLevelTags) . nub . concatMap expandTag
-        <$> getTags ident
+getExpandedTags ident = pagedTags <$> getTags ident
+
+-- | The tags that get a page for a list of tags as written: each with its
+--   ancestors, empty path segments dropped ("photography//a" pages
+--   @photography/a@), less the 'sectionOwnedTopLevelTags', which would
+--   collide with section landings. @site expand-tags@ answers this for
+--   tools/scaffold-photos.py, whose own copy kept the empty segments.
+pagedTags :: [String] -> [String]
+pagedTags = filter (`notElem` sectionOwnedTopLevelTags) . nub . concatMap expandTag
 
 
 -- ---------------------------------------------------------------------------

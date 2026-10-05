@@ -107,6 +107,29 @@ class Importers(unittest.TestCase):
                       "content/photography/denmark/harbor.md", done.stderr)
         self.assertFalse((self.photos / "quay").exists())
 
+    def test_empty_tag_segments_are_judged_as_the_build_expands_them(self):
+        # The build drops empty path segments: photography//denmark/harbor
+        # pages photography/denmark and photography/denmark/harbor. A Python
+        # copy of the expansion kept them, so both importers copied the
+        # photos and the next build refused the collision.
+        (self.photos / "denmark").mkdir()
+        (self.photos / "denmark" / "index.md").write_text(
+            "---\ntitle: Denmark\ndate: 2026-01-01\ntags: [photography]\n---\n")
+        (self.photos / "denmark" / "harbor.md").write_text(
+            "---\ntitle: Harbor\ndate: 2026-01-02\nseries: denmark\ntags: [photography]\n---\n")
+        single = self.run_single("quay", "--tags", "photography//denmark/harbor")
+        bulk = self.run_bulk([f"{self.original}\tpier"], "--tags", "photography//denmark/harbor")
+        for done in (single, bulk):
+            self.assertNotEqual(done.returncode, 0)
+            self.assertIn("tag 'photography/denmark' collides with "
+                          "content/photography/denmark/index.md", done.stderr)
+            self.assertIn("tag 'photography/denmark/harbor' collides with "
+                          "content/photography/denmark/harbor.md", done.stderr)
+        self.assertFalse((self.photos / "quay").exists())
+        self.assertFalse((self.photos / "pier").exists())
+        self.assertEqual(sorted(p.name for p in (self.photos / "denmark").iterdir()),
+                         ["harbor.md", "index.md"])
+
     def test_a_tag_cannot_claim_what_the_same_import_creates(self):
         bulk = self.run_bulk([f"{self.original}\tquay"], "--series", "harbor-roll",
                              "--tags", "harbor-roll")

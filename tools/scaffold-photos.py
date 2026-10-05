@@ -44,7 +44,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import front_matter  # noqa: E402
 import photo_sidecars  # noqa: E402
-import shared_rules  # noqa: E402
 import unpublished  # noqa: E402
 
 REPO_ROOT = Path(__file__).parent.parent
@@ -67,23 +66,15 @@ def title_from_slug(slug: str) -> str:
     return " ".join(w.capitalize() for w in slug.split("-"))
 
 
-def site_listing(command: str) -> list[str]:
-    """`site list-routes` or `site list-tags`, for the tree at REPO_ROOT."""
-    return subprocess.run([unpublished.site_binary(), command], cwd=REPO_ROOT,
+def site_listing(command: str, stdin: str = "") -> list[str]:
+    """`site list-routes`, `site list-tags` or `site expand-tags`, for the
+    tree at REPO_ROOT."""
+    return subprocess.run([unpublished.site_binary(), command], cwd=REPO_ROOT, input=stdin,
                           capture_output=True, text=True, check=True).stdout.splitlines()
 
 
-def tag_pages(tags: list[str], unpaged: list[str]) -> list[str]:
-    """The tags that get a page: each tag and every ancestor (a tag
-    photography/a/b pages photography/a too), less the top-level names a
-    section owns. As build/Tags.hs expands and filters them."""
-    pages = {"/".join(t.split("/")[:n]) for t in tags for n in range(1, t.count("/") + 2)}
-    return sorted(pages - set(unpaged))
-
-
-def namespace_problems(series: str, tags: list[str], slugs: list[str],
-                       routes: list[tuple[str, str]], paged: set[str],
-                       unpaged: list[str]) -> list[str]:
+def namespace_problems(series: str, pages: list[str], slugs: list[str],
+                       routes: list[tuple[str, str]], paged: set[str]) -> list[str]:
     """Series, photographs and tags share one URL space: a series lives at
     /photography/<series>/, a photograph at /photography/[<series>/]<slug>/,
     and a tag, with each of its ancestors, at /<tag>/. The build refuses two
@@ -91,11 +82,14 @@ def namespace_problems(series: str, tags: list[str], slugs: list[str],
     copied and the entries written; refused here instead, where the decision
     is still on the command line.
 
-    `routes` is what the build routes now (`site list-routes`) and `paged`
-    the tags that already have a page (`site list-tags`): asked of the
-    generator rather than guessed from directory names, which missed a
-    nested tag naming a photograph. Judges `tags` as they will be written
-    (build_tags), not as typed."""
+    `pages` are the tag pages this import's tags get, as the generator
+    expands them (`site expand-tags`: ancestors added, empty segments
+    dropped, section names left out); `routes` is what the build routes
+    now (`site list-routes`) and `paged` the tags that already have a page
+    (`site list-tags`). All asked of the generator rather than guessed:
+    directory names missed a nested tag naming a photograph, and a Python
+    copy of the expansion missed photography//denmark. Judges the tags as
+    they will be written (build_tags), not as typed."""
     owners: dict[str, list[str]] = {}
     for route, source in routes:
         owners.setdefault(route, []).append(source)
@@ -119,7 +113,7 @@ def namespace_problems(series: str, tags: list[str], slugs: list[str],
         new[f"{where}/index.html"] = (f"photograph '{slug}' being imported", own)
 
     problems = []
-    for tag in tag_pages(tags, unpaged):
+    for tag in pages:
         route = f"{tag}/index.html"
         if route in new:
             problems.append(f"tag '{tag}' collides with the {new[route][0]}: "
@@ -145,13 +139,14 @@ def main() -> int:
         try:
             routes = [tuple(line.split("\t", 1)) for line in site_listing("list-routes")]
             paged = set(site_listing("list-tags"))
+            pages = site_listing("expand-tags", "\n".join(tags) + "\n")
         except (OSError, subprocess.CalledProcessError) as exc:
             detail = getattr(exc, "stderr", "") or str(exc)
             print(f"scaffold-photos: could not list the site's routes: {detail.strip()}",
                   file=sys.stderr)
             return 2
-        problems = namespace_problems(series, tags, os.environ.get("SLUGS", "").split(),
-                                      routes, paged, shared_rules.shared_rules()["section-owned-tags"])
+        problems = namespace_problems(series, pages, os.environ.get("SLUGS", "").split(),
+                                      routes, paged)
         for p in problems:
             print(f"scaffold-photos: {p}", file=sys.stderr)
         return 2 if problems else 0
