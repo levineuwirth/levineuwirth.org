@@ -152,6 +152,9 @@ content/photography/**/*.palette.yaml
 # attrs on every <img> for CLS prevention). Same churn-avoidance reasons
 # as the photography sidecars above; recreated on every `make build`.
 **/*.dims.yaml
+# ...except the golden fixture's: it is test input (the expected width and
+# height of plate.png), and a fresh checkout without it failed the golden test.
+!tests/golden/*.dims.yaml
 
 # Photography delivery images.
 #
