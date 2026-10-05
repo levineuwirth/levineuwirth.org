@@ -69,17 +69,16 @@ done
 #
 # Series and tags share one URL space: a series lives at /photography/<slug>/
 # and a tag index at /photography/<tag>/. Tagging Danish frames `denmark` while
-# a `denmark` series exists makes both claim the same route, and Hakyll fails
-# the whole build with "multiple writes for route" — which names the conflict
-# but not the decision that caused it, several hundred files after the fact.
+# a `denmark` series exists makes both claim the same route, and the build
+# refuses to run (build/RouteCheck.hs) — which names the conflict, but only
+# after the photos are copied and the entries written.
 #
 # Cheaper to refuse here, where the offending tag is still on the command line.
 # ---------------------------------------------------------------------------
 # The check is scaffold-photos.py --check, which judges the tags as they
 # will be written; a check here in the shell split "street art" into two
-# words that were never the tag written ("streetart").
-SERIES="$SERIES" TAGS="$TAGS" \
-    "$REPO_ROOT/.venv/bin/python" "$REPO_ROOT/tools/scaffold-photos.py" --check || exit 2
+# words that were never the tag written ("streetart"). It runs once the
+# manifest is read, since a photograph's slug can collide too.
 
 # ---------------------------------------------------------------------------
 # Parse and validate the whole manifest before writing anything. A batch that
@@ -128,6 +127,8 @@ if [ "$errors" -gt 0 ]; then
     exit 1
 fi
 [ "$n" -gt 0 ] || { echo "import-photos: manifest is empty" >&2; exit 1; }
+SERIES="$SERIES" TAGS="$TAGS" SLUGS="${SLUGS[*]}" \
+    "$REPO_ROOT/.venv/bin/python" "$REPO_ROOT/tools/scaffold-photos.py" --check || exit 2
 
 echo "import-photos: $n photograph(s)${SERIES:+ into series '$SERIES'}"
 if ! $EXECUTE; then

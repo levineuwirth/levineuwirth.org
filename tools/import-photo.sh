@@ -159,7 +159,7 @@ fi
 
 # The namespace guard (scaffold-photos.py --check), on the tags as they will
 # be written, before anything is copied.
-SERIES="$SERIES" TAGS="$EXTRA_TAGS" \
+SERIES="$SERIES" TAGS="$EXTRA_TAGS" SLUGS="$SLUG" \
     "$REPO_ROOT/.venv/bin/python" "$REPO_ROOT/tools/scaffold-photos.py" --check || exit 2
 
 mkdir -p "$ENTRY_DIR"

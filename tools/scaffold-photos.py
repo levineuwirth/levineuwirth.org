@@ -21,7 +21,8 @@ tags went unquoted).
     scaffold-photos.py --check
 
 is the importers' namespace guard (see namespace_problems), run before
-either copies a photograph: it judges the tags as they will be written.
+either copies a photograph, with SERIES, TAGS and SLUGS (space-separated)
+in the environment: it judges the tags as they will be written.
 
 The frontmatter written here is the durable copy of the camera metadata: the
 sidecars are gitignored and are regenerated from delivery files that have had
@@ -35,6 +36,7 @@ commit exact positions to a public repository and route around it.
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -42,6 +44,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import front_matter  # noqa: E402
 import photo_sidecars  # noqa: E402
+import shared_rules  # noqa: E402
+import unpublished  # noqa: E402
 
 REPO_ROOT = Path(__file__).parent.parent
 TODAY = __import__("datetime").datetime.now(__import__("datetime").timezone.utc).date().isoformat()
@@ -63,40 +67,71 @@ def title_from_slug(slug: str) -> str:
     return " ".join(w.capitalize() for w in slug.split("-"))
 
 
-def entry_tags(path: Path) -> list[str]:
-    """The tags an existing entry's front matter gives it, as a list."""
-    try:
-        tags = front_matter.load(path.read_text(encoding="utf-8")).get("tags") or []
-    except (OSError, UnicodeDecodeError, front_matter.yaml.YAMLError):
-        return []
-    if isinstance(tags, str):
-        tags = tags.split(",")
-    return [str(t).strip() for t in tags if str(t).strip()]
+def site_listing(command: str) -> list[str]:
+    """`site list-routes` or `site list-tags`, for the tree at REPO_ROOT."""
+    return subprocess.run([unpublished.site_binary(), command], cwd=REPO_ROOT,
+                          capture_output=True, text=True, check=True).stdout.splitlines()
 
 
-def namespace_problems(series: str, tags: list[str], photo_root: Path) -> list[str]:
-    """Series and tags share one URL space: a series lives at
-    /photography/<series>/ and a tag at /<tag>/, so photography/<x> claims
-    /photography/<x>/ too. Two claims on one route fail the whole build
-    with "multiple writes for route", which names the conflict but not the
-    import that caused it, several hundred files after the fact; refused
-    here instead, where the decision is still on the command line. Judges
-    `tags` as they will be written (build_tags), not as typed."""
-    problems = []
-    for tag in tags:
-        name = tag.removeprefix("photography/")
-        if (name != tag and "/" not in name and name != series
-                and (photo_root / name).is_dir()):
-            problems.append(f"tag '{tag}' collides with the series '{name}': both would "
-                            f"claim /photography/{name}/. Use another tag, or rename the series.")
+def tag_pages(tags: list[str], unpaged: list[str]) -> list[str]:
+    """The tags that get a page: each tag and every ancestor (a tag
+    photography/a/b pages photography/a too), less the top-level names a
+    section owns. As build/Tags.hs expands and filters them."""
+    pages = {"/".join(t.split("/")[:n]) for t in tags for n in range(1, t.count("/") + 2)}
+    return sorted(pages - set(unpaged))
+
+
+def namespace_problems(series: str, tags: list[str], slugs: list[str],
+                       routes: list[tuple[str, str]], paged: set[str],
+                       unpaged: list[str]) -> list[str]:
+    """Series, photographs and tags share one URL space: a series lives at
+    /photography/<series>/, a photograph at /photography/[<series>/]<slug>/,
+    and a tag, with each of its ancestors, at /<tag>/. The build refuses two
+    claims on one route (build/RouteCheck.hs), but only after the photos are
+    copied and the entries written; refused here instead, where the decision
+    is still on the command line.
+
+    `routes` is what the build routes now (`site list-routes`) and `paged`
+    the tags that already have a page (`site list-tags`): asked of the
+    generator rather than guessed from directory names, which missed a
+    nested tag naming a photograph. Judges `tags` as they will be written
+    (build_tags), not as typed."""
+    owners: dict[str, list[str]] = {}
+    for route, source in routes:
+        owners.setdefault(route, []).append(source)
+    tag_routes = {f"{t}/index.html": t for t in paged}
+
+    def url(route: str) -> str:
+        return "/" + route.removesuffix("index.html")
+
+    def describe(source: str) -> str:
+        return f"the tag '{tag_routes[source]}'" if source in tag_routes else source
+
+    # What this import adds, and which existing item may already hold each
+    # route (a re-import into an existing series is no claim).
+    new: dict[str, tuple[str, str]] = {}
     if series:
-        claim = f"photography/{series}"
-        for md in sorted(photo_root.rglob("*.md")):
-            if claim in entry_tags(md):
-                problems.append(f"series '{series}' collides with the tag '{claim}' on "
-                                f"{md.relative_to(photo_root.parent.parent)}: both would claim "
-                                f"/photography/{series}/.")
-                break
+        new[f"photography/{series}/index.html"] = (
+            f"series '{series}'", f"content/photography/{series}/index.md")
+    for slug in slugs:
+        where = f"photography/{series}/{slug}" if series else f"photography/{slug}"
+        own = f"content/{where}.md" if series else f"content/{where}/index.md"
+        new[f"{where}/index.html"] = (f"photograph '{slug}' being imported", own)
+
+    problems = []
+    for tag in tag_pages(tags, unpaged):
+        route = f"{tag}/index.html"
+        if route in new:
+            problems.append(f"tag '{tag}' collides with the {new[route][0]}: "
+                            f"both would claim {url(route)}.")
+        elif tag not in paged and owners.get(route):
+            problems.append(f"tag '{tag}' collides with {describe(owners[route][0])}: "
+                            f"both would claim {url(route)}.")
+    for route, (what, own) in new.items():
+        for source in owners.get(route, []):
+            if source != own:
+                problems.append(f"{what} collides with {describe(source)}: "
+                                f"both would claim {url(route)}.")
     return problems
 
 
@@ -107,7 +142,16 @@ def main() -> int:
     args     = sys.argv[1:]
 
     if args == ["--check"]:
-        problems = namespace_problems(series, tags, REPO_ROOT / "content" / "photography")
+        try:
+            routes = [tuple(line.split("\t", 1)) for line in site_listing("list-routes")]
+            paged = set(site_listing("list-tags"))
+        except (OSError, subprocess.CalledProcessError) as exc:
+            detail = getattr(exc, "stderr", "") or str(exc)
+            print(f"scaffold-photos: could not list the site's routes: {detail.strip()}",
+                  file=sys.stderr)
+            return 2
+        problems = namespace_problems(series, tags, os.environ.get("SLUGS", "").split(),
+                                      routes, paged, shared_rules.shared_rules()["section-owned-tags"])
         for p in problems:
             print(f"scaffold-photos: {p}", file=sys.stderr)
         return 2 if problems else 0

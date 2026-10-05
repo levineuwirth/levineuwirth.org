@@ -15,7 +15,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests._helpers import ROOT, script_env
+from tests._helpers import ROOT, requires_cabal, script_env, site_binary
 
 try:
     import yaml
@@ -27,6 +27,7 @@ READY = (yaml is not None and shutil.which("magick") and shutil.which("exiftool"
          and (ROOT / ".venv" / "bin" / "python").exists())
 
 
+@requires_cabal
 @unittest.skipUnless(READY, "needs magick, exiftool and the .venv")
 class Importers(unittest.TestCase):
     def setUp(self):
@@ -39,20 +40,24 @@ class Importers(unittest.TestCase):
         (self.repo / ".venv").symlink_to(ROOT / ".venv")
         self.photos = self.repo / "content" / "photography"
         self.photos.mkdir(parents=True)
+        # The namespace guard asks the generator what the tree routes
+        # (`site list-routes`), which reads data/ as a build does.
+        (self.repo / "data").mkdir()
+        self.env = script_env(SITE_DRAFTS_BINARY=str(site_binary()))
         self.original = self.tmp / "original.jpg"
         Image.new("RGB", (300, 200), (200, 50, 50)).save(self.original, quality=90)
 
     def run_single(self, *args):
         return subprocess.run(["bash", str(self.repo / "tools" / "import-photo.sh"),
                                str(self.original), *args],
-                              env=script_env(), capture_output=True, text=True, timeout=120)
+                              env=self.env, capture_output=True, text=True, timeout=120)
 
     def run_bulk(self, manifest_lines, *args):
         manifest = self.tmp / "manifest.tsv"
         manifest.write_text("".join(line + "\n" for line in manifest_lines))
         return subprocess.run(["bash", str(self.repo / "tools" / "import-photos.sh"),
                                "--manifest", str(manifest), *args, "--execute"],
-                              env=script_env(), capture_output=True, text=True, timeout=120)
+                              env=self.env, capture_output=True, text=True, timeout=120)
 
     def front_matter(self, path):
         return yaml.safe_load(path.read_text().split("---")[1])
@@ -79,11 +84,47 @@ class Importers(unittest.TestCase):
     def test_a_series_cannot_claim_an_existing_tag(self):
         (self.photos / "old").mkdir()
         (self.photos / "old" / "index.md").write_text(
-            '---\ntitle: Old\ntags: ["photography", "photography/night"]\n---\n')
+            '---\ntitle: Old\ndate: 2026-01-01\ntags: ["photography", "photography/night"]\n---\n')
         done = self.run_single("harbor", "--series", "night")
         self.assertNotEqual(done.returncode, 0)
         self.assertIn("/photography/night/", done.stderr)
         self.assertFalse((self.photos / "night").exists())
+
+    def test_a_nested_tag_cannot_claim_a_photograph_or_its_series(self):
+        # photography/denmark/harbor pages /photography/denmark/harbor/ and,
+        # as an ancestor, /photography/denmark/: the series' entry and its
+        # landing. The old guard looked only at one-level tags.
+        (self.photos / "denmark").mkdir()
+        (self.photos / "denmark" / "index.md").write_text(
+            "---\ntitle: Denmark\ndate: 2026-01-01\ntags: [photography]\n---\n")
+        (self.photos / "denmark" / "harbor.md").write_text(
+            "---\ntitle: Harbor\ndate: 2026-01-02\nseries: denmark\ntags: [photography]\n---\n")
+        done = self.run_single("quay", "--tags", "photography/denmark/harbor")
+        self.assertNotEqual(done.returncode, 0)
+        self.assertIn("tag 'photography/denmark' collides with content/photography/denmark/index.md",
+                      done.stderr)
+        self.assertIn("tag 'photography/denmark/harbor' collides with "
+                      "content/photography/denmark/harbor.md", done.stderr)
+        self.assertFalse((self.photos / "quay").exists())
+
+    def test_a_tag_cannot_claim_what_the_same_import_creates(self):
+        bulk = self.run_bulk([f"{self.original}\tquay"], "--series", "harbor-roll",
+                             "--tags", "harbor-roll")
+        self.assertNotEqual(bulk.returncode, 0)
+        self.assertIn("tag 'photography/harbor-roll' collides with the series 'harbor-roll': "
+                      "both would claim /photography/harbor-roll/", bulk.stderr)
+        self.assertFalse((self.photos / "harbor-roll").exists())
+
+    def test_a_photograph_cannot_claim_a_tag_page(self):
+        (self.photos / "old").mkdir()
+        (self.photos / "old" / "index.md").write_text(
+            '---\ntitle: Old\ndate: 2026-01-01\ntags: ["photography", "photography/roll/quay"]\n---\n')
+        bulk = self.run_bulk([f"{self.original}\tquay"], "--series", "roll")
+        self.assertNotEqual(bulk.returncode, 0)
+        self.assertIn("series 'roll' collides with the tag 'photography/roll'", bulk.stderr)
+        self.assertIn("photograph 'quay' being imported collides with the tag "
+                      "'photography/roll/quay'", bulk.stderr)
+        self.assertFalse((self.photos / "roll").exists())
 
     def test_bulk_import_still_imports(self):
         done = self.run_bulk([f"{self.original}\tquay-one", f"{self.original}\tquay-two\tQuay Two"],
