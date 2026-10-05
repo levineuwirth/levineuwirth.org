@@ -46,6 +46,7 @@ import           Text.Pandoc.Walk
 
 import           BibExtras           (BibExtra (..), emptyBibExtra, parseBibExtras)
 import qualified Filters.Archive     (annotateBlock)
+import qualified Filters.Links       (pdfViewerTarget)
 
 
 -- ---------------------------------------------------------------------------
@@ -391,12 +392,12 @@ wrapFirstTitle href inls = reverse . fst $ foldl step ([], False) inls
         _          -> (inl:acc, False)
 
 -- | Build the @.pdf-link[data-pdf-src]@ anchor that popups.js binds to.
---   See @static/js/popups.js:112@ for the matching selector.
+--   A hosted PDF opens in the PDF.js viewer, as a body link to one does
+--   ('Filters.Links.pdfViewerTarget'); any other @file:@ is linked as is.
 asPdfLink :: Text -> [Inline] -> Inline
 asPdfLink href content =
-    Link ("", ["pdf-link"], [("data-pdf-src", href)])
-         content
-         (href, "")
+    let (url, src) = fromMaybe (href, href) (Filters.Links.pdfViewerTarget href)
+    in  Link ("", ["pdf-link"], [("data-pdf-src", src)]) content (url, "")
 
 -- | Trailing keyword strip, linking each keyword to the future
 --   @/bibliography/\<keyword\>/@ page. Returns @[]@ when the keyword

@@ -8,7 +8,7 @@
 --   * Adds @data-link-icon@ / @data-link-icon-type@ attributes for
 --     per-domain brand icons (see 'domainIcon' for the full list).
 --   * Adds @target="_blank" rel="noopener noreferrer"@ to external links.
-module Filters.Links (apply) where
+module Filters.Links (apply, pdfViewerTarget) where
 
 import           Data.Text            (Text)
 import qualified Data.Text            as T
@@ -35,15 +35,22 @@ apply = walk classifyLink . walk classifyPdfLink
 --   after the viewer URL so PDF.js's anchor handling works.
 classifyPdfLink :: Inline -> Inline
 classifyPdfLink (Link (ident, classes, kvs) ils (url, title))
-    | "/" `T.isPrefixOf` url
-    , isPdfUrl (T.unpack url)
-    , "pdf-link" `notElem` classes =
-        let (path, fragment) = T.break (== '#') url
-            viewerUrl = T.pack (pdfViewerUrl (T.unpack path)) <> fragment
-            classes'  = classes ++ ["pdf-link"]
+    | "pdf-link" `notElem` classes
+    , Just (viewerUrl, path) <- pdfViewerTarget url =
+        let classes'  = classes ++ ["pdf-link"]
             kvs'      = kvs ++ [("data-pdf-src", path)]
         in  Link (ident, classes', kvs') ils (viewerUrl, title)
 classifyPdfLink x = x
+
+-- | For a root-relative PDF URL, the viewer URL to link to (fragment kept)
+--   and the bare path for @data-pdf-src@; Nothing for anything else. Body
+--   links and the bibliography's titles ('Citations') both open this way.
+pdfViewerTarget :: Text -> Maybe (Text, Text)
+pdfViewerTarget url
+    | "/" `T.isPrefixOf` url, isPdfUrl (T.unpack url) =
+        let (path, fragment) = T.break (== '#') url
+        in  Just (T.pack (pdfViewerUrl (T.unpack path)) <> fragment, path)
+    | otherwise = Nothing
 
 classifyLink :: Inline -> Inline
 classifyLink l@(Link (_, classes, _) _ _)
