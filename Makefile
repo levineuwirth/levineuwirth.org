@@ -14,6 +14,14 @@
 -include .env
 export VPS_USER VPS_HOST VPS_PATH
 
+# The project's Python: the venv's interpreter when `uv sync` has made one,
+# else the system's. Called directly, not through `uv run`, which syncs the
+# environment first and so could download and install packages in the
+# middle of a build or a deploy. Tools that need the venv's packages check
+# for VENV_PY and skip, with a note, without it.
+VENV_PY := .venv/bin/python3
+PY      := $(if $(wildcard $(VENV_PY)),$(VENV_PY),python3)
+
 # ---------------------------------------------------------------------------
 # Inter-process lock  (B06)
 # ---------------------------------------------------------------------------
@@ -126,10 +134,10 @@ build-locked:
 	# content/** so build/Filters/Images.hs can attach width / height
 	# attrs to body images for CLS prevention.
 	# Gated on .venv presence, same as embed.py — failures are non-fatal.
-	@if [ -d .venv ]; then \
-	  uv run python tools/extract-exif.py       || echo "Warning: EXIF extraction failed (build continues with frontmatter only)"; \
-	  uv run python tools/extract-palette.py    || echo "Warning: palette extraction failed (build continues with frontmatter only)"; \
-	  uv run python tools/extract-dimensions.py || echo "Warning: dimension extraction failed (build continues without width/height attrs)"; \
+	@if [ -x $(VENV_PY) ]; then \
+	  $(VENV_PY) tools/extract-exif.py       || echo "Warning: EXIF extraction failed (build continues with frontmatter only)"; \
+	  $(VENV_PY) tools/extract-palette.py    || echo "Warning: palette extraction failed (build continues with frontmatter only)"; \
+	  $(VENV_PY) tools/extract-dimensions.py || echo "Warning: dimension extraction failed (build continues without width/height attrs)"; \
 	else \
 	  echo "Photography sidecars skipped: run 'uv sync' to enable EXIF + palette + dimension extraction (build continues with frontmatter only)"; \
 	fi
@@ -138,8 +146,8 @@ build-locked:
 	# data/archive-index.json. Gated on .venv, same as embed.py. A SHA or
 	# slug-URL integrity error exits non-zero and halts the build; a
 	# transient network failure is non-fatal (the entry retries next build).
-	@if [ -d .venv ]; then \
-	  uv run python tools/archive.py fetch; \
+	@if [ -x $(VENV_PY) ]; then \
+	  $(VENV_PY) tools/archive.py fetch; \
 	else \
 	  echo "Archive fetch skipped: run 'uv sync' to enable link archiving (build continues)"; \
 	fi
@@ -176,8 +184,8 @@ build-locked:
 	# and a new essay's Related section did not appear until the build
 	# after the one that created it. (B01)
 	@touch data/.embed-start
-	@if [ -d .venv ]; then \
-	  HF_HUB_DISABLE_IMPLICIT_TOKEN=1 uv run python tools/embed.py || echo "Warning: embedding failed — data/similar-links.json not updated (build continues)"; \
+	@if [ -x $(VENV_PY) ]; then \
+	  HF_HUB_DISABLE_IMPLICIT_TOKEN=1 $(VENV_PY) tools/embed.py || echo "Warning: embedding failed — data/similar-links.json not updated (build continues)"; \
 	else \
 	  echo "Embedding skipped: run 'uv sync' to enable similar-links (build continues)"; \
 	fi
@@ -332,11 +340,7 @@ thumbnails:
 	@$(WITH_LOCK) $(MAKE) --no-print-directory thumbnails-locked
 
 thumbnails-locked:
-	@if [ -d .venv ]; then \
-	  uv run python tools/generate-thumbnails.py $(THUMBNAIL_FLAGS); \
-	else \
-	  python3 tools/generate-thumbnails.py $(THUMBNAIL_FLAGS); \
-	fi
+	@$(PY) tools/generate-thumbnails.py $(THUMBNAIL_FLAGS)
 
 # Generate first-page thumbnails for the PDFs under static/ (also runs in
 # build). Requires pdftoppm: pacman -S poppler  /  apt install poppler-utils
@@ -441,7 +445,7 @@ deploy-preflight:
 	# Fetch what the build would fetch before judging the tree, so that a
 	# snapshot for a newly linked page or code file is caught below.
 	@python3 tools/code-refs.py fetch
-	@if [ -d .venv ]; then uv run python tools/archive.py fetch; fi
+	@if [ -x $(VENV_PY) ]; then $(VENV_PY) tools/archive.py fetch; fi
 	# Tracked modifications anywhere in DIRTY_PATHS, plus untracked files in
 	# all of them except data/. data/ is excluded from the untracked check
 	# on purpose: it is where every build artifact and state file lands
@@ -474,11 +478,7 @@ deploy-preflight:
 	 fi
 	# Score pages are ignored by git: a fresh checkout builds without them,
 	# but deploying it would remove the published scores.
-	@if [ -x .venv/bin/python3 ]; then \
-	  .venv/bin/python3 tools/music-import.py check; \
-	else \
-	  python3 tools/music-import.py check; \
-	fi
+	@$(PY) tools/music-import.py check
 
 deploy-recheck:
 	@dirty=$$($(call dirty_inputs,$(RECHECK_PATHS))); \
@@ -694,18 +694,10 @@ validate-locked: test
 # author writes there; `check` (viz-provenance-check) verifies the recorded
 # checksums still match and exits non-zero if not.
 viz-provenance:
-	@if [ -d .venv ]; then \
-	  .venv/bin/python3 tools/viz-provenance.py write; \
-	else \
-	  python3 tools/viz-provenance.py write; \
-	fi
+	@$(PY) tools/viz-provenance.py write
 
 viz-provenance-check:
-	@if [ -d .venv ]; then \
-	  .venv/bin/python3 tools/viz-provenance.py check; \
-	else \
-	  python3 tools/viz-provenance.py check; \
-	fi
+	@$(PY) tools/viz-provenance.py check
 
 # Render every figure and report what a reader would notice: a mark with no
 # variation in it, text that cannot be read against what sits behind it,
@@ -718,11 +710,7 @@ viz-provenance-check:
 # heatmap drawn from constant data, white labels repainted near-black, 4px
 # tick text, a y-axis reading "(imes)".
 audit-viz:
-	@if [ -d .venv ]; then \
-	  .venv/bin/python3 tools/audit-viz.py $(if $(STRICT),--strict,); \
-	else \
-	  python3 tools/audit-viz.py $(if $(STRICT),--strict,); \
-	fi
+	@$(PY) tools/audit-viz.py $(if $(STRICT),--strict,)
 
 # Report which content pieces are missing a monogram (mark.svg) and / or
 # the epistemic figure (status: frontmatter). Exits 0 unconditionally;
@@ -730,54 +718,34 @@ audit-viz:
 # hook tools/hooks/pre-commit-marks.sh (not installed by default; MARKS.md
 # § 9.3) makes its own, narrower check of newly added essays.
 audit-marks:
-	@if [ -d .venv ]; then \
-	  uv run python tools/audit-marks.py; \
-	else \
-	  python3 tools/audit-marks.py; \
-	fi
+	@$(PY) tools/audit-marks.py
 
 # Evict archived works: delete archive/<slug>/ directories whose slug is
 # recorded in archive/removed.yaml. Opt-in — NEVER run by `make build`.
 # Orphan directories (not in manifest.yaml, not in removed.yaml) are
 # reported, never deleted. See ARCHIVE.md - Eviction & removal.
 archive-gc:
-	@if [ -d .venv ]; then \
-	  uv run python tools/archive.py gc; \
-	else \
-	  python3 tools/archive.py gc; \
-	fi
+	@$(PY) tools/archive.py gc
 
 # Submit archived URLs to the Wayback Machine and backfill the capture URL
 # into each PROVENANCE.json. A slow network job — opt-in, never run by
 # `make build`. Always exits 0; an entry without a capture retries next run.
 archive-wayback:
-	@if [ -d .venv ]; then \
-	  uv run python tools/archive.py wayback; \
-	else \
-	  python3 tools/archive.py wayback; \
-	fi
+	@$(PY) tools/archive.py wayback
 
 # Print works cited in data/*.bib but not yet archived, as manifest-ready
 # lines the author copies by hand. Read-only — it never edits the manifest
 # (bibliography auto-seeding is rejected by design; see ARCHIVE.md).
 # Offline: scans local files only, no network.
 archive-suggest:
-	@if [ -d .venv ]; then \
-	  uv run python tools/archive.py suggest; \
-	else \
-	  python3 tools/archive.py suggest; \
-	fi
+	@$(PY) tools/archive.py suggest
 
 # Probe every archived URL for link rot, updating data/archive-state.json.
 # A slow network job — opt-in, never run by `make build`. Asymmetric
 # hysteresis: `rotted` needs 3 consecutive failures over >=14 days; a
 # single success recovers immediately. The next build consumes the state.
 archive-check:
-	@if [ -d .venv ]; then \
-	  uv run python tools/archive.py check; \
-	else \
-	  python3 tools/archive.py check; \
-	fi
+	@$(PY) tools/archive.py check
 
 # Dev build includes any in-progress drafts under content/drafts/essays/.
 # SITE_ENV=dev is read by build/Site.hs; `make build` now forces
