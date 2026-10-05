@@ -342,15 +342,6 @@ TYPE_PROFILES: dict[str, dict[str, Any]] = {
 }
 
 
-def first_real_line(body: str) -> str:
-    """First non-empty, non-whitespace line of body."""
-    for line in body.splitlines():
-        stripped = line.strip()
-        if stripped:
-            return stripped
-    return ""
-
-
 def auto_abstract(body: str, max_chars: int = 200) -> str:
     """Best-effort abstract from the first paragraph."""
     para: list[str] = []

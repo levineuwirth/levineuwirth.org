@@ -574,12 +574,12 @@ def scaffold(slug: str, meta: dict, mvts: list[dict], pdf: bool, created: str,
             for i, m in enumerate(mvts)]
     text = "---\n" + yaml.safe_dump(fm, sort_keys=False, allow_unicode=True) + "---\n"
     (MUSIC / slug / "index.md").write_text(text)
-    print(f"  scaffolded index.md — check the date, forces, and movement names,\n"
-          f"  and add `scoring:` by hand: divisi does not show in the part list.")
+    print("  scaffolded index.md — check the date, forces, and movement names,\n"
+          "  and add `scoring:` by hand: divisi does not show in the part list.")
     if subtitle and "dedication" not in fm:
         print(f"  the title page's subtitle {subtitle!r} was not used — place it by hand")
     if str(meta.get("hasLyrics")).lower() == "true" and not meta.get("poet"):
-        print(f"  the score sets a text but credits no poet — add `text:` for the author")
+        print("  the score sets a text but credits no poet — add `text:` for the author")
 
 
 def compare_movements(slug: str, mvts: list[dict], published: int | None = None) -> None:
@@ -824,7 +824,7 @@ def install(slug: str, source: Path, pdf: bool, audio: bool, force: bool, new: b
         "exported": dt.datetime.now().isoformat(timespec="seconds"),
     })
     print(f"{slug}: {n} pages from {source.name} ({version})"
-          + (f", with a Muse Sounds realization" if audio else "")
+          + (", with a Muse Sounds realization" if audio else "")
           + f"; pages shrunk {before / 1e6:.1f} → {after / 1e6:.1f} MB")
     for i, m in enumerate(mvts if len(mvts) > 1 else []):
         held = k is not None and i >= k

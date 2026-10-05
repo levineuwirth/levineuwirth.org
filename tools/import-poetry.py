@@ -88,14 +88,6 @@ def strip_gutenberg(text: str) -> tuple[str, str]:
     body   = "\n".join(lines[start:end])
     return header, body
 
-def parse_gutenberg_meta(header: str) -> dict:
-    meta: dict = {}
-    for line in header.splitlines():
-        for field in ("Title", "Author", "Release date", "Release Date"):
-            if line.startswith(field + ":"):
-                meta[field.lower().replace(" ", "-")] = line.split(":", 1)[1].strip()
-    return meta
-
 # ---------------------------------------------------------------------------
 # Poem splitting
 # ---------------------------------------------------------------------------
@@ -352,7 +344,7 @@ def main() -> None:
     out_dir          = POETRY_DIR / collection_slug
 
     text = source.read_text(encoding="utf-8", errors="replace")
-    header, body = strip_gutenberg(text)
+    _header, body = strip_gutenberg(text)
 
     if not body.strip():
         print("warning: Gutenberg markers not found — treating entire file as body", file=sys.stderr)
