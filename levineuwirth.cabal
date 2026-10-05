@@ -24,6 +24,7 @@ executable site
         Dingbat
         Drafts
         PageScan
+        RouteCheck
         PandocOptions
         Sections
         SimilarLinks

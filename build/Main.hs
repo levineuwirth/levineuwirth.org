@@ -4,7 +4,7 @@ import Control.Monad         (when)
 import Data.Time.Clock.POSIX (getPOSIXTime)
 import System.Directory      (createDirectoryIfMissing)
 import System.Environment    (getArgs)
-import Hakyll                (hakyllWith)
+import Hakyll                (hakyllWith, toFilePath)
 import Golden                (renderFixture)
 import Site                  (refusedPath, rules, siteConfigurationFor)
 import Drafts                (currentUnpublished, scanUnpublished, unpublishedSummary,
@@ -25,6 +25,9 @@ import Data.List             (intercalate)
 import Data.Maybe            (fromMaybe)
 import Utils                 (boolSpellings, isDevBuild, outputDirFor)
 import FooterData            (writeFooterData)
+import RouteCheck            (siteRoutes, siteRulesValue, withUniqueRoutes)
+import Tags                  (buildAllTags, sectionOwnedTopLevelTags)
+import Hakyll                (tagsMap)
 
 -- | Stamp the start of this build into @data/build-stamp.txt@ before
 -- Hakyll scans the provider directory. The file therefore always exists
@@ -58,7 +61,11 @@ writeBuildStamp = do
 -- @site normalize-url@ prints each URL on stdin as the archive matches it
 -- ('ArchiveIndex.normalizeUrl'), for tools/archive.py's parity test;
 -- @site list-links ROOT@ prints each distinct link target on the published
--- pages under ROOT ("PageScan"), for tools/code-refs.py.
+-- pages under ROOT ("PageScan"), for tools/code-refs.py; @site list-routes@
+-- prints every output path and the item routed there, tab-separated, for
+-- tools/import-content.py (build/RouteCheck.hs), and @site list-tags@ each
+-- tag that gets a page, for tools/scaffold-photos.py. A build refuses to
+-- run when two items share an output path ('withUniqueRoutes').
 main :: IO ()
 main = do
     args <- getArgs
@@ -77,6 +84,14 @@ main = do
                       [k, fromMaybe "" (bibFile e), intercalate "," (bibKeywords e)]))
                   (Map.toList extras)
         ["list-unpublished", root] -> scanUnpublished root >>= mapM_ putStrLn . unpublishedSummary
+        ["list-routes"] -> do
+            dev <- isDevBuild
+            routed <- siteRoutes (siteConfigurationFor dev) (withoutUnpublished currentUnpublished rules)
+            mapM_ (\(path, ident) -> putStrLn (path ++ "\t" ++ toFilePath ident)) routed
+        ["list-tags"] -> do
+            dev <- isDevBuild
+            tags <- siteRulesValue (siteConfigurationFor dev) buildAllTags
+            mapM_ (putStrLn . fst) (tagsMap tags)
         ["footer-data"] -> do
             dev <- isDevBuild
             when dev $ fail "footer-data: production builds only (a dev build's backlinks include drafts)"
@@ -84,7 +99,8 @@ main = do
         _ -> do
             writeBuildStamp
             dev <- isDevBuild
-            hakyllWith (siteConfigurationFor dev) (withoutUnpublished currentUnpublished rules)
+            hakyllWith (siteConfigurationFor dev)
+                (withUniqueRoutes (withoutUnpublished currentUnpublished rules))
 
 -- | The lists the Python tools and tests must agree with the generator on,
 --   read through @site shared-rules@ (tools/shared_rules.py) rather than
@@ -93,6 +109,7 @@ sharedRules :: Map.Map String Aeson.Value
 sharedRules = Map.fromList
     [ ("epistemic-vocabulary", Aeson.toJSON (Map.fromList epistemicVocabulary))
     , ("reserved-sections",    Aeson.toJSON reservedSectionDirs)
+    , ("section-owned-tags",   Aeson.toJSON sectionOwnedTopLevelTags)
     , ("photo-variant-widths", Aeson.toJSON photoVariantWidths)
     , ("archive-tracking-params", Aeson.toJSON trackingParams)
     , ("boolean-spellings",    Aeson.toJSON (Map.fromList

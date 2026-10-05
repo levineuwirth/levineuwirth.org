@@ -20,6 +20,7 @@
 --   and the corresponding @$if$@ blocks render nothing.
 module Tags
     ( buildAllTags
+    , sectionOwnedTopLevelTags
     , applyTagRules
     , anchoredTagsRules
     , tagPaginationThreshold
@@ -84,10 +85,11 @@ expandTag t =
 
 -- | Top-level tags that own a section URL outside the tag system, and
 --   therefore must NOT be created as tag pages — doing so would
---   collide with a section landing route. Hakyll does not error on
---   duplicate routes (one item silently overwrites the other), so an
---   essay tagged e.g. @music@ would otherwise clobber
---   @music/index.html@. The set therefore lists every namespace that
+--   collide with a section landing route. The build refuses two items
+--   on one route ("RouteCheck"), so an essay tagged e.g. @music@ would
+--   otherwise stop it by claiming @music/index.html@ (before that check,
+--   an incremental build let one silently replace the other). The set
+--   therefore lists every namespace that
 --   owns a @<name>/index.html@ route, not just the tags currently in
 --   use: @photography@ (every photo's @tags:@ list begins with it, per
 --   the section convention) plus the other section landings and
