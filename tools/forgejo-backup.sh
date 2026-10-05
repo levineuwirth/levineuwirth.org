@@ -39,10 +39,11 @@
 #
 #   Everything above still lives on the disk it is backing up, which
 #   protects against "I broke the database" and not against losing the VPS.
-#   Set OFFHOST_DEST (see systemd/forgejo-backup.env.example) to copy each
-#   completed archive somewhere else and verify it by reading it back and
-#   comparing hashes. When it is unset the run says so on every line of the
-#   log rather than letting the gap go quiet.
+#   Set OFFHOST_DEST (see systemd/forgejo-backup.env.example) to the borg
+#   repository on the storage box: each completed archive goes there, and
+#   tools/borg-offhost.sh reads it back and compares hashes. When it is
+#   unset the run says so on every line of the log rather than letting the
+#   gap go quiet.
 #
 # Usage:
 #   forgejo-backup.sh              # take a backup
@@ -62,13 +63,10 @@ CONTAINER=${CONTAINER:-forgejo}
 
 # Off-host copy. Unset by default: the feature is opt-in, and a run with no
 # destination configured is a successful local backup, not a failure.
-#   OFFHOST_DEST   rsync/rclone destination, e.g. user@storage:forgejo/ or remote:forgejo/;
-#                  for borg, the repository URL (also exported as BORG_REPO)
-#   OFFHOST_TOOL   rsync (default), rclone, or borg (/usr/local/lib/borg-offhost.sh)
-#   OFFHOST_VERIFY readback (default) or none
+#   OFFHOST_DEST   the borg repository URL (exported as BORG_REPO unless that is set)
+#   OFFHOST_TOOL   borg, the only tool (the default; any other value is refused)
 OFFHOST_DEST=${OFFHOST_DEST:-}
-OFFHOST_TOOL=${OFFHOST_TOOL:-}
-OFFHOST_VERIFY=${OFFHOST_VERIFY:-readback}
+OFFHOST_TOOL=${OFFHOST_TOOL:-borg}
 
 VERIFY_TMP=""
 log() { echo "forgejo-backup: $*"; }
@@ -189,56 +187,21 @@ verify_archive() {
 # Off-host copy.
 # ---------------------------------------------------------------------------
 offhost_copy() {
-    local archive=$1 sum="$1.sha256" tool=$OFFHOST_TOOL
-
-    if [ -z "$tool" ]; then
-        # `remote:path` with no @ and no / before the colon is rclone's
-        # syntax; anything else (a path, or user@host:path) is rsync's.
-        if [[ "$OFFHOST_DEST" =~ ^[A-Za-z0-9_-]+: ]] && command -v rclone >/dev/null 2>&1; then
-            tool=rclone
-        else
-            tool=rsync
-        fi
-    fi
-    command -v "$tool" >/dev/null 2>&1 || die "off-host: $tool is not installed"
-
-    if [ "$tool" = borg ]; then
-        # encrypted, deduplicated, retention on the box; verified by readback
-        # inside — see the library for what it does and does not promise
-        . /usr/local/lib/borg-offhost.sh || die "off-host: /usr/local/lib/borg-offhost.sh is missing"
-        export BORG_REPO=${BORG_REPO:-$OFFHOST_DEST}
-        borg_offhost_copy forgejo "$archive" "$sum"
-        return 0
-    fi
-
-    log "off-host: copying to $OFFHOST_DEST with $tool"
-    case "$tool" in
-        rsync)  rsync -a --partial "$archive" "$sum" "$OFFHOST_DEST" ;;
-        rclone) rclone copy "$archive" "$OFFHOST_DEST" && rclone copy "$sum" "$OFFHOST_DEST" ;;
-        *)      die "off-host: unknown OFFHOST_TOOL '$tool'" ;;
-    esac || die "off-host: transfer failed — the local archive is kept, retention did not run"
-
-    if [ "$OFFHOST_VERIFY" = none ]; then
-        log "off-host: OFFHOST_VERIFY=none — transfer NOT verified"
-        return 0
-    fi
-
-    # Read the remote copy back and hash it here. Slower than asking the
-    # remote for a digest, but it works against storage that offers no shell
-    # and it proves the bytes that arrived are the bytes that left.
-    local back want got
-    back=$(mktemp -t forgejo-offhost-XXXXXX)
-    case "$tool" in
-        rsync)  rsync -a "${OFFHOST_DEST%/}/$(basename "$archive")" "$back" ;;
-        rclone) rclone cat "${OFFHOST_DEST%/}/$(basename "$archive")" > "$back" ;;
-    esac || { rm -f "$back"; die "off-host: could not read the copy back — treat the transfer as failed"; }
-
-    want=$(awk '{print $1}' "$sum")
-    got=$(sha256sum "$back" | awk '{print $1}')
-    rm -f "$back"
-    [ "$want" = "$got" ] || die "off-host: read-back checksum mismatch (want $want, got $got)"
-    log "off-host: verified — remote copy hashes to $got"
-    date -u +%Y-%m-%dT%H:%M:%SZ > "$DEST/last-offhost-success"
+    local archive=$1 sum="$1.sha256"
+    # borg is the fleet's off-host tool (decided 2026-09-15,
+    # anki-sync/ROADMAP.md): encrypted at rest, deduplicated, retention on
+    # the box. The library reads each archive back to verify it and stamps
+    # last-offhost-success. This script's rsync and rclone paths were never
+    # configured on the VPS and were removed (2026-10-05); a setting naming
+    # either is refused rather than quietly sent to borg.
+    [ "$OFFHOST_TOOL" = borg ] \
+        || die "off-host: OFFHOST_TOOL=$OFFHOST_TOOL is not supported; only borg is (rsync and rclone were removed)"
+    command -v borg >/dev/null 2>&1 || die "off-host: borg is not installed"
+    # shellcheck source=tools/borg-offhost.sh
+    . "${BORG_OFFHOST_LIB:-/usr/local/lib/borg-offhost.sh}" \
+        || die "off-host: ${BORG_OFFHOST_LIB:-/usr/local/lib/borg-offhost.sh} is missing"
+    export BORG_REPO=${BORG_REPO:-$OFFHOST_DEST}
+    borg_offhost_copy forgejo "$archive" "$sum"
 }
 
 # ---------------------------------------------------------------------------

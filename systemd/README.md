@@ -69,6 +69,23 @@ ssh root@vps "docker network inspect proxy-net -f '{{json .IPAM.Config}}'"   # 1
 `tools/vps-status` (run from the laptop) now lists the job and the `config`
 set's stamps, and the monthly verify restores the set.
 
+## Installing the 2026-10-05 forgejo-backup change
+
+`forgejo-backup.sh` copies off-host with borg only: its rsync and rclone
+paths, never configured here, are gone, and an `OFFHOST_TOOL` naming either
+is refused. `/etc/default/forgejo-backup` already sets `OFFHOST_TOOL=borg`
+(checked 2026-10-05), so nothing there changes; an `OFFHOST_VERIFY` or
+`RSYNC_RSH` line in it, if any, is now unused.
+
+```bash
+scp tools/forgejo-backup.sh root@vps:/usr/local/bin/
+ssh root@vps 'chmod 755 /usr/local/bin/forgejo-backup.sh && bash -n /usr/local/bin/forgejo-backup.sh'
+```
+
+The next nightly run is the check: its log ends with borg's readback and
+`last-offhost-success` is stamped, as before. To check at once,
+`systemctl start forgejo-backup.service` and read its journal.
+
 ## Installing the 2026-10-04 cleanup changes
 
 The four backup scripts now source `tools/backup-pair.sh` for the
