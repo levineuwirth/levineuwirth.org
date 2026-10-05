@@ -23,14 +23,18 @@
 # match their pinned checksum are skipped; anything missing or
 # mismatched is re-fetched.
 #
-# To bump the pinned versions, set LEAFLET_VERSION / MARKERCLUSTER_VERSION,
-# re-run, then update tools/leaflet-checksums.sha256 with the new hashes.
+# To bump the pinned versions, set LEAFLET_VERSION / MARKERCLUSTER_VERSION
+# and re-run with ALLOW_UNPINNED=1, then add the lines it prints to
+# tools/leaflet-checksums.sha256. Without a pinned line a file is refused
+# (tools/pin-check.sh).
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 LEAFLET_DIR="$REPO_ROOT/static/leaflet"
 CHECKSUMS="$REPO_ROOT/tools/leaflet-checksums.sha256"
+# shellcheck source=tools/pin-check.sh
+source "$REPO_ROOT/tools/pin-check.sh"
 
 LEAFLET_VERSION="${LEAFLET_VERSION:-1.9.4}"
 MARKERCLUSTER_VERSION="${MARKERCLUSTER_VERSION:-1.5.3}"
@@ -54,29 +58,6 @@ files_to_fetch=(
 
 mkdir -p "$LEAFLET_DIR/images"
 
-verify_or_warn() {
-    local file="$1"
-    local pin_key="$2"
-    if [ ! -f "$CHECKSUMS" ]; then
-        echo "leaflet: $CHECKSUMS not found — skipping sha256 verification" >&2
-        return 0
-    fi
-    local want
-    want="$(awk -v p="$pin_key" '$2 == p { print $1; exit }' "$CHECKSUMS")"
-    if [ -z "$want" ]; then
-        echo "leaflet: no pinned checksum for $pin_key — skipping verification" >&2
-        return 0
-    fi
-    local got
-    got="$(sha256sum "$file" | awk '{ print $1 }')"
-    if [ "$got" != "$want" ]; then
-        echo "leaflet: sha256 mismatch for $pin_key" >&2
-        echo "         expected $want" >&2
-        echo "         got      $got" >&2
-        return 1
-    fi
-}
-
 # Per-file skip: existing files are skipped only after re-verifying
 # their checksum, so a partial or tampered file from an interrupted
 # earlier run can never be silently accepted. Downloads land in a
@@ -89,7 +70,7 @@ for entry in "${files_to_fetch[@]}"; do
     mkdir -p "$(dirname "$target")"
 
     if [ -f "$target" ]; then
-        if verify_or_warn "$target" "$pin_key"; then
+        if pin_verify "$CHECKSUMS" "$pin_key" "$target" leaflet; then
             echo "leaflet: $local_path present and verified (skipping)"
             continue
         fi
@@ -100,7 +81,7 @@ for entry in "${files_to_fetch[@]}"; do
     echo "leaflet: fetching $local_path ($pin_key)"
     tmp="$target.part"
     curl -fsSL --progress-bar "$url_base/$src_name" -o "$tmp"
-    if ! verify_or_warn "$tmp" "$pin_key"; then
+    if ! pin_verify "$CHECKSUMS" "$pin_key" "$tmp" leaflet; then
         rm -f "$tmp"
         echo "leaflet: refusing to vendor unverified $local_path" >&2
         exit 1

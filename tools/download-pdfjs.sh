@@ -26,8 +26,10 @@
 # atomic, so a concurrent site build sees either the old complete viewer or
 # the new complete viewer, never a half-written one.
 #
-# To bump the pinned version, set PDFJS_VERSION, re-run, then update
-# tools/pdfjs-checksums.sha256 with the new archive SHA-256.
+# To bump the pinned version, set PDFJS_VERSION and re-run with
+# ALLOW_UNPINNED=1, then add the line it prints to
+# tools/pdfjs-checksums.sha256. Without a pinned line the archive is
+# refused (tools/pin-check.sh).
 #
 # Test-only overrides:
 #   PDFJS_DIR           install somewhere other than static/pdfjs
@@ -38,6 +40,8 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PDFJS_DIR="${PDFJS_DIR:-$REPO_ROOT/static/pdfjs}"
 CHECKSUMS="${PDFJS_CHECKSUMS:-$REPO_ROOT/tools/pdfjs-checksums.sha256}"
+# shellcheck source=tools/pin-check.sh
+source "$REPO_ROOT/tools/pin-check.sh"
 
 PDFJS_VERSION="${PDFJS_VERSION:-5.6.205}"
 ARCHIVE="pdfjs-${PDFJS_VERSION}-dist.zip"
@@ -131,23 +135,8 @@ else
     curl -fsSL --progress-bar "$URL" -o "$tmpdir/$ARCHIVE"
 fi
 
-if [ -f "$CHECKSUMS" ]; then
-    want=$(awk -v p="$ARCHIVE" '$2 == p { print $1; exit }' "$CHECKSUMS")
-    if [ -n "$want" ]; then
-        got=$(sha256sum "$tmpdir/$ARCHIVE" | awk '{ print $1 }')
-        if [ "$got" != "$want" ]; then
-            echo "pdfjs: sha256 mismatch for $ARCHIVE" >&2
-            echo "       expected $want" >&2
-            echo "       got      $got" >&2
-            exit 1
-        fi
-        echo "pdfjs: sha256 verified"
-    else
-        echo "pdfjs: no pinned checksum for $ARCHIVE in $CHECKSUMS — skipping verification" >&2
-    fi
-else
-    echo "pdfjs: $CHECKSUMS not found — skipping sha256 verification" >&2
-fi
+pin_verify "$CHECKSUMS" "$ARCHIVE" "$tmpdir/$ARCHIVE" pdfjs || exit 1
+echo "pdfjs: sha256 verified"
 
 # --- Stage ------------------------------------------------------------------
 

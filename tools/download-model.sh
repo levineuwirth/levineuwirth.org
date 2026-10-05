@@ -8,17 +8,13 @@
 # Run once before deploying. Files are gitignored (binary artifacts).
 # Re-running is safe — existing files are skipped.
 #
-# Supply chain hardening: each downloaded file is verified against
-# tools/model-checksums.sha256 if that file is present. The checksums
-# file is committed to git so a HuggingFace compromise (or a
-# transparently rebuilt model) cannot silently land in the deployed
-# site. To pin a new model version, run `tools/download-model.sh`,
-# verify the model out-of-band, then commit the generated checksums:
-#
-#     (cd static/models/all-MiniLM-L6-v2 && \
-#      sha256sum config.json tokenizer.json tokenizer_config.json \
-#                special_tokens_map.json onnx/model_quantized.onnx) \
-#      > tools/model-checksums.sha256
+# Supply chain hardening: each downloaded file must match its line in
+# tools/model-checksums.sha256 (tools/pin-check.sh), and a file with no
+# line is refused. The checksums file is committed to git so a HuggingFace
+# compromise (or a transparently rebuilt model) cannot silently land in the
+# deployed site. To pin a new model version, run
+# `ALLOW_UNPINNED=1 tools/download-model.sh`, verify the model
+# out-of-band, and commit the lines it prints.
 
 set -euo pipefail
 
@@ -26,34 +22,14 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MODEL_DIR="$REPO_ROOT/static/models/all-MiniLM-L6-v2"
 BASE_URL="https://huggingface.co/Xenova/all-MiniLM-L6-v2/resolve/main"
 CHECKSUMS="$REPO_ROOT/tools/model-checksums.sha256"
+# shellcheck source=tools/pin-check.sh
+source "$REPO_ROOT/tools/pin-check.sh"
 
 mkdir -p "$MODEL_DIR/onnx"
 
-# Look up the expected SHA-256 for a relative path, or empty string if
-# no checksums file is present (or the path isn't pinned yet).
-expected_sha() {
-    local rel="$1"
-    if [ ! -f "$CHECKSUMS" ]; then
-        echo ""
-        return
-    fi
-    # Match lines of the form "<sha>  <relative-path>"
-    awk -v p="$rel" '$2 == p { print $1; exit }' "$CHECKSUMS"
-}
-
 verify_sha() {
     local rel="$1" dst="$2"
-    local want
-    want=$(expected_sha "$rel")
-    if [ -z "$want" ]; then
-        return
-    fi
-    local got
-    got=$(sha256sum "$dst" | awk '{ print $1 }')
-    if [ "$got" != "$want" ]; then
-        echo "  ERROR sha256 mismatch for $rel" >&2
-        echo "        expected $want" >&2
-        echo "        got      $got" >&2
+    if ! pin_verify "$CHECKSUMS" "$rel" "$dst" model; then
         rm -f "$dst"
         exit 1
     fi
@@ -70,17 +46,11 @@ fetch() {
     echo "  fetch $src"
     # Download to a temp name and move into place only after
     # verification: an interrupted curl must never leave a partial
-    # file at the final path, where the present-file skip (or, for an
-    # unpinned file, nothing at all) would accept it forever.
+    # file at the final path, where the present-file skip would accept it.
     curl -fsSL --progress-bar "$BASE_URL/$src" -o "$dst.part"
     verify_sha "$src" "$dst.part"
     mv "$dst.part" "$dst"
 }
-
-if [ ! -f "$CHECKSUMS" ]; then
-    echo "Note: $CHECKSUMS not found — downloads will not be SHA-verified." >&2
-    echo "      See the comment in tools/download-model.sh to pin checksums." >&2
-fi
 
 echo "Downloading all-MiniLM-L6-v2 to $MODEL_DIR ..."
 
