@@ -7,7 +7,6 @@ the whole fetch, so another entry's missing artifact (a fatal error there)
 rolled the refresh back."""
 
 import http.server
-import importlib.util
 import json
 import tempfile
 import threading
@@ -16,11 +15,9 @@ from pathlib import Path
 from unittest import mock
 
 import yaml
+from tests._helpers import load_tool
 
-_spec = importlib.util.spec_from_file_location(
-    "archive", Path(__file__).resolve().parents[1] / "tools" / "archive.py")
-archive = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(archive)
+archive = load_tool("archive.py")
 
 BODY = b"%PDF-1.4 small\n" * 10
 

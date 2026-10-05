@@ -1,16 +1,14 @@
 """A fresh font cache must use the same bytes as the reviewed rebuild."""
 import hashlib
-import importlib.util
 import io
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+from tests._helpers import load_tool
 
 ROOT = Path(__file__).resolve().parents[1]
-SPEC = importlib.util.spec_from_file_location("subset_fonts", ROOT / "tools/subset-fonts.py")
-fonts = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(fonts)
+fonts = load_tool("subset-fonts.py")
 
 
 class FontSourceTests(unittest.TestCase):

@@ -3,9 +3,8 @@ cases Hakyll's own (Hakyll.Core.Provider.Metadata.splitMetadata) decides.
 build/Drafts.hs reads pages both through Hakyll and through a lenient
 split; tests/test_drafts.py covers that side."""
 
-import importlib.util
 import unittest
-from pathlib import Path
+from tests._helpers import load_tool
 
 try:
     import yaml
@@ -17,10 +16,7 @@ except ImportError:  # pragma: no cover
 class FrontMatterSplit(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        spec = importlib.util.spec_from_file_location(
-            "front_matter", Path(__file__).resolve().parents[1] / "tools" / "front_matter.py")
-        cls.fm = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(cls.fm)
+        cls.fm = load_tool("front_matter.py")
 
     def test_splits_as_hakyll_does(self) -> None:
         cases = {

@@ -2,19 +2,17 @@
 semantic search, and the vector cache's model pinning (audit T14).
 No model is loaded."""
 
-import importlib.util
 import shutil
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
+from tests._helpers import load_tool
 
 ROOT = Path(__file__).resolve().parents[1]
 
 try:
-    SPEC = importlib.util.spec_from_file_location("embed_tool", ROOT / "tools" / "embed.py")
-    embed = importlib.util.module_from_spec(SPEC)
-    SPEC.loader.exec_module(embed)
+    embed = load_tool("embed.py", "embed_tool")
 except ImportError as exc:          # faiss, numpy or bs4 missing: no .venv
     embed = None
     MISSING = str(exc)

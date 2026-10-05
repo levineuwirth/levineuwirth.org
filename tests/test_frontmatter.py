@@ -23,14 +23,13 @@ Run with: ``make test`` (or ``python3 -m unittest tests.test_frontmatter``).
 from __future__ import annotations
 
 import datetime
-import importlib.util
 import json
 import re
-import shutil
 import subprocess
 import unittest
 from functools import lru_cache
 from pathlib import Path
+from tests._helpers import load_tool, requires_cabal, site_binary
 
 try:
     import yaml
@@ -45,10 +44,7 @@ COLOPHON = CONTENT / "colophon.md"
 
 # Hakyll's split (a fence of three or more dashes, closed by as many dashes
 # or dots), shared with the tools.
-_spec = importlib.util.spec_from_file_location(
-    "front_matter", REPO_ROOT / "tools" / "front_matter.py")
-front_matter = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(front_matter)
+front_matter = load_tool("front_matter.py")
 ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 # The fields that only render inside the epistemic footer, which appears
@@ -260,14 +256,13 @@ class FrontMatterTests(unittest.TestCase):
                     bad.append(f"{rel}: revised entry {entry!r}")
         self.assertNoViolations(bad, "revisions the build drops")
 
-    @unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
+    @requires_cabal
     def test_draft_flags_are_ones_the_build_reads(self) -> None:
         # build/Drafts.hs withholds any page whose `draft:` is true (YAML
         # true, or a true spelling of Utils.boolSpellings) and publishes it
         # otherwise. A value it does not read as either — `draft: maybe`,
         # `draft: [x]` — would publish the page while looking like it holds
         # it back (audit C06).
-        from tests.test_golden import site_binary
         done = subprocess.run([str(site_binary()), "shared-rules"],
                               capture_output=True, text=True, check=True)
         spellings = json.loads(done.stdout)["boolean-spellings"]

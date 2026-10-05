@@ -1,15 +1,13 @@
 """Stateful failure rehearsals; no real Docker, services, or network."""
-import importlib.util
 import json
 import os
 from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
+from tests._helpers import load_tool
 
-SPEC = importlib.util.spec_from_file_location('anubis_update', Path(__file__).resolve().parents[1] / 'tools/anubis-update.py')
-update = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(update)
+update = load_tool("anubis-update.py")
 OLD = update.REGISTRY + ':v1.27.0@sha256:' + 'a' * 64
 NEW = update.REGISTRY + ':v1.28.0@sha256:' + 'b' * 64
 

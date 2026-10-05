@@ -20,6 +20,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from tests._helpers import site_binary
 
 REPO = Path(__file__).resolve().parent.parent
 SCRIPT = REPO / "tools" / "build-freshness.sh"
@@ -45,7 +46,6 @@ def have(binary: str) -> bool:
 class BuildFreshnessTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        from tests.test_golden import site_binary
         cls.binary = site_binary()
 
     def setUp(self) -> None:

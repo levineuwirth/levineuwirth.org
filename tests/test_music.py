@@ -31,7 +31,6 @@ from __future__ import annotations
 
 import contextlib
 import datetime as dt
-import importlib.util
 import io
 import json
 import os
@@ -45,6 +44,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from unittest import mock
 from urllib.parse import urljoin, urlsplit
+from tests._helpers import load_tool
 
 try:
     import yaml
@@ -58,12 +58,7 @@ SITE_DIR = REPO_ROOT / "_site"
 MUSIC_DIR = REPO_ROOT / "content" / "music"
 
 if HAVE_YAML:
-    SPEC = importlib.util.spec_from_file_location(
-        "music_import", REPO_ROOT / "tools" / "music-import.py")
-    assert SPEC is not None and SPEC.loader is not None
-    music_import = importlib.util.module_from_spec(SPEC)
-    sys.modules[SPEC.name] = music_import
-    SPEC.loader.exec_module(music_import)
+    music_import = load_tool("music-import.py", register=True)
     _front_matter = music_import.front_matter   # tools/front_matter.py
 
 HAVE_THUMB_TOOLS = bool(__import__("shutil").which("rsvg-convert"))

@@ -1,15 +1,13 @@
 """tools/cv-pdfs.py: does /cv.pdf still match the CV data? (audit C02)"""
 
-import importlib.util
 import shutil
 import tempfile
 import unittest
 from pathlib import Path
+from tests._helpers import load_tool
 
 ROOT = Path(__file__).resolve().parents[1]
-SPEC = importlib.util.spec_from_file_location("cv_pdfs", ROOT / "tools" / "cv-pdfs.py")
-cv_pdfs = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(cv_pdfs)
+cv_pdfs = load_tool("cv-pdfs.py")
 
 
 class CvPdfTests(unittest.TestCase):

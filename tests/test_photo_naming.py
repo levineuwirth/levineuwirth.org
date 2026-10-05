@@ -4,25 +4,16 @@ through `site shared-rules`). A rung one side lacks is a srcset candidate
 that 404s, or a variant written for nothing; and before 2026-10-04 four
 tools each carried their own copy of the pattern."""
 
-import importlib.util
 import json
-import shutil
 import subprocess
 import unittest
 from pathlib import Path
+from tests._helpers import load_tool, requires_cabal, site_binary
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
-def load(name: str, path: Path):
-    spec = importlib.util.spec_from_file_location(name, path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-photo_naming = load("photo_naming", REPO_ROOT / "tools" / "photo_naming.py")
-_golden = load("golden", Path(__file__).with_name("test_golden.py"))
+photo_naming = load_tool("photo_naming.py")
 
 
 class PhotoNamingTests(unittest.TestCase):
@@ -39,9 +30,9 @@ class PhotoNamingTests(unittest.TestCase):
             with self.subTest(name=name):
                 self.assertFalse(photo_naming.is_variant(Path(name)))
 
-    @unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
+    @requires_cabal
     def test_widths_are_the_generators(self) -> None:
-        out = subprocess.run([str(_golden.site_binary()), "shared-rules"],
+        out = subprocess.run([str(site_binary()), "shared-rules"],
                              capture_output=True, text=True, check=True)
         self.assertEqual(list(photo_naming.WIDTHS),
                          json.loads(out.stdout)["photo-variant-widths"])

@@ -2,22 +2,16 @@ from __future__ import annotations
 
 import argparse
 import contextlib
-import importlib.util
 import io
-import shutil
-import sys
 import tempfile
 import unittest
 from pathlib import Path
+from tests._helpers import load_tool, requires_cabal
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 MODULE_PATH = REPO_ROOT / "tools" / "import-content.py"
-SPEC = importlib.util.spec_from_file_location("import_content", MODULE_PATH)
-assert SPEC is not None and SPEC.loader is not None
-import_content = importlib.util.module_from_spec(SPEC)
-sys.modules[SPEC.name] = import_content
-SPEC.loader.exec_module(import_content)
+import_content = load_tool("import-content.py", register=True)
 
 
 def args_for(**overrides: object) -> argparse.Namespace:
@@ -77,7 +71,7 @@ class ImportContentTests(unittest.TestCase):
         )
 
     # A page collection is checked against `site shared-rules`.
-    @unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
+    @requires_cabal
     def test_collections_support_every_content_type(self) -> None:
         expected = {
             "essay": (
@@ -118,7 +112,7 @@ class ImportContentTests(unittest.TestCase):
                     doc.meta["collection-url"], collection_url
                 )
 
-    @unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
+    @requires_cabal
     def test_page_collection_rejects_reserved_section_slug(self) -> None:
         docs = [import_content.Document("Body", {"title": "Piece"})]
 

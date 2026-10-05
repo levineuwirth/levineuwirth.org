@@ -3,19 +3,15 @@ hysteresis, .bib citations, snapshot grading (audit T14). The network probe
 has its own tests in test_archive_probe.py."""
 
 import datetime
-import importlib.util
 import json
-import shutil
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
+from tests._helpers import load_tool, requires_cabal, site_binary
 
-SPEC = importlib.util.spec_from_file_location(
-    "archive_tool", Path(__file__).resolve().parents[1] / "tools" / "archive.py")
-archive = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(archive)
+archive = load_tool("archive.py", "archive_tool")
 
 try:
     import bs4  # noqa: F401
@@ -99,7 +95,7 @@ PARITY_URLS = (
 )
 
 
-@unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
+@requires_cabal
 class NormalizationParityTests(unittest.TestCase):
     """archive.normalize_url against the build's ArchiveIndex.normalizeUrl
     (`site normalize-url`): removal enforcement, duplicate detection and
@@ -107,7 +103,6 @@ class NormalizationParityTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        from tests.test_golden import site_binary
         cls.binary = str(site_binary())
 
     def test_tracking_parameters_are_the_builds(self):

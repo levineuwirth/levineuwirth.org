@@ -7,16 +7,12 @@ Run with: ``python3 -m unittest tests.test_prune_site``.
 
 from __future__ import annotations
 
-import importlib.util
 import tempfile
 import unittest
 from pathlib import Path
+from tests._helpers import load_tool
 
-_SPEC = importlib.util.spec_from_file_location(
-    "prune_site", Path(__file__).resolve().parent.parent / "tools" / "prune-site.py")
-assert _SPEC and _SPEC.loader
-prune_site = importlib.util.module_from_spec(_SPEC)
-_SPEC.loader.exec_module(prune_site)
+prune_site = load_tool("prune-site.py")
 
 
 class Prune(unittest.TestCase):

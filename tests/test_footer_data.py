@@ -21,7 +21,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests.test_golden import site_binary
+from tests._helpers import requires_cabal, site_binary
 
 
 def entry(url: str, score: float) -> dict:
@@ -32,7 +32,7 @@ BACKLINK = {"url": "/essays/b/", "title": "B", "abstract": "", "sentence": "s",
             "paragraph": "p", "fragment": ""}
 
 
-@unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
+@requires_cabal
 class FooterDataTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:

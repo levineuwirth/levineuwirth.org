@@ -2,12 +2,12 @@
 
 import json
 from pathlib import Path
-import shutil
 import subprocess
 import unittest
 from urllib.parse import parse_qs, urlsplit
 
 from bs4 import BeautifulSoup
+from tests._helpers import requires_cabal
 
 ROOT = Path(__file__).resolve().parents[1]
 PATHS = [
@@ -20,7 +20,7 @@ PATHS = [
 ]
 
 
-@unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
+@requires_cabal
 class PdfViewerUrls(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

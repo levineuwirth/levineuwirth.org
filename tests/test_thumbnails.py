@@ -13,22 +13,17 @@ there is nothing to assert.
 from __future__ import annotations
 
 import contextlib
-import importlib.util
 import io
 import os
-import sys
 import tempfile
 import unittest
 from pathlib import Path
+from tests._helpers import load_tool
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 MODULE_PATH = REPO_ROOT / "tools" / "generate-thumbnails.py"
-SPEC = importlib.util.spec_from_file_location("generate_thumbnails", MODULE_PATH)
-assert SPEC is not None and SPEC.loader is not None
-generate_thumbnails = importlib.util.module_from_spec(SPEC)
-sys.modules[SPEC.name] = generate_thumbnails
-SPEC.loader.exec_module(generate_thumbnails)
+generate_thumbnails = load_tool("generate-thumbnails.py", register=True)
 
 try:
     from PIL import Image

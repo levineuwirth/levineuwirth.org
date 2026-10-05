@@ -2,23 +2,19 @@
 PDF links, through `site bib-extras FILE` (key, file, keywords per line).
 A malformed or fieldless entry must not swallow the next one."""
 
-import importlib.util
-import shutil
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
-
-_spec = importlib.util.spec_from_file_location("golden", Path(__file__).with_name("test_golden.py"))
-_golden = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(_golden)
+from tests._helpers import requires_cabal, site_binary
 
 
-@unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
+
+@requires_cabal
 class BibExtrasTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.binary = _golden.site_binary()
+        cls.binary = site_binary()
 
     def scan(self, text: str) -> dict[str, tuple[str, str]]:
         with tempfile.NamedTemporaryFile("w", suffix=".bib", delete=False) as f:

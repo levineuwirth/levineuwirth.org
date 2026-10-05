@@ -12,23 +12,19 @@ Run with: ``python3 -m unittest tests.test_gitignore``.
 
 from __future__ import annotations
 
-import importlib.util
 import re
 import shutil
 import subprocess
 import unittest
 from pathlib import Path
+from tests._helpers import load_tool, requires_cabal, site_binary
 
 ROOT = Path(__file__).resolve().parent.parent
 SAMPLE_DIR = "content/essays/sample"
 
 
 def _check_site():
-    spec = importlib.util.spec_from_file_location("check_site", ROOT / "tools" / "check-site.py")
-    assert spec and spec.loader
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
+    return load_tool("check-site.py")
 
 
 def never_publish() -> dict[str, list[str]]:
@@ -98,13 +94,12 @@ class PrivateNamesAreIgnored(unittest.TestCase):
                    if not any(fnmatch.fnmatch(name, g) for g in globs)]
         self.assertEqual(missing, [], "add each to PRIVATE_FILE_GLOBS in tools/check-site.py")
 
-    @unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
+    @requires_cabal
     def test_the_build_refuses_every_name_the_artifact_gate_does(self):
         # The other direction, asked of the build itself (`site
         # private-paths`, Site.refusedPath): checklist.md, *.local.html and
         # *.draft.* were known only to check-site until 2026-10-04, so the
         # build rendered such a file and the gate then failed the deploy.
-        from tests.test_golden import site_binary
         names = [name for _, name in gate_samples()]
         paths = ([f"{SAMPLE_DIR}/{n}" for n in names]
                  + [f"{SAMPLE_DIR}/{n}/index.md" for n in names])

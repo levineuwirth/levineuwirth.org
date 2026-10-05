@@ -4,23 +4,19 @@ ignore; it runs here over a temporary content tree."""
 
 from __future__ import annotations
 
-import importlib.util
 import shutil
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from tests._helpers import requires_cabal, site_binary
 
-_spec = importlib.util.spec_from_file_location("golden", Path(__file__).with_name("test_golden.py"))
-_golden = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(_golden)
-site_binary = _golden.site_binary
 
 DRAFT = "---\ntitle: T\ndraft: true\n---\nBody.\n"
 LIVE = "---\ntitle: T\n---\nBody.\n"
 
 
-@unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
+@requires_cabal
 class UnpublishedTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

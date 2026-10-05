@@ -11,25 +11,18 @@ Run with: ``make test`` (or ``python3 -m unittest tests.test_check_site``).
 
 from __future__ import annotations
 
-import importlib.util
 import io
 import os
-import sys
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from tests._helpers import load_tool
 
 # check-site.py is a hyphenated script, not an importable module name, so it
 # is loaded by path rather than by `import`.
 
-_SPEC = importlib.util.spec_from_file_location(
-    "check_site",
-    Path(__file__).resolve().parent.parent / "tools" / "check-site.py",
-)
-assert _SPEC and _SPEC.loader
-check_site = importlib.util.module_from_spec(_SPEC)
-_SPEC.loader.exec_module(check_site)
+check_site = load_tool("check-site.py")
 
 
 FEED = """<?xml version="1.0" encoding="utf-8"?>

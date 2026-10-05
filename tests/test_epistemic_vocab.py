@@ -6,22 +6,18 @@ for each value: a filter by button index matches a page only while all three
 agree. The JS copy once lacked `local` and `low` (fixed 2026-10-04), so a
 filter at or above either matched nothing it should have."""
 
-import importlib.util
 import json
 import re
-import shutil
 import subprocess
 import unittest
 from pathlib import Path
+from tests._helpers import requires_cabal, site_binary
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SEARCH_FILTERS_JS = REPO_ROOT / "static" / "js" / "search-filters.js"
 SEARCH_MD = REPO_ROOT / "content" / "search.md"
 SEARCH_META = REPO_ROOT / "_site" / "data" / "epistemic-meta.json"
 
-_spec = importlib.util.spec_from_file_location("golden", Path(__file__).with_name("test_golden.py"))
-_golden = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(_golden)
 
 
 def js_scales() -> dict[str, list[str]]:
@@ -43,11 +39,11 @@ def ordinal_buttons() -> dict[str, list[tuple[int, str]]]:
     return buttons
 
 
-@unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
+@requires_cabal
 class EpistemicVocabularyTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        out = subprocess.run([str(_golden.site_binary()), "shared-rules"],
+        out = subprocess.run([str(site_binary()), "shared-rules"],
                              capture_output=True, text=True, check=True)
         cls.vocab = json.loads(out.stdout)["epistemic-vocabulary"]
 

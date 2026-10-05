@@ -6,24 +6,17 @@ Run with: ``python3 -m unittest tests.test_code_refs``.
 
 from __future__ import annotations
 
-import importlib.util
 import json
 import os
-import shutil
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 from pathlib import Path
 from unittest import mock
+from tests._helpers import load_tool, requires_cabal
 
-_SPEC = importlib.util.spec_from_file_location(
-    "code_refs",
-    Path(__file__).resolve().parent.parent / "tools" / "code-refs.py",
-)
-assert _SPEC and _SPEC.loader
-code_refs = importlib.util.module_from_spec(_SPEC)
-_SPEC.loader.exec_module(code_refs)
+code_refs = load_tool("code-refs.py")
 
 SHA = "3508ef1d63d004686e85373f6100689ae94b922a"
 
@@ -72,7 +65,7 @@ class ParseLink(unittest.TestCase):
 
 
 # Discovery asks the generator (`site list-links`, build/PageScan.hs).
-@unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
+@requires_cabal
 class Discover(unittest.TestCase):
     def test_markdown_links_deduplicated(self):
         with tempfile.TemporaryDirectory() as d:
@@ -98,7 +91,7 @@ class Discover(unittest.TestCase):
         self.assertEqual(found, {"link.py", "autolink.py"})
 
 
-@unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
+@requires_cabal
 class Eligibility(unittest.TestCase):
     """Everything under code-refs/ is published, so only links on pages the
     site publishes may be snapshotted (audit X1, T07)."""

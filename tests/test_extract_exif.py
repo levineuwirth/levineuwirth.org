@@ -2,14 +2,11 @@
 and lens names, focal length, exposure, date and GPS (audit T14). The
 exiftool reader is fed through its per-run cache, so no exiftool is needed."""
 
-import importlib.util
 import unittest
 from pathlib import Path
+from tests._helpers import load_tool
 
-SPEC = importlib.util.spec_from_file_location(
-    "extract_exif", Path(__file__).resolve().parents[1] / "tools" / "extract-exif.py")
-exif = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(exif)
+exif = load_tool("extract-exif.py")
 
 IMAGE = Path("/nonexistent/photo.jpg")
 

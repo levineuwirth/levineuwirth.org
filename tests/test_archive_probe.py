@@ -4,17 +4,13 @@ A live link marked rotted is swapped for the local copy on every page that
 cites it, so the probe must not count a server's quirk as a failure.
 """
 
-import importlib.util
 import io
 import unittest
 import urllib.error
-from pathlib import Path
 from unittest import mock
+from tests._helpers import load_tool
 
-SPEC = importlib.util.spec_from_file_location(
-    "archive_tool", Path(__file__).resolve().parents[1] / "tools" / "archive.py")
-archive = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(archive)
+archive = load_tool("archive.py", "archive_tool")
 
 URL = "https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.203.pdf"
 

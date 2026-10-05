@@ -34,10 +34,10 @@ import difflib
 import html
 import os
 import re
-import shutil
 import subprocess
 import unittest
 from pathlib import Path
+from tests._helpers import requires_cabal, site_binary
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 GOLDEN_DIR = REPO_ROOT / "tests" / "golden"
@@ -52,19 +52,6 @@ def fixtures() -> list[Path]:
     return sorted(GOLDEN_DIR.glob("*.md"))
 
 
-def site_binary() -> Path:
-    """The generator, rebuilt first if any source changed."""
-    for args in (["cabal", "build", "-v0", "exe:site"],):
-        done = subprocess.run(args, cwd=REPO_ROOT, capture_output=True, text=True)
-        if done.returncode:
-            raise AssertionError(f"`{' '.join(args)}` failed:\n{done.stderr[-2000:]}")
-    found = subprocess.run(
-        ["cabal", "list-bin", "-v0", "exe:site"],
-        cwd=REPO_ROOT, capture_output=True, text=True, check=True,
-    )
-    return Path(found.stdout.strip())
-
-
 def render(binary: Path, fixture: Path) -> str:
     done = subprocess.run(
         [str(binary), "render-fixture", str(fixture.relative_to(REPO_ROOT))],
@@ -75,7 +62,7 @@ def render(binary: Path, fixture: Path) -> str:
     return done.stdout
 
 
-@unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
+@requires_cabal
 class GoldenTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -129,7 +116,7 @@ class GoldenTests(unittest.TestCase):
         self.assertEqual(before, after, "render-fixture touched data/build-stamp.txt")
 
 
-@unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
+@requires_cabal
 class InvariantTests(unittest.TestCase):
     """What must hold of any render, golden or not."""
 

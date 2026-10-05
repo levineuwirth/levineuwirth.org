@@ -19,6 +19,7 @@ import unittest
 import urllib.error
 import urllib.request
 import uuid
+from tests._helpers import load_tool
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -290,12 +291,9 @@ http {
         No release is downloaded: one image only adds a label, the other
         starts Anubis with an invalid policy path. Both use the real binary.
         """
-        import importlib.util
         import yaml
         from unittest.mock import patch
-        spec = importlib.util.spec_from_file_location('anubis_update_real', ROOT / 'tools/anubis-update.py')
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        module = load_tool('anubis-update.py', 'anubis_update_real')
         fixture = self
         service = yaml.safe_load((ROOT / 'anubis/docker-compose.yml').read_text())['services']['anubis']
         base = service['image']

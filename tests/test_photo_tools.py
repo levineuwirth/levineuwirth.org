@@ -1,33 +1,26 @@
 """tools/scaffold-photos.py and tools/extract-palette.py (audit T14)."""
 
 import contextlib
-import importlib.util
 import io
 import shutil
 import tempfile
 import unittest
 from pathlib import Path
+from tests._helpers import load_tool
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def load(name, file):
-    spec = importlib.util.spec_from_file_location(name, ROOT / "tools" / file)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
-
-
 try:
     import yaml
-    scaffold = load("scaffold_photos", "scaffold-photos.py")
+    scaffold = load_tool("scaffold-photos.py")
     fm = scaffold.front_matter
 except ImportError:
     scaffold = None
 
 try:
     from PIL import Image
-    palette = load("extract_palette", "extract-palette.py")
+    palette = load_tool("extract-palette.py")
 except ImportError:              # Pillow or colorthief missing: no .venv
     palette = None
 

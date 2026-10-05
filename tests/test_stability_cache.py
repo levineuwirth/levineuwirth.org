@@ -7,11 +7,12 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from tests._helpers import requires_cabal
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-@unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
+@requires_cabal
 class StabilityCacheTests(unittest.TestCase):
     def run_probe(self, commands):
         with tempfile.TemporaryDirectory() as directory:
