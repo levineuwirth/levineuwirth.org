@@ -62,6 +62,9 @@ from urllib.parse import quote, urlparse
 
 import yaml
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import sitelib  # noqa: E402
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -114,27 +117,12 @@ def err(msg: str) -> None:
     print(f"[archive] ERROR: {msg}", file=sys.stderr)
 
 
-def atomic_write_text(path: Path, text: str) -> None:
-    """Write to a PID-unique temp then os.replace. PROVENANCE.json and
-    the generated index/state files are integrity records — an interrupt
-    mid-write must never leave a truncated file that the next run parses
-    (or mistakes for corruption); fsync makes the rename durable and the
-    PID suffix keeps concurrent runs from sharing a temp file."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + f".tmp.{os.getpid()}")
-    try:
-        with tmp.open("w", encoding="utf-8") as f:
-            f.write(text)
-            f.flush()
-            os.fsync(f.fileno())
-        os.replace(tmp, path)
-    except BaseException:
-        tmp.unlink(missing_ok=True)
-        raise
-
-
 def atomic_write_json(path: Path, obj) -> None:
-    atomic_write_text(
+    """PROVENANCE.json and the generated index/state files are integrity
+    records: an interrupt mid-write must never leave a truncated file that
+    the next run parses (or mistakes for corruption), so they are written
+    through sitelib.atomic_write_text, durably."""
+    sitelib.atomic_write_text(
         path, json.dumps(obj, indent=2, ensure_ascii=False) + "\n")
 
 

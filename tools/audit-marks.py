@@ -35,21 +35,15 @@ epistemic figures by design (see PHOTOGRAPHY.md).
 
 from __future__ import annotations
 
-import importlib.util
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
 
-_spec = importlib.util.spec_from_file_location(
-    "shared_rules", Path(__file__).with_name("shared_rules.py"))
-shared_rules = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(shared_rules)
-_spec = importlib.util.spec_from_file_location(
-    "front_matter", Path(__file__).with_name("front_matter.py"))
-front_matter = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(front_matter)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import shared_rules  # noqa: E402
+import front_matter  # noqa: E402
 CONTENT_ROOT = Path("content")
 
 # Sections that ship marks by design — these get a coverage line in

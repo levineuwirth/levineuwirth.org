@@ -37,7 +37,6 @@ seconds of extraction, not a model-library import.
 
 import hashlib
 import json
-import os
 import re
 import sys
 import zipfile
@@ -46,6 +45,9 @@ from pathlib import Path
 import faiss
 import numpy as np
 from bs4 import BeautifulSoup
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import sitelib  # noqa: E402
 
 # torch + sentence-transformers cost seconds of import time alone, so
 # they are imported lazily inside the cache-miss branches below. A
@@ -144,31 +146,11 @@ except ImportError:
 
 
 def atomic_write_bytes(path: Path, data: bytes) -> None:
-    """Write to a PID-unique temp then os.replace: an interrupt mid-write
-    cannot leave a truncated file at the final path, fsync makes the
-    rename durable across power loss, and the PID suffix keeps two
-    concurrent runs from interleaving writes into one temp file.
-
-    Identical bytes are left alone: Hakyll judges an input changed by its
+    """Identical bytes are left alone: Hakyll judges an input changed by its
     mtime, so rewriting an unchanged similar-links.json made every page that
     reads it recompile, and re-copied, recompressed and re-signed the
     semantic pair, on every build (audit X3/D05)."""
-    try:
-        if path.read_bytes() == data:
-            return
-    except OSError:
-        pass
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + f".tmp.{os.getpid()}")
-    try:
-        with tmp.open("wb") as f:
-            f.write(data)
-            f.flush()
-            os.fsync(f.fileno())
-        os.replace(tmp, path)
-    except BaseException:
-        tmp.unlink(missing_ok=True)
-        raise
+    sitelib.atomic_write_bytes(path, data, skip_if_unchanged=True)
 
 
 def atomic_write_text(path: Path, text: str) -> None:
@@ -226,28 +208,17 @@ def save_vec_cache(path: Path, model: str, revision: str, dim: int,
     else:
         hashes  = np.array([], dtype="U64")
         vectors = np.zeros((0, dim), dtype=np.float32)
-    path.parent.mkdir(parents=True, exist_ok=True)
     # Pass an open file handle, not a path: np.savez_compressed appends
-    # ".npz" to bare paths, which would mangle our atomic-rename target.
-    # PID-unique temp so concurrent runs can't interleave; fsync so the
-    # rename is durable.
-    tmp = path.with_suffix(path.suffix + f".tmp.{os.getpid()}")
-    try:
-        with open(tmp, "wb") as f:
-            np.savez_compressed(
-                f,
-                model=model,
-                revision=revision,
-                dim=dim,
-                hashes=hashes,
-                vectors=vectors,
-            )
-            f.flush()
-            os.fsync(f.fileno())
-        os.replace(tmp, path)
-    except BaseException:
-        tmp.unlink(missing_ok=True)
-        raise
+    # ".npz" to bare paths, which would mangle the temporary's name.
+    with sitelib.atomic_path(path) as tmp, open(tmp, "wb") as f:
+        np.savez_compressed(
+            f,
+            model=model,
+            revision=revision,
+            dim=dim,
+            hashes=hashes,
+            vectors=vectors,
+        )
 
 
 STRIP_SELECTORS = [

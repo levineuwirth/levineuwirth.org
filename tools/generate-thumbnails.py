@@ -76,15 +76,12 @@ problem (tools/check-site.py). A genuine conversion failure exits 1.
 from __future__ import annotations
 
 import argparse
-import importlib.util
-import os
 import sys
 from pathlib import Path
 
-_spec = importlib.util.spec_from_file_location(
-    "photo_naming", Path(__file__).with_name("photo_naming.py"))
-photo_naming = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(photo_naming)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import photo_naming  # noqa: E402
+import sitelib  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_ROOT = REPO_ROOT / "content" / "photography"
@@ -232,17 +229,12 @@ def _prepare_for_format(source: Path, image):
 
 
 def _write(image, destination: Path, kwargs: dict) -> None:
-    """Save through a PID-unique temp name; never leaves a partial file."""
-    tmp = destination.with_name(f"{destination.name}.tmp.{os.getpid()}")
-    try:
+    """Save through a temporary sibling; never leaves a partial file. Mode
+    644 matches what import-photo.sh sets on the delivery file: these are
+    rsync'd to the VPS and served by nginx. Not durable: a lost variant is
+    regenerated on the next run."""
+    with sitelib.atomic_path(destination, durable=False, mode=0o644) as tmp:
         image.save(tmp, **kwargs)
-        # Match the 644 that import-photo.sh sets on the delivery file;
-        # these are rsync'd to the VPS and served by nginx.
-        os.chmod(tmp, 0o644)
-        tmp.replace(destination)
-    except BaseException:
-        tmp.unlink(missing_ok=True)
-        raise
 
 
 def render_variant(source: Path, destination: Path, width: int,

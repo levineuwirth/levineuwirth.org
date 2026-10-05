@@ -14,7 +14,6 @@ All four stages implemented.
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import json
 import re
 import sys
@@ -25,14 +24,10 @@ from typing import Any, Callable
 
 import yaml
 
-_spec = importlib.util.spec_from_file_location(
-    "shared_rules", Path(__file__).with_name("shared_rules.py"))
-shared_rules = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(shared_rules)
-_spec = importlib.util.spec_from_file_location(
-    "front_matter", Path(__file__).with_name("front_matter.py"))
-front_matter = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(front_matter)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import shared_rules  # noqa: E402
+import front_matter  # noqa: E402
+from sitelib import slugify  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Types
@@ -345,14 +340,6 @@ TYPE_PROFILES: dict[str, dict[str, Any]] = {
         "body_hard_lines": True,
     },
 }
-
-
-def slugify(text: str) -> str:
-    s = text.lower()
-    s = re.sub(r"[^\w\s-]", "", s)
-    s = re.sub(r"[\s_]+", "-", s)
-    s = re.sub(r"-+", "-", s)
-    return s.strip("-")
 
 
 def first_real_line(body: str) -> str:

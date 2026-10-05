@@ -9,16 +9,14 @@ Fails if the generator does not build.
 
 from __future__ import annotations
 
-import importlib.util
 import json
+import sys
 import subprocess
 from functools import lru_cache
 from pathlib import Path
 
-_spec = importlib.util.spec_from_file_location(
-    "unpublished", Path(__file__).with_name("unpublished.py"))
-unpublished = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(unpublished)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import unpublished  # noqa: E402
 
 
 @lru_cache(maxsize=1)

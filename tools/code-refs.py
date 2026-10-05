@@ -64,7 +64,6 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import http.client
-import importlib.util
 import json
 import os
 import re
@@ -77,9 +76,9 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-_spec = importlib.util.spec_from_file_location("unpublished", ROOT / "tools/unpublished.py")
-unpublished = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(unpublished)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import unpublished  # noqa: E402
+import sitelib  # noqa: E402
 CONTENT_DIR = ROOT / "content"
 STORE_DIR = ROOT / "code-refs"
 INDEX_PATH = STORE_DIR / "index.json"
@@ -217,15 +216,8 @@ def public(path: Path) -> str:
     return PUBLIC_PREFIX + path.relative_to(STORE_DIR).as_posix()
 
 
-def write_atomic(path: Path, data: bytes) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_name(path.name + ".partial")
-    tmp.write_bytes(data)
-    tmp.replace(path)
-
-
 def write_json(path: Path, obj) -> None:
-    write_atomic(path, (json.dumps(obj, indent=1, ensure_ascii=False) + "\n").encode())
+    sitelib.atomic_write_bytes(path, (json.dumps(obj, indent=1, ensure_ascii=False) + "\n").encode())
 
 
 def ensure_commit(owner: str, repo: str, ref: str) -> dict:
@@ -275,7 +267,7 @@ def ensure_blob(owner: str, repo: str, sha: str, path: str) -> Path:
         raw.decode("utf-8")
     except UnicodeDecodeError:
         raise FetchError(f"{path}: not UTF-8 text, skipped") from None
-    write_atomic(dest, raw)
+    sitelib.atomic_write_bytes(dest, raw)
     return dest
 
 

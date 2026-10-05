@@ -90,7 +90,6 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
-import importlib.util
 import json
 import os
 import re
@@ -104,10 +103,9 @@ from pathlib import Path
 
 import yaml
 
-_spec = importlib.util.spec_from_file_location(
-    "front_matter", Path(__file__).with_name("front_matter.py"))
-front_matter = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(front_matter)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import front_matter  # noqa: E402
+import sitelib  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 MUSIC = ROOT / "content" / "music"
@@ -501,13 +499,7 @@ def write_manifest(slug: str, data: dict) -> None:
             "# not versioned; this records how to regenerate them:\n"
             f"#   tools/music-import.py refresh {slug}\n")
     body = yaml.safe_dump(data, sort_keys=False, allow_unicode=True)
-    manifest = MUSIC / slug / MANIFEST
-    tmp = manifest.with_name(f".{manifest.name}.tmp")
-    try:
-        tmp.write_text(head + body, encoding="utf-8")
-        os.replace(tmp, manifest)
-    finally:
-        tmp.unlink(missing_ok=True)
+    sitelib.atomic_write_text(MUSIC / slug / MANIFEST, head + body)
 
 
 def frontmatter(slug: str) -> dict | None:
@@ -688,9 +680,7 @@ def shrink_pages(slug: str, pages: list[Path]) -> tuple[int, int]:
         out = shrink_page(text, f"{slug}-{page_index(page)}-")
         before += len(text.encode()); after += len(out.encode())
         if out != text:
-            tmp = page.with_name(f".{page.name}.tmp")
-            tmp.write_text(out, encoding="utf-8")
-            os.replace(tmp, page)
+            sitelib.atomic_write_text(page, out)
     return before, after
 
 
@@ -714,11 +704,9 @@ def thumbnail(page: Path, out: Path) -> bool:
         png.unlink(missing_ok=True)
         warn(f"rsvg-convert could not render {page}: {r.stderr.strip()[-500:]}")
         return False
-    tmp = out.with_name(f".{out.name}.tmp")
-    with Image.open(png) as im:
+    with sitelib.atomic_path(out) as tmp, Image.open(png) as im:
         im.convert("L").save(tmp, "WEBP", quality=80, method=6)
     png.unlink()
-    os.replace(tmp, out)
     return True
 
 

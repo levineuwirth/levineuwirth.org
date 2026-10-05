@@ -19,6 +19,10 @@ import os
 import re
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import sitelib  # noqa: E402
 
 
 def ordinal_suffix(day: int) -> str:
@@ -49,19 +53,10 @@ def stamp_file(path: str, replacement_bytes: bytes) -> bool:
         data,
     )
     if count and new_data != data:
-        # Write to a sibling temp file and os.replace so an interrupt
-        # mid-write never leaves a truncated deployed HTML file.
-        tmp = path + ".stamp-tmp"
-        try:
-            with open(tmp, "wb") as f:
-                f.write(new_data)
-            os.replace(tmp, path)
-        except BaseException:
-            try:
-                os.unlink(tmp)
-            except FileNotFoundError:
-                pass
-            raise
+        # Through a temporary sibling, so an interrupt mid-write never
+        # leaves a truncated deployed HTML file. Not durable: every build
+        # stamps again.
+        sitelib.atomic_write_bytes(Path(path), new_data, durable=False)
         return True
     return False
 

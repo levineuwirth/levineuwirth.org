@@ -35,7 +35,6 @@ images are logged and the rest of the walk continues.
 
 from __future__ import annotations
 
-import importlib.util
 import json
 import os
 import shutil
@@ -47,10 +46,9 @@ from typing import Any
 
 import yaml
 
-_spec = importlib.util.spec_from_file_location(
-    "photo_naming", Path(__file__).with_name("photo_naming.py"))
-photo_naming = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(photo_naming)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import photo_naming  # noqa: E402
+import sitelib  # noqa: E402
 
 REPO_ROOT = Path(__file__).parent.parent
 CONTENT_DIR = REPO_ROOT / "content" / "photography"
@@ -469,19 +467,12 @@ def _is_stale(image: Path, sidecar: Path) -> bool:
 
 
 def _atomic_write_yaml(path: Path, data: dict[str, Any]) -> None:
-    # PID-unique temp (concurrent runs can't share it), removed on
-    # failure. No fsync: sidecars are regenerated from the photo on the
-    # next build, so a lost rename costs one re-extraction, not data.
-    tmp = path.with_suffix(path.suffix + f".tmp.{os.getpid()}")
-    try:
-        with tmp.open("w", encoding="utf-8") as f:
-            # Preserve the SIDECAR_KEYS order so a manual diff is easy to read.
-            ordered = {k: data[k] for k in SIDECAR_KEYS if k in data}
-            yaml.safe_dump(ordered, f, sort_keys=False, allow_unicode=True)
-        tmp.replace(path)
-    except BaseException:
-        tmp.unlink(missing_ok=True)
-        raise
+    # Not durable: sidecars are regenerated from the photo on the next
+    # build, so a lost rename costs one re-extraction, not data.
+    with sitelib.atomic_path(path, durable=False) as tmp, tmp.open("w", encoding="utf-8") as f:
+        # Preserve the SIDECAR_KEYS order so a manual diff is easy to read.
+        ordered = {k: data[k] for k in SIDECAR_KEYS if k in data}
+        yaml.safe_dump(ordered, f, sort_keys=False, allow_unicode=True)
 
 
 def _read_one(image: Path) -> dict[str, Any]:

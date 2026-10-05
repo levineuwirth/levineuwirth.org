@@ -30,6 +30,9 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from sitelib import slugify  # noqa: E402
+
 REPO_ROOT   = Path(__file__).parent.parent
 POETRY_DIR  = REPO_ROOT / "content" / "poetry"
 
@@ -60,17 +63,6 @@ _ROMAN_RE = re.compile(
     r"^(M{0,4}(?:CM|CD|D?C{0,3})(?:XC|XL|L?X{0,3})(?:IX|IV|V?I{0,3}))\.?$",
     re.IGNORECASE,
 )
-
-# ---------------------------------------------------------------------------
-# Slug generation
-# ---------------------------------------------------------------------------
-
-def slugify(s: str) -> str:
-    s = s.lower()
-    s = re.sub(r"[^\w\s-]", "", s)
-    s = re.sub(r"[\s_]+", "-", s)
-    s = re.sub(r"-+", "-", s)
-    return s.strip("-")
 
 # ---------------------------------------------------------------------------
 # Gutenberg parsing
