@@ -14,6 +14,7 @@ module Utils
     , escapeHtml
     , escapeHtmlText
     , inlinesText
+    , stripHtmlComments
     , trim
     , splitOn
     , authorSlugify
@@ -168,6 +169,29 @@ inlinesText = T.concat . map go
     go (Image _ ils _)             = inlinesText ils
     go (Note _)                    = ""
     go (Span _ ils)                = inlinesText ils
+
+-- | Drop the HTML comments from a template's source. A comment that has
+--   its lines to itself goes with them, so no blank, indented line is left
+--   where it stood; one beside markup goes alone. An unterminated @<!--@ is
+--   left as it is.
+stripHtmlComments :: String -> String
+stripHtmlComments = T.unpack . go . T.pack
+  where
+    go s = case T.breakOn "<!--" s of
+        (before, rest)
+            | T.null rest -> before
+            | otherwise -> case T.breakOn "-->" rest of
+                (_, close)
+                    | T.null close -> s
+                    | otherwise ->
+                        let after         = T.drop 3 close
+                            before'       = T.dropWhileEnd blank before
+                            (_, after')   = T.span blank after
+                            ownsLine      = (T.null before' || "\n" `T.isSuffixOf` before')
+                                         && (T.null after' || "\n" `T.isPrefixOf` after')
+                        in  if ownsLine then before' <> go (T.drop 1 after')
+                                        else before <> go after
+    blank c = c == ' ' || c == '\t'
 
 -- | Strip leading and trailing whitespace.
 trim :: String -> String

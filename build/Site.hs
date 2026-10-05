@@ -47,7 +47,7 @@ import Tags       (buildAllTags, applyTagRules, sidecarIdentifier,
 import Pagination (blogPaginateRules)
 import Stability  (resolveStability)
 import Stats      (statsRules)
-import Utils      (cacheDirFor, confidencePercent, contentPageRoute, formatIso, inDefault,
+import Utils      (cacheDirFor, confidencePercent, contentPageRoute, formatIso, inDefault, stripHtmlComments,
                    isDevBuild, metadataKeywords, outputDirFor, stripPrefixRoute,
                    trustScore)
 
@@ -327,8 +327,16 @@ rules = do
     -- reason the essay sidecars are: to make them trackable. Audit B11.
     match "static/**/*.dims.yaml" $ compile getResourceLBS
 
-    -- Templates
-    match "templates/**" $ compile templateBodyCompiler
+    -- Templates. Their HTML comments are notes for whoever edits them
+    -- (audit IDs, why a partial is shaped as it is) and are dropped as each
+    -- template compiles: a comment in a partial rendered inside a loop
+    -- shipped once per item (about 750 copies of photo-card's across the
+    -- photography pages), 1.3 MB of comments across the site. Comments in
+    -- content are untouched.
+    match "templates/**" $ compile $ cached "Site.templateWithoutComments" $ do
+        item <- getResourceBody
+        tpl  <- compileTemplateItem (fmap stripHtmlComments item)
+        return (itemSetBody tpl item)
 
     -- The repository and the public site carry the same licence texts.
     match (fromList ["LICENSE", "LICENSE-CONTENT"]) $ do

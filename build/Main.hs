@@ -23,7 +23,7 @@ import qualified Data.Map.Strict as Map
 import qualified Data.Set    as Set
 import Data.List             (intercalate)
 import Data.Maybe            (fromMaybe)
-import Utils                 (boolSpellings, isDevBuild, outputDirFor)
+import Utils                 (boolSpellings, isDevBuild, outputDirFor, stripHtmlComments)
 import FooterData            (writeFooterData)
 import RouteCheck            (siteRoutes, siteRulesValue, withUniqueRoutes)
 import Tags                  (buildAllTags, pagedTags)
@@ -65,7 +65,9 @@ writeBuildStamp = do
 -- prints every output path and the item routed there, tab-separated, for
 -- tools/import-content.py (build/RouteCheck.hs); @site list-tags@ each tag
 -- that gets a page, and @site expand-tags@ the pages the tags on stdin would
--- get ('Tags.pagedTags'), for tools/scaffold-photos.py. A build refuses to
+-- get ('Tags.pagedTags'), for tools/scaffold-photos.py; @site
+-- strip-template-comments@ filters stdin as templates are ('Utils.stripHtmlComments'),
+-- for its test. A build refuses to
 -- run when two items share an output path ('withUniqueRoutes').
 main :: IO ()
 main = do
@@ -90,6 +92,7 @@ main = do
             routed <- siteRoutes (siteConfigurationFor dev) (withoutUnpublished currentUnpublished rules)
             mapM_ (\(path, ident) -> putStrLn (path ++ "\t" ++ toFilePath ident)) routed
         ["expand-tags"] -> getContents >>= mapM_ putStrLn . pagedTags . lines
+        ["strip-template-comments"] -> interact stripHtmlComments
         ["list-tags"] -> do
             dev <- isDevBuild
             tags <- siteRulesValue (siteConfigurationFor dev) buildAllTags
