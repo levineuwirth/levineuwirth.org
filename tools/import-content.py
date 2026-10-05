@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 from dataclasses import dataclass, field
 from datetime import date as date_type, datetime
@@ -26,6 +27,7 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import shared_rules  # noqa: E402
+import unpublished  # noqa: E402
 import front_matter  # noqa: E402
 from sitelib import slugify  # noqa: E402
 
@@ -676,6 +678,54 @@ def validate_collection_request(
         )
 
 
+def collection_prefix(type_name: str, collection_slug: str) -> str:
+    """The URL path a collection's pages live under, without the leading
+    slash: `<slug>/` for pages, `<section>/<slug>/` otherwise."""
+    profile = TYPE_PROFILES.get(type_name, TYPE_PROFILES["page"])
+    section_path = profile["output_dir"].removeprefix("content").strip("/")
+    return "/".join(part for part in (section_path, collection_slug) if part) + "/"
+
+
+def validate_collection_routes(
+    docs: list[Document], args: argparse.Namespace,
+) -> None:
+    """Refuse a collection whose URL space already belongs to other pages.
+
+    The build refuses two items on one route (build/RouteCheck.hs), and a
+    collection always writes <prefix>index.html, which a tag page, a
+    generated page (stats, build, authors, archive, bibliography) or a
+    static directory under the same name already has. Asks the generator
+    which routes exist (`site list-routes`, run against the tree in the
+    current directory) rather than keeping a list of names; pages from
+    the collection's own directory are a re-import, not a claim."""
+    collection_slug = detect_collection_slug(docs, getattr(args, "collection", None))
+    if not collection_slug:
+        return
+    prefix = collection_prefix(args.type, collection_slug)
+    own_dir = TYPE_PROFILES.get(args.type, TYPE_PROFILES["page"])["output_dir"]
+    own = f"{own_dir}/{collection_slug}/"
+    try:
+        listing = subprocess.run(
+            [unpublished.site_binary(), "list-routes"],
+            capture_output=True, text=True, check=True,
+        ).stdout
+    except (OSError, subprocess.CalledProcessError) as exc:
+        detail = getattr(exc, "stderr", "") or str(exc)
+        raise ContentImportError(
+            f"could not list the site's routes: {detail.strip()}") from exc
+    claims = sorted(
+        f"/{route} ({source})"
+        for route, _, source in (line.partition("\t") for line in listing.splitlines())
+        if route.startswith(prefix) and not source.startswith(own)
+    )
+    if claims:
+        shown = ", ".join(claims[:5]) + (f", and {len(claims) - 5} more" if len(claims) > 5 else "")
+        raise ContentImportError(
+            f"collection {collection_slug!r} would share /{prefix} with existing pages: "
+            f"{shown}. Choose another --collection name."
+        )
+
+
 def assemble_file_entries(
     docs: list[Document], args: argparse.Namespace,
 ) -> list[FileEntry]:
@@ -686,10 +736,7 @@ def assemble_file_entries(
     collection_slug = detect_collection_slug(docs, cli_collection)
 
     if collection_slug:
-        section_path = profile["output_dir"].removeprefix("content").strip("/")
-        collection_url = "/" + "/".join(
-            part for part in (section_path, collection_slug) if part
-        ) + "/"
+        collection_url = "/" + collection_prefix(args.type, collection_slug)
         for doc in docs:
             if cli_collection:
                 doc.meta["collection"] = collection_slug
@@ -875,8 +922,8 @@ def main(argv: list[str]) -> int:
 
     try:
         schema_docs = apply_schema(split_docs, args)
-        validate_collection_request(schema_docs, args)
         file_entries = assemble_file_entries(schema_docs, args)
+        validate_collection_routes(schema_docs, args)
     except ContentImportError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2

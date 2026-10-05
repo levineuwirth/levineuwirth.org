@@ -126,6 +126,34 @@ class ImportContentTests(unittest.TestCase):
                     docs, args_for(type="page", collection=collection)
                 )
 
+    @requires_cabal
+    def test_collection_refused_where_its_url_space_is_taken(self) -> None:
+        # A tag page already lives at /notes/; a `notes` collection would
+        # write notes/index.html over it, which the build refuses
+        # (build/RouteCheck.hs). Refused before anything is written.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "data").mkdir()
+            essay = root / "content" / "essays" / "a.md"
+            essay.parent.mkdir(parents=True)
+            essay.write_text("---\ntitle: A\ndate: 2026-01-01\ntags: [notes]\n---\n\nBody.\n",
+                             encoding="utf-8")
+            source = root / "source.txt"
+            source.write_text("Title\n\nBody\n", encoding="utf-8")
+            stderr = io.StringIO()
+
+            with contextlib.chdir(root), contextlib.redirect_stdout(io.StringIO()), \
+                    contextlib.redirect_stderr(stderr):
+                refused = import_content.main([str(source), "--collection", "Notes"])
+                accepted = import_content.main([str(source), "--collection", "Fresh"])
+
+            self.assertEqual(refused, 2)
+            self.assertIn("collection 'notes' would share /notes/ with existing pages: "
+                          "/notes/index.html (notes/index.html)", stderr.getvalue())
+            self.assertFalse((root / "content" / "notes").exists())
+            self.assertEqual(accepted, 0, stderr.getvalue())
+            self.assertTrue((root / "content" / "fresh" / "index.md").exists())
+
     def test_writing_types_require_valid_iso_dates(self) -> None:
         with self.assertRaisesRegex(
             import_content.ContentImportError,
