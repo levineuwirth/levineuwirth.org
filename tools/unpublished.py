@@ -5,32 +5,21 @@ the scanner if needed, then ask it about the actual content tree. A scan
 failure aborts its caller instead of treating every page as published.
 """
 
-from functools import lru_cache
 import hashlib
 import json
-import os
 from pathlib import Path
 import subprocess
 import sys
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import sitelib  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
-
-
-@lru_cache(maxsize=1)
-def site_binary() -> str:
-    # Tests run the real scanner over temporary trees without rebuilding a
-    # nonexistent Haskell project in each fixture.
-    if binary := os.environ.get("SITE_DRAFTS_BINARY"):
-        return binary
-    subprocess.run(["cabal", "build", "-v0", "exe:site"], cwd=ROOT, check=True)
-    return subprocess.check_output(
-        ["cabal", "list-bin", "-v0", "exe:site"], cwd=ROOT, text=True,
-    ).strip()
 
 
 def load_boundary(content: Path) -> dict[str, list[str]]:
     summary = subprocess.check_output(
-        [site_binary(), "list-unpublished", str(content.resolve())], text=True,
+        [sitelib.site_binary(), "list-unpublished", str(content.resolve())], text=True,
     )
     boundary = {"file": [], "dir": [], "stem": []}
     for line in summary.splitlines():

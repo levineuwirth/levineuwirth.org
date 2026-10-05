@@ -16,10 +16,10 @@ from functools import lru_cache
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import unpublished  # noqa: E402
+import sitelib  # noqa: E402
 
 
 @lru_cache(maxsize=1)
 def shared_rules() -> dict:
     return json.loads(subprocess.check_output(
-        [unpublished.site_binary(), "shared-rules"], text=True))
+        [sitelib.site_binary(), "shared-rules"], text=True))

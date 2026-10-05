@@ -77,7 +77,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import unpublished  # noqa: E402
 import sitelib  # noqa: E402
 CONTENT_DIR = ROOT / "content"
 STORE_DIR = ROOT / "code-refs"
@@ -148,7 +147,7 @@ def discover_links(content_dir: Path | None = None) -> dict[str, dict]:
     snapshotted for a tag that would never use it."""
     content_dir = content_dir or CONTENT_DIR
     targets = subprocess.check_output(
-        [unpublished.site_binary(), "list-links", str(content_dir.resolve())], text=True)
+        [sitelib.site_binary(), "list-links", str(content_dir.resolve())], text=True)
     links: dict[str, dict] = {}
     for target in targets.splitlines():
         m = URL_RE.match(target)

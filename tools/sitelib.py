@@ -12,9 +12,13 @@ from __future__ import annotations
 
 import os
 import re
+import subprocess
 from collections.abc import Iterator
 from contextlib import contextmanager
+from functools import lru_cache
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
 
 
 @contextmanager
@@ -87,3 +91,17 @@ def slugify(text: str) -> str:
     s = re.sub(r"[\s_]+", "-", s)
     s = re.sub(r"-+", "-", s)
     return s.strip("-")
+
+
+@lru_cache(maxsize=1)
+def site_binary() -> str:
+    """The generator, which the tools ask whatever it alone decides (drafts,
+    shared lists, routes, tags, links), rebuilt first if a source changed.
+    SITE_BINARY names one instead: the tests run it over scratch trees that
+    have no Haskell project to build."""
+    if binary := os.environ.get("SITE_BINARY"):
+        return binary
+    subprocess.run(["cabal", "build", "-v0", "exe:site"], cwd=ROOT, check=True)
+    return subprocess.check_output(
+        ["cabal", "list-bin", "-v0", "exe:site"], cwd=ROOT, text=True,
+    ).strip()

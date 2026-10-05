@@ -27,7 +27,7 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import shared_rules  # noqa: E402
-import unpublished  # noqa: E402
+import sitelib  # noqa: E402
 import front_matter  # noqa: E402
 from sitelib import slugify  # noqa: E402
 
@@ -706,7 +706,7 @@ def validate_collection_routes(
     own = f"{own_dir}/{collection_slug}/"
     try:
         listing = subprocess.run(
-            [unpublished.site_binary(), "list-routes"],
+            [sitelib.site_binary(), "list-routes"],
             capture_output=True, text=True, check=True,
         ).stdout
     except (OSError, subprocess.CalledProcessError) as exc:

@@ -94,6 +94,7 @@ class BuildFreshnessTestCase(unittest.TestCase):
         tools.mkdir(exist_ok=True)
         shutil.copy2(SCRIPT, tools / SCRIPT.name)
         shutil.copy2(REPO / "tools/unpublished.py", tools / "unpublished.py")
+        shutil.copy2(REPO / "tools/sitelib.py", tools / "sitelib.py")
 
         self.git("add", "-A")
         self.git("commit", "-q", "-m", "initial")
@@ -108,7 +109,7 @@ class BuildFreshnessTestCase(unittest.TestCase):
 
     def run_script(self, arg: str) -> subprocess.CompletedProcess:
         env = script_env(CLEAN_CMD=f"touch {self.root}/CLEANED", STATE_DIR="data",
-                         CACHE_DIR="_cache", SITE_DRAFTS_BINARY=str(self.binary))
+                         CACHE_DIR="_cache", SITE_BINARY=str(self.binary))
         return subprocess.run(
             ["bash", str(self.root / "tools" / SCRIPT.name), arg],
             cwd=self.root,

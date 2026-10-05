@@ -61,7 +61,7 @@ def site_binary() -> Path:
 # inside the very deploy they were meant to allow (40190c8).
 _LEAKY_PREFIXES = ("DEPLOY_", "BORG_")
 _LEAKY_NAMES = ("SITE_LOCK_HELD", "LOCK_TIMEOUT", "REQUIRE_WEBP", "SITE_ENV",
-                "SITE_DRAFTS_BINARY")
+                "SITE_BINARY")
 
 
 def script_env(path: Path | str | None = None, **overrides: str) -> dict[str, str]:

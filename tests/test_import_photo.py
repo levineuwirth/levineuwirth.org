@@ -43,7 +43,7 @@ class Importers(unittest.TestCase):
         # The namespace guard asks the generator what the tree routes
         # (`site list-routes`), which reads data/ as a build does.
         (self.repo / "data").mkdir()
-        self.env = script_env(SITE_DRAFTS_BINARY=str(site_binary()))
+        self.env = script_env(SITE_BINARY=str(site_binary()))
         self.original = self.tmp / "original.jpg"
         Image.new("RGB", (300, 200), (200, 50, 50)).save(self.original, quality=90)
 

@@ -44,7 +44,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import front_matter  # noqa: E402
 import photo_sidecars  # noqa: E402
-import unpublished  # noqa: E402
+import sitelib  # noqa: E402
 
 REPO_ROOT = Path(__file__).parent.parent
 TODAY = __import__("datetime").datetime.now(__import__("datetime").timezone.utc).date().isoformat()
@@ -69,7 +69,7 @@ def title_from_slug(slug: str) -> str:
 def site_listing(command: str, stdin: str = "") -> list[str]:
     """`site list-routes`, `site list-tags` or `site expand-tags`, for the
     tree at REPO_ROOT."""
-    return subprocess.run([unpublished.site_binary(), command], cwd=REPO_ROOT, input=stdin,
+    return subprocess.run([sitelib.site_binary(), command], cwd=REPO_ROOT, input=stdin,
                           capture_output=True, text=True, check=True).stdout.splitlines()
 
 
