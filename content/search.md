@@ -7,6 +7,9 @@ description: >-
 # Pure-navigation page: keep the search interface itself out of the
 # keyword index (templates/page.html reads this).
 search-exclude: true
+# Nor in search engines: a results page is not a destination. The sitemap
+# already leaves it out, with every other undated standalone page.
+noindex: true
 history:
   - date: "2026-06-19"
   - date: "2026-04-12"
