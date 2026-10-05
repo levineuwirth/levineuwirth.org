@@ -5,8 +5,8 @@
         $for(items)$
         <li class="essay-list-item">
             <a href="$canonical-url$">$title$</a>
-            $if(date)$
-            <span class="essay-list-date">$date$</span>
+            $if(date-display)$
+            <span class="essay-list-date"><time datetime="$date-iso$">$date-display$</time>$if(has-revision)$ · Revised$endif$</span>
             $endif$
             $if(abstract)$
             <p class="essay-list-abstract">$abstract$</p>

@@ -15,11 +15,12 @@ module Authors
     ) where
 
 import Hakyll
-import Pagination           (sortAndGroup)
+import Pagination           (pageSize)
 import Patterns             (authorIndexable)
-import Contexts             (abstractField, tagLinksField, canonicalUrlField)
-import Utils                (authorSlugify, inDefault, itemAuthors, writerlyDate)
-import Tags                 (anchoredTagsRules)
+import Contexts             (abstractField, tagLinksField, canonicalUrlField, recentFirstByDisplay,
+                             revisionDateFields)
+import Utils                (authorSlugify, inDefault, itemAuthors)
+import Tags                 (anchoredTagsRules, sortAndGroupByDisplayAt)
 
 
 -- ---------------------------------------------------------------------------
@@ -62,11 +63,12 @@ buildAllAuthors = buildTagsWith getAuthors allContent authorIdentifier
 applyAuthorRules :: Tags -> Context String -> Rules ()
 applyAuthorRules authors baseCtx = anchoredTagsRules "_dependencies/authors" authors $ \name pat -> do
     let slug = authorSlugify name
-    paginate <- buildPaginateWith sortAndGroup pat (authorPageId slug)
+    -- By display date, as tag pages are: a revised piece moves up.
+    paginate <- buildPaginateWith (sortAndGroupByDisplayAt pageSize) pat (authorPageId slug)
     paginateRules paginate $ \pageNum pat' -> do
         route idRoute
         compile $ do
-            items <- recentFirst =<< loadAll (pat' .&&. hasNoVersion)
+            items <- recentFirstByDisplay =<< loadAll (pat' .&&. hasNoVersion)
             let ctx = listField "items" itemCtx (return items)
                    <> paginateContext paginate pageNum
                    <> constField "author" name
@@ -85,7 +87,9 @@ applyAuthorRules authors baseCtx = anchoredTagsRules "_dependencies/authors" aut
     -- directory-routed essay's route is @essays/x/index.html@, and the
     -- author index is the reader's way in to a page whose canonical
     -- link, sitemap entry and feed id all say @/essays/x/@ (audit C03).
-    itemCtx = dateField "date" writerlyDate
+    -- The date shown is the one the list is sorted by, as on tag pages:
+    -- the latest revision's, marked as one.
+    itemCtx = revisionDateFields
            <> tagLinksField "item-tags"
            <> abstractField
            <> canonicalUrlField

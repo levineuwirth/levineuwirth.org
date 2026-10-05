@@ -24,6 +24,7 @@ module Tags
     , anchoredTagsRules
     , tagPaginationThreshold
     , tagPageSize
+    , sortAndGroupByDisplayAt
     , sidecarIdentifier
     , portalIntroField
     , portalTooltipField
