@@ -64,6 +64,7 @@ import           Hakyll (Compiler, Context, Identifier, Item, Metadata, Routes, 
                          lookupString, lookupStringList, relativizeUrls, setExtension,
                          toFilePath)
 import           System.Environment (lookupEnv)
+import           Text.Printf (printf)
 import           Text.Read (readMaybe)
 
 -- | Whether this run is a dev build: @SITE_ENV=dev@, set by @make dev@ and
@@ -264,15 +265,18 @@ trustScore (Just c) (Just e) =
     in  Just (max 0 (min 100 (round (raw * 100.0))))
 trustScore _ _ = Nothing
 
--- | A byte count for readers: @512 B@, @3.4 KB@, @12.0 MB@ (truncated to
--- one decimal place).
+-- | A byte count for readers, rounded: @512 B@, @3 KB@, @12.4 MB@,
+-- @1.3 GB@. Kilobytes are whole; a tenth of one says nothing.
 formatBytes :: Integer -> String
-formatBytes b
-    | b < 1024        = show b ++ " B"
-    | b < 1024 * 1024 = showD (b * 10 `div` 1024)          ++ " KB"
-    | otherwise       = showD (b * 10 `div` (1024 * 1024)) ++ " MB"
+formatBytes n
+    | n >= gb   = printf "%.1f GB" (fromIntegral n / fromIntegral gb :: Double)
+    | n >= mb   = printf "%.1f MB" (fromIntegral n / fromIntegral mb :: Double)
+    | n >= kb   = printf "%.0f KB" (fromIntegral n / fromIntegral kb :: Double)
+    | otherwise = show n ++ " B"
   where
-    showD n = show (n `div` 10) ++ "." ++ show (n `mod` 10)
+    kb = 1024 :: Integer
+    mb = kb * 1024
+    gb = mb * 1024
 
 -- | The median; 0 for an empty list. An even-length list takes the mean
 -- of the two middle elements, rounded half up.

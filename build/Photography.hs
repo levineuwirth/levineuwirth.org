@@ -45,7 +45,7 @@ import           Contexts               (feedTitleField, photographyCtx, pageCtx
                                          recentFirstByDisplay, feedMetaFields,
                                          photoVariantName)
 import qualified Patterns               as P
-import           Utils                  (exposureISO, inDefault, stripPrefixRoute)
+import           Utils                  (exposureISO, formatBytes, inDefault, stripPrefixRoute)
 
 -- ---------------------------------------------------------------------------
 -- Rules
@@ -244,7 +244,7 @@ seriesStatsCtx =
         sizes <- unsafeCompiler $ mapM (fileSize dir) ms
         let total = sum sizes
         if total <= 0 then noResult "no delivery files on disk"
-                      else return (humanBytes total))
+                      else return (formatBytes total))
     <> field "series-captured-span" capturedSpan
     <> distinctField "series-cameras" "camera"
     <> distinctField "series-lenses"  "lens"
@@ -367,18 +367,6 @@ loadSeriesChildrenFor parent = do
                     (fromGlob ("content/photography/" ++ slug ++ "/index.md"))
             .&&. hasNoVersion
     loadAll pat
-
--- | Bytes as the telemetry pages would print them.
-humanBytes :: Integer -> String
-humanBytes n
-    | n >= gb   = printf "%.1f GB" (fromIntegral n / fromIntegral gb :: Double)
-    | n >= mb   = printf "%.1f MB" (fromIntegral n / fromIntegral mb :: Double)
-    | n >= kb   = printf "%.0f KB" (fromIntegral n / fromIntegral kb :: Double)
-    | otherwise = show n ++ " B"
-  where
-    kb = 1024 :: Integer
-    mb = kb * 1024
-    gb = mb * 1024
 
 -- | Route a photography entry to its public URL. The pattern check on
 --   @takeFileName@ distinguishes flat (@content/photography/<slug>.md@)
