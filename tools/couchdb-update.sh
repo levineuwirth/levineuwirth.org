@@ -57,7 +57,18 @@ admin_cfg() {
     printf 'user = "%s:%s"\n' "$u" "$p"
 }
 get() { admin_cfg | curl -fsS -K - --max-time 5 "$URL$1"; }
-field() { python3 -c 'import json,sys; v=json.load(sys.stdin); print(v[sys.argv[1]] if sys.argv[1] else v)' "${1:-}"; }
+# field [key]: the JSON value on stdin, or one key of it. Fails without a
+# traceback (which only cluttered the journal) when curl gave nothing, or
+# the answer is not JSON or lacks the key; the callers refuse on failure.
+field() {
+    python3 -c '
+import json, sys
+try:
+    v = json.load(sys.stdin)
+    print(v[sys.argv[1]] if sys.argv[1] else v)
+except (ValueError, KeyError, TypeError):
+    sys.exit(1)' "${1:-}"
+}
 counts() {   # "db=count …" for every database in DBS
     local db count out=""
     for db in $DBS; do

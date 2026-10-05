@@ -25,6 +25,9 @@ if name == 'curl':
     path = args[-1].split(':5984')[-1]
     if mode == 'bad-count' and path == '/one':
         sys.exit(22)
+    if mode == 'no-count' and path == '/one':
+        print(json.dumps({'error': 'not_found', 'reason': 'Database does not exist.'}))
+        sys.exit(0)
     if path == '/':
         print(json.dumps({'version': '3.5.2' if applied.exists() else '3.4.2', 'uuid': 'identity'}))
     elif path == '/_up':
@@ -106,12 +109,21 @@ class CouchDBUpdateRecovery(unittest.TestCase):
         self.assertTrue((self.state / 'maintenance').exists())
         self.assertNotEqual(self.run_update().returncode, 0)
 
-    def test_count_failure_refuses_before_stopping(self):
-        result = self.run_update('bad-count')
+    def assert_count_refused(self, mode):
+        # Refused before anything stops, and without a Python traceback in
+        # the journal.
+        result = self.run_update(mode)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('could not count documents; not updating', result.stdout)
+        self.assertNotIn('Traceback', result.stdout + result.stderr)
         self.assertFalse((self.root / 'stopped').exists(), result.stdout + result.stderr)
         self.assertFalse((self.state / 'maintenance').exists())
+
+    def test_count_failure_refuses_before_stopping(self):
+        self.assert_count_refused('bad-count')
+
+    def test_an_answer_without_a_count_is_refused(self):
+        self.assert_count_refused('no-count')
 
     def test_verified_success_clears_markers(self):
         result = self.run_update()
