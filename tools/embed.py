@@ -24,10 +24,9 @@ Called by `make build` when .venv exists. Failures are non-fatal.
 Staleness: both passes are content-hash cached (data/embed-cache-*.npz),
 so an unchanged site re-embeds nothing and loads no model. Extraction is
 cached too (data/embed-cache-extract.json): a page is parsed only when
-its bytes, footer build time aside, or the extractor changed. There is
-deliberately no mtime-based skip: stamp-build-time.py rewrites every
-page's footer after this script runs, so "are outputs newer than the
-HTML" is always false and a check based on it can never fire.
+its bytes, footer build time aside, or the extractor changed. A content
+hash rather than an mtime, which cannot see changed content behind an
+unchanged mtime (the compression cache's lesson, audit X2).
 
 Cost of a fully-warm run: every page is read and hashed, none parsed,
 and torch / sentence-transformers are imported lazily only when a cache
@@ -333,10 +332,11 @@ def _extract(url: str, raw: str) -> tuple[dict | None, list[dict]]:
 
     return page, paras
 
-# The footer's site-wide build time, which stamp-build-time.py rewrites on
-# every page at the end of every build. It is outside #markdownBody, so it
-# never reaches the extracted text; masked here so it does not make every
-# page look changed.
+# The footer's site-wide build time. Pages ship this span empty and the
+# browser fills it in (since 2026-10-06); before that it was stamped into
+# every page after every build. It is outside #markdownBody, so it never
+# reaches the extracted text; masked so a stamped page and an empty one
+# hash alike.
 BUILD_TIME_SPAN = re.compile(
     rb'(<span class="footer-build-time" data-build-time>)[^<]*(</span>)')
 

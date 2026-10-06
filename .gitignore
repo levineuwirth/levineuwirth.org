@@ -87,6 +87,7 @@ data/semantic-meta.json
 # Both embed caches (pages + paragraphs); the trailing glob also
 # catches interrupted-write debris (.tmp / .tmp.npz)
 data/embed-cache-*
+data/sign-manifest.txt
 
 # Archive: generated text + its staleness stamp (recreated from the
 # committed artifact on every build — deterministic, so committing them is

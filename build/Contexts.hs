@@ -51,8 +51,7 @@ import Data.Maybe              (fromMaybe, mapMaybe)
 import Data.Ord                (Down (..), comparing)
 import qualified Data.Scientific    as Sci
 import qualified Data.Set           as Set
-import Data.Time.Calendar      (toGregorian)
-import Data.Time.Clock         (UTCTime, getCurrentTime, utctDay)
+import Data.Time.Clock         (UTCTime, utctDay)
 import Data.Time.Format        (formatTime, defaultTimeLocale)
 import Data.IORef              (IORef, atomicModifyIORef', newIORef, readIORef)
 import qualified Data.Map.Strict    as Map
@@ -117,28 +116,6 @@ affiliationField = listFieldWith "affiliation-links" ctx $ \item -> do
     parseEntry s = case break (== '|') s of
         (name, '|' : url) -> (trim name, trim url)
         (name, _)         -> (trim name, "")
-
--- ---------------------------------------------------------------------------
--- Build time field
--- ---------------------------------------------------------------------------
-
--- | Resolves to the time the current item was compiled, formatted as
---   "Saturday, November 15th, 2025 15:05:55" (UTC).
-buildTimeField :: Context String
-buildTimeField = field "build-time" $ \_ ->
-    unsafeCompiler $ do
-        t <- getCurrentTime
-        let (_, _, d) = toGregorian (utctDay t)
-            prefix    = formatTime defaultTimeLocale "%A, %B " t
-            suffix    = formatTime defaultTimeLocale ", %Y %H:%M:%S" t
-        return (prefix ++ show d ++ ordSuffix d ++ suffix)
-  where
-    ordSuffix n
-        | n `elem` [11,12,13] = "th"
-        | n `mod` 10 == 1     = "st"
-        | n `mod` 10 == 2     = "nd"
-        | n `mod` 10 == 3     = "rd"
-        | otherwise            = "th"
 
 -- ---------------------------------------------------------------------------
 -- Content kind field
@@ -695,7 +672,6 @@ siteCtx =
     <> plainField
     <> constField "site-url" "https://levineuwirth.org"
     <> canonicalUrlField
-    <> buildTimeField
     <> pageScriptsField
     <> pageFeatureFields
     <> abstractField

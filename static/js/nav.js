@@ -75,6 +75,19 @@
             });
         }
 
+        // The site-wide build time, from the one file each build writes
+        // (tools/stamp-build-time.py). Stamping it into every page made
+        // every build rewrite, recompress, re-sign and re-upload ~500
+        // unchanged pages; this way they stay byte-identical. Without
+        // script, or before the file loads, the span is simply empty.
+        var buildTime = document.querySelector('[data-build-time]');
+        if (buildTime && window.fetch) {
+            fetch('/build/time.txt', { cache: 'no-cache' })
+                .then(function (r) { return r.ok ? r.text() : ''; })
+                .then(function (t) { if (t.trim()) buildTime.textContent = t.trim(); })
+                .catch(function () {});
+        }
+
         const portals = document.querySelector('.nav-portals');
         const toggle  = document.querySelector('.nav-portal-toggle');
         if (!portals || !toggle) return;

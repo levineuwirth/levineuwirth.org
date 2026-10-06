@@ -226,29 +226,13 @@ build-locked:
 	rm -rf _site/pagefind
 	pagefind --site _site
 	# ---- Stage 5: stamp --------------------------------------------------
-	# Site-wide footer timestamp: rewrite every <span data-build-time>
-	# in _site/**/*.html so cached (un-recompiled) pages don't show a
-	# stale per-page build time. See tools/stamp-build-time.py for the
-	# full rationale. Must run before compress-assets so the .gz/.br
-	# sidecars include the fresh stamp.
-	#
-	# COST (P05, accepted deliberately): this touches EVERY html file on
-	# every build, so downstream everything looks changed — compress-assets
-	# regenerates every .gz/.br, sign-site.sh re-signs every page, and
-	# rsync transfers all of it even when no prose changed. On this site
-	# that is ~500 pages of otherwise-avoidable work per deploy. The
-	# alternative (a per-page timestamp that silently freezes on cached
-	# pages) is a wrong page, which is worse than a slow deploy.
-	#
-	# SKIP_STAMP=1 opts out: pages then show the build time of the run
-	# that last compiled them, which is stale on any page Hakyll reused.
-	# Pair it with SIGN_ONLY_CHANGED=1 for the fast path, and only for a
-	# local preview — never for a deploy.
-	@if [ "$(SKIP_STAMP)" = "1" ]; then \
-	  echo "build: SKIP_STAMP=1 — footers keep their per-page compile time (stale on cached pages)"; \
-	else \
-	  python3 tools/stamp-build-time.py _site; \
-	fi
+	# The site-wide build time every footer shows, written once to
+	# _site/build/time.txt; static/js/nav.js puts it in each page's empty
+	# <span data-build-time>. Until 2026-10-06 it was stamped into every
+	# page (P05), so every build rewrote ~500 unchanged pages and every
+	# deploy re-signed and re-sent them; pages now stay byte-identical
+	# until their content changes. See tools/stamp-build-time.py.
+	@python3 tools/stamp-build-time.py _site
 	@./tools/compress-assets.sh _site
 	# ---- Stage 6: gate ---------------------------------------------------
 	# Reject the finished artifact before anything can sign or ship it:

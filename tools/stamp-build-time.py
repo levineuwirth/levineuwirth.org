@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
-"""Post-build sweep: stamp the site-wide build time into every footer.
+"""Write the site-wide build time to _site/build/time.txt.
 
-Why this exists
----------------
-build/Contexts.hs binds $build-time$ to getCurrentTime at item-compile
-time, but Hakyll caches outputs. Pages whose dependencies have not
-changed are not recompiled, so the previously-rendered timestamp stays
-on disk and the footer drifts per page. We want one site-wide
-"last built at" stamp, so this script walks _site/**/*.html after
-Hakyll runs and rewrites the contents of every wrapped element.
+Every page's footer shows when the site was last built, the same text on
+every page. static/js/nav.js reads it from this one file into the empty
+<span data-build-time> that templates/partials/footer.html ships.
 
-Format must match build/Contexts.hs:buildTimeField exactly so a fresh
-build (where Hakyll renders the timestamp itself) and the sweep agree.
+It used to be stamped into every page: Hakyll renders a page only when its
+dependencies change, so a time rendered at compile time froze on reused
+pages, and this script rewrote the span in every HTML file after each
+build instead. That made every build rewrite and recompress ~500 pages
+whose content had not changed, and every deploy re-sign and re-send them
+with their compressed copies (boot profile, 2026-10-06). Pages now stay
+byte-identical until their content changes.
+
+Format: "Monday, October 6th, 2026 13:03:33", UTC, as the footers showed
+it before.
 """
 from __future__ import annotations
 
-import os
-import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -31,8 +32,7 @@ def ordinal_suffix(day: int) -> str:
     return {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
 
 
-def format_now() -> str:
-    now = datetime.now(timezone.utc)
+def format_time(now: datetime) -> str:
     return (
         f"{now.strftime('%A, %B')} "
         f"{now.day}{ordinal_suffix(now.day)}, "
@@ -40,42 +40,16 @@ def format_now() -> str:
     )
 
 
-PATTERN = re.compile(
-    rb'(<span class="footer-build-time" data-build-time>)[^<]*(</span>)'
-)
-
-
-def stamp_file(path: str, replacement_bytes: bytes) -> bool:
-    with open(path, "rb") as f:
-        data = f.read()
-    new_data, count = PATTERN.subn(
-        lambda m: m.group(1) + replacement_bytes + m.group(2),
-        data,
-    )
-    if count and new_data != data:
-        # Through a temporary sibling, so an interrupt mid-write never
-        # leaves a truncated deployed HTML file. Not durable: every build
-        # stamps again.
-        sitelib.atomic_write_bytes(Path(path), new_data, durable=False)
-        return True
-    return False
-
-
 def main(root: str) -> int:
-    if not os.path.isdir(root):
+    site = Path(root)
+    if not site.is_dir():
         print(f"stamp-build-time: {root} not found", file=sys.stderr)
         return 1
-    timestamp = format_now().encode("utf-8")
-    rewritten = 0
-    scanned = 0
-    for dirpath, _, files in os.walk(root):
-        for name in files:
-            if not name.endswith(".html"):
-                continue
-            scanned += 1
-            if stamp_file(os.path.join(dirpath, name), timestamp):
-                rewritten += 1
-    print(f"stamp-build-time: rewrote {rewritten}/{scanned} HTML files")
+    target = site / "build" / "time.txt"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    stamp = format_time(datetime.now(timezone.utc))
+    sitelib.atomic_write_text(target, stamp + "\n")
+    print(f"stamp-build-time: {stamp} -> {target}")
     return 0
 
 

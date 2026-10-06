@@ -123,7 +123,7 @@ class VectorCacheTests(unittest.TestCase):
 
 
 def stamped(body, when="Monday, October 6th, 2026 13:03:33"):
-    """A page with the footer build time that stamp-build-time.py rewrites."""
+    """A page with a footer build time in it, as pages were stamped until 2026-10-06."""
     return page(body).replace(
         "<footer>footer text</footer>",
         f'<footer><span class="footer-build-time" data-build-time>{when}</span></footer>')
