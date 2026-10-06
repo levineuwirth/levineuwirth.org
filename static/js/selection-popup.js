@@ -151,8 +151,11 @@
         var langEl = el.closest('[lang]');
         if (!langEl) return null;
 
+        /* A primary language subtag (ISO 639: two or three letters) or
+           nothing: it goes into the Translate button's markup and on to
+           DeepL (audit J14). */
         var lang = (langEl.getAttribute('lang') || '').toLowerCase().split('-')[0];
-        if (!lang) return null;
+        if (!/^[a-z]{2,3}$/.test(lang)) return null;
 
         var rootLang = (document.documentElement.getAttribute('lang') || 'en')
             .toLowerCase().split('-')[0];
@@ -290,7 +293,7 @@
        it to DeepL (or fall through to auto-detect). */
     function translateBtn(lang) {
         return '<button class="selection-popup-btn" data-action="translate"'
-             + ' data-lang="' + lang + '">Translate</button>';
+             + ' data-lang="' + window.lnUtils.escapeHtml(lang) + '">Translate</button>';
     }
 
 

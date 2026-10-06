@@ -184,7 +184,11 @@
        stale by however much the material above the target changed. Re-aim
        at the target even when no ancestor needed expanding. */
     function revealHashTarget(initial) {
-        var id = location.hash ? decodeURIComponent(location.hash.slice(1)) : '';
+        var id = '';
+        /* A malformed escape (#100%) is no target, as in popups.js; it
+           used to throw URIError out of load and every hashchange (J14). */
+        try { id = decodeURIComponent(location.hash.slice(1)); }
+        catch (_) { return; }
         if (!id) return;
         var target = document.getElementById(id);
         if (!target) return;

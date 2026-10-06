@@ -72,13 +72,33 @@
 
     /* ---- Persistence ---- */
 
+    /* A stored value is taken only if it has the shape its field has
+       here; anything else leaves the default (audit J14). Storage is the
+       reader's own, but a hand edit, another version of this script or a
+       broken write must not throw at load: a non-array `status` used to
+       make hasActiveFilters throw before the panel was wired. */
+    function validStored(k, v) {
+        if (k === 'status' || k === 'archiveStatus') {
+            return Array.isArray(v) && v.every(function (x) { return typeof x === 'string'; });
+        }
+        if (v === null) return true;
+        if (k === 'archiveMode') return v === 'exclude' || v === 'only';
+        if (SCALES.hasOwnProperty(k)) {
+            return typeof v === 'number' && v % 1 === 0 && v >= 0 && v < SCALES[k].length;
+        }
+        return typeof v === 'number' && isFinite(v);
+    }
+
     function load() {
         try {
             var raw = localStorage.getItem(KEY);
             if (raw) {
                 var obj = JSON.parse(raw);
+                if (!obj || typeof obj !== 'object') return;
                 for (var k in state) {
-                    if (obj.hasOwnProperty(k)) state[k] = obj[k];
+                    if (Object.prototype.hasOwnProperty.call(obj, k) && validStored(k, obj[k])) {
+                        state[k] = obj[k];
+                    }
                 }
             }
         } catch (e) {}
