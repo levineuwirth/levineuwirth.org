@@ -51,23 +51,14 @@
         var timeEl = stamp.querySelector('.now-stamp-date');
         if (!timeEl) return;
 
-        var iso = timeEl.getAttribute('datetime');
-        var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
-        if (!m) return;   // unparseable — leave the SSR fallback as-is
-
-        // Calendar-day difference, computed via UTC epoch days so DST
-        // transitions can't add or drop a day. "today" uses the
-        // visitor's *local* date components, matching what they'd
-        // read off a wall calendar.
-        var then = Date.UTC(+m[1], +m[2] - 1, +m[3]);
-        var local = new Date();
-        var today = Date.UTC(
-            local.getFullYear(),
-            local.getMonth(),
-            local.getDate()
-        );
-        var days = Math.round((today - then) / 86400000);
-        var text = relative(days);
+        // Calendar days between the stamp's date and the visitor's own
+        // (lnUtils.isoDay/localDay, shared with the date popups). Without
+        // utils.js, or with an unparseable date, the SSR fallback stays.
+        var u = window.lnUtils;
+        if (!u || !u.isoDay) return;
+        var then = u.isoDay(timeEl.getAttribute('datetime'));
+        if (then === null) return;
+        var text = relative(u.localDay() - then);
 
         var rel = stamp.querySelector('.now-stamp-relative');
         if (!text) {

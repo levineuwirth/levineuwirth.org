@@ -1485,21 +1485,22 @@
     ------------------------------------------------------------------ */
 
     function dateContent(target) {
-        var startAttr = target.getAttribute('data-date-start');
-        if (!startAttr) return Promise.resolve(null);
-        var start = parseIsoDate(startAttr);
-        if (!start) return Promise.resolve(null);
+        /* Calendar days, as now.js counts them: the reader's own date
+           against the attribute's (lnUtils.isoDay/localDay, audit J09). */
+        var isoDay  = window.lnUtils.isoDay;
+        var start   = isoDay(target.getAttribute('data-date-start'));
+        if (start === null) return Promise.resolve(null);
 
         var endAttr = target.getAttribute('data-date-end');
-        var end     = endAttr ? parseIsoDate(endAttr) : null;
+        var end     = endAttr ? isoDay(endAttr) : null;
         var commits = target.getAttribute('data-date-commits');
 
-        var today   = new Date();
+        var today   = window.lnUtils.localDay();
         var lines   = [];
 
-        if (end) {
-            var spanDays = daysBetween(start, end);
-            var agoDays  = daysBetween(start, today);
+        if (end !== null) {
+            var spanDays = end - start;
+            var agoDays  = today - start;
             /* "~" prefix when we've rounded to a unit larger than days. */
             var span = humanDuration(spanDays, true);
             var ago  = humanAgo(agoDays);   /* '' when start is in the future */
@@ -1515,8 +1516,7 @@
                     + '</div>');
             }
         } else {
-            var days = daysBetween(start, today);
-            var ago2 = humanAgo(days);      /* '' when the date is in the future */
+            var ago2 = humanAgo(today - start);  /* '' when the date is in the future */
             if (ago2) {
                 lines.push(
                     '<div class="popup-date-primary">'
@@ -1530,21 +1530,6 @@
         return Promise.resolve('<div class="popup-date">' + lines.join('') + '</div>');
     }
 
-    /* Parse "YYYY-MM-DD" (UTC midnight) to a Date. Returns null on failure. */
-    function parseIsoDate(s) {
-        var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
-        if (!m) return null;
-        var d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
-        return isNaN(d.getTime()) ? null : d;
-    }
-
-    /* Whole-day difference b − a, floored. Negative when b precedes a,
-       so callers can detect future dates instead of mislabelling them. */
-    function daysBetween(a, b) {
-        var ms = b.getTime() - a.getTime();
-        return Math.floor(ms / 86400000);
-    }
-
     /* "5 days" / "3 weeks" / "4 months" / "2 years" — the unit is chosen
        to match the magnitude so the number stays small and readable.
        `approx` prefixes "~" when the returned unit is coarser than days. */
@@ -1555,8 +1540,9 @@
             var w = Math.round(days / 7);
             return (approx ? '~' : '') + w + ' week' + (w === 1 ? '' : 's');
         }
-        if (days < 365) {
-            var mo = Math.round(days / 30);
+        /* From 345 days the months round to twelve: say "~1 year". */
+        var mo = Math.round(days / 30);
+        if (mo < 12) {
             return (approx ? '~' : '') + mo + ' month' + (mo === 1 ? '' : 's');
         }
         var y = Math.round(days / 365);

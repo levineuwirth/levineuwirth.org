@@ -77,5 +77,37 @@
         };
     };
 
+    /* Calendar days as integers (days since 1970-01-01), for "how long
+       ago" phrases.
+
+       isoDay("2026-10-01") is that date's number, or null when the text
+       is not a real YYYY-MM-DD date. localDay(d) is the number of the
+       date a wall calendar shows at instant `d` (default: now) in the
+       reader's time zone. Their difference counts whole calendar days,
+       whatever the hour, and DST, which makes some local days 23 or 25
+       hours long, cannot add or drop one. now.js and popups.js's date
+       popups both count this way (audit J09): the popups used to measure
+       from the date's UTC midnight to the present instant, so a date
+       read as "yesterday" in a Los Angeles evening and as the future,
+       with no popup, on a Tokyo morning. */
+    var DAY_MS = 86400000;
+
+    lnUtils.isoDay = function (s) {
+        var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(typeof s === 'string' ? s : '');
+        if (!m) return null;
+        var t = Date.UTC(+m[1], +m[2] - 1, +m[3]);
+        var d = new Date(t);
+        /* Date.UTC rolls 2026-02-31 into March, and years below 100
+           into the 1900s: refuse what does not come back unchanged. */
+        if (d.getUTCFullYear() !== +m[1] || d.getUTCMonth() !== +m[2] - 1
+            || d.getUTCDate() !== +m[3]) return null;
+        return t / DAY_MS;
+    };
+
+    lnUtils.localDay = function (date) {
+        var d = date || new Date();
+        return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / DAY_MS;
+    };
+
     global.lnUtils = lnUtils;
 })(window);
