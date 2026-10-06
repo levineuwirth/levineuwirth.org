@@ -1,4 +1,4 @@
-.PHONY: test validate audit-viz viz-provenance viz-provenance-check build build-locked deploy deploy-locked validate-locked thumbnails-locked pdf-thumbs-locked deploy-guard deploy-preflight deploy-recheck deploy-rsync-inplace deploy-rsync-atomic deploy-clean sign download-model download-pdfjs download-leaflet compress-assets convert-images thumbnails pdf-thumbs pdfs watch watch-locked clean dev dev-locked audit-marks archive-gc archive-wayback archive-check archive-suggest
+.PHONY: test test-clean validate audit-viz viz-provenance viz-provenance-check build build-locked deploy deploy-locked validate-locked thumbnails-locked pdf-thumbs-locked deploy-guard deploy-preflight deploy-recheck deploy-rsync-inplace deploy-rsync-atomic deploy-clean sign download-model download-pdfjs download-leaflet compress-assets convert-images thumbnails pdf-thumbs pdfs watch watch-locked clean dev dev-locked audit-marks archive-gc archive-wayback archive-check archive-suggest
 
 # Prerequisite orders (deploy: build -> sign; deploy-clean: clean ->
 # deploy) are only correct serially; under `make -j` they could
@@ -659,6 +659,13 @@ test:
 	else \
 	  echo "yaml-source/tests/ not present — skipping"; \
 	fi
+
+# The suite on HEAD as committed, in a fresh clone under a minimal
+# environment (tools/test-clean.sh): catches what only this working tree
+# supplies, such as an untracked fixture or an exported variable. Slower
+# than `make test`: the generator compiles from scratch. KEEP=1 keeps the clone.
+test-clean:
+	@./tools/test-clean.sh
 
 # The deployment contract, checked in one command: both test suites plus
 # the finished-artifact gate over _site/. `deploy` depends on this, so a
