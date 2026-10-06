@@ -1,0 +1,24 @@
+# The tests that need nothing but Python, Node and stock tools; tests/ci.py
+# lists them and fails if any skips. The full suite (`make test`, which every
+# deploy runs, and `make test-clean`) needs the Haskell generator and a built
+# site, and runs on the author's machine.
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Python environment (uv.lock)
+        run: uv sync --frozen
+      - name: Tests
+        run: uv run python tests/ci.py

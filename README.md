@@ -1,5 +1,7 @@
 # levineuwirth.org
 
+[![tests](https://github.com/levineuwirth/levineuwirth.org/actions/workflows/tests.yml/badge.svg)](https://github.com/levineuwirth/levineuwirth.org/actions/workflows/tests.yml)
+
 Personal site of Levi Neuwirth — essays, poetry, fiction, music, photography,
 and a CV.
 Built with [Hakyll](https://jaspervdj.be/hakyll/) and [Pandoc](https://pandoc.org/),
@@ -146,7 +148,10 @@ the Makefile does not pass it on from `.env`.
   written by `tools/code-refs.py` during the build. Tracked: commit it when
   a build changes it, or `make deploy` refuses.
 - `tests/` — the Python `unittest` suite run by `make test` and
-  `make validate`.
+  `make validate`; `make test-clean` runs it on HEAD in a fresh clone. The
+  badge above covers only the part a stock GitHub runner can run, the tests
+  listed in `tests/ci.py` (no Haskell generator, no built site), and fails
+  if any of them skips. The full suite runs locally, before every deploy.
 - `systemd/` — units and timers for the VPS (backups, updates) and the
   laptop's `archive-check`; installed by hand, see `systemd/README.md`.
 - `forgejo/`, `couchdb/` — Docker Compose sources for the VPS's Forgejo
