@@ -15,6 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Everything else tests/ci.py needs (node, gpg, rsync, flock, coreutils)
+      # ships with the runner; borg does not. Ubuntu's 1.2.8 passes the test.
+      - name: borg
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends borgbackup
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true

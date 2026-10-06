@@ -10,8 +10,15 @@ author's machine, and every deploy runs it.
 
 Chosen 2026-10-06 from `make test-clean`'s run: the modules with no skips
 there that use neither the generator nor ImageMagick, exiftool, Pagefind,
-brotli, borg or Docker; plus the CV/résumé variant resolver's suite
+brotli or Docker; plus the CV/résumé variant resolver's suite
 (yaml-source/tests). A module added to tests/ runs here only once listed.
+
+What they need from outside Python, all of which a test skips without:
+node, sha256sum, gpg and gpgconf, rsync, flock, and borg (the off-host
+restore test); and a non-root user. The runner has all but borg, which the
+workflow installs (Ubuntu's 1.2.8 passes; checked locally). The first run
+showed why this list matters: that test checks for borg with
+`which('borg')`, a spelling the selection's scan did not look for.
 
     python3 tests/ci.py
 """
