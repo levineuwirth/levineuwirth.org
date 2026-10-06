@@ -103,6 +103,39 @@
             bind(el, epistemicContent);
         });
 
+        /* Source-file references — wrapped at build time by
+           build/Filters/SourceRefs.hs around inline `path` and Forgejo
+           links. These specific kinds are bound before the generic
+           internal- and external-link loops below: bind() keeps an
+           element's first binding, and a source reference with a
+           same-origin href (../source/data/x.json) used to be claimed as
+           an internal page, which showed nothing (audit J08). Other
+           git.levineuwirth.org links get no popup: the forge sits behind
+           Anubis, which refuses anonymous API requests, and Forgejo sends
+           no CORS headers in any case. */
+        root.querySelectorAll('a.source-ref[data-source-path]').forEach(function (el) {
+            bind(el, sourceContent);
+        });
+
+        /* GitHub code references — blob / tree / commit links that
+           tools/code-refs.py snapshotted at build time and
+           build/Filters/CodeRefs.hs tagged. Bound before the external
+           dispatcher so the repository-card provider does not claim
+           them; untagged GitHub links still fall through to it. */
+        root.querySelectorAll('a[data-code-ref][data-code-src]').forEach(function (el) {
+            bind(el, codeRefContent);
+        });
+
+        /* PDF links — rewritten to viewer URL by Links.hs; thumbnail on hover */
+        root.querySelectorAll('a.pdf-link[data-pdf-src]').forEach(function (el) {
+            bind(el, pdfContent);
+        });
+
+        /* PGP signature links in footer */
+        root.querySelectorAll('a.footer-sig-link').forEach(function (el) {
+            bind(el, sigContent);
+        });
+
         /* Internal links — absolute (/foo) and relative (../../foo) same-origin hrefs.
            relativizeUrls in Hakyll makes index-page links relative, so we must match both. */
         root.querySelectorAll('a[href^="/"], a[href^="./"], a[href^="../"]').forEach(function (el) {
@@ -134,36 +167,6 @@
                 if (el.classList.contains('content-divider-logo') || el.classList.contains('aftermatter-logo')) return;
             }
             bind(el, internalContent);
-        });
-
-        /* Source-file references — wrapped at build time by
-           build/Filters/SourceRefs.hs around inline `path` and Forgejo
-           links. Bound before the generic external-link loop, whose
-           idempotent guard in bind() then leaves them alone. Other
-           git.levineuwirth.org links get no popup: the forge sits behind
-           Anubis, which refuses anonymous API requests, and Forgejo sends
-           no CORS headers in any case. */
-        root.querySelectorAll('a.source-ref[data-source-path]').forEach(function (el) {
-            bind(el, sourceContent);
-        });
-
-        /* GitHub code references — blob / tree / commit links that
-           tools/code-refs.py snapshotted at build time and
-           build/Filters/CodeRefs.hs tagged. Bound before the external
-           dispatcher so the repository-card provider does not claim
-           them; untagged GitHub links still fall through to it. */
-        root.querySelectorAll('a[data-code-ref][data-code-src]').forEach(function (el) {
-            bind(el, codeRefContent);
-        });
-
-        /* PDF links — rewritten to viewer URL by Links.hs; thumbnail on hover */
-        root.querySelectorAll('a.pdf-link[data-pdf-src]').forEach(function (el) {
-            bind(el, pdfContent);
-        });
-
-        /* PGP signature links in footer */
-        root.querySelectorAll('a.footer-sig-link').forEach(function (el) {
-            bind(el, sigContent);
         });
 
         /* External links — single dispatcher handles all providers */

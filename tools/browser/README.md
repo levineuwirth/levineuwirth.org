@@ -2,10 +2,13 @@
 
 Playwright scripts that drive Chromium and Firefox over the built site, from
 the 2026-10-01 audit and later checks. They print a line per route and dump
-JSON, and assert nothing themselves; the browser tests
-(`tests/test_browser_*.py`, `make test-browser`) run them and assert on what
-they record, so far `csp_run.py` (`tests/test_browser_csp.py`). The rest
-are still reports.
+JSON, and assert nothing themselves. The browser tests
+(`tests/test_browser_*.py`, `make test-browser`) run `csp_run.py` and assert
+on what it records (`tests/test_browser_csp.py`), and drive fixture pages of
+their own through `serve.py --fixtures`: popups with every provider's answer
+faked, dates, the slideshow, the Random link, the footer and three
+robustness fixes. The other scripts here are still reports; `popup_run.py`
+meets the live providers, which the tests do not.
 
 ## Running
 
