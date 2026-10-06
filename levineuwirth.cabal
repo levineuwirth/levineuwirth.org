@@ -13,6 +13,7 @@ executable site
     hs-source-dirs:   build
     other-modules:
         Site
+        SiteThreads
         Archive
         ArchiveIndex
         Authors

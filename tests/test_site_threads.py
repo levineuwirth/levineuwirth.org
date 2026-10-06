@@ -1,4 +1,4 @@
-"""How many items the generator compiles at once (build/Main.hs).
+"""How many items the generator compiles at once (build/SiteThreads.hs).
 
 Hakyll runs one worker per capability, and the generator used to get one;
 it now gets SITE_THREADS, a whole number from 1 to 256 (the RTS's limit),
@@ -19,22 +19,52 @@ from tests._helpers import ROOT, requires_cabal, script_env, site_binary
 
 @requires_cabal
 class SiteThreadsTests(unittest.TestCase):
-    def threads(self, **env) -> subprocess.CompletedProcess[str]:
-        # A scratch tree is enough: the count is logged as compiling starts,
-        # before the missing templates stop the build. Only these tests drop
-        # an inherited SITE_THREADS, to see the default.
+    @classmethod
+    def setUpClass(cls):
+        # Exercise the real environment reader at its boundary without
+        # allocating 256 runtime capabilities in a deployment's test gate.
+        temporary = tempfile.TemporaryDirectory()
+        cls.addClassCleanup(temporary.cleanup)
+        root = Path(temporary.name)
+        source = root / "Probe.hs"
+        source.write_text("import SiteThreads (siteThreads)\nmain = siteThreads >>= print\n")
+        cls.probe = root / "probe"
+        done = subprocess.run(
+            ["cabal", "exec", "--", "ghc", "-v0", "-ibuild", "-outputdir", str(root),
+             str(source), "-o", str(cls.probe)], cwd=ROOT,
+            capture_output=True, text=True, timeout=120,
+        )
+        if done.returncode:
+            raise AssertionError(f"Thread setting probe failed ({done.returncode}):\n{done.stderr}")
+
+    def environment(self, **env) -> dict[str, str]:
+        # Only these configuration tests drop an inherited setting.
         environment = script_env(**env)
         if "SITE_THREADS" not in env:
             environment.pop("SITE_THREADS", None)
+        return environment
+
+    def setting(self, **env) -> subprocess.CompletedProcess[str]:
+        done = subprocess.run([str(self.probe)], env=self.environment(**env),
+                              capture_output=True, text=True, timeout=30)
+        self.assertEqual(done.returncode, 0, f"stdout: {done.stdout}\nstderr: {done.stderr}")
+        return done
+
+    def threads(self, **env) -> subprocess.CompletedProcess[str]:
+        # The actual generator logs its count before missing templates
+        # stop this scratch build. Keep runtime integration counts small.
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "data").mkdir()
             essay = root / "content" / "essays" / "a.md"
             essay.parent.mkdir(parents=True)
             essay.write_text("---\ntitle: A\ndate: 2026-01-01\n---\n\nBody.\n")
-            return subprocess.run([str(site_binary()), "build"], cwd=root,
-                                  env=environment, capture_output=True, text=True,
+            done = subprocess.run([str(site_binary()), "build"], cwd=root,
+                                  env=self.environment(**env), capture_output=True, text=True,
                                   timeout=120)
+            self.assertEqual(done.returncode, 1,
+                             f"stdout: {done.stdout}\nstderr: {done.stderr}")
+            return done
 
     def test_four_by_default(self):
         self.assertIn("async runtime with 4 threads", self.threads().stdout)
@@ -42,9 +72,20 @@ class SiteThreadsTests(unittest.TestCase):
     def test_site_threads_sets_the_count_from_1_to_256(self):
         for value in ("1", "2", "256"):
             with self.subTest(value=value):
+                done = self.setting(SITE_THREADS=value)
+                self.assertEqual(done.stdout.strip(), value)
+                self.assertEqual(done.stderr, "")
+
+    def test_generator_applies_the_setting(self):
+        for value in ("1", "2"):
+            with self.subTest(value=value):
                 done = self.threads(SITE_THREADS=value)
-                self.assertIn(f"async runtime with {value} threads", done.stdout)
-                self.assertNotIn("SITE_THREADS", done.stderr)
+                self.assertIn(f"async runtime with {value} threads", done.stdout, done.stderr)
+
+    def test_empty_setting_uses_four(self):
+        done = self.setting(SITE_THREADS="")
+        self.assertEqual(done.stdout.strip(), "4")
+        self.assertEqual(done.stderr, "")
 
     def test_anything_else_warns_and_uses_four(self):
         # Out-of-range values are judged before they become an Int: read
@@ -53,10 +94,10 @@ class SiteThreadsTests(unittest.TestCase):
         for value in ("0", "257", "-3", "eight", "2.5", "-18446744073709551614",
                       "4294967296", "18446744073709551617"):
             with self.subTest(value=value):
-                done = self.threads(SITE_THREADS=value)
+                done = self.setting(SITE_THREADS=value)
                 self.assertIn(f'SITE_THREADS="{value}" is not a whole number from 1 to 256; '
                               "using 4", done.stderr)
-                self.assertIn("async runtime with 4 threads", done.stdout)
+                self.assertEqual(done.stdout.strip(), "4")
 
     def test_make_passes_it_to_the_generator(self):
         done = subprocess.run(["make", "-s", "--eval", "probe-threads: ; @echo $$SITE_THREADS",

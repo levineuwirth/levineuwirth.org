@@ -14,8 +14,8 @@
 -include .env
 export VPS_USER VPS_HOST VPS_PATH
 
-# How many items the generator compiles at once (build/Main.hs: a positive
-# integer, default 4). `make build SITE_THREADS=8` or the environment.
+# How many items the generator compiles at once (build/SiteThreads.hs: a whole
+# number from 1 to 256, default 4). `make build SITE_THREADS=8` or the environment.
 ifdef SITE_THREADS
 export SITE_THREADS
 endif
