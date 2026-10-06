@@ -165,16 +165,24 @@ class Updater:
     def prune(self, keep):
         """Drop every Anubis image but `keep` (the new one and the rollback
         copy). Each release stays tagged with its version, so no dangling-
-        image prune ever removed one, and they accumulated. A removal that
-        fails (an image still in use) is logged, not fatal: the update has
-        already been applied and verified."""
-        listing = self.command('docker', 'image', 'ls', '--no-trunc', '--format', '{{.ID}}', REGISTRY)
+        image prune ever removed one, and they accumulated. The update has
+        already been applied and verified, so a listing or a removal that
+        fails or times out (an image still in use, a stuck daemon) is
+        logged, never raised."""
+        def why(error):
+            stderr = getattr(error, 'stderr', None)
+            return stderr.strip() if isinstance(stderr, str) and stderr.strip() else str(error)
+        try:
+            listing = self.command('docker', 'image', 'ls', '--no-trunc', '--format', '{{.ID}}', REGISTRY)
+        except (subprocess.SubprocessError, OSError) as error:
+            log('could not list old images, none removed: ' + why(error))
+            return
         for image_id in sorted(set(listing.split()) - set(keep)):
             try:
                 self.command('docker', 'image', 'rm', image_id)
                 log('removed old image ' + image_id)
-            except subprocess.CalledProcessError as error:
-                log('could not remove old image ' + image_id + ': ' + (error.stderr or '').strip())
+            except (subprocess.SubprocessError, OSError) as error:
+                log('could not remove old image ' + image_id + ': ' + why(error))
 
     def select(self, reference):
         atomic(self.override, {'services': {'anubis': {'image': reference}}})

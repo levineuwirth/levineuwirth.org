@@ -1,5 +1,7 @@
 """Stateful failure rehearsals; no real Docker, services, or network."""
+import contextlib
 import fcntl
+import io
 import json
 import os
 from pathlib import Path
@@ -28,9 +30,15 @@ class Fake(update.Updater):
         if args[:3] == ('docker', 'image', 'inspect'):
             return json.dumps([{'Id': 'old'}])
         if args[:3] == ('docker', 'image', 'ls'):
+            if self.mode == 'ls-fails':
+                raise update.subprocess.CalledProcessError(1, args, stderr='Cannot connect to the Docker daemon')
+            if self.mode == 'ls-timeout':
+                raise update.subprocess.TimeoutExpired(args, 300)
             return 'new\nold\nolder\noldest\n'
-        if args[:3] == ('docker', 'image', 'rm') and args[3] == 'oldest' and self.mode == 'rm-fails':
+        if args[:3] == ('docker', 'image', 'rm') and self.mode == 'rm-fails' and args[3] == 'oldest':
             raise update.subprocess.CalledProcessError(1, args, stderr='image is being used by a container')
+        if args[:3] == ('docker', 'image', 'rm') and self.mode == 'rm-timeout' and args[3] == 'older':
+            raise update.subprocess.TimeoutExpired(args, 300, stderr=b'')
         if args[0] == 'cp':
             return super().command(*args, **kw)
         return ''
@@ -103,11 +111,39 @@ class Recovery(unittest.TestCase):
         self.up.run()
         self.assertEqual(self.removed(), ['older', 'oldest'])
 
-    def test_a_failed_removal_is_logged_not_fatal(self):
-        self.up.mode = 'rm-fails'
-        self.up.run()
-        self.assertEqual(self.removed(), ['older', 'oldest'])
+    def run_logged(self, mode):
+        # A cleanup failure after a verified update is logged; run() returns.
+        self.up.mode = mode
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.up.run()
         self.assertEqual(json.loads(self.up.override.read_text())['services']['anubis']['image'], NEW)
+        self.assertFalse(self.up.journal.exists())
+        self.assertIn('applied and stable', out.getvalue())
+        return out.getvalue()
+
+    def test_a_failed_removal_is_logged_not_fatal(self):
+        log = self.run_logged('rm-fails')
+        self.assertEqual(self.removed(), ['older', 'oldest'])
+        self.assertIn('could not remove old image oldest: image is being used by a container', log)
+
+    def test_a_removal_that_times_out_is_logged_and_the_rest_continue(self):
+        log = self.run_logged('rm-timeout')
+        self.assertEqual(self.removed(), ['older', 'oldest'])
+        self.assertIn('could not remove old image older: Command', log)
+        self.assertIn('timed out after 300 seconds', log)
+        self.assertIn('removed old image oldest', log)
+
+    def assert_listing_failure_logged(self, mode, said):
+        log = self.run_logged(mode)
+        self.assertEqual(self.removed(), [])
+        self.assertIn('could not list old images, none removed: ' + said, log)
+
+    def test_a_listing_that_fails_removes_nothing(self):
+        self.assert_listing_failure_logged('ls-fails', 'Cannot connect to the Docker daemon')
+
+    def test_a_listing_that_times_out_removes_nothing(self):
+        self.assert_listing_failure_logged('ls-timeout', "Command '")
 
     def test_nothing_is_removed_after_a_failed_update(self):
         self.up.mode = 'bad'
