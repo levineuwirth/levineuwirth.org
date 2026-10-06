@@ -225,12 +225,11 @@ build-locked:
 	# published score files that no longer have a source (audit M02).
 	@python3 tools/prune-site.py _site
 	# ---- Stage 4: index --------------------------------------------------
-	# pagefind never clears its output dir (verified: files it did not
-	# write survive a run), so without this rm stale content-hashed
-	# fragments would accumulate in _site — and on the VPS — forever.
 	# Runs after stage 3 so the keyword index covers the Related sections.
-	rm -rf _site/pagefind
-	pagefind --site _site
+	# Indexed into a scratch directory and copied over by content, so
+	# unchanged index files keep their mtimes (deploys and readers' caches
+	# skip them) while stale fragments are still removed; see the script.
+	./tools/pagefind-index.sh _site
 	# ---- Stage 5: stamp --------------------------------------------------
 	# The site-wide build time every footer shows, written once to
 	# _site/build/time.txt; static/js/nav.js puts it in each page's empty
