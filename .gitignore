@@ -222,3 +222,8 @@ content/photography/**/*.psd
 
 # Build profiles from tools/profile-build.py: local measurements, never published.
 .build-profiles/
+
+# Browser harness (tools/browser/): results and screenshots, and axe-core,
+# which is fetched rather than vendored (see tools/browser/README.md).
+/.browser-runs/
+tools/browser/axe.min.js
