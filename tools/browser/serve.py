@@ -9,6 +9,9 @@
 - /pdfjs/ and /archive/ use frame-ancestors 'self' + XFO SAMEORIGIN
 - /proxy/* -> 404 (logged), /csp-report POST -> 204 + JSONL log
 - Range support (nginx serves ranges for static files)
+- --fixtures DIR: /__fixture/<name> serves DIR/<name>, with the same
+  headers, for pages written to exercise one behavior (tools/browser/fixture/,
+  or a test's own)
 """
 import argparse, json, os, re, sys, threading, time, urllib.parse
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
@@ -20,6 +23,7 @@ ap.add_argument('--csp', required=True, help='policy string')
 ap.add_argument('--mode', choices=['enforce', 'report-only', 'none'], default='enforce')
 ap.add_argument('--compress', action='store_true')
 ap.add_argument('--log', required=True)
+ap.add_argument('--fixtures', help='directory served under /__fixture/')
 args = ap.parse_args()
 ROOT = os.path.realpath(args.root)
 os.makedirs(os.path.dirname(os.path.abspath(args.log)), exist_ok=True)
@@ -60,6 +64,12 @@ def resolve(upath):
             if rc.startswith(ROOT):
                 return rc
     return None
+
+def fixture(name):
+    """A file directly or below --fixtures, or None."""
+    top = os.path.realpath(args.fixtures)
+    fs = os.path.realpath(os.path.join(top, name))
+    return fs if fs.startswith(top + os.sep) and os.path.isfile(fs) else None
 
 class H(BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
@@ -119,6 +129,13 @@ class H(BaseHTTPRequestHandler):
         if path == '/404.html':
             self.serve_404(head)
             return
+        if args.fixtures and path.startswith('/__fixture/'):
+            fs = fixture(path[len('/__fixture/'):])
+            if fs is None:
+                self.serve_404(head)
+            else:
+                self.serve_file(fs, path, head)
+            return
         fs = resolve(path)
         if fs is None:
             log('404', path=self.path, referer=self.headers.get('Referer'))
@@ -169,8 +186,16 @@ class H(BaseHTTPRequestHandler):
                     return
         self.send_body(200, hs, body, head)
 
-srv = ThreadingHTTPServer(('127.0.0.1', args.port), H)
-srv.daemon_threads = True
+class Server(ThreadingHTTPServer):
+    daemon_threads = True
+    # nginx listens with a backlog of 511; socketserver's default is 5. With
+    # several browsers opening connections at once that queue overflowed, the
+    # kernel dropped the SYNs (TcpExtListenOverflows), and the browsers retried
+    # after 1, 2, 4, 8… seconds: page loads stalled for up to tens of seconds
+    # when the machine was busy, and the browser tests timed out.
+    request_queue_size = 511
+
+srv = Server(('127.0.0.1', args.port), H)
 # --port 0 takes a free port; this line names it (the tests read it).
 print(f'serving {ROOT} on 127.0.0.1:{srv.server_address[1]} mode={args.mode}', flush=True)
 srv.serve_forever()

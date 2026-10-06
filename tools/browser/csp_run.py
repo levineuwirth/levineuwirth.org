@@ -265,6 +265,7 @@ def run():
                 rec['status'] = resp and resp.status
             except Exception as e:
                 rec['goto_err'] = str(e)[:200]
+            rec['load_secs'] = round(time.time() - t0, 1)
             settle(page)
             scroll_through(page)
             settle(page, 400)

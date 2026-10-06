@@ -76,13 +76,17 @@ def enforcing_csp() -> str:
 
 
 @contextmanager
-def site_server(workdir: Path, csp: str | None = None) -> Iterator[str]:
+def site_server(workdir: Path, csp: str | None = None,
+                fixtures: Path | None = None) -> Iterator[str]:
     """tools/browser/serve.py over _site on a free port, with `csp`
-    enforcing (no policy at all when None); yields its base URL. CSP
-    reports go to workdir/csp-reports.jsonl."""
+    enforcing (no policy at all when None) and `fixtures`, if given,
+    served under /__fixture/; yields its base URL. CSP reports go to
+    workdir/csp-reports.jsonl."""
     args = [sys.executable, str(HARNESS / "serve.py"), "--root", str(SITE), "--port", "0",
             "--csp", csp or "", "--mode", "enforce" if csp else "none",
             "--log", str(workdir / "csp-reports.jsonl")]
+    if fixtures:
+        args += ["--fixtures", str(fixtures)]
     with open(workdir / "serve.stderr", "w") as stderr, \
          subprocess.Popen(args, stdout=subprocess.PIPE, stderr=stderr, text=True) as server:
         try:
