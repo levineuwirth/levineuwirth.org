@@ -1,9 +1,12 @@
 module Main where
 
+import Control.Concurrent    (setNumCapabilities)
 import Control.Monad         (when)
 import Data.Time.Clock.POSIX (getPOSIXTime)
 import System.Directory      (createDirectoryIfMissing)
-import System.Environment    (getArgs)
+import System.Environment    (getArgs, lookupEnv)
+import System.IO             (hPutStrLn, stderr)
+import Text.Read             (readMaybe)
 import Hakyll                (hakyllWith, toFilePath)
 import Golden                (renderFixture)
 import Site                  (refusedPath, rules, siteConfigurationFor)
@@ -40,6 +43,30 @@ writeBuildStamp = do
     createDirectoryIfMissing True "data"
     t <- getPOSIXTime
     writeFile "data/build-stamp.txt" (show t ++ "\n")
+
+-- | How many items Hakyll compiles at once: @SITE_THREADS@, a positive
+-- integer, or 'defaultThreads'. Hakyll runs one worker per capability, and
+-- the generator used to get one. Measured 2026-10-06 (8 cores, 16 threads,
+-- under load): a full compile took 33 s on 1, 15 s on 4, 14 s on 8 and 18 s
+-- on 16, where the parallel collector's overhead outgrows the work; a
+-- no-change build, mostly Hakyll's single-threaded dependency check, was
+-- the same on 1 and 4 and a second slower on 8. Output is byte-identical
+-- whatever the count.
+defaultThreads :: Int
+defaultThreads = 4
+
+siteThreads :: IO Int
+siteThreads = do
+    setting <- lookupEnv "SITE_THREADS"
+    case setting of
+        Nothing -> return defaultThreads
+        Just "" -> return defaultThreads
+        Just s  -> case readMaybe s of
+            Just n | n >= 1 -> return n
+            _ -> do
+                hPutStrLn stderr ("site: SITE_THREADS=" ++ show s ++ " is not a positive integer; using "
+                                  ++ show defaultThreads)
+                return defaultThreads
 
 -- | 'siteConfigurationFor' (not 'Hakyll.defaultConfiguration') is the
 -- publication boundary: it extends Hakyll's @ignoreFile@ so that private
@@ -102,6 +129,7 @@ main = do
             when dev $ fail "footer-data: production builds only (a dev build's backlinks include drafts)"
             writeFooterData (outputDirFor False)
         _ -> do
+            siteThreads >>= setNumCapabilities
             writeBuildStamp
             dev <- isDevBuild
             hakyllWith (siteConfigurationFor dev)

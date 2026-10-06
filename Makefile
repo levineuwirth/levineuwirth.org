@@ -14,6 +14,12 @@
 -include .env
 export VPS_USER VPS_HOST VPS_PATH
 
+# How many items the generator compiles at once (build/Main.hs: a positive
+# integer, default 4). `make build SITE_THREADS=8` or the environment.
+ifdef SITE_THREADS
+export SITE_THREADS
+endif
+
 # The project's Python: the venv's interpreter when `uv sync` has made one,
 # else the system's. Called directly, not through `uv run`, which syncs the
 # environment first and so could download and install packages in the

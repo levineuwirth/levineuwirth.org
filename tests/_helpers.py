@@ -60,7 +60,7 @@ def site_binary() -> Path:
 # deploy's DEPLOY_* overrides made the deploy guard's refusal tests fail
 # inside the very deploy they were meant to allow (40190c8).
 _LEAKY_PREFIXES = ("DEPLOY_", "BORG_")
-_LEAKY_NAMES = ("SITE_LOCK_HELD", "LOCK_TIMEOUT", "REQUIRE_WEBP", "SITE_ENV",
+_LEAKY_NAMES = ("SITE_LOCK_HELD", "LOCK_TIMEOUT", "REQUIRE_WEBP", "SITE_ENV", "SITE_THREADS",
                 "SITE_BINARY")
 
 
