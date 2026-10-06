@@ -144,15 +144,16 @@
                 triggerEl = null;
             }
             // Clear src after transition to stop background loading.
-            // The darkroom class is also cleared on the same delay so
-            // the page chrome doesn't re-appear on top of a fading
-            // black backdrop.
+            // Removed, not set to '': an empty src is a failed image
+            // load, with an error event. The darkroom class is also
+            // cleared on the same delay so the page chrome doesn't
+            // re-appear on top of a fading black backdrop.
             var delay = parseFloat(
                 getComputedStyle(overlay).transitionDuration || '0'
             ) * 1000;
             setTimeout(function () {
                 if (!overlay.classList.contains('is-open')) {
-                    img.src = '';
+                    img.removeAttribute('src');
                     overlay.classList.remove('darkroom');
                 }
             }, delay + 50);
