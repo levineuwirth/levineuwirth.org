@@ -22,17 +22,17 @@ Two models, one process:
 Called by `make build` when .venv exists. Failures are non-fatal.
 
 Staleness: both passes are content-hash cached (data/embed-cache-*.npz),
-so an unchanged site re-embeds nothing and loads no model — only the
-HTML extraction pass runs. There is deliberately no mtime-based skip:
-stamp-build-time.py rewrites every page's footer after this script runs,
-so "are outputs newer than the HTML" is always false and a check based
-on it can never fire.
+so an unchanged site re-embeds nothing and loads no model. Extraction is
+cached too (data/embed-cache-extract.json): a page is parsed only when
+its bytes, footer build time aside, or the extractor changed. There is
+deliberately no mtime-based skip: stamp-build-time.py rewrites every
+page's footer after this script runs, so "are outputs newer than the
+HTML" is always false and a check based on it can never fire.
 
-Cost of a fully-warm run: each page is read and parsed exactly once
-(shared by the page and paragraph extractors, via lxml when available),
+Cost of a fully-warm run: every page is read and hashed, none parsed,
 and torch / sentence-transformers are imported lazily only when a cache
-miss actually requires embedding — so a no-change build pays a few
-seconds of extraction, not a model-library import.
+miss actually requires embedding. Parsing every page with BeautifulSoup
+had been nearly all of a no-change run (about 3.5 of 3.9 s).
 """
 
 import hashlib
@@ -67,6 +67,10 @@ SEMANTIC_META  = REPO_ROOT / "data" / "semantic-meta.json"
 # Gitignored — build artifacts, not source. Survive `make clean`.
 PAGE_CACHE     = REPO_ROOT / "data" / "embed-cache-pages.npz"
 PARA_CACHE     = REPO_ROOT / "data" / "embed-cache-paragraphs.npz"
+# What extract_document returned for each page, keyed by the page's path
+# and the hash of its bytes with the footer build time masked, under a
+# fingerprint of this file and the parser (see extract_site).
+EXTRACT_CACHE  = REPO_ROOT / "data" / "embed-cache-extract.json"
 
 # Two models, deliberately split:
 #
@@ -271,6 +275,10 @@ def _title(soup: BeautifulSoup, url: str) -> str:
 # Extraction — pages (similar-links) + paragraphs (semantic search)
 # ---------------------------------------------------------------------------
 
+def _excluded(url: str) -> bool:
+    return url in EXCLUDE_URLS or url.startswith(EXCLUDE_PREFIXES)
+
+
 def extract_document(html_path: Path) -> tuple[dict | None, list[dict]]:
     """Read and parse a page ONCE; return (page, paragraphs).
 
@@ -281,10 +289,12 @@ def extract_document(html_path: Path) -> tuple[dict | None, list[dict]]:
     behaviour is preserved here.
     """
     url = _url_from_path(html_path)
-    if url in EXCLUDE_URLS or url.startswith(EXCLUDE_PREFIXES):
+    if _excluded(url):
         return None, []
+    return _extract(url, html_path.read_text(encoding="utf-8", errors="replace"))
 
-    raw  = html_path.read_text(encoding="utf-8", errors="replace")
+
+def _extract(url: str, raw: str) -> tuple[dict | None, list[dict]]:
     soup = BeautifulSoup(raw, HTML_PARSER)
 
     body_tag = soup.body
@@ -323,6 +333,75 @@ def extract_document(html_path: Path) -> tuple[dict | None, list[dict]]:
 
     return page, paras
 
+# The footer's site-wide build time, which stamp-build-time.py rewrites on
+# every page at the end of every build. It is outside #markdownBody, so it
+# never reaches the extracted text; masked here so it does not make every
+# page look changed.
+BUILD_TIME_SPAN = re.compile(
+    rb'(<span class="footer-build-time" data-build-time>)[^<]*(</span>)')
+
+
+def extractor_fingerprint() -> str:
+    """Everything besides a page's bytes that decides its extraction:
+    this file (the selectors, limits and code) and the parser's versions.
+    Any change re-extracts every page once."""
+    import bs4
+    import soupsieve
+    h = hashlib.sha256(Path(__file__).read_bytes())
+    h.update(f"{HTML_PARSER} bs4 {bs4.__version__} soupsieve {soupsieve.__version__}".encode())
+    if HTML_PARSER == "lxml":
+        from lxml import etree
+        h.update(f" lxml {etree.LXML_VERSION}".encode())
+    return h.hexdigest()
+
+
+def load_extract_cache(path: Path, fingerprint: str) -> dict:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(data, dict) or data.get("fingerprint") != fingerprint:
+        return {}
+    pages = data.get("pages")
+    return pages if isinstance(pages, dict) else {}
+
+
+def extract_site(cache_path: Path = EXTRACT_CACHE) -> tuple[list[dict], list[dict], int]:
+    """Every indexable page under SITE_DIR and its paragraphs, in path
+    order, as extract_document gives them, and how many pages had to be
+    parsed. A page whose bytes (footer build time aside) and extractor are
+    unchanged since the last run is taken from the cache, which keeps
+    only the pages present now."""
+    fingerprint = extractor_fingerprint()
+    cached = load_extract_cache(cache_path, fingerprint)
+    fresh: dict[str, dict] = {}
+    pages: list[dict] = []
+    paragraphs: list[dict] = []
+    parsed = 0
+    for html in sorted(SITE_DIR.rglob("*.html")):
+        url = _url_from_path(html)
+        if _excluded(url):
+            continue
+        raw = html.read_bytes()
+        key = hashlib.sha256(BUILD_TIME_SPAN.sub(rb"\1\2", raw)).hexdigest()
+        rel = html.relative_to(SITE_DIR).as_posix()
+        hit = cached.get(rel)
+        if isinstance(hit, dict) and hit.get("key") == key:
+            page, paras = hit["page"], hit["paras"]
+        else:
+            # As read_text would: invalid bytes replaced, newlines universal.
+            text = raw.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
+            page, paras = _extract(url, text)
+            parsed += 1
+        fresh[rel] = {"key": key, "page": page, "paras": paras}
+        if page is not None:
+            pages.append(page)
+            paragraphs.extend(paras)
+    atomic_write_text(cache_path, json.dumps({"fingerprint": fingerprint, "pages": fresh},
+                                             ensure_ascii=False))
+    return pages, paragraphs, parsed
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -334,15 +413,9 @@ def main() -> int:
 
     # --- Extract pages + paragraphs in one pass ---
     print("embed.py: extracting pages…")
-    pages = []
-    paragraphs = []
-
-    for html in sorted(SITE_DIR.rglob("*.html")):
-        page, paras = extract_document(html)
-        if page is None:
-            continue
-        pages.append(page)
-        paragraphs.extend(paras)
+    pages, paragraphs, parsed = extract_site()
+    print(f"embed.py: extraction: {parsed} page(s) parsed, the rest unchanged "
+          f"({len(pages)} indexable)")
 
     if not pages:
         print("embed.py: no indexable pages found", file=sys.stderr)

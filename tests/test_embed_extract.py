@@ -2,6 +2,7 @@
 semantic search, and the vector cache's model pinning (audit T14).
 No model is loaded."""
 
+import json
 import shutil
 import tempfile
 import unittest
@@ -119,6 +120,81 @@ class VectorCacheTests(unittest.TestCase):
         embed.save_vec_cache(self.path, "m", "r1", 4, {})
         self.assertEqual(embed.load_vec_cache(self.path, "m", "r1", 4), {})
         self.assertEqual([p.name for p in self.dir.iterdir()], ["cache.npz"], "no temp file left behind")
+
+
+def stamped(body, when="Monday, October 6th, 2026 13:03:33"):
+    """A page with the footer build time that stamp-build-time.py rewrites."""
+    return page(body).replace(
+        "<footer>footer text</footer>",
+        f'<footer><span class="footer-build-time" data-build-time>{when}</span></footer>')
+
+
+@unittest.skipIf(embed is None, "embed.py's dependencies are not installed")
+class ExtractCacheTests(unittest.TestCase):
+    """Parsing every page was nearly all of a no-change run; extract_site
+    parses only pages whose bytes (footer build time aside) or extractor
+    changed, and must return exactly what extract_document would."""
+
+    def setUp(self):
+        self.site = Path(tempfile.mkdtemp(prefix="embed-"))
+        self.addCleanup(shutil.rmtree, self.site)
+        patcher = mock.patch.object(embed, "SITE_DIR", self.site)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.cache = self.site.parent / (self.site.name + "-extract.json")
+        self.addCleanup(self.cache.unlink, missing_ok=True)
+        self.write("essays/a.html", stamped(f"<h1>Alpha</h1><p>{PROSE}</p>"))
+        self.write("essays/b.html", stamped(f"<h1>Beta</h1><p>{PROSE} Beta.</p>"))
+        self.write("404.html", stamped(f"<p>{PROSE}</p>"))           # excluded by URL
+
+    def write(self, rel, html):
+        p = self.site / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(html, encoding="utf-8")
+        return p
+
+    def direct(self):
+        pages, paras = [], []
+        for html in sorted(self.site.rglob("*.html")):
+            p, q = embed.extract_document(html)
+            if p is not None:
+                pages.append(p)
+                paras.extend(q)
+        return pages, paras
+
+    def run_site(self):
+        pages, paras, parsed = embed.extract_site(self.cache)
+        self.assertEqual((pages, paras), self.direct())
+        return parsed
+
+    def test_an_unchanged_site_is_not_parsed_again(self):
+        self.assertEqual(self.run_site(), 2)
+        with mock.patch.object(embed, "_extract", side_effect=AssertionError("parsed")):
+            pages, paras, parsed = embed.extract_site(self.cache)
+        self.assertEqual(parsed, 0)
+        self.assertEqual((pages, paras), self.direct())
+
+    def test_a_new_build_time_alone_is_not_a_change(self):
+        self.run_site()
+        self.write("essays/a.html", stamped(f"<h1>Alpha</h1><p>{PROSE}</p>", when="Tuesday"))
+        self.assertEqual(self.run_site(), 0)
+
+    def test_a_changed_page_is_parsed_and_a_deleted_one_dropped(self):
+        self.run_site()
+        self.write("essays/a.html", stamped(f"<h1>Alpha, revised</h1><p>{PROSE}</p>"))
+        (self.site / "essays/b.html").unlink()
+        self.assertEqual(self.run_site(), 1)
+        kept = json.loads(self.cache.read_text())["pages"]
+        self.assertEqual(sorted(kept), ["essays/a.html"])
+
+    def test_another_extractor_parses_everything_again(self):
+        self.run_site()
+        with mock.patch.object(embed, "extractor_fingerprint", return_value="other"):
+            self.assertEqual(self.run_site(), 2)
+
+    def test_an_unreadable_cache_is_ignored(self):
+        self.cache.write_text("{not json")
+        self.assertEqual(self.run_site(), 2)
 
 
 if __name__ == "__main__":
