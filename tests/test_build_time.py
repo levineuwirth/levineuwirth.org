@@ -10,6 +10,7 @@ signs a page again only when its content changed.
 
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
@@ -75,11 +76,14 @@ class SignTests(unittest.TestCase):
         path.write_text(f"<html><body>{body}{FOOTER}</body></html>\n")
         return path
 
-    def sign(self, **extra):
+    def run_sign(self, **extra):
         env = script_env(GNUPGHOME=str(self.home), SIGNING_KEY=self.key,
                          SIGN_MANIFEST=str(self.manifest), **extra)
-        done = subprocess.run(["bash", str(SIGN), str(self.site)], env=env,
+        return subprocess.run(["bash", str(SIGN), str(self.site)], env=env,
                               capture_output=True, text=True, timeout=120)
+
+    def sign(self, **extra):
+        done = self.run_sign(**extra)
         self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
         return int(re.search(r"Signed (\d+) HTML", done.stdout).group(1))
 
@@ -108,10 +112,36 @@ class SignTests(unittest.TestCase):
     def test_sign_all_and_another_key_sign_everything(self):
         self.sign()
         self.assertEqual(self.sign(SIGN_ALL="1"), 3)
-        lines = self.manifest.read_text().splitlines()
-        self.manifest.write_text("\n".join(["key OTHER" + lines[0][len("key " + self.key):]]
-                                           + lines[1:]) + "\n")
+        self.manifest.write_text(self.manifest.read_text().replace(self.key, "OTHER", 1))
         self.assertEqual(self.sign(), 3)
+
+    def test_a_swapped_or_edited_signature_is_signed_again(self):
+        # Reuse vouches that the .sig is the file made for this content: one
+        # copied from another page, or altered, is replaced.
+        self.sign()
+        shutil.copy(self.site / "essays/b.html.sig", self.site / "essays/a.html.sig")
+        self.assertFalse(self.verifies("essays/a.html"))
+        self.assertEqual(self.sign(), 1)
+        self.assertTrue(self.verifies("essays/a.html"))
+        with open(self.site / "index.html.sig", "a") as sig:
+            sig.write("\n")
+        self.assertEqual(self.sign(), 1)
+        self.assertTrue(self.verifies("index.html"))
+
+    @unittest.skipIf(os.geteuid() == 0, "root reads an unreadable file")
+    def test_a_page_that_cannot_be_hashed_stops_signing(self):
+        # A failed hash used to vanish inside a process substitution: the
+        # run succeeded, left the page out of the manifest and kept its old
+        # signature.
+        self.sign()
+        before = self.manifest.read_bytes()
+        page = self.write("essays/a.html", "<p>revised</p>")
+        page.chmod(0)
+        self.addCleanup(page.chmod, 0o644)
+        done = self.run_sign()
+        self.assertNotEqual(done.returncode, 0)
+        self.assertIn("could not hash every page", done.stderr)
+        self.assertEqual(self.manifest.read_bytes(), before)
 
 
 if __name__ == "__main__":

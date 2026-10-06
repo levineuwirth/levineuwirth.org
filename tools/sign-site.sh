@@ -7,11 +7,13 @@
 # Usage (called by `make sign`):
 #   ./tools/sign-site.sh [site-dir]
 #
-# A page whose content has not changed keeps its signature. Each run records
-# the SHA-256 of every page it leaves signed in $SIGN_MANIFEST
-# (data/sign-manifest.txt, headed by the key and the site directory), and a
-# page is signed again only when its .sig is missing or empty or its hash
-# differs from the one recorded. A content hash, not an mtime: an mtime rule
+# A page whose content has not changed keeps its signature. Each run records,
+# in $SIGN_MANIFEST (data/sign-manifest.txt, headed by the key and the site
+# directory), the SHA-256 of every page it leaves signed and of that page's
+# .sig as it wrote or kept it. A signature is reused only when both still
+# match: the page is the content it signed, and the .sig is the file it made
+# for it, not one swapped, edited or left from another page. Anything else
+# is signed again. A content hash, not an mtime: an mtime rule
 # misses changed content behind an unchanged mtime, as the compression cache
 # found (audit X2). Until 2026-10-06 every page changed on every build (the
 # footer time was stamped into each), so every deploy re-signed and re-sent
@@ -79,12 +81,14 @@ sign_one() {
 
 # The hashes recorded when the current signatures were made, if they were
 # made with this key for this site directory.
-header="key $SIGNING_KEY site $(cd "$SITE_DIR" && pwd)"
+# Lines are "<page sha256>  <.sig sha256>  <path>"; v2 added the .sig hash,
+# so an older manifest matches nothing and every page is signed once.
+header="v2 key $SIGNING_KEY site $(cd "$SITE_DIR" && pwd)"
 declare -A signed=()
 if [ "${SIGN_ALL:-0}" != "1" ] && [ -f "$SIGN_MANIFEST" ] \
    && [ "$(head -n 1 "$SIGN_MANIFEST")" = "$header" ]; then
     while IFS= read -r line; do
-        signed["${line#*  }"]="${line%%  *}"
+        signed["${line:132}"]="${line:0:130}"
     done < <(tail -n +2 "$SIGN_MANIFEST")
 fi
 
@@ -92,24 +96,48 @@ fi
 # signed: an interrupted run records nothing, and the next one re-signs.
 mkdir -p "$(dirname "$SIGN_MANIFEST")"
 manifest_tmp="$SIGN_MANIFEST.tmp.$$"
-trap 'rm -f "$manifest_tmp"' EXIT
+pages_tmp="$SIGN_MANIFEST.pages.$$"
+sigs_tmp="$SIGN_MANIFEST.sigs.$$"
+trap 'rm -f "$manifest_tmp" "$pages_tmp" "$sigs_tmp"' EXIT
 printf '%s\n' "$header" > "$manifest_tmp"
+
+# Every page and every existing .sig hashed up front, each into a file, so a
+# page that cannot be read stops the run here: read through a process
+# substitution, a failed sha256sum went unseen, and the page was left out
+# of the manifest with its old signature in place.
+if ! (cd "$SITE_DIR" && find . -name "*.html" -print0 | xargs -0 -r sha256sum) > "$pages_tmp"; then
+    echo "sign-site: could not hash every page in $SITE_DIR; nothing signed" >&2
+    exit 1
+fi
+if ! (cd "$SITE_DIR" && find . -name "*.html.sig" -print0 | xargs -0 -r sha256sum) > "$sigs_tmp"; then
+    echo "sign-site: could not hash every signature in $SITE_DIR; nothing signed" >&2
+    exit 1
+fi
+declare -A sig_now=()
+while IFS= read -r line; do
+    rel=${line:66}
+    sig_now["${rel#./}"]="${line:0:64}"
+done < "$sigs_tmp"
 
 count=0
 skipped=0
 while IFS= read -r line; do
-    hash=${line%%  *}
-    rel=${line#*  }
+    hash=${line:0:64}
+    rel=${line:66}
     rel=${rel#./}
     html="$SITE_DIR/$rel"
-    if [ -s "${html}.sig" ] && [ "${signed[$rel]:-}" = "$hash" ]; then
+    sig_hash=${sig_now[$rel.sig]:-}
+    if [ -s "${html}.sig" ] && [ -n "$sig_hash" ] \
+       && [ "${signed[$rel]:-}" = "$hash  $sig_hash" ]; then
         skipped=$((skipped + 1))
     else
         sign_one "$html"
+        sig_hash=$(sha256sum "${html}.sig") || exit 1
+        sig_hash=${sig_hash:0:64}
         count=$((count + 1))
     fi
-    printf '%s  %s\n' "$hash" "$rel" >> "$manifest_tmp"
-done < <(cd "$SITE_DIR" && find . -name "*.html" -print0 | xargs -0 -r sha256sum)
+    printf '%s  %s  %s\n' "$hash" "$sig_hash" "$rel" >> "$manifest_tmp"
+done < "$pages_tmp"
 mv -f "$manifest_tmp" "$SIGN_MANIFEST"
 
 # Post-sign manifest verification: every .html must have a non-empty
