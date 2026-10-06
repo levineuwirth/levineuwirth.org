@@ -249,6 +249,25 @@ projects:
     end: Present
     description: "Routes proof goals from Lean 4 and Rocq through a shared intermediate representation to untrusted SMT solvers, automated theorem provers, and LLM provers, grades and checks the returned certificate, then reconstructs or replays it as a proof term the home kernel verifies. The downstream VerInf Lean demonstration closes 19 of 19 targeted obligations in an otherwise unmodified development, inside the sanctioned axiom ceiling, with generated evidence."
     presentation_sets:
+      evidence-assurance:
+        # Public proof-broker main at 3eb438a (2026-10-02), R6-015.md and
+        # R6-QUALIFICATION-1-ADDENDUM-1.md; R4 demo at f208e97.
+        # Kernel acceptance, certificate sufficiency, and frozen acceptance
+        # predicates are distinct. R6-015 is partial and not pooled with R6-014.
+        description: >-
+          Built an OCaml broker routing Lean 4 and Rocq goals to untrusted
+          solvers and LLM search, with structured evidence, explicit trust
+          tiers, independent certificate checks, and reconstruction or replay
+          into kernel-checked proof terms. R4 closed 19/19 targeted VerInf
+          obligations with statements unchanged (one verdict-only certificate);
+          downstream integration exposed and fixed three defects.
+        bullets:
+          - >-
+            Designed a live-model certificate evaluation with independent
+            checking and kernel validation; audited context reliance.
+            Offline replay yielded proofs accepted by the kernel from all 36
+            retained certificates, but only 18/36 met every frozen acceptance
+            check (axiom changes and an audit binding gap).
       agent-platform-systems:
         description: >-
           Built a tool-execution boundary that routes Lean 4 and Rocq goals to

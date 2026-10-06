@@ -30,6 +30,7 @@ skills:
     label: AI evaluation and research
     items:
       - Frontier-model evaluation
+      - Harbor
       - Evaluation-environment design
       - Evaluator calibration
       - Agent scaffolds

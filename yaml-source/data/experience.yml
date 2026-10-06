@@ -190,19 +190,45 @@ experience:
             sharding with byte-identical outputs that passed the unmodified Rust
             verifier at two- and three-way cuts; multi-GPU timing remains
             model-based.
+      empirical-assurance:
+        # Public main at 815634c (2026-10-02), after merged PRs 21--25.
+        # PR 21 separates our integration/hardening from the collaborator's
+        # bridge. PR 23 and the session-6 archive invalidate the older proofs
+        # as evidence for the repaired relation; do not reuse their speedups.
+        description: >-
+          VerInf research with James Petrie (Future of Life Institute).
+        bullets:
+          - >-
+            Built and upstreamed VerInf's workload profiler, execution DAG,
+            cost model and partition scorecards; cross-checked workload
+            accounting against an archived Llama-4 Maverick run and calibrated
+            on live NVIDIA B200 hardware. When measurements disagreed with the
+            model, corrected a communication estimate from roughly 950 GB to
+            2.4--2.8 GB per sweep.
+          - >-
+            Implemented and merged verifier-transparent enrolled-weight
+            splitting: partitioned proofs matched the ordinary path byte for
+            byte and passed the Rust verifier. Multi-GPU speedup remains
+            modeled, without end-to-end multi-device timing.
+          - >-
+            Integrated a collaborator's expert-weight bridge; bound enrollment
+            identity to root, geometry and row layout, and fixed Merkle index
+            and sumcheck round checks. Targeted verifier review, not a complete
+            soundness audit; bridge folds remain public.
+          - >-
+            Implemented repairs for causal softmax, SiLU and surprisal
+            constraints; all 10 counterexample/honest GPU cases passed through
+            the Rust verifier. Earlier full-scale proofs do not verify under
+            the repaired constraints.
     links:
       - label: VerInf
         href: https://github.com/JamesPetrie/VerInf
       - label: Case study
         href: https://levineuwirth.org/essays/verified-inference/
 
-  # TOGGLED OFF on both documents as of August 2026 — retained, not deleted.
-  # The entry is accurate and stays in the file so it can be switched back on
-  # by flipping the two visibility flags; the orders below are kept live so it
-  # lands back in the right slot (last among industry entries) if it is.
-  # Held to one line when shown: the grok-code-fast-1 scope is the dated,
-  # externally verifiable part, and the metrics bullets are omitted to keep
-  # both documents' centre of gravity on research.
+  # Intentionally excluded from current résumé/CV materials by the author.
+  # Preserve this canonical record for historical artifacts; new variants
+  # must not select it or inherit a historical selection of it.
   - id: xai-grok-code-fast
     organization: xAI
     location: Remote
@@ -282,6 +308,23 @@ experience:
             model behavior, scaffolding, task design, and scoring; analyze
             reasoning, capability, safety, and red-team failures. Client
             identities and results are confidential.
+      evaluation-reliability:
+        # Shared evaluation evidence, including the work page's rubric-validity
+        # finding and the existing evaluation presentations' trajectories.
+        description: >-
+          Lead frontier-model evaluation-environment design and evaluator
+          calibration.
+        bullets:
+          - >-
+            Build tasks and scoring rubrics in \textbf{Harbor}; execute models
+            and debug agent scaffolds and trajectories.
+          - >-
+            Identify rubrics that measure something other than the intended
+            task; refine evaluation design before scaling runs. Distinguish
+            model failures from defects in task design, scaffolding and scoring.
+          - >-
+            Analyze reasoning, capability, safety and red-team failures.
+            Client identities and specific results are confidential.
 
   # Held to one line: the role is stated plainly without framing the venture's
   # scope or direction.
@@ -346,6 +389,22 @@ experience:
             deployed their public calculator. Built its FastAPI model-serving
             backend in Python, with TensorFlow, ICD lookup and parsing, and
             input validation.
+      empirical-research-engineering:
+        # The manuscript's 80.2M development discharges include validation;
+        # outcome-specific downsampling further reduces the training samples.
+        # 113M+ is the whole dataset, not the number trained on.
+        preamble: null
+        bullets:
+          - >-
+            Co-led Deep Sets outcome models developed on an 80M+ discharge
+            cohort and deployed their public calculator. On 3.23M temporally
+            held-out discharges, readmission AUROC was 0.750 versus 0.655 for
+            the Charlson index; manuscript under review at JAMIA.
+          - >-
+            Technical lead for NeuroPose across four externally funded
+            research projects. Built TensorFlow inference in Python, validated
+            outputs, persistent job state across crashes, Docker deployment
+            and Rust-backed analysis.
 
   # Post-graduation continuation, deliberately bulletless: the work is fully
   # described in the block above, so this entry's only job is to show the
