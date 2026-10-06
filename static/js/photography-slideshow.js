@@ -190,8 +190,13 @@
             show(typeof startAt === 'number' ? startAt : 0);
             overlay.classList.add('is-open');
             document.body.classList.add('slideshow-open');
-            closeBtn.focus();
+            /* Playback first, so the control that takes focus already has
+               the name it will keep ("Pause slideshow" when playing); a
+               screen reader announces it on focus. Play/Pause takes focus,
+               not Close: Space presses the focused control (below), so
+               Space on opening still pauses. */
             if (!reducedMotion()) play();
+            playBtn.focus();
         }
 
         function close() {
@@ -237,6 +242,10 @@
                 case 'Home':       e.preventDefault(); step(-index); break;
                 case 'End':        e.preventDefault(); step(frames.length - 1 - index); break;
                 case ' ':
+                    /* A focused control takes Space as a press of itself,
+                       as buttons do (audit J10): Space on Next used to
+                       start playback and leave the frame where it was. */
+                    if (e.target instanceof HTMLButtonElement && overlay.contains(e.target)) break;
                     e.preventDefault();
                     playing() ? pause() : play();
                     break;
