@@ -88,6 +88,9 @@ data/semantic-meta.json
 # catches interrupted-write debris (.tmp / .tmp.npz)
 data/embed-cache-*
 data/sign-manifest.txt
+# What the last finished build was built from (tools/build-inputs.py).
+data/build-inputs.json
+data/build-inputs.json.tmp
 
 # Archive: generated text + its staleness stamp (recreated from the
 # committed artifact on every build — deterministic, so committing them is

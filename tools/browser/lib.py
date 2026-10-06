@@ -69,7 +69,17 @@ CSP_INIT = r"""
       doc: e.documentURI}); } catch (_) {} };
   document.addEventListener('securitypolicyviolation', h, true);
   window.__errs = [];
-  window.addEventListener('error', e => { window.__errs.push(String(e.message) + ' @' + (e.filename||'') + ':' + (e.lineno||'')); }, true);
+  // Captured, an error event also reports elements that failed to load
+  // (img, script, link); those go to __reserrs, not among script errors.
+  window.__reserrs = [];
+  window.addEventListener('error', e => {
+    const t = e.target;
+    if (t && t !== window && t.tagName) {
+      window.__reserrs.push(t.tagName.toLowerCase() + ' ' + (t.getAttribute('src') ?? t.getAttribute('href') ?? '(no src)'));
+      return;
+    }
+    window.__errs.push(String(e.message) + ' @' + (e.filename||'') + ':' + (e.lineno||''));
+  }, true);
   window.addEventListener('unhandledrejection', e => { window.__errs.push('unhandledrejection: ' + String(e.reason && (e.reason.stack || e.reason.message) || e.reason)); });
 })();
 """

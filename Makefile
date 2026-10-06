@@ -1,4 +1,4 @@
-.PHONY: test test-clean validate audit-viz viz-provenance viz-provenance-check build build-locked deploy deploy-locked validate-locked thumbnails-locked pdf-thumbs-locked deploy-guard deploy-preflight deploy-recheck deploy-rsync-inplace deploy-rsync-atomic deploy-clean sign download-model download-pdfjs download-leaflet compress-assets convert-images thumbnails pdf-thumbs pdfs watch watch-locked clean dev dev-locked audit-marks archive-gc archive-wayback archive-check archive-suggest
+.PHONY: test test-clean test-browser test-browser-locked validate audit-viz viz-provenance viz-provenance-check build build-locked deploy deploy-locked validate-locked thumbnails-locked pdf-thumbs-locked deploy-guard deploy-preflight deploy-recheck deploy-rsync-inplace deploy-rsync-atomic deploy-clean sign download-model download-pdfjs download-leaflet compress-assets convert-images thumbnails pdf-thumbs pdfs watch watch-locked clean dev dev-locked audit-marks archive-gc archive-wayback archive-check archive-suggest
 
 # Prerequisite orders (deploy: build -> sign; deploy-clean: clean ->
 # deploy) are only correct serially; under `make -j` they could
@@ -114,6 +114,9 @@ build-locked:
 	fi
 	@mkdir -p data
 	@date +%s > data/build-start.txt
+	# Recorded again as the last step: until then _site is not what its
+	# inputs describe (tools/build-inputs.py, read by the browser tests).
+	@rm -f data/build-inputs.json
 	# Full-rebuild-or-incremental decision. Four triggers force a clean
 	# here (Hakyll rules changed, content deleted/renamed, route-defining
 	# frontmatter changed, stale full-rebuild stamp); otherwise the build
@@ -254,6 +257,10 @@ build-locked:
 	 BUILD_START=$$(cat data/build-start.txt); \
 	 echo $$((BUILD_END - BUILD_START)) > data/last-build-seconds.txt.tmp && \
 	 mv data/last-build-seconds.txt.tmp data/last-build-seconds.txt
+	# What this build was built from, for tests that need _site to match
+	# the tree (tests/_browser.py). Last, so nothing the build writes
+	# afterwards reads as a change.
+	@python3 tools/build-inputs.py record $(DIRTY_PATHS) content
 
 sign:
 	@$(WITH_LOCK) ./tools/sign-site.sh
@@ -666,6 +673,23 @@ test:
 # than `make test`: the generator compiles from scratch. KEEP=1 keeps the clone.
 test-clean:
 	@./tools/test-clean.sh
+
+# The browser tests (tests/test_browser_*.py): Chromium and Firefox through
+# Playwright over the built site, served as the production vhost serves it
+# (tools/browser/serve.py), under the enforcing CSP. Opt-in: `make test`
+# skips them without RUN_BROWSER_TESTS=1. Run `make build` first; inputs
+# changed since it finished (tools/build-inputs.py) fail the run. Locked
+# like `validate`, so no build or deploy rewrites _site underneath them.
+# Needs the network (popups, map tiles, transformers.js). `playwright
+# install` matches the browsers to the installed Playwright and is quick
+# when they already are.
+test-browser:
+	@$(WITH_LOCK) $(MAKE) --no-print-directory test-browser-locked
+
+test-browser-locked:
+	@test -x $(VENV_PY) || { echo "test-browser: .venv/ is absent — run 'uv sync'." >&2; exit 1; }
+	@.venv/bin/playwright install chromium firefox
+	@RUN_BROWSER_TESTS=1 $(VENV_PY) -m unittest discover -s tests -p 'test_browser_*.py' -v
 
 # The deployment contract, checked in one command: both test suites plus
 # the finished-artifact gate over _site/. `deploy` depends on this, so a

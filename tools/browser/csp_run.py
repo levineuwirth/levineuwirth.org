@@ -69,6 +69,7 @@ def features(page, name):
             canvases: document.querySelectorAll('.page canvas').length,
             text: document.querySelectorAll('.textLayer span').length,
             err: (document.querySelector('#errorWrapper:not([hidden]), .dialog[open]')||{}).textContent || null})""")
+        out['pdf'].update(pdf_blob_probe(page, out['pdf']['pages']))
     if name in ('archive-snapshot', 'archive-pdf'):
         page.wait_for_timeout(1500)
         out['iframe'] = [{'url': f.url, 'title': (f.title() if f != page.main_frame else None)} for f in page.frames if f != page.main_frame]
@@ -130,6 +131,51 @@ def hover_popups(page):
             res.append({'kind': kind, 'href': href, 'err': str(e)[:160]})
     page.mouse.move(0, 0)
     return res
+
+
+def poll(page, expr, secs):
+    """Wait until `expr` is true in the page. Not wait_for_function: it
+    evaluates its predicate from a string, which the enforcing policy
+    blocks (and reports) as eval."""
+    deadline = time.time() + secs
+    while not page.evaluate(expr):
+        if time.time() > deadline:
+            raise TimeoutError(f'{expr} still false after {secs} s')
+        page.wait_for_timeout(200)
+
+
+def pdf_blob_probe(page, pages):
+    """PDF.js's sidebar thumbnails and its print output: both are
+    <img src="blob:..."> it draws from a canvas (img-src blob:). Print
+    renders every page into #printContainer, calls the browser's print and
+    empties the container afterwards, so its loads are counted as they
+    happen."""
+    out = {}
+    loaded_thumbs = ("[...document.querySelectorAll('#thumbnailsView img')].filter(i =>"
+                     " i.src.startsWith('blob:') && i.complete && i.naturalWidth > 0).length")
+    try:
+        # Open on a wide viewport already; opened here if not.
+        if page.get_attribute('#viewsManagerToggleButton', 'aria-expanded') != 'true':
+            page.click('#viewsManagerToggleButton', timeout=3000)
+        poll(page, f'{loaded_thumbs} > 0', 10)
+    except Exception as e:
+        out['thumbs_err'] = str(e)[:200]
+    out['thumbs_loaded'] = page.evaluate(loaded_thumbs)
+    page.evaluate("""() => {
+        window.__printLoads = 0;
+        document.addEventListener('load', e => {
+            const t = e.target;
+            if (t instanceof HTMLImageElement && t.src.startsWith('blob:')
+                && t.closest('#printContainer')) window.__printLoads++;
+        }, true);
+        setTimeout(() => window.print(), 0);
+    }""")
+    try:
+        poll(page, f'window.__printLoads >= {pages}', 20)
+    except Exception as e:
+        out['print_err'] = str(e)[:200]
+    out['print_loaded'] = page.evaluate('window.__printLoads')
+    return out
 
 
 def search_probe(page):
@@ -213,8 +259,10 @@ def run():
                     rec['bad_status'].append({'url': r.url[:200], 'status': r.status})
             page.on('response', onresp)
             t0 = time.time()
+            rec['status'] = None
             try:
-                page.goto(BASE + path, wait_until='load', timeout=30000)
+                resp = page.goto(BASE + path, wait_until='load', timeout=30000)
+                rec['status'] = resp and resp.status
             except Exception as e:
                 rec['goto_err'] = str(e)[:200]
             settle(page)
@@ -227,10 +275,12 @@ def run():
             page.wait_for_timeout(500)
             rec['csp'] = []
             rec['jserrs'] = []
+            rec['reserrs'] = []
             for f in page.frames:
                 try:
                     rec['csp'] += f.evaluate('window.__cspv || []')
                     rec['jserrs'] += f.evaluate('window.__errs || []')
+                    rec['reserrs'] += f.evaluate('window.__reserrs || []')
                 except Exception:
                     pass
             rec['secs'] = round(time.time() - t0, 1)

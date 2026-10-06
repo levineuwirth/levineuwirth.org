@@ -34,10 +34,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 MODULES = [
     "test_annotations", "test_anubis_update", "test_archive_fetch", "test_archive_probe",
-    "test_backup_pair", "test_bibliography", "test_build_time", "test_check_site",
-    "test_couchdb_backup", "test_couchdb_update", "test_cv_pdfs", "test_deploy_guard",
-    "test_dynamic_assets", "test_embed_extract", "test_font_sources", "test_fonts",
-    "test_forgejo_backup_offhost", "test_forgejo_update", "test_front_matter",
+    "test_backup_pair", "test_bibliography", "test_build_inputs", "test_build_time",
+    "test_check_site", "test_couchdb_backup", "test_couchdb_update", "test_cv_pdfs",
+    "test_deploy_guard", "test_dynamic_assets", "test_embed_extract", "test_font_sources",
+    "test_fonts", "test_forgejo_backup_offhost", "test_forgejo_update", "test_front_matter",
     "test_photo_tools", "test_pin_check", "test_popup_providers", "test_prune_site",
     "test_score_reader", "test_sitelib", "test_thumbnails", "test_viz_lifecycle",
     "test_vps_config_backup", "test_wikilink_routes", "test_with_lock",

@@ -15,7 +15,7 @@ from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--root', required=True)
-ap.add_argument('--port', type=int, required=True)
+ap.add_argument('--port', type=int, required=True, help='0 for any free port')
 ap.add_argument('--csp', required=True, help='policy string')
 ap.add_argument('--mode', choices=['enforce', 'report-only', 'none'], default='enforce')
 ap.add_argument('--compress', action='store_true')
@@ -174,5 +174,6 @@ class H(BaseHTTPRequestHandler):
 
 srv = ThreadingHTTPServer(('127.0.0.1', args.port), H)
 srv.daemon_threads = True
-print(f'serving {ROOT} on 127.0.0.1:{args.port} mode={args.mode}', flush=True)
+# --port 0 takes a free port; this line names it (the tests read it).
+print(f'serving {ROOT} on 127.0.0.1:{srv.server_address[1]} mode={args.mode}', flush=True)
 srv.serve_forever()

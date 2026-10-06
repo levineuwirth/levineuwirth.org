@@ -31,6 +31,14 @@ dependencies = [
     "lxml>=5,<7",
 ]
 
+[dependency-groups]
+# The browser tests (tests/test_browser_*.py, `make test-browser`) and the
+# harness under tools/browser/. In `dev` because `uv sync` installs that
+# group by default and removes any group it was not asked for. Unbounded:
+# an API change breaks only the tests, and uv.lock keeps upgrades
+# deliberate. Its browsers are fetched by `make test-browser`.
+dev = ["playwright"]
+
 [[tool.uv.index]]
 name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
