@@ -42,6 +42,18 @@ if [ "$(id -u)" = 0 ]; then
     exit 2
 fi
 
+# Where your shell moves the toolchain's state, carried like PATH. Without
+# CABAL_DIR the 2026-10-06 boot run used cabal's default store, wrote a
+# default ~/.config/cabal/config, and the three tests that compile against
+# the store failed.
+toolchain_env() {
+    local var
+    for var in CABAL_DIR GHCUP_INSTALL_BASE_PREFIX XDG_CONFIG_HOME XDG_DATA_HOME \
+               XDG_STATE_HOME XDG_CACHE_HOME; do
+        if [ -n "${!var:-}" ]; then echo "Environment=$var=${!var}"; fi
+    done
+}
+
 render_unit() {
 cat <<EOF
 # Written by tools/profile-build-arm.sh on $(date -Iseconds). Inert unless
@@ -61,6 +73,7 @@ Group=$(id -gn)
 WorkingDirectory=$REPO
 Environment=HOME=$HOME
 Environment=PATH=$PATH
+$(toolchain_env)
 Environment=LANG=${LANG:-C.UTF-8}
 Environment=PYTHONUNBUFFERED=1
 ExecStartPre=/usr/bin/rm -f $FLAG
