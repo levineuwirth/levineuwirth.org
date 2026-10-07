@@ -154,11 +154,22 @@
         announceModelLoading(pct);
     }
 
+    /* Failed imports so far. Chromium keeps a failed module fetch in the
+       page's module map, and import() of that URL then fails again without
+       asking the network: after one dropped connection "Try again" could
+       never recover. A retry imports a URL of its own; jsDelivr serves the
+       same file whatever the query, and CSP source matching ignores it. */
+    var importFailures = 0;
+
     function loadModel() {
         if (extractor) return Promise.resolve(extractor);
         if (loadModelPromise) return loadModelPromise;
         announceModelLoading(null);
-        loadModelPromise = import(CDN).then(function (mod) {
+        var url = importFailures ? CDN + '?retry=' + importFailures : CDN;
+        loadModelPromise = import(url).catch(function (err) {
+            importFailures++;
+            throw err;
+        }).then(function (mod) {
             /* Point transformers.js at our self-hosted model files. */
             mod.env.localModelPath   = MODEL_PATH;
             mod.env.allowRemoteModels = false;
