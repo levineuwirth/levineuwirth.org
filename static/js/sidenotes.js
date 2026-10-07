@@ -150,6 +150,7 @@
     /* ------------------------------------------------------------------ */
 
     var mobileOverlay = null;
+    var mobileOpener  = null;   /* focused when the popup opened; gets it back */
 
     function ensureMobileOverlay() {
         if (mobileOverlay) return;
@@ -194,13 +195,20 @@
 
     function openMobilePopup(sn) {
         ensureMobileOverlay();
+        mobileOpener = document.activeElement;
         mobileOverlay.querySelector('.sidenote-popup-body').innerHTML = sn.innerHTML;
         mobileOverlay.classList.add('is-open');
         mobileOverlay.querySelector('.sidenote-popup').focus();
     }
 
+    /* Focus goes back to the reference that opened the note; it used to
+       stay on the closed sheet, and a keyboard or screen-reader user
+       started again from the top of the page. */
     function closeMobilePopup() {
-        if (mobileOverlay) mobileOverlay.classList.remove('is-open');
+        if (!mobileOverlay || !mobileOverlay.classList.contains('is-open')) return;
+        mobileOverlay.classList.remove('is-open');
+        if (mobileOpener && mobileOpener.focus) mobileOpener.focus();
+        mobileOpener = null;
     }
 
     /* Click anywhere outside a focused pair dismisses it. */

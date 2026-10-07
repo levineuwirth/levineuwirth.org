@@ -86,6 +86,20 @@
         display: none !important;
     }
 
+    /* ----------------------------------------------------------------
+       Collapsed sections print in full (audit J07). collapse.js closes
+       a section three ways (the `hidden` attribute, an inline
+       max-height of 0, overflow hidden) and remembers it, so a section
+       folded weeks earlier was left off the paper without a sign, and
+       paper has no toggle to reopen it with.
+    ---------------------------------------------------------------- */
+    .section-body,
+    .section-body[hidden] {
+        display: block !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
     /* The mobile TOC bar's screen rule also adds `body { padding-bottom: 2.5rem }`
        to clear the fixed strip — undo it on paper. */
     body {
