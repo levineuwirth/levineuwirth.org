@@ -325,10 +325,10 @@
             return;
         }
 
-        var visible = 0;
+        var visible = 0, pending = 0;
         results.forEach(function (el) {
             var link = el.querySelector('.pagefind-ui__result-link');
-            if (!link) return;
+            if (!link) { pending++; return; }
             var ok = accepts(normUrl(link.getAttribute('href')));
             el.classList.toggle('search-filtered', !ok);
             if (ok) visible++;
@@ -336,7 +336,12 @@
 
         var total = pfTotal();
         pfSummarise(msgEl, visible, total, term);
-        pfLoadMore(visible, total);
+        /* Pagefind adds a page of results as placeholders and fills each
+           in as its data arrives; the observer below runs this again as
+           they do. Until every one is in, how many pass is not known: a
+           page was loaded on the strength of the placeholders, and a
+           filter that two pages would satisfy loaded all of them. */
+        if (!pending) pfLoadMore(visible, total);
     }
 
     /* Counts and empty state describe the filtered set, not Pagefind's

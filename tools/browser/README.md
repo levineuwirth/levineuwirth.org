@@ -7,8 +7,10 @@ JSON, and assert nothing themselves. The browser tests
 on what it records (`tests/test_browser_csp.py`), and drive fixture pages of
 their own through `serve.py --fixtures`: popups with every provider's answer
 faked, dates, the slideshow, the Random link, the footer and three
-robustness fixes. The other scripts here are still reports; `popup_run.py`
-meets the live providers, which the tests do not.
+robustness fixes; and the search page, keyword search over the built
+Pagefind index and semantic search with its model and index faked. The
+other scripts here are still reports; `popup_run.py` meets the live
+providers, and `csp_run.py` the live model, which the tests do not.
 
 ## Running
 
