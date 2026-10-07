@@ -14,8 +14,10 @@ import ast
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
+import time
 import unittest
 import urllib.error
 import urllib.request
@@ -91,16 +93,19 @@ def enforcing_csp() -> str:
 
 @contextmanager
 def site_server(workdir: Path, csp: str | None = None,
-                fixtures: Path | None = None) -> Iterator[str]:
+                fixtures: Path | None = None, compress: bool = False) -> Iterator[str]:
     """tools/browser/serve.py over _site on a free port, with `csp`
-    enforcing (no policy at all when None) and `fixtures`, if given,
-    served under /__fixture/; yields its base URL. CSP reports go to
+    enforcing (no policy at all when None), `fixtures`, if given, served
+    under /__fixture/, and the .br/.gz sidecars served when `compress`, as
+    nginx does; yields its base URL. CSP reports go to
     workdir/csp-reports.jsonl."""
     args = [sys.executable, str(HARNESS / "serve.py"), "--root", str(SITE), "--port", "0",
             "--csp", csp or "", "--mode", "enforce" if csp else "none",
             "--log", str(workdir / "csp-reports.jsonl")]
     if fixtures:
         args += ["--fixtures", str(fixtures)]
+    if compress:
+        args += ["--compress"]
     with open(workdir / "serve.stderr", "w") as stderr, \
          subprocess.Popen(args, stdout=subprocess.PIPE, stderr=stderr, text=True) as server:
         try:
@@ -173,3 +178,78 @@ class FakeNetwork:
                 return
         self.unexpected.append(url)
         route.abort()
+
+
+BASELINE = ROOT / "tests" / "browser-baseline"
+UPDATE_BASELINE = os.environ.get("UPDATE_BROWSER_BASELINE") == "1"
+
+
+def stop_process(proc: subprocess.Popen) -> None:
+    """A harness script still running, with its Playwright driver: SIGTERM
+    to its process group lets the driver close the browsers it launched
+    (they run in groups of their own); SIGKILL if it does not go."""
+    if proc.poll() is not None:
+        return
+    try:
+        os.killpg(proc.pid, signal.SIGTERM)
+        proc.wait(timeout=15)
+    except subprocess.TimeoutExpired:
+        os.killpg(proc.pid, signal.SIGKILL)
+        proc.wait()
+    except ProcessLookupError:
+        pass
+
+
+def run_harness(case, base: str, out: Path, jobs: list[list[str]], *,
+                offline: bool = True, seconds: int = 1800) -> None:
+    """Run tools/browser scripts (each an argument list: script, then its
+    arguments) at once against `base`, writing to `out`, offline unless
+    told otherwise; each is stopped at class cleanup if still running.
+    Raises with the stderr of any that fail, or of all if time runs out."""
+    env = dict(os.environ, BROWSER_OUT=str(out), BROWSER_PORT=base.rsplit(":", 1)[1])
+    if offline:
+        env["BROWSER_OFFLINE"] = "1"
+    running = []
+    for job in jobs:
+        proc = subprocess.Popen([sys.executable, *job], cwd=HARNESS, env=env, text=True,
+                                start_new_session=True, stdout=subprocess.DEVNULL,
+                                stderr=subprocess.PIPE)
+        case.addClassCleanup(stop_process, proc)
+        running.append((" ".join(job[:2]), proc))
+    deadline = time.monotonic() + seconds
+    failed = []
+    for name, proc in running:
+        try:
+            _, err = proc.communicate(timeout=max(0.1, deadline - time.monotonic()))
+        except subprocess.TimeoutExpired:
+            failed.append(f"{name}: still running after {seconds} s")
+            continue
+        if proc.returncode:
+            failed.append(f"{name} exited {proc.returncode}:\n{err[-2000:]}")
+    if failed:
+        raise AssertionError("\n\n".join(failed))
+
+
+def baseline(name: str, current):
+    """The recorded tests/browser-baseline/<name>.json; with
+    UPDATE_BROWSER_BASELINE=1, `current` is recorded there first."""
+    path = BASELINE / f"{name}.json"
+    if UPDATE_BASELINE:
+        BASELINE.mkdir(exist_ok=True)
+        path.write_text(json.dumps(current, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    if not path.is_file():
+        raise AssertionError(f"no {path.relative_to(ROOT)}: record one with UPDATE_BROWSER_BASELINE=1")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def require_axe() -> Path:
+    """tools/browser/axe.min.js, as tools/browser/axe-version records it."""
+    import hashlib
+    axe = HARNESS / "axe.min.js"
+    lines = [l.split() for l in (HARNESS / "axe-version").read_text(encoding="utf-8").splitlines()
+             if l.strip() and not l.lstrip().startswith("#")]
+    want = lines[0][1]
+    if not axe.is_file() or hashlib.sha256(axe.read_bytes()).hexdigest() != want:
+        raise AssertionError("tools/browser/axe.min.js is missing or not the recorded axe-core "
+                             f"{lines[0][0]}: run `make test-browser` (tools/browser/fetch_axe.py)")
+    return axe

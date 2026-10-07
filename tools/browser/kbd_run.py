@@ -34,7 +34,9 @@ FOCUS_INFO = r"""
   const ind = {outline: cs.outlineStyle + ' ' + cs.outlineWidth + ' ' + cs.outlineColor, shadow: cs.boxShadow, bg: cs.backgroundColor, td: cs.textDecorationLine, border: cs.borderBottomStyle + ' ' + cs.borderBottomWidth + ' ' + cs.borderBottomColor};
   const fv = el.matches(':focus-visible');
   const inView = r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;
-  return {desc, name, href: el.getAttribute('href'), w: Math.round(r.width), h: Math.round(r.height), inView, ariaHidden: ah, hidden: hid, inert, clipped, ind, fv};
+  // The browser's own answer to "can this be seen": opacity, visibility, content-visibility, display.
+  const visible = el.checkVisibility ? el.checkVisibility({checkOpacity: true, checkVisibilityCSS: true}) : null;
+  return {desc, name, href: el.getAttribute('href'), w: Math.round(r.width), h: Math.round(r.height), inView, ariaHidden: ah, hidden: hid, inert, clipped, visible, ind, fv};
 }
 """
 
@@ -46,7 +48,7 @@ def tab_walk(page, n=STOPS):
     stops = []
     for i in range(n):
         page.keyboard.press('Tab')
-        page.wait_for_timeout(60)
+        page.wait_for_timeout(150)   # Firefox finishes scrolling focus into view after 60 ms
         info = page.evaluate(FOCUS_INFO)
         if info.get('body'):
             stops.append({'i': i, 'body': True}); continue
@@ -74,6 +76,7 @@ def run():
         browser = getattr(p, browser_name).launch()
         for vp in [(1440, 1000), (375, 812)]:
             ctx = browser.new_context(viewport={'width': vp[0], 'height': vp[1]}, reduced_motion='reduce')
+            offline(ctx)
             page = ctx.new_page()
             for name, path in ROUTES:
                 if name not in KROUTES:

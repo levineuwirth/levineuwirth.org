@@ -40,6 +40,7 @@ def run():
                 ctx = browser.new_context(viewport={'width': w, 'height': h}, bypass_csp=True,
                                           reduced_motion='reduce')
                 ctx.add_init_script(THEME_INIT % theme)
+                offline(ctx)
                 page = ctx.new_page()
                 for name, path in ROUTES:
                     if only and name not in only:

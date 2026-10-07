@@ -13,7 +13,10 @@ highlights, the selection toolbar, collapsible sections (and printing
 them) and sidenotes; photography (view modes, masonry, the map with its data
 and tiles faked, the lightbox and slideshow on real pages), the equation
 gallery, and the score reader with its following (real scores and
-recordings). The
+recordings); and, offline, `axe_run.py`, `kbd_run.py`, `overflow_run.py`,
+`motion_run.py` and `perf_run.py` (`tests/test_browser_a11y.py`,
+`tests/test_browser_layout.py`), against the known issues and budgets in
+`tests/browser-baseline/`. The
 other scripts here are still reports; `popup_run.py` meets the live
 providers, and `csp_run.py` the live model, which the tests do not.
 
@@ -39,8 +42,10 @@ Results and screenshots go to `$BROWSER_OUT`, or `.browser-runs/` at the
 repository root (gitignored). Routes are in `lib.py`: 43, every page type
 and the 404 page. `playwright install` fetches the browsers that match the
 installed Playwright; there is no WebKit here.
-`axe_run.py` needs axe-core 4.13.0 as `axe.min.js` in this directory
-(gitignored): `curl -o axe.min.js https://cdn.jsdelivr.net/npm/axe-core@4.13.0/axe.min.js`.
+`axe_run.py` needs axe-core as `axe.min.js` in this directory (gitignored):
+`fetch_axe.py` fetches the version and checksum `axe-version` records, and
+`make test-browser` runs it. `BROWSER_PORT` points a script at another
+server, and `BROWSER_OFFLINE=1` refuses every request that would leave it.
 
 ## Scripts
 

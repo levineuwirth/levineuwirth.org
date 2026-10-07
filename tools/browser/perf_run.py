@@ -28,6 +28,7 @@ def run():
                 continue
             ctx = browser.new_context(viewport={'width': width, 'height': 900 if width > 500 else 812})
             ctx.add_init_script(OBS)
+            offline(ctx)
             page = ctx.new_page()
             cdp = ctx.new_cdp_session(page)
             cdp.send('Network.enable')

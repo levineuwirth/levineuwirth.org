@@ -1,0 +1,66 @@
+{
+ "bibliography": {
+  "target-size": 21
+ },
+ "build": {
+  "region": 3
+ },
+ "colophon": {
+  "region": 9,
+  "target-size": 3
+ },
+ "commonplace": {
+  "region": 1
+ },
+ "composition": {
+  "heading-order": 1,
+  "label-content-name-mismatch": 2,
+  "region": 1
+ },
+ "essay-grd": {
+  "empty-table-header": 4,
+  "region": 5,
+  "target-size": 5
+ },
+ "essay-notes": {
+  "heading-order": 1,
+  "region": 7,
+  "target-size": 1
+ },
+ "essay-proofbroker": {
+  "region": 10,
+  "target-size": 3
+ },
+ "essay-r6": {
+  "region": 10
+ },
+ "essay-scaling": {
+  "region": 5,
+  "target-size": 1
+ },
+ "essay-simd": {
+  "region": 5,
+  "target-size": 3
+ },
+ "essay-verified": {
+  "region": 12,
+  "target-size": 3
+ },
+ "me": {
+  "region": 9,
+  "target-size": 3
+ },
+ "memento": {
+  "region": 6
+ },
+ "photo-contact": {
+  "image-redundant-alt": 377
+ },
+ "poem": {
+  "heading-order": 1,
+  "region": 4
+ },
+ "stats": {
+  "region": 3
+ }
+}

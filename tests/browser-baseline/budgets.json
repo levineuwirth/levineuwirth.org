@@ -1,0 +1,170 @@
+{
+ "colophon|1440": {
+  "kB": 252,
+  "requests": 42
+ },
+ "colophon|375": {
+  "kB": 252,
+  "requests": 42
+ },
+ "composition|1440": {
+  "kB": 211,
+  "requests": 36
+ },
+ "composition|375": {
+  "kB": 211,
+  "requests": 36
+ },
+ "current|1440": {
+  "kB": 185,
+  "requests": 35
+ },
+ "current|375": {
+  "kB": 185,
+  "requests": 35
+ },
+ "cv-about|1440": {
+  "kB": 237,
+  "requests": 38
+ },
+ "cv-about|375": {
+  "kB": 237,
+  "requests": 38
+ },
+ "essay-grd|1440": {
+  "kB": 425,
+  "requests": 53
+ },
+ "essay-grd|375": {
+  "kB": 425,
+  "requests": 53
+ },
+ "essay-r6|1440": {
+  "kB": 422,
+  "requests": 46
+ },
+ "essay-r6|375": {
+  "kB": 422,
+  "requests": 46
+ },
+ "essay-simd|1440": {
+  "kB": 447,
+  "requests": 46
+ },
+ "essay-simd|375": {
+  "kB": 447,
+  "requests": 46
+ },
+ "home|1440": {
+  "kB": 181,
+  "requests": 34
+ },
+ "home|375": {
+  "kB": 181,
+  "requests": 34
+ },
+ "library|1440": {
+  "kB": 198,
+  "requests": 42
+ },
+ "library|375": {
+  "kB": 198,
+  "requests": 42
+ },
+ "me|1440": {
+  "kB": 272,
+  "requests": 40
+ },
+ "me|375": {
+  "kB": 272,
+  "requests": 40
+ },
+ "music-index|1440": {
+  "kB": 224,
+  "requests": 35
+ },
+ "music-index|375": {
+  "kB": 224,
+  "requests": 35
+ },
+ "new|1440": {
+  "kB": 197,
+  "requests": 34
+ },
+ "new|375": {
+  "kB": 197,
+  "requests": 34
+ },
+ "photo-contact|1440": {
+  "kB": 1653,
+  "requests": 86
+ },
+ "photo-contact|375": {
+  "kB": 652,
+  "requests": 51
+ },
+ "photo-index|1440": {
+  "kB": 228,
+  "requests": 40
+ },
+ "photo-index|375": {
+  "kB": 228,
+  "requests": 40
+ },
+ "photo-map|1440": {
+  "kB": 245,
+  "requests": 43
+ },
+ "photo-map|375": {
+  "kB": 245,
+  "requests": 43
+ },
+ "photo-series|1440": {
+  "kB": 157,
+  "requests": 33
+ },
+ "photo-series|375": {
+  "kB": 157,
+  "requests": 33
+ },
+ "photo-single|1440": {
+  "kB": 249,
+  "requests": 37
+ },
+ "photo-single|375": {
+  "kB": 225,
+  "requests": 37
+ },
+ "photo-year|1440": {
+  "kB": 1249,
+  "requests": 78
+ },
+ "photo-year|375": {
+  "kB": 395,
+  "requests": 48
+ },
+ "score-reader|1440": {
+  "kB": 162,
+  "requests": 15
+ },
+ "score-reader|375": {
+  "kB": 137,
+  "requests": 14
+ },
+ "search|1440": {
+  "kB": 197,
+  "requests": 38
+ },
+ "search|375": {
+  "kB": 197,
+  "requests": 38
+ },
+ "stats|1440": {
+  "kB": 211,
+  "requests": 35
+ },
+ "stats|375": {
+  "kB": 211,
+  "requests": 35
+ }
+}

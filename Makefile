@@ -689,6 +689,7 @@ test-browser:
 test-browser-locked:
 	@test -x $(VENV_PY) || { echo "test-browser: .venv/ is absent — run 'uv sync'." >&2; exit 1; }
 	@.venv/bin/playwright install chromium firefox
+	@$(VENV_PY) tools/browser/fetch_axe.py
 	@RUN_BROWSER_TESTS=1 $(VENV_PY) -m unittest discover -s tests -p 'test_browser_*.py' -v
 
 # The deployment contract, checked in one command: both test suites plus

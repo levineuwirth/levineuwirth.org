@@ -22,17 +22,12 @@ shows its popup is for a popup test, not this sweep.
 from __future__ import annotations
 
 import json
-import os
-import signal
-import subprocess
-import sys
 import tempfile
-import time
 import unittest
 from pathlib import Path
 
-from tests._browser import (BROWSERS, HARNESS, check_site, enforcing_csp, harness_routes,
-                            require_playwright, requires_browser, site_server)
+from tests._browser import (BROWSERS, check_site, enforcing_csp, harness_routes,
+                            require_playwright, requires_browser, run_harness, site_server)
 
 ROUTES = harness_routes()
 
@@ -56,22 +51,6 @@ EXPECTED_VIOLATIONS = {
 }
 
 
-def stop(shard: subprocess.Popen) -> None:
-    """A shard still running, with its Playwright driver: SIGTERM to its
-    process group lets the driver close the browsers it launched (they run
-    in groups of their own); SIGKILL if it does not go."""
-    if shard.poll() is not None:
-        return
-    try:
-        os.killpg(shard.pid, signal.SIGTERM)
-        shard.wait(timeout=15)
-    except subprocess.TimeoutExpired:
-        os.killpg(shard.pid, signal.SIGKILL)
-        shard.wait()
-    except ProcessLookupError:
-        pass
-
-
 @requires_browser
 class CspSweep(unittest.TestCase):
     results: dict[str, dict[str, dict]]
@@ -83,32 +62,13 @@ class CspSweep(unittest.TestCase):
         tmp = Path(cls.enterClassContext(tempfile.TemporaryDirectory(prefix="browser-csp-")))
         out = tmp / "runs"
         base = cls.enterClassContext(site_server(tmp, enforcing_csp()))
-        env = dict(os.environ, BROWSER_OUT=str(out))
         names = list(ROUTES)
-        shards = []
-        for browser in BROWSERS:
-            for i in range(SHARDS):
-                shard = subprocess.Popen(
-                    [sys.executable, "csp_run.py", browser, base.rsplit(":", 1)[1],
-                     f"{browser}-{i}.json", *names[i::SHARDS]],
-                    cwd=HARNESS, env=env, text=True, start_new_session=True,
-                    stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-                # Registered as each starts, so a failure here or a timeout
-                # below leaves none running.
-                cls.addClassCleanup(stop, shard)
-                shards.append((browser, i, shard))
-        deadline = time.monotonic() + SWEEP_SECONDS
-        failed = []
-        for browser, i, shard in shards:
-            try:
-                _, err = shard.communicate(timeout=max(0.1, deadline - time.monotonic()))
-            except subprocess.TimeoutExpired:
-                failed.append(f"{browser} shard {i} still running after {SWEEP_SECONDS} s")
-                continue
-            if shard.returncode:
-                failed.append(f"{browser} shard {i} exited {shard.returncode}:\n{err[-2000:]}")
-        if failed:
-            raise AssertionError("\n\n".join(failed))
+        port = base.rsplit(":", 1)[1]
+        # Online: this sweep is the one meant to meet the live origins.
+        run_harness(cls, base, out, [["csp_run.py", browser, port, f"{browser}-{i}.json",
+                                      *names[i::SHARDS]]
+                                     for browser in BROWSERS for i in range(SHARDS)],
+                    offline=False, seconds=SWEEP_SECONDS)
         cls.results = {b: {} for b in BROWSERS}
         for browser in BROWSERS:
             for i in range(SHARDS):

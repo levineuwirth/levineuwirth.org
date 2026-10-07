@@ -63,6 +63,7 @@ def run():
         browser = getattr(p, browser_name).launch()
         for w in WIDTHS:
             ctx = browser.new_context(viewport={'width': w, 'height': 900}, reduced_motion='reduce')
+            offline(ctx)
             page = ctx.new_page()
             for name, path in ROUTES:
                 if only and name not in only:

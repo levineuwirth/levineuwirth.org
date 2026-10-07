@@ -44,6 +44,7 @@ def run():
                                       reduced_motion='reduce' if mode == 'os' else 'no-preference')
             if mode == 'site':
                 ctx.add_init_script("try { localStorage.setItem('reduce-motion', '1'); } catch (e) {}")
+            offline(ctx)
             page = ctx.new_page()
             for name, path in ROUTES:
                 if name not in MROUTES:

@@ -1,4 +1,4 @@
-import json, os, time
+import json, os, re, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
@@ -10,7 +10,8 @@ os.makedirs(SHOTS, exist_ok=True)
 
 PORT_ENFORCE = 48731
 PORT_THUMB = 48732
-PORT_NONE = 48733
+# A test runs these scripts against a server of its own and names its port.
+PORT_NONE = int(os.environ.get('BROWSER_PORT', '48733'))
 
 ROUTES = [
     ('home', '/'),
@@ -87,6 +88,14 @@ CSP_INIT = r"""
 THEME_INIT = """
 try { localStorage.setItem('theme', '%s'); } catch (e) {}
 """
+
+def offline(ctx):
+    """With BROWSER_OFFLINE=1, nothing leaves the local server: map tiles,
+    CDN scripts and the like are refused. The tests set it; the CSP sweep,
+    which is meant to meet the live origins, does not."""
+    if os.environ.get('BROWSER_OFFLINE') == '1':
+        ctx.route(re.compile(r'^(?!http://127\.0\.0\.1[:/])'), lambda route: route.abort())
+
 
 def dump(name, obj):
     p = os.path.join(OUT, name)
