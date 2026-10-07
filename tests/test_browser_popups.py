@@ -35,24 +35,15 @@ import json
 import re
 import tempfile
 import unittest
-from collections import Counter, defaultdict
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
-from tests._browser import (BROWSERS, SITE, check_site, enforcing_csp, require_playwright,
-                            requires_browser, site_server)
+from tests._browser import (BROWSERS, SITE, FakeNetwork, check_site, enforcing_csp,
+                            require_playwright, requires_browser, site_server)
+from tests._browser import fake_answer as answer
 
 PNG = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk"
                        "+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==")
-
-
-def answer(body, ctype: str = "application/json", status: int = 200) -> dict:
-    """A route.fulfill() answer. The CORS header is there because the real
-    APIs send it; the browser does not check it on a fulfilled route."""
-    if not isinstance(body, (str, bytes)):
-        body = json.dumps(body)
-    return {"status": status, "body": body,
-            "headers": {"content-type": ctype, "access-control-allow-origin": "*"}}
 
 
 ATOM = """<?xml version="1.0" encoding="UTF-8"?>
@@ -216,39 +207,6 @@ def code_ref() -> tuple[str, dict]:
     return link, {"path": path, "rev": f"{owner}/{repo} @ {sha[:7]}"}
 
 
-class Network:
-    """Every request off serve.py, plus /proxy/ and annotations.json,
-    answered from `answers` by the first route that matches: a fulfill()
-    dict, a callable taking the route, or None to abort. Anything else is
-    aborted and kept in `unexpected`."""
-
-    def __init__(self, context, base: str):
-        self.answers = dict(ANSWERS)
-        self.hits: Counter = Counter()
-        self.requests = defaultdict(list)
-        self.unexpected: list[str] = []
-        origin = re.escape(base)
-        context.route(re.compile(rf"^(?!{origin}/)"), self.handle)
-        context.route(re.compile(rf"^{origin}/(?:proxy/|data/annotations\.json)"), self.handle)
-
-    def handle(self, route) -> None:
-        url = route.request.url
-        for name, pattern in ROUTES.items():
-            if re.search(pattern, url):
-                self.hits[name] += 1
-                self.requests[name].append(route.request)
-                reply = self.answers.get(name)
-                if reply is None:
-                    route.abort()
-                elif callable(reply):
-                    reply(route)
-                else:
-                    route.fulfill(**reply)
-                return
-        self.unexpected.append(url)
-        route.abort()
-
-
 @requires_browser
 class LinkPopups(unittest.TestCase):
     @classmethod
@@ -272,7 +230,7 @@ class LinkPopups(unittest.TestCase):
             cls.addClassCleanup(cls.browsers[name].close)
 
     def fixture(self, browser: str, **answers):
-        """The fixture page and its Network, with `answers` replacing the
+        """The fixture page and its FakeNetwork, with `answers` replacing the
         default ones. At cleanup: no page errors, no CSP violations, no
         request that no route answers."""
         context = self.browsers[browser].new_context(viewport={"width": 1280, "height": 1600})
@@ -280,7 +238,8 @@ class LinkPopups(unittest.TestCase):
         context.add_init_script("""window.__csp = [];
             document.addEventListener('securitypolicyviolation',
                 e => window.__csp.push(e.effectiveDirective + ' ' + e.blockedURI));""")
-        net = Network(context, self.base)
+        net = FakeNetwork(context, self.base, ROUTES, ANSWERS,
+                          local=r"proxy/|data/annotations\.json")
         net.answers.update(answers)
         page = context.new_page()
         errors = []
@@ -313,7 +272,7 @@ class LinkPopups(unittest.TestCase):
         self.expect(popup).to_be_visible(timeout=5000)
         return popup
 
-    def nothing_shown(self, page, net: Network, link: str, route: str | None) -> None:
+    def nothing_shown(self, page, net: FakeNetwork, link: str, route: str | None) -> None:
         """Hover `link`, wait for its request (if it makes one) to be
         answered and the popup to have had its chance, and see none."""
         self.away(page)

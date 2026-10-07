@@ -11,6 +11,7 @@ have changed since it was built, they fail instead of skipping.
 from __future__ import annotations
 
 import ast
+import json
 import os
 import re
 import subprocess
@@ -18,6 +19,7 @@ import sys
 import unittest
 import urllib.error
 import urllib.request
+from collections import Counter, defaultdict
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
@@ -109,3 +111,53 @@ def site_server(workdir: Path, csp: str | None = None,
         finally:
             server.terminate()
             server.wait(timeout=10)
+
+
+def fake_answer(body, ctype: str = "application/json", status: int = 200) -> dict:
+    """A route.fulfill() answer. It carries the CORS header the real APIs
+    send, but the browser does not check CORS on a fulfilled route."""
+    if not isinstance(body, (str, bytes)):
+        body = json.dumps(body)
+    return {"status": status, "body": body,
+            "headers": {"content-type": ctype, "access-control-allow-origin": "*"}}
+
+
+class FakeNetwork:
+    """Requests a test answers itself, in place of the network or serve.py.
+
+    `routes` maps a name to a pattern searched in the full URL; the first
+    that matches answers from `answers[name]`: a route.fulfill() dict, a
+    callable taking the route, or None to abort. A request leaving
+    serve.py that no route matches is aborted and kept in `unexpected`,
+    which a test should end with empty. Same-origin requests are routed
+    only where `local` (a pattern for the path after the origin's "/")
+    matches; the rest reach serve.py. `hits` and `requests` count and keep
+    what each route answered."""
+
+    def __init__(self, context, base: str, routes: dict, answers: dict, local: str | None = None):
+        self.routes = routes
+        self.answers = dict(answers)
+        self.hits: Counter = Counter()
+        self.requests = defaultdict(list)
+        self.unexpected: list[str] = []
+        origin = re.escape(base)
+        context.route(re.compile(rf"^(?!{origin}/)"), self.handle)
+        if local:
+            context.route(re.compile(rf"^{origin}/(?:{local})"), self.handle)
+
+    def handle(self, route) -> None:
+        url = route.request.url
+        for name, pattern in self.routes.items():
+            if re.search(pattern, url):
+                self.hits[name] += 1
+                self.requests[name].append(route.request)
+                reply = self.answers.get(name)
+                if reply is None:
+                    route.abort()
+                elif callable(reply):
+                    reply(route)
+                else:
+                    route.fulfill(**reply)
+                return
+        self.unexpected.append(url)
+        route.abort()
