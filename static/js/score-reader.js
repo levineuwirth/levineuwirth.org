@@ -615,6 +615,23 @@
 
     var IDLE_MS = 3000;
     var idleTimer = null;
+    var lastPointer = 'mouse';   /* the pointerType of the last press */
+
+    /* The chrome stays while the reader is using it — a mouse resting on
+       the toolbar, keyboard focus inside it — and recedes otherwise. What
+       a press leaves behind does not count: touch browsers keep :hover on
+       whatever was last tapped, and a pressed button keeps focus, so after
+       Play the toolbar never receded on a phone, nor on a desktop until
+       the reader clicked elsewhere. Keyboard focus does count: hiding the
+       control that holds it would leave focus invisible. */
+    function inUse() {
+        if (!bar) return false;
+        if (lastPointer === 'mouse' && bar.matches(':hover')) return true;
+        var a = document.activeElement;
+        if (!a || !bar.contains(a)) return false;
+        try { return a.matches(':focus-visible'); }
+        catch (e) { return true; }   /* no :focus-visible: keep the old rule */
+    }
 
     function poke() {
         document.body.classList.remove('is-idle');
@@ -622,11 +639,14 @@
         idleTimer = setTimeout(function () {
             var panel = document.querySelector('.settings-panel');
             if (panel && panel.classList.contains('is-open')) return poke();
-            if (bar && bar.matches(':hover')) return poke();
-            if (bar && bar.contains(document.activeElement)) return poke();
+            if (inUse()) return poke();
             document.body.classList.add('is-idle');
         }, IDLE_MS);
     }
+
+    document.addEventListener('pointerdown', function (e) {
+        lastPointer = e.pointerType || 'mouse';
+    }, { capture: true, passive: true });
 
     ['mousemove', 'mousedown', 'keydown', 'touchstart', 'wheel', 'focusin']
         .forEach(function (evt) {

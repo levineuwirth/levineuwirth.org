@@ -11,8 +11,9 @@ robustness fixes; the search page, keyword search over the built
 Pagefind index and semantic search with its model and index faked; and
 highlights, the selection toolbar, collapsible sections (and printing
 them) and sidenotes; photography (view modes, masonry, the map with its data
-and tiles faked, the lightbox and slideshow on real pages) and the equation
-gallery. The
+and tiles faked, the lightbox and slideshow on real pages), the equation
+gallery, and the score reader with its following (real scores and
+recordings). The
 other scripts here are still reports; `popup_run.py` meets the live
 providers, and `csp_run.py` the live model, which the tests do not.
 
