@@ -51,15 +51,24 @@ img[data-lightbox] {
     visibility: hidden;
     pointer-events: none;
 
+    /* Closing: the fade runs, then visibility drops (0s long, after the
+       fade's length; the token carries the easing). */
     transition:
         opacity var(--transition-fast),
-        visibility var(--transition-fast);
+        visibility 0s var(--transition-fast);
 }
 
+/* Opening: visible at once. While visibility was still transitioning from
+   hidden, the browser refused the focus() lightbox.js and the slideshow
+   give their first control, and keyboard focus stayed on the page behind
+   the dialog. */
 .lightbox-overlay.is-open {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
+    transition:
+        opacity var(--transition-fast),
+        visibility 0s;
 }
 
 .lightbox-img {

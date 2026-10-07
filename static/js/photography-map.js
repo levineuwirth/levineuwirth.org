@@ -177,7 +177,10 @@
 
         configureMarkerIconPaths();
 
-        fetch(MAP_DATA_URL, { cache: 'force-cache' })
+        /* Under the normal cache rules: `force-cache` used any stored copy
+           however old, so a returning visitor need not see a photograph
+           geotagged since (audit J11). */
+        fetch(MAP_DATA_URL)
             .then(function (r) {
                 if (!r.ok) throw new Error('HTTP ' + r.status);
                 return r.json();
@@ -276,11 +279,12 @@
                     }
                 }
 
-                // Allow scroll-wheel zoom only after the user clicks
-                // into the map — prevents the page from "trapping" the
-                // scroll on someone passing through.
-                map.once('focus', function () { map.scrollWheelZoom.enable(); });
-                map.on('blur',    function () { map.scrollWheelZoom.disable(); });
+                // Allow scroll-wheel zoom only while the map has focus —
+                // prevents the page from "trapping" the scroll on someone
+                // passing through. Every focus, not the first only: after
+                // one blur, wheel zoom never came back (audit J11).
+                map.on('focus', function () { map.scrollWheelZoom.enable(); });
+                map.on('blur',  function () { map.scrollWheelZoom.disable(); });
             })
             .catch(function (err) {
                 renderErrorState(container, 'Could not load map data: ' + err.message);

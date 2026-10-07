@@ -176,13 +176,23 @@
         // Masonry row-spans
         // ----------------------------------------------------------------
 
-        function rowSpanForRatio(ratio, contentWidth) {
+        function rowSpanForRatio(ratio, contentWidth, metaHeight) {
             // ratio = naturalHeight / naturalWidth; contentWidth = rendered width
             var imageHeight = ratio * contentWidth;
-            // Allow ~1.4em for the meta strip (title + date below image).
-            var metaHeight = 28;
             var totalHeight = imageHeight + metaHeight;
             return Math.max(1, Math.ceil((totalHeight + ROW_GAP) / (ROW_UNIT + ROW_GAP)));
+        }
+
+        // The title-and-date strip under the photograph, margin included,
+        // as laid out at the card's width. A fixed 28px allowance was short
+        // of a line of 0.9em text and its margin, more so when the title
+        // wraps, and the caption ran 10-18px into the card below.
+        function metaHeightOf(card) {
+            var meta = card.querySelector('.photo-card-meta');
+            if (!meta) return 0;
+            var cs = getComputedStyle(meta);
+            return meta.getBoundingClientRect().height
+                 + (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
         }
 
         function applyRowSpan(card) {
@@ -213,7 +223,7 @@
                 var orient = card.dataset.orientation || 'landscape';
                 ratio = ORIENTATION_RATIO[orient] || ORIENTATION_RATIO.landscape;
             }
-            card.style.gridRowEnd = 'span ' + rowSpanForRatio(ratio, width);
+            card.style.gridRowEnd = 'span ' + rowSpanForRatio(ratio, width, metaHeightOf(card));
         }
 
         function applyAllRowSpans() {
