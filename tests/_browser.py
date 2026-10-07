@@ -58,6 +58,18 @@ def harness_routes() -> dict[str, str]:
     raise AssertionError("tools/browser/lib.py defines no ROUTES")
 
 
+def page_styles(path: str = "/essays/proof-broker/") -> str:
+    """The <link rel="stylesheet"> tags of a built page, as root-relative
+    URLs, for a fixture page to look as that page does."""
+    from urllib.parse import urljoin
+    html = (SITE / path.lstrip("/") / "index.html").read_text(encoding="utf-8")
+    links = re.findall(r'<link rel="stylesheet" href="([^"]+)"( media="[^"]+")?>', html)
+    if not links:
+        raise AssertionError(f"no stylesheets on {path}")
+    return "\n".join(f'<link rel="stylesheet" href="{urljoin(path, href)}"{media}>'
+                     for href, media in links)
+
+
 def require_playwright() -> None:
     try:
         import playwright.sync_api  # noqa: F401

@@ -14,6 +14,7 @@
     var tooltipTimer = null;
     var tooltipPinned = false; /* keyboard-opened: blur must not dismiss */
     var tooltipMark   = null;  /* mark that opened the tooltip, for focus return */
+    var returningFocus = false; /* focus going back to that mark: do not reopen */
 
     /* ------------------------------------------------------------------
        Storage
@@ -183,7 +184,13 @@
         tooltip.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 hideTooltip(true);
-                if (tooltipMark) tooltipMark.focus();
+                /* The mark's focus handler shows the tooltip; returning
+                   focus to it used to reopen what Escape had just closed. */
+                if (tooltipMark) {
+                    returningFocus = true;
+                    tooltipMark.focus();
+                    returningFocus = false;
+                }
             }
         });
         tooltip.addEventListener('focusout', function (e) {
@@ -261,6 +268,7 @@
            moves focus to its Delete button; Escape dismisses. */
         mark.setAttribute('tabindex', '0');
         mark.addEventListener('focus', function () {
+            if (returningFocus) return;
             clearTimeout(tooltipTimer);
             showTooltip(mark, ann);
         });
