@@ -20,6 +20,13 @@
             });
         }
 
+        /* Pagefind labels its input with a title alone, which is not a
+           label (axe: label-title-only). */
+        var pfInput = document.querySelector('#search .pagefind-ui__search-input');
+        if (pfInput && !pfInput.hasAttribute('aria-label')) {
+            pfInput.setAttribute('aria-label', 'Search the site');
+        }
+
         /* Timing instrumentation ------------------------------------------ */
         var timingEl  = document.getElementById('search-timing');
         var searchEl  = document.getElementById('search');

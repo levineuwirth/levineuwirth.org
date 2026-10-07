@@ -368,7 +368,10 @@ renderEpistemicFigure d = T.concat
     , " viewBox=\"0 0 200 200\""
     , " role=\"img\""
     , " aria-label=\"Epistemic figure: "
-    , maybe "" (\t -> "trust " <> T.pack (show t) <> ", ") (epTrust d)
+      -- "82 trust", as the figure shows it: a link around the figure takes
+      -- this as its name, and a name that holds the visible text in its
+      -- order is one a voice user can say (WCAG 2.5.3).
+    , maybe "" (\t -> T.pack (show t) <> " trust, ") (epTrust d)
     , "stability ", T.pack (epStability d), "\">"
     , renderRoundel
     , renderGuides

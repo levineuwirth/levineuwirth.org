@@ -51,15 +51,56 @@
 
     window.renderMath = renderIn;
 
+    /* A display equation wider than its column scrolls sideways
+       (typography.css: overflow-x: auto), and a scroller the keyboard
+       cannot reach can only be scrolled with a pointer (WCAG 2.1.1). The
+       ones that overflow, and only those, take a tab stop: one for every
+       equation was the flood audit J04 removed. Rechecked as their width
+       changes. */
+    function markScroller(el) {
+        if (el.scrollWidth > el.clientWidth + 1) {
+            el.setAttribute('tabindex', '0');
+            /* A group, not a region: a page has several, and landmarks
+               must each have a name of their own. */
+            el.setAttribute('role', 'group');
+            el.setAttribute('aria-label', 'Equation, scrolls sideways');
+        } else if (el.getAttribute('role') === 'group') {
+            el.removeAttribute('tabindex');
+            el.removeAttribute('role');
+            el.removeAttribute('aria-label');
+        }
+    }
+
+    var scrollers = window.ResizeObserver ? new ResizeObserver(function (entries) {
+        entries.forEach(function (e) { markScroller(e.target); });
+    }) : null;
+
+    function watchScrollers(scope) {
+        if (!scrollers) return;
+        (scope && scope.querySelectorAll ? scope : document)
+            .querySelectorAll('.katex-display').forEach(function (el) { scrollers.observe(el); });
+    }
+
+    /* A formula widens without its box changing size when KaTeX's fonts
+       arrive, which the observer does not see: look again then. */
+    function recheckScrollers() {
+        document.querySelectorAll('.katex-display').forEach(markScroller);
+    }
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(recheckScrollers);
+    window.addEventListener('load', recheckScrollers);
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () {
             renderIn(document);
+            watchScrollers(document);
         });
     } else {
         renderIn(document);
+        watchScrollers(document);
     }
 
     document.addEventListener('ln:content-added', function (e) {
         renderIn(e.detail && e.detail.container);
+        watchScrollers(e.detail && e.detail.container);
     });
 })();

@@ -234,6 +234,15 @@
     margin-bottom: 1.5rem;
 }
 
+/* "Photography" is one word: at the title's 2.6rem it is wider than a
+   320px screen's column and cannot wrap, so the page scrolled sideways
+   (WCAG 1.4.10). Capped at 12vw it fits; above ~430px nothing changes.
+   #markdownBody: typography.css sizes `#markdownBody h1`, which outranks
+   two classes. */
+#markdownBody .photography-header .page-title {
+    font-size: min(2.6rem, 12vw);
+}
+
 /* Mode toggle.
  *
  * These are anchors, so they were inheriting body-link underlines and reading
@@ -1041,6 +1050,14 @@ body.slideshow-open {
 
 .photography-map-pin:hover span {
     transform: scale(1.12);
+}
+
+/* Clusters keep the plugin's light green, yellow and orange bubbles in
+   either theme, and their count inherited the page's text colour: in the
+   dark theme, pale text on pale yellow (contrast 1.03). Dark text reads on
+   all three. */
+.marker-cluster div {
+    color: #1a1a1a;
 }
 
 /* Thumbnail strip inside a place tooltip — a glance at what is there,

@@ -398,6 +398,14 @@
         overflow-wrap: anywhere;
     }
 
+    /* The date neither wraps nor shrinks on a wide card; in this narrow
+       column "24 September 2026" was wider than the column at 320px and
+       pushed the page sideways (WCAG 1.4.10). */
+    .item-card-date {
+        white-space: normal;
+        flex-shrink: 1;
+    }
+
     .item-card-date {
         font-size: 0.68rem;
     }

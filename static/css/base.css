@@ -501,6 +501,10 @@ html {
        The 1.25rem is breathing room below the nav's border so the
        heading does not land flush against it. */
     scroll-padding-top: calc(var(--nav-height) + 1.25rem);
+    /* And a little at the foot: Firefox left a focused footer link a few
+       pixels below the bottom of a phone's screen rather than scroll it in
+       (WCAG 2.4.11). */
+    scroll-padding-bottom: 2rem;
 }
 
 body {

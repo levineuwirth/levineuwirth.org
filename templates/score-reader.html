@@ -37,7 +37,7 @@
       data-page-count="$score-page-count$"$if(realization)$
       data-timing="$realization$"$endif$
       data-pages="$for(score-pages)$$score-page-url$$sep$,$endfor$">
-    <div class="score-reader-viewport" id="score-reader-viewport">
+    <div class="score-reader-viewport" id="score-reader-viewport" tabindex="0" role="region" aria-label="Score">
         <!-- The SVG for the current page is fetched and inlined here, so the
              notation inherits the theme's `color` (see score-reader.css) and
              stays vector-crisp at any zoom. With scripting off nothing fetches,
