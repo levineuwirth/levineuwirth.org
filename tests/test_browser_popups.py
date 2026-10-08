@@ -19,7 +19,9 @@ renders), and no test in the suite meets the real APIs' CORS headers.
 
 Checked: each provider's request and popup; that a failed, misshapen or
 mistyped answer shows nothing, throws nothing and is not cached; that
-hostile text and image sources from an API stay inert; the arXiv lead
+hostile text and image sources from an API stay inert; an abstract sent
+as markup (CrossRef's JATS, an Archive description) reads as text, its
+entities decoded once and its paragraphs apart; the arXiv lead
 figure, on time and late; Escape (audit A03); Forgejo links, which get no
 popup and make no request (J05); a same-origin source reference, which
 gets its source preview (J08).
@@ -387,6 +389,22 @@ class LinkPopups(unittest.TestCase):
                 self.shown(page, "doi")
                 self.shown(page, "doi")
                 self.assertEqual(net.hits["doi"], 1)
+
+    def test_abstracts_in_markup_read_as_text(self) -> None:
+        # The markup was stripped with a regex and the rest escaped: its
+        # entities showed as written and its paragraphs ran together.
+        jats = ("<jats:title>Abstract</jats:title><jats:p>Effects of R&amp;D at p &lt; 0.05 on"
+                " <jats:italic>firms</jats:italic>.</jats:p><jats:p>A second paragraph.</jats:p>")
+        doi = answer({"status": "ok", "message": {"title": ["A Fake DOI Title"], "abstract": jats}})
+        archive = answer({"metadata": {"title": "An Item", "creator": "Someone",
+                                       "description": "<p>An item &amp; its <b>notes</b>.</p><p>More.</p>"}})
+        for browser in BROWSERS:
+            page, _ = self.fixture(browser, doi=doi, archive=archive)
+            for link, want in (("doi", "Effects of R&D at p < 0.05 on firms. A second paragraph."),
+                               ("archive", "An item & its notes. More.")):
+                with self.subTest(browser=browser, link=link):
+                    abstract = self.shown(page, link).locator(".popup-abstract")
+                    self.assertEqual(self.text(abstract), want)
 
     def test_hostile_answers_stay_inert(self) -> None:
         evil = '<img src=x onerror="window.__pwned=1">Evil'

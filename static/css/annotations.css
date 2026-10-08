@@ -143,14 +143,20 @@ mark.user-annotation:hover { filter: brightness(0.80); }
 
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.12s ease, visibility 0.12s ease;
+    /* Closing: hidden once the fade is over. */
+    transition: opacity 0.12s ease, visibility 0s linear 0.12s;
     pointer-events: none;
 }
 
+/* Opening: visible at once. While visibility was still transitioning from
+   hidden, the browser refused the focus() selection-popup.js gives the
+   note field, and the keyboard was left on the page behind (as with the
+   lightbox, images.css). */
 .ann-picker.is-visible {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
+    transition: opacity 0.12s ease, visibility 0s;
 }
 
 .ann-picker-swatches {

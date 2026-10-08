@@ -35,8 +35,15 @@
     var style   = (storage && storage.get(STYLE_KEY)) || 'bar';
     if (!STYLES.some(function (s) { return s.key === style; })) style = 'bar';
 
-    var reduceMotion = window.matchMedia &&
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    /* The site's Reduce Motion setting and the system's, unioned, and read
+       when used, as nav.js and collapse.js do. Only the system's was read,
+       once at load: a reader who had turned on the site's setting still
+       had the view glide to every new system. */
+    function reducedMotion() {
+        if (document.documentElement.hasAttribute('data-reduce-motion')) return true;
+        return !!(window.matchMedia
+            && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    }
 
     var timing     = null;
     var audioUrl   = null;
@@ -242,7 +249,7 @@
         if (top >= view.top && top <= view.top + view.height * 0.6) return;
         reader.viewport.scrollBy({
             top: top - view.top - margin,
-            behavior: reduceMotion ? 'auto' : 'smooth'
+            behavior: reducedMotion() ? 'auto' : 'smooth'
         });
     }
 

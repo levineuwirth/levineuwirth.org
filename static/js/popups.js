@@ -823,7 +823,7 @@
                                   return (a.given ? a.given + ' ' : '') + (a.family || '');
                               }),
                     meta:     [journal, year].filter(Boolean).join(', '),
-                    abstract: (msg.abstract || '').replace(/<[^>]+>/g, '')
+                    abstract: markupText(msg.abstract)
                 };
             }
         },
@@ -932,7 +932,7 @@
                 return {
                     title:    title,
                     authors:  [creator, year].filter(Boolean).join(', '),
-                    abstract: first(meta.description).replace(/<[^>]+>/g, '')
+                    abstract: markupText(first(meta.description))
                 };
             }
         },
@@ -1561,6 +1561,31 @@
         if (days === 1) return 'yesterday';
         if (days < 14)  return days + ' days ago';
         return humanDuration(days, true) + ' ago';
+    }
+
+    /* The text of an abstract that arrives as markup (CrossRef's JATS, an
+       Internet Archive description), parsed rather than stripped with a
+       regex: its entities are decoded once, so esc() does not show them
+       escaped ("p &lt; 0.05"), and its blocks are kept apart ("firms.
+       Second paragraph" used to run together). A heading that only says
+       "Abstract" is dropped. DOMParser's document runs no scripts and
+       loads nothing. */
+    var MARKUP_BLOCK = /^(?:p|div|sec|title|br|li|ul|ol|h[1-6]|blockquote|table|tr|td|th|list-item|label|caption)$/;
+
+    function markupText(markup) {
+        if (!markup || typeof markup !== 'string') return '';
+        var doc = new DOMParser().parseFromString(markup, 'text/html');
+        Array.prototype.slice.call(doc.body.querySelectorAll('*')).forEach(function (el) {
+            var name = el.localName.replace(/^.*:/, '');
+            if (name === 'script' || name === 'style'
+                    || (name === 'title' && /^\s*abstract\s*$/i.test(el.textContent))) {
+                el.remove();
+            } else if (MARKUP_BLOCK.test(name)) {
+                el.before(' ');
+                el.after(' ');
+            }
+        });
+        return (doc.body.textContent || '').replace(/\s+/g, ' ').trim();
     }
 
     /* Defer to the shared utility (loaded synchronously from

@@ -542,6 +542,25 @@
        Keyboard
     ------------------------------------------------------------------ */
 
+    /* Escape goes back to the work's page. Back in history only when that
+       is where the reader came from (its scroll position kept); otherwise
+       to it by the header's link. history.back() alone did nothing in a
+       tab opened on a shared ?p= link, and left the site for a reader
+       who came from a search. */
+    function leave() {
+        var back = document.querySelector('.score-reader-back');
+        if (!back) { history.back(); return; }
+        var from = null;
+        try { from = document.referrer ? new URL(document.referrer) : null; }
+        catch (_) { from = null; }
+        if (from && from.origin === location.origin && from.pathname === back.pathname
+                && history.length > 1) {
+            history.back();
+        } else {
+            location.assign(back.href);
+        }
+    }
+
     document.addEventListener('keydown', function (e) {
         var panel = document.querySelector('.settings-panel');
         if (panel && panel.classList.contains('is-open')) return;
@@ -583,7 +602,7 @@
         case '0':
             mode = 'fit-height'; applySize(); e.preventDefault(); break;
         case 'Escape':
-            history.back(); break;
+            leave(); break;
         }
     });
 

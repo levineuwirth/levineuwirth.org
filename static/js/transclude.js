@@ -34,8 +34,8 @@
  * ---------------------------------------------
  * `window.lnEnhance(container[, {force: true, source: url}])` is the one
  * idempotent entry point for content inserted into the page after load.
- * It calls the known reinitialisers (sidenotes, popups, collapse,
- * gallery) and then dispatches a bubbling `ln:content-added` CustomEvent
+ * It calls the known reinitialisers (sidenotes, popups, collapse) and
+ * then dispatches a bubbling `ln:content-added` CustomEvent
  * on the container, with `detail = {container, source}`. Any subsystem
  * that needs to see injected content — KaTeX rendering, code-copy
  * buttons, annotations, lightbox — should listen for that event rather
@@ -47,13 +47,18 @@
  *
  * Calling lnEnhance twice on the same container is a no-op unless
  * `force` is passed, so listeners may assume one call per insertion.
+ *
+ * gallery.js does not listen yet: a transcluded display equation or score
+ * fragment gets no expand button. No page transcludes either today.
  */
 
 (function () {
     'use strict';
 
     /* Shared fetch cache — one network request per URL regardless of how
-     * many transclusions reference the same page. */
+     * many transclusions reference the same page. A failure is not kept:
+     * it was, for the life of the page, so one dropped request failed
+     * every later transclusion of that URL. */
     var cache = {};
 
     function fetchPage(url) {
@@ -62,6 +67,7 @@
                 if (!r.ok) throw new Error('HTTP ' + r.status);
                 return r.text();
             });
+            cache[url].catch(function () { delete cache[url]; });
         }
         return cache[url];
     }

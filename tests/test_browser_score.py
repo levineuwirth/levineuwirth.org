@@ -15,8 +15,11 @@ the top (M04, M07); one animation-frame loop however many seeks and turns
 seeks once, where it ends (M08); the toolbar recedes unless a mouse rests
 on it or keyboard focus is in it (what a tap or click leaves behind kept
 it up); on a touch screen the tap that wakes the sleeping toolbar does not
-also move the music (M05); a page's SVG is inlined without scripts,
-handlers or javascript: links.
+also move the music (M05); following moves the view without animation
+when the site's own Reduce Motion is on (it read only the system's);
+Escape goes back to the work's page, by history only when the reader came
+from it (history.back() left the site, or did nothing in a new tab); a
+page's SVG is inlined without scripts, handlers or javascript: links.
 
     RUN_BROWSER_TESTS=1 python -m unittest tests.test_browser_score -v
 """
@@ -363,6 +366,69 @@ class ScoreReader(unittest.TestCase):
                 self.expect(page.locator(idle)).to_have_count(0)
 
     # -- sanitising ----------------------------------------------------------
+
+    def test_following_honours_the_sites_reduce_motion(self) -> None:
+        # Every scrollBy the view makes, by its behavior; then a seek to a
+        # bar low on its page, so that following has to bring it into view
+        # (the symphony's pages hold several systems; the concerto's one).
+        record = """window.__scrolls = [];
+            const by = Element.prototype.scrollBy;
+            Element.prototype.scrollBy = function (o) {
+                window.__scrolls.push(o && o.behavior); return by.apply(this, arguments); };"""
+        site = "try { localStorage.setItem('reduce-motion', '1'); } catch (e) {}"
+        t = self.symphony
+        bar = next(b for b, m in enumerate(t["measures"]) if m and m[2] > 0.7 and b in t["first"])
+        for browser in BROWSERS:
+            for setting, want in (("the site's", "auto"), ("none", "smooth")):
+                with self.subTest(browser=browser, reduce_motion=setting):
+                    page, _ = self.reader(browser, SYMPHONY,
+                                          init=record + (site if setting == "the site's" else ""))
+                    page.click(".score-follow-play")
+                    self.playing(page)
+                    page.evaluate("""at => { const s = document.querySelector('.score-follow-seek');
+                        s.value = String(at); s.dispatchEvent(new Event('input')); }""",
+                                  t["first"][bar] / 1000)
+                    self.expect(page.locator(".score-follow-play")).to_have_attribute(
+                        "aria-pressed", "true")
+                    self.until(page, "window.__scrolls.length > 0")
+                    page.click(".score-follow-play")
+                    self.assertEqual(set(page.evaluate("window.__scrolls")), {want})
+
+    def until(self, page, condition: str, seconds: float = 10) -> None:
+        """Poll `condition` (a JavaScript expression) until it holds;
+        wait_for_function's string form is an eval the CSP refuses."""
+        for _ in range(int(seconds * 10)):
+            if page.evaluate(f"() => !!({condition})"):
+                return
+            page.wait_for_timeout(100)
+        self.fail(f"never held: {condition}")
+
+    def test_escape_goes_back_to_the_work(self) -> None:
+        work = f"/music/{CONCERTO}/"
+        for browser in BROWSERS:
+            with self.subTest(browser=browser, arrived="a shared link, in a new tab"):
+                page, _ = self.reader(browser, CONCERTO, "?p=5")
+                self.unfocus(page)
+                page.keyboard.press("Escape")
+                page.wait_for_url(self.base + work)
+            with self.subTest(browser=browser, arrived="from the work's page"):
+                page.locator("a.comp-frontispiece").click()
+                page.wait_for_url(f"{self.base}/music/{CONCERTO}/score/")
+                self.rendered(page)
+                self.unfocus(page)
+                page.keyboard.press("Escape")
+                page.wait_for_url(self.base + work)
+                # By history: the reader is still ahead of us, not behind.
+                page.go_forward()
+                page.wait_for_url(f"{self.base}/music/{CONCERTO}/score/")
+            with self.subTest(browser=browser, arrived="from elsewhere on the site"):
+                page.goto(self.base + "/music/", wait_until="load")
+                page.evaluate(f"location.href = '/music/{CONCERTO}/score/'")
+                page.wait_for_url(f"{self.base}/music/{CONCERTO}/score/")
+                self.rendered(page)
+                self.unfocus(page)
+                page.keyboard.press("Escape")
+                page.wait_for_url(self.base + work)
 
     def test_pages_are_inlined_inert(self) -> None:
         hostile = ('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '

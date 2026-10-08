@@ -13,10 +13,15 @@ across an inline element, and one across a paragraph break, which leaves
 the paragraphs as they were (it used to make four of two); a phrase that
 occurs twice is highlighted, and found again, where it was selected, not
 at its first occurrence; malformed stored highlights are ignored, not
-fatal; a passage that cannot be highlighted says so and stores nothing;
+fatal; the Annotate picker opens inside the window when the selection
+fills it, takes focus without scrolling, and stays open as the page
+scrolls (it opened out of sight, and closed when scrolled to); a passage
+that cannot be highlighted says so and stores nothing;
 colours; the tooltip, its escaped note, Delete, and its keyboard path;
 the toolbar's buttons for prose, a single word, code, math and text
-outside the page's body (no Annotate), and what each action opens or
+outside the page's body (no Annotate); on a phone the toolbar and every
+button in it inside the window (one row ran past the screen's edge, half
+its actions out of reach); and what each action opens or
 copies (window.open and the clipboard are stubbed, so nothing leaves the
 machine).
 
@@ -113,10 +118,11 @@ class Annotations(unittest.TestCase):
             cls.browsers[name] = getattr(playwright, name).launch()
             cls.addClassCleanup(cls.browsers[name].close)
 
-    def fixture(self, browser: str, stored: str | None = None):
+    def fixture(self, browser: str, stored: str | None = None, width: int = 1280,
+                height: int = 900):
         """The reading fixture, with `stored` as the saved highlights if
         given; the page's errors are checked at cleanup."""
-        context = self.browsers[browser].new_context(viewport={"width": 1280, "height": 900})
+        context = self.browsers[browser].new_context(viewport={"width": width, "height": height})
         self.addCleanup(context.close)
         context.add_init_script(STUBS)
         if stored is not None:
@@ -288,6 +294,45 @@ class Annotations(unittest.TestCase):
                         self.expect(page.locator("#plain mark")).to_have_count(0)
                         self.assertEqual(len(self.stored(page)), 1)
 
+    def test_the_picker_opens_in_view(self) -> None:
+        # A selection from near the top of the window to near its foot
+        # leaves no room above it or below: the picker went below, out of
+        # sight, and scrolling to it (or its note field taking focus)
+        # closed it.
+        span = """() => { const r = document.createRange();
+            r.setStartBefore(document.getElementById('wrapped'));
+            r.setEndAfter(document.getElementById('echo'));
+            return r.getBoundingClientRect().toJSON(); }"""
+        box = "s => { const r = document.querySelector(s).getBoundingClientRect(); return [r.top, r.bottom]; }"
+        for browser in BROWSERS:
+            with self.subTest(browser=browser):
+                page = self.fixture(browser)
+                page.evaluate("window.scrollTo(0, document.getElementById('wrapped')"
+                              ".getBoundingClientRect().top + scrollY - 12)")
+                page.set_viewport_size({"width": 1280, "height": int(page.evaluate(span)["bottom"]) + 30})
+                self.select(page, "main", "As a result", "told again")
+                y = page.evaluate("scrollY")
+                page.click(".selection-popup [data-action=annotate]")
+                picker = page.locator(".ann-picker.is-visible")
+                self.expect(picker).to_be_visible()
+                self.expect(page.locator(".ann-picker-note")).to_be_focused()
+                top, bottom = page.evaluate(box, ".ann-picker")
+                height, sel = bottom - top, page.evaluate(span)
+                vh = page.evaluate("innerHeight")
+                # The premise: no room either side of the selection.
+                self.assertLess(sel["top"], height + 16)
+                self.assertGreater(sel["bottom"] + 8 + height, vh)
+                self.assertGreaterEqual(top, 0)
+                self.assertLessEqual(bottom, vh)
+                self.assertEqual(page.evaluate("scrollY"), y, "taking focus scrolled the page")
+                page.mouse.wheel(0, 60)
+                page.wait_for_timeout(300)
+                self.assertGreater(page.evaluate("scrollY"), y)
+                self.expect(picker).to_be_visible()
+                page.fill(".ann-picker-note", "in view")
+                page.press(".ann-picker-note", "Enter")
+                self.expect(page.locator("#echo mark.user-annotation")).to_have_count(1)
+
     def test_what_cannot_be_highlighted_says_so(self) -> None:
         # Text already inside a highlight cannot be anchored again.
         for browser in BROWSERS:
@@ -361,6 +406,31 @@ class Annotations(unittest.TestCase):
             with self.subTest(browser=browser, part="Escape hides"):
                 page.keyboard.press("Escape")
                 self.expect(page.locator(".selection-popup.is-visible")).to_have_count(0)
+
+    def test_the_toolbar_fits_a_phone(self) -> None:
+        # At 375px the one-word toolbar ran from x=10 to x=559.
+        boxes = """els => els.map(e => { const r = e.getBoundingClientRect();
+            return [e.textContent.trim() || 'toolbar', r.left, r.top, r.right, r.bottom]; })"""
+        cases = {"one word, at a line's start": ("#plain", "Serendipity", "Serendipity", "Define"),
+                 "one word, further on": ("#plain", "prepared", "prepared", "Define"),
+                 "a phrase": ("#inline", "phrase", "then", "Wikipedia")}
+        for browser in BROWSERS:
+            for width in (320, 375):
+                page = self.fixture(browser, width=width, height=700)
+                vw, vh = page.evaluate("[document.documentElement.clientWidth, innerHeight]")
+                for case, (selector, start, end, button) in cases.items():
+                    with self.subTest(browser=browser, width=width, case=case):
+                        page.mouse.click(1, 1)
+                        self.select(page, selector, start, end)
+                        toolbar = page.locator(".selection-popup.is-visible")
+                        toolbar.evaluate("t => Promise.all(t.getAnimations().map(a => a.finished))")
+                        self.assertIn(button, self.toolbar(page))
+                        found = page.eval_on_selector_all(
+                            ".selection-popup.is-visible, .selection-popup.is-visible button", boxes)
+                        self.assertGreater(len(found), 4)
+                        outside = [b for b in found
+                                   if b[1] < 0 or b[2] < 0 or b[3] > vw or b[4] > vh]
+                        self.assertEqual(outside, [], f"window {vw}x{vh}")
 
     def test_toolbar_actions(self) -> None:
         phrase = "favours the prepared"

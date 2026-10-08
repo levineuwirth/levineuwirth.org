@@ -10,8 +10,9 @@ font-loading test uses a built essay with many notes.
 
 Checked: closing a section takes its content out of view, the tab order
 and the accessibility tree, and reopening restores it; the state survives
-a reload; a link into a closed section opens it, at load and on
-hashchange; a closed section prints in full (audit J07: it was left off
+a reload; a link into a closed section opens it, at load, on hashchange,
+and when it names the fragment already in the address bar (no hashchange:
+it did nothing); a closed section prints in full (audit J07: it was left off
 the paper); sidenotes follow the text when a section above them closes,
 and when web fonts arrive after the first layout (J03: notes stayed where
 the fallback font had put them); hover, click, Space and Escape on a
@@ -38,7 +39,7 @@ PAGE = """<!doctype html>
 <script src="/js/sidenotes.js" defer></script>
 </head><body><div class="page-shell"><main id="markdownBody">
 <h1 class="page-title">Sections Fixture</h1>
-<p>An introduction that stays open.</p>
+<p>An introduction that stays open, with <a id="to-deep" href="#deep">a link to the subsection</a>.</p>
 <h2 id="first">First section</h2>
 <p id="p1">The first section's text, with <a id="link1" href="#second">a link</a> in it.</p>
 {filler}
@@ -169,6 +170,17 @@ class Sections(unittest.TestCase):
                 page.evaluate("location.hash = '#link1'")
                 self.expect(page.locator("#link1")).to_be_visible()
                 self.expect(self.toggle(page, "first")).to_have_attribute("aria-expanded", "true")
+            with self.subTest(browser=browser, at="the fragment already in the address bar"):
+                # A link to the current fragment fires no hashchange: one to
+                # a passage closed since did nothing, its target hidden.
+                page = self.open(browser, path="/__fixture/sections.html#deep")
+                self.close_section(page, "first")
+                page.evaluate("window.scrollTo(0, 0)")
+                page.click("#to-deep")
+                self.assertTrue(page.url.endswith("#deep"))
+                self.expect(page.locator("#deep")).to_be_visible()
+                self.expect(self.toggle(page, "first")).to_have_attribute("aria-expanded", "true")
+                self.expect(page.locator("#deep")).to_be_in_viewport()
 
     def test_a_closed_section_prints(self) -> None:
         # J07: printed, a closed section was display:none.

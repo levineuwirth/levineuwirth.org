@@ -74,7 +74,12 @@
         document.addEventListener('keyup',     onKeyUp);
         document.addEventListener('mousedown', onMouseDown);
         document.addEventListener('keydown',   onKeyDown);
-        window.addEventListener('scroll', function () { hide(); hidePicker(); }, { passive: true });
+        /* Scrolling hides the toolbar, not the Annotate picker: it is
+           placed on the page and scrolls with the selection, and a reader
+           may scroll to see what they are annotating. Closing it on
+           scroll also closed it when its own note field took focus and
+           the browser scrolled that into view. */
+        window.addEventListener('scroll', hide, { passive: true });
     }
 
     /* ------------------------------------------------------------------
@@ -221,12 +226,19 @@
     ------------------------------------------------------------------ */
 
     function position(rect) {
-        var pw  = popup.offsetWidth;
-        var ph  = popup.offsetHeight;
         var GAP = 10;
         var sy  = window.scrollY;
         var sx  = window.scrollX;
-        var vw  = window.innerWidth;
+        var vw  = document.documentElement.clientWidth;   /* without a scrollbar */
+        var vh  = window.innerHeight;
+        /* Measured at no more than the window's width, from the left edge:
+           where it was last left would narrow it further (an absolutely
+           placed box shrinks to the room on its right), and wider it ran
+           off a phone's screen. CSS wraps the buttons into rows. */
+        popup.style.maxWidth = (vw - 2 * GAP) + 'px';
+        popup.style.left = sx + 'px';
+        var pw  = popup.offsetWidth;
+        var ph  = popup.offsetHeight;
 
         var left = rect.left + sx + rect.width / 2 - pw / 2;
         left = Math.max(sx + GAP, Math.min(left, sx + vw - pw - GAP));
@@ -238,6 +250,8 @@
         } else {
             popup.classList.remove('is-below');
         }
+        /* In the window either way, as the picker is (positionPicker). */
+        top = Math.max(sy + GAP, Math.min(top, sy + vh - ph - GAP));
 
         popup.style.left = left + 'px';
         popup.style.top  = top  + 'px';
@@ -511,26 +525,31 @@
             if (e.key === 'Escape') { hidePicker(); }
         });
 
-        setTimeout(function () { note.focus(); }, 0);
+        setTimeout(function () { note.focus({ preventScroll: true }); }, 0);
     }
 
     function hidePicker() {
         if (picker) picker.classList.remove('is-visible');
     }
 
+    /* Above the selection, else below it, and in either case inside the
+       window: below a selection that reached the foot of the window it
+       used to open out of sight. */
     function positionPicker(rect) {
         var pw  = picker.offsetWidth;
         var ph  = picker.offsetHeight;
         var GAP = 8;
         var sy  = window.scrollY;
         var sx  = window.scrollX;
-        var vw  = window.innerWidth;
+        var vw  = document.documentElement.clientWidth;   /* without a scrollbar */
+        var vh  = window.innerHeight;
 
         var left = rect.left + sx + rect.width / 2 - pw / 2;
         left = Math.max(sx + GAP, Math.min(left, sx + vw - pw - GAP));
 
         var top = rect.top + sy - ph - GAP;
         if (top < sy + GAP) top = rect.bottom + sy + GAP;
+        top = Math.max(sy + GAP, Math.min(top, sy + vh - ph - GAP));
 
         picker.style.left = left + 'px';
         picker.style.top  = top  + 'px';

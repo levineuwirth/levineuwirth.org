@@ -11,6 +11,11 @@
     position: absolute;
     z-index: 700;
     display: flex;
+    /* Rows where the window is narrower than the buttons: on a phone
+       one row ran past the screen's edge, half its actions out of reach.
+       The width is capped by selection-popup.js, which knows the gap. */
+    flex-wrap: wrap;
+    justify-content: center;
     align-items: center;
     padding: 0 0.25rem;
     gap: 0;

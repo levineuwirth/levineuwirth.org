@@ -253,6 +253,20 @@
        revealHashTarget's first argument is the `initial` flag. */
     window.addEventListener('hashchange', function () { revealHashTarget(); });
 
+    /* A link to the fragment already in the address bar fires no
+       hashchange: a contents entry for a passage the reader has since
+       closed did nothing, its target hidden. Such a click opens it here;
+       any other link is left to hashchange. */
+    document.addEventListener('click', function (e) {
+        if (e.defaultPrevented || e.button !== 0
+                || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        var a = e.target.closest ? e.target.closest('a[href*="#"]') : null;
+        if (!a || !a.hash || a.hash !== location.hash) return;
+        if (a.origin !== location.origin || a.pathname !== location.pathname
+                || a.search !== location.search) return;
+        revealHashTarget();
+    });
+
     // Public entry point for transclude.js: initialize collapse toggles on
     // headings inside a newly injected fragment.
     window.reinitCollapse = function (container) {
