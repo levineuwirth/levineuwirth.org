@@ -56,6 +56,9 @@
  "photo-contact": {
   "image-redundant-alt": 377
  },
+ "photo-series": {
+  "region": 3
+ },
  "poem": {
   "heading-order": 1,
   "region": 4

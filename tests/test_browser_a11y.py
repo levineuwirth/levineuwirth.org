@@ -15,7 +15,8 @@ route where it is not recorded, or on more elements than recorded, fails:
 a new problem. So does a recorded one that is gone or smaller: a fix,
 whose record should follow it. The keyboard has no known issues: every
 page's first stop is a skip link that lands in its target, and no stop is
-hidden, aria-hidden, inert, out of view, or without a visible change.
+hidden, aria-hidden, inert, invisible, clipped (inside a collapsed
+container), out of view, or without a visible change.
 
     RUN_BROWSER_TESTS=1 python -m unittest tests.test_browser_a11y -v
     UPDATE_BROWSER_BASELINE=1 RUN_BROWSER_TESTS=1 ...   # record what is found
@@ -109,6 +110,7 @@ class Accessibility(unittest.TestCase):
                         why = [w for w, hit in (
                             ("aria-hidden", s.get("ariaHidden")), ("hidden", s.get("hidden")),
                             ("inert", s.get("inert")), ("invisible", s.get("visible") is False),
+                            ("clipped", s.get("clipped")),
                             ("out of view", not s.get("inView")),
                             ("no visible focus", not s.get("indicator_diff"))) if hit]
                         if why:

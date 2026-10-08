@@ -1,7 +1,10 @@
 """Quick perf: requests, encoded bytes, LCP, CLS (local server, br/gz sidecars served, no network throttling).
+Also the origins other than the local server each page asks for; offline
+(BROWSER_OFFLINE=1) those requests are refused, so the bytes are the site's own.
 usage: python perf_run.py <outname> <width> [route ...]
 """
 import sys, collections
+from urllib.parse import urlsplit
 from playwright.sync_api import sync_playwright
 from lib import *
 
@@ -30,6 +33,12 @@ def run():
             ctx.add_init_script(OBS)
             offline(ctx)
             page = ctx.new_page()
+            outside = set()
+            def asked(request):
+                u = urlsplit(request.url)
+                if u.scheme in ('http', 'https') and not request.url.startswith(BASE + '/'):
+                    outside.add(f'{u.scheme}://{u.netloc}')
+            page.on('request', asked)
             cdp = ctx.new_cdp_session(page)
             cdp.send('Network.enable')
             cdp.send('Network.setCacheDisabled', {'cacheDisabled': True})
@@ -46,16 +55,15 @@ def run():
             page.wait_for_timeout(1500)
             nav = page.evaluate("(() => { const n = performance.getEntriesByType('navigation')[0]; return {dcl: Math.round(n.domContentLoadedEventEnd), load: Math.round(n.loadEventEnd)}; })()")
             lcp = page.evaluate('window.__lcp'); cls = page.evaluate('window.__cls'); lcpEl = page.evaluate('window.__lcpEl')
-            by = collections.Counter(); byn = collections.Counter(); ext = 0
+            by = collections.Counter(); byn = collections.Counter()
             for rid, sz in sizes.items():
                 t = types.get(rid, '?'); by[t] += sz; byn[t] += 1
-                if not urls.get(rid, '').startswith(BASE): ext += sz
             biggest = sorted(((sz, urls.get(rid, '')[-70:]) for rid, sz in sizes.items()), reverse=True)[:4]
-            rec = {'requests': len(sizes), 'kB': round(sum(sizes.values()) / 1024), 'ext_kB': round(ext / 1024),
+            rec = {'requests': len(sizes), 'kB': round(sum(sizes.values()) / 1024), 'outside': sorted(outside),
                    'by_type_kB': {k: round(v / 1024) for k, v in by.items()}, 'by_type_n': dict(byn),
                    'lcp_ms': round(lcp) if lcp else None, 'lcp_el': lcpEl, 'cls': round(cls, 4), **nav, 'biggest': biggest}
             res[name] = rec
-            print(name, rec['requests'], 'req', rec['kB'], 'kB (ext', rec['ext_kB'], ') LCP', rec['lcp_ms'], lcpEl, 'CLS', rec['cls'], 'load', nav['load'], biggest[:2], flush=True)
+            print(name, rec['requests'], 'req', rec['kB'], 'kB, outside', rec['outside'], 'LCP', rec['lcp_ms'], lcpEl, 'CLS', rec['cls'], 'load', nav['load'], biggest[:2], flush=True)
             ctx.close()
         browser.close()
     dump(outname, res)

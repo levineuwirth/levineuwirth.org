@@ -128,9 +128,14 @@ class SlideshowKeyboard(unittest.TestCase):
         for browser in BROWSERS:
             with self.subTest(browser=browser):
                 page = self.opened(browser)
+                # Tall enough to scroll, so a Space the slideshow failed to
+                # take would show (the fixture alone is shorter than the window).
+                page.evaluate("document.body.style.minHeight = '5000px'")
                 page.evaluate("document.activeElement.blur()")
                 page.keyboard.press("Space")
                 self.assertEqual(self.label(page), "Play slideshow")
+                # Browsers animate a keyboard scroll: give one time to move.
+                page.wait_for_timeout(500)
                 self.assertEqual(page.evaluate("window.scrollY"), 0)
 
 

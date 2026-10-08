@@ -22,6 +22,7 @@ shows its popup is for a popup test, not this sweep.
 from __future__ import annotations
 
 import json
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -167,9 +168,32 @@ class CspSweep(unittest.TestCase):
                                     for u in frames), frames)
             with check("score pages", "score-reader"):
                 self.assertGreater(got["score-reader"]["score"]["stage"]["svgs"], 0)
-            with check("lightbox", "photo-single"):
-                self.assertTrue(got["photo-single"].get("lightbox", {}).get("visible"),
-                                got["photo-single"])
+            for route in ("photo-single", "essay-simd"):
+                with check("lightbox", route):
+                    self.assertTrue(got[route].get("lightbox_img"), got[route])
+                    self.assertTrue(got[route].get("lightbox", {}).get("visible"), got[route])
+            with check("slideshow", "photo-series"):
+                s = got["photo-series"]
+                self.assertTrue(s.get("slideshow_btn"), s)
+                self.assertNotIn("slideshow_err", s)
+                self.assertTrue(s["slideshow"]["open"] and s["slideshow"]["ok"], s["slideshow"])
+            with check("score audio and turning", "score-reader"):
+                score = got["score-reader"]["score"]
+                self.assertNotIn("audio_err", score)
+                self.assertEqual(score["audio"]["pressed"], "true", score["audio"])
+                self.assertNotIn("next_err", score)
+                before, after = (re.fullmatch(r"(\d+) / (\d+)", score[k] or "")
+                                 for k in ("before_next", "after_next"))
+                self.assertTrue(before and after, score)
+                self.assertEqual(int(after[1]), int(before[1]) + 1, score)
+            with check("commonplace view toggle", "commonplace"):
+                self.assertNotIn("cp_err", got["commonplace"])
+                self.assertEqual(got["commonplace"]["cp"], {"chrono": True, "themed": False})
+            with check("composition images", "composition"):
+                c = got["composition"]["composition"]
+                self.assertTrue(c["thumb"] and c["thumb"]["loaded"], c)
+                self.assertTrue(c["thumb"]["src"].endswith("/scores/thumb.webp"), c)
+                self.assertEqual(c["broken"], [])
             with check("transclusion", "colophon"):
                 loaded = [t["cls"] for t in got["colophon"]["transclude_after"]]
                 self.assertTrue(loaded and all("transclude--loaded" in c for c in loaded), loaded)

@@ -24,10 +24,32 @@ FOCUS_INFO = r"""
     if (a.getAttribute && a.getAttribute('aria-hidden') === 'true' && !ah) ah = a.tagName + '.' + a.className;
     if (a.hidden && !hid) hid = a.tagName + '.' + a.className;
     if (a.inert && !inert) inert = a.tagName + '.' + a.className;
-    if (a !== el && a.nodeType === 1) {
+  }
+  // Clipped: a box above it that clips its overflow leaves none of it
+  // showing (a collapsed container). Only boxes that do clip it count. A
+  // fixed element escapes those below its containing block, which is the
+  // viewport unless an ancestor is transformed, filtered or contained; an
+  // absolutely positioned one, those below its containing block, the
+  // nearest positioned ancestor or one of those. (Opacity and visibility
+  // are `visible`'s.)
+  const holdsFixed = c => c.transform !== 'none' || c.perspective !== 'none' || c.filter !== 'none'
+    || (c.backdropFilter || 'none') !== 'none' || /paint|layout|strict|content/.test(c.contain)
+    || /transform|perspective|filter/.test(c.willChange);
+  const holdsAbsolute = c => c.position !== 'static' || holdsFixed(c);
+  if (r.width > 0 && r.height > 0) {
+    let waiting = cs.position === 'fixed' ? holdsFixed : cs.position === 'absolute' ? holdsAbsolute : null;
+    for (let a = el.parentElement; a && !clipped; a = a.parentElement) {
       const c = getComputedStyle(a);
-      if ((c.overflow === 'hidden' || c.overflowY === 'hidden') && a.getBoundingClientRect().height < 2 && !clipped) clipped = a.tagName + '.' + a.className;
-      if (c.visibility === 'hidden' || c.opacity === '0') clipped = clipped || ('invisible:' + a.tagName + '.' + a.className);
+      if (waiting && !waiting(c)) continue;   // a box it escapes
+      waiting = null;
+      if (c.display !== 'contents' && (c.overflowX !== 'visible' || c.overflowY !== 'visible')) {
+        const b = a.getBoundingClientRect();
+        const w = Math.min(r.right, b.right) - Math.max(r.left, b.left);
+        const h = Math.min(r.bottom, b.bottom) - Math.max(r.top, b.top);
+        if (w < 1 || h < 1) clipped = a.tagName + '.' + a.className;
+      }
+      if (c.position === 'fixed') waiting = holdsFixed;
+      else if (c.position === 'absolute') waiting = holdsAbsolute;
     }
   }
   const desc = el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.classList.length ? '.' + [...el.classList].slice(0,3).join('.') : '');

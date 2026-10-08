@@ -56,6 +56,7 @@ def run():
                     r = page.evaluate(PROBE)
                     if name == 'photo-series':
                         btn = page.query_selector('[data-mode="slideshow"]')
+                        r['slideshow'] = None   # no button: the test says so
                         if btn:
                             btn.click(); page.wait_for_timeout(1200)
                             r['slideshow'] = page.evaluate("""(() => { const bs = [...document.querySelectorAll('button')].filter(b => /pause|play/i.test(b.getAttribute('aria-label') || b.textContent));

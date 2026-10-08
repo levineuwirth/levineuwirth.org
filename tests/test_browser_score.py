@@ -242,6 +242,9 @@ class ScoreReader(unittest.TestCase):
                 page.keyboard.press("k")
                 self.assertGreater(frames, 20)
                 self.assertLessEqual(loops, frames + 2, "more than one loop a frame")
+                # And one: counting by the callback's name, a renamed or
+                # stopped loop would pass the line above with none.
+                self.assertGreaterEqual(loops, frames - 2, "no loop while the music plays")
 
     # -- M08 ----------------------------------------------------------------
 

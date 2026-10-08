@@ -40,14 +40,14 @@ def features(page, name):
         if btn:
             try:
                 btn.click(timeout=3000); page.wait_for_timeout(1500)
-                out['slideshow'] = ev("""(() => { const d = document.querySelector('[class*=slideshow]');
+                out['slideshow'] = ev("""(() => { const d = document.querySelector('.slideshow-overlay.is-open');
                     const img = d && d.querySelector('img');
                     return {open: !!d, cls: d && d.className, img: img && img.currentSrc, ok: img && img.naturalWidth > 0}; })()""")
                 page.screenshot(path=f'{SHOTS}/{browser_name}-{port}-slideshow.png')
                 page.keyboard.press('Escape'); page.wait_for_timeout(500)
             except Exception as e:
                 out['slideshow_err'] = str(e)[:200]
-    if name in ('photo-single', 'essay-r6', 'essay-proofbroker'):
+    if name in ('photo-single', 'essay-simd'):
         img = page.query_selector('img[data-lightbox]')
         out['lightbox_img'] = bool(img)
         if img:
@@ -77,14 +77,23 @@ def features(page, name):
         # PDF embed / pdf popup link
         out['pdf_links'] = ev("[...document.querySelectorAll('a[href*=\"pdfjs\"], iframe[src*=\"pdfjs\"]')].map(a => a.outerHTML.slice(0, 160)).slice(0, 4)")
     if name == 'composition':
-        out['composition'] = ev("""({imgs: document.images.length,
-            broken: [...document.images].filter(i => i.complete && i.naturalWidth === 0).map(i => i.src).slice(0,5),
+        # The score's thumbnail, by name: counting images also counts the
+        # lightbox's, which has no source until it opens.
+        out['composition'] = ev("""({thumb: (i => i && {src: i.currentSrc, loaded: i.complete && i.naturalWidth > 0})
+                (document.querySelector('.comp-frontispiece img')),
+            broken: [...document.images].filter(i => i.getAttribute('src') && i.complete && i.naturalWidth === 0).map(i => i.src).slice(0,5),
             audio: document.querySelectorAll('audio').length})""")
     if name == 'colophon':
         page.wait_for_timeout(1500)
         out['transclude_after'] = ev("[...document.querySelectorAll('div.transclude')].map(d => ({cls: d.className, len: d.textContent.length, html: d.outerHTML.slice(0,200)}))")
     if name == 'commonplace':
-        out['cp'] = ev("({btns: document.querySelectorAll('.cp-toggle-btn').length})")
+        # commonplace.js was an inline script: the toggle is what the CSP could stop.
+        try:
+            page.click('.cp-toggle-btn[data-target="cp-chrono"]', timeout=3000)
+            out['cp'] = ev("""({chrono: !document.getElementById('cp-chrono').hidden,
+                themed: !document.getElementById('cp-themed').hidden})""")
+        except Exception as e:
+            out['cp_err'] = str(e)[:200]
     return out
 
 
@@ -225,9 +234,12 @@ def score_probe(page):
         btn.click()
     except Exception as e:
         out['audio_err'] = str(e)[:200]
+    folio = "(document.getElementById('score-folio') || {}).textContent || null"
     try:
+        # Play follows the music, which need not start on page 1.
+        out['before_next'] = page.evaluate(folio)
         page.click('#score-next', timeout=3000); page.wait_for_timeout(1200)
-        out['after_next'] = page.evaluate("(document.getElementById('score-page')||{}).value || (document.getElementById('score-folio')||{}).textContent || null")
+        out['after_next'] = page.evaluate(folio)
     except Exception as e:
         out['next_err'] = str(e)[:200]
     return out

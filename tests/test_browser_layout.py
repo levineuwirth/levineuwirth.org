@@ -15,9 +15,12 @@ of it:
   animation, no transition, no smooth scrolling, and the slideshow does
   not start by itself.
 - perf_run.py, on 21 pages (its PROUTES), in Chromium at 1440 and 375px:
-  cumulative layout shift under 0.1, and each page's requests and
-  transferred bytes within 15% of tests/browser-baseline/budgets.json (a
-  page that grows must be recorded; one that shrinks need not be).
+  cumulative layout shift under 0.1; each page's requests and transferred
+  bytes within 15% of tests/browser-baseline/budgets.json (a page that
+  grows must be recorded; one that shrinks need not be); and the origins
+  other than the site's own that each page asks for, as recorded in
+  outside.json (offline, those requests are refused, so the bytes are
+  the site's own).
 
     RUN_BROWSER_TESTS=1 python -m unittest tests.test_browser_layout -v
     UPDATE_BROWSER_BASELINE=1 RUN_BROWSER_TESTS=1 ...   # record what is found
@@ -98,9 +101,10 @@ class Layout(unittest.TestCase):
                     self.assertEqual(r["scrollBehavior"], "auto")
                     self.assertFalse(r.get("smooth"), "smooth scrolling")
                     self.assertFalse(r.get("webAnims"), "script animations")
-                    if "slideshow" in r:
-                        self.assertNotIn("Pause slideshow", r["slideshow"],
-                                         "the slideshow started by itself")
+                    if key.startswith("photo-series|"):
+                        self.assertIsNotNone(r["slideshow"], "no slideshow button")
+                        self.assertIn("Play slideshow", r["slideshow"],
+                                      "the slideshow started by itself")
 
     def assert_perf_complete(self) -> None:
         for width in WIDTHS:
@@ -128,9 +132,25 @@ class Layout(unittest.TestCase):
                                   budgets[key][measure] + SLACK[measure])
                     self.assertLessEqual(now[measure], allowed,
                                          f"{measure}: {now[measure]}, budget {budgets[key][measure]}")
-            with self.subTest(page=key, part="nothing from outside"):
-                route, w = key.rsplit("|", 1)
-                self.assertEqual(self.perf[int(w)][route]["ext_kB"], 0)
+
+    def test_outside_origins(self) -> None:
+        # The page-weight test used to check that no bytes came from
+        # outside, which offline they never can: the requests are refused.
+        # What a page asks for is what tells.
+        self.assert_perf_complete()
+        found = {}
+        for width in WIDTHS:
+            for route, r in self.perf[width].items():
+                found.setdefault(route, set()).update(r["outside"])
+        known = baseline("outside", {r: sorted(o) for r, o in sorted(found.items()) if o})
+        if UPDATE_BASELINE:
+            return
+        for route in sorted(PERF_ROUTES):
+            with self.subTest(route=route):
+                now, was = found[route], set(known.get(route, []))
+                self.assertEqual(sorted(now - was), [], "asks a new origin")
+                self.assertEqual(sorted(was - now), [], "no longer asked: record it "
+                                                        "(UPDATE_BROWSER_BASELINE=1)")
 
 
 if __name__ == "__main__":

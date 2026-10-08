@@ -120,12 +120,12 @@
   "requests": 43
  },
  "photo-series|1440": {
-  "kB": 157,
-  "requests": 33
+  "kB": 1027,
+  "requests": 77
  },
  "photo-series|375": {
-  "kB": 157,
-  "requests": 33
+  "kB": 419,
+  "requests": 47
  },
  "photo-single|1440": {
   "kB": 249,

@@ -17,7 +17,8 @@ recordings); and, offline, `axe_run.py`, `kbd_run.py`, `overflow_run.py`,
 `motion_run.py` and `perf_run.py` (`tests/test_browser_a11y.py`,
 `tests/test_browser_layout.py`), against the known issues and budgets in
 `tests/browser-baseline/`, each report required to hold every page and
-variant asked of it. The
+variant asked of it (`tests/test_browser_harness.py` checks the keyboard
+probe's own answer on cases with a known one). The
 other scripts here are still reports; `popup_run.py` meets the live
 providers, and `csp_run.py` the live model, which the tests do not.
 
@@ -60,7 +61,7 @@ server, and `BROWSER_OFFLINE=1` refuses every request that would leave it.
 | `nojs_run.py` | pages with JavaScript off |
 | `overflow_run.py` | horizontal overflow on every route at several widths |
 | `motion_run.py` | reduced motion, from the OS and from the site's setting, on the 14 pages of its `MROUTES` |
-| `perf_run.py` | requests, bytes, LCP and CLS on the local server, on the 21 pages of its `PROUTES` |
+| `perf_run.py` | requests, bytes, LCP and CLS on the local server, and the other origins each page asks for, on the 21 pages of its `PROUTES` |
 | `popup_run.py` | every link-popup provider |
 | `printcheck.py` | PDF.js thumbnails and print images under the CSP |
 | `prod_smoke.py` | a few checks against production; aborts `/csp-report` so test traffic never reaches the report log |

@@ -4,9 +4,9 @@ Each provider names an anchored `host` pattern for the link's hostname and a
 `match` pattern for its href; getProvider needs both. Before 2026-10-04 it
 tried `match` alone, unanchored, and took gist.github.com/user/id for a
 GitHub repository and a path containing doi.org/10.… for a DOI (the link
-icons in build/Filters/Links.hs already matched on the host). The patterns
-are read from popups.js and run in node, so they are JavaScript's regexes,
-not a Python approximation."""
+icons in build/Filters/Links.hs already matched on the host). popups.js
+itself runs in node, and its own getProvider is asked; it is not copied
+here, so a change to how it chooses is tested too."""
 
 import json
 import re
@@ -56,20 +56,36 @@ class PopupProviderTests(unittest.TestCase):
                 self.assertRegex(host, r"^/\^.*\$/$", "host must be anchored at both ends")
 
     def test_provider_for_each_link(self) -> None:
-        table = ",".join(f"{{name:{json.dumps(n)},host:{h},match:{m}}}" for n, h, m in self.providers)
-        script = f"""
-const P = [{table}];
-const out = {{}};
-for (const href of {json.dumps(list(CASES))}) {{
-  let host = ''; try {{ host = new URL(href).hostname; }} catch (e) {{}}
-  const p = P.find(p => p.host.test(host) && p.match.test(href));
-  out[href] = p ? p.name : null;
-}}
+        # popups.js runs whole in a bare sandbox (it waits for
+        # DOMContentLoaded, which never comes). Two lines are put in
+        # before bind(): one hands out getProvider, the other makes the
+        # provider it returns name its entry instead of fetching.
+        script = r"""
+const fs = require('fs'), vm = require('vm');
+const [file, cases] = [process.argv[1], JSON.parse(process.argv[2])];
+let src = fs.readFileSync(file, 'utf8');
+const at = src.indexOf('    function bind(el, provider)');
+if (at < 0) throw new Error('popups.js has no bind()');
+src = src.slice(0, at)
+    + '    providerContent = function (target, entry) { return entry.name; };\n'
+    + '    window.__getProvider = getProvider;\n' + src.slice(at);
+const noop = () => {};
+const window = {addEventListener: noop, matchMedia: () => ({matches: false, addEventListener: noop})};
+window.window = window;
+const ctx = vm.createContext({window, URL, console, navigator: {},
+    document: {addEventListener: noop, readyState: 'loading', documentElement: {}},
+    location: {href: 'https://levineuwirth.org/essays/x/', origin: 'https://levineuwirth.org'}});
+vm.runInContext(src, ctx);
+const out = {};
+for (const href of cases) {
+    const p = window.__getProvider(href);
+    out[href] = p ? p(null) : null;
+}
 console.log(JSON.stringify(out));
 """
-        done = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        done = subprocess.run(["node", "-e", script, str(POPUPS_JS), json.dumps(list(CASES))],
+                              capture_output=True, text=True, check=True)
         self.assertEqual(json.loads(done.stdout), CASES)
-
 
 if __name__ == "__main__":
     unittest.main()

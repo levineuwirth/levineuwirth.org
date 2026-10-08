@@ -91,7 +91,10 @@ class Hardening(unittest.TestCase):
                     # Wired: the panel's toggle opens it.
                     page.click(".library-filter-toggle")
                     self.expect(page.locator("#search-filters")).to_be_visible()
-                    self.expect(page.locator(".filter-status-btn.is-active")).to_have_count(0)
+                    # Dropped, not kept unshown: the badge counts every
+                    # filter in force, shown or not.
+                    self.expect(page.locator("#search-filters .is-active")).to_have_count(0)
+                    self.assertEqual(page.inner_text(".filter-toggle-badge").strip(), "")
 
     def test_search_filters_keep_a_well_formed_state(self) -> None:
         for browser in BROWSERS:
@@ -102,6 +105,11 @@ class Hardening(unittest.TestCase):
                 self.expect(page.locator(".filter-status-btn.is-active")).to_have_attribute(
                     "data-value", "draft")
                 self.expect(page.locator("#search-filters")).to_be_visible()
+                self.assertEqual(page.inner_text(".filter-toggle-badge").strip(), "(3)")
+                self.expect(page.locator(".filter-ordinal-btn.is-active")).to_have_attribute(
+                    "data-field", "scope")
+                self.expect(page.locator(".filter-threshold-btn.is-active")).to_have_attribute(
+                    "data-field", "importance")
 
     def test_a_malformed_fragment_is_no_target(self) -> None:
         for browser in BROWSERS:

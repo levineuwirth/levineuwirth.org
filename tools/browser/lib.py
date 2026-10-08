@@ -27,7 +27,7 @@ ROUTES = [
     ('poem', '/poetry/sonnet-60.html'),
     ('fiction', '/fiction/'),
     ('photo-index', '/photography/'),
-    ('photo-series', '/photography/copenhagen/'),
+    ('photo-series', '/photography/denmark/'),
     ('photo-single', '/photography/denmark/copenhagen-005/'),
     ('photo-map', '/photography/map/'),
     ('photo-contact', '/photography/contact-sheet/'),
