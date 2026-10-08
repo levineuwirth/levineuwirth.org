@@ -35,6 +35,13 @@ EXCLUDE = (
     "data/sign-manifest.txt",      # written by `make sign`, after the build
     "nginx",                       # served configuration; the browser tests read it as it is
     "tools/browser",               # the browser harness
+    # The résumé's artifacts and private variants (gitignored; see the
+    # Makefile's pdfs target). The site reads yaml-source/data/ and the
+    # PDFs copied into static/; editing a private variant made the browser
+    # tests refuse a _site it had not changed.
+    "yaml-source/build",
+    "yaml-source/output",
+    "yaml-source/variants/private",
 )
 # Bytecode that Python writes beside a tool whenever something imports it.
 SKIP_DIRS = {"__pycache__"}

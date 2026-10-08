@@ -18,7 +18,7 @@ from pathlib import Path
 from tests._helpers import ROOT, script_env
 
 TOOL = ROOT / "tools" / "build-inputs.py"
-INPUTS = ["static", "data", "tools", "nginx", "Makefile"]
+INPUTS = ["static", "data", "tools", "nginx", "Makefile", "yaml-source"]
 
 
 class BuildInputsTests(unittest.TestCase):
@@ -30,7 +30,9 @@ class BuildInputsTests(unittest.TestCase):
                           "data/now.yaml": "now", "Makefile": "all:",
                           "nginx/site.conf": "server {}", "tools/browser/lib.py": "",
                           "data/.compress-cache/x.gz": "", "data/.site-build.lock": "",
-                          "data/sign-manifest.txt": ""}.items():
+                          "data/sign-manifest.txt": "", "yaml-source/data/vita.yml": "",
+                          "yaml-source/build/r.aux": "", "yaml-source/output/r.pdf": "",
+                          "yaml-source/variants/private/r.yml": ""}.items():
             self.write(rel, text)
         (self.root / "tools" / "build-inputs.py").write_bytes(TOOL.read_bytes())
 
@@ -83,11 +85,18 @@ class BuildInputsTests(unittest.TestCase):
     def test_what_is_not_an_input(self) -> None:
         self.run_tool("record", *INPUTS)
         for rel in ("nginx/site.conf", "tools/browser/lib.py", "data/.compress-cache/x.gz",
-                    "data/.site-build.lock", "data/sign-manifest.txt"):
+                    "data/.site-build.lock", "data/sign-manifest.txt",
+                    # The résumé's artifacts and private variants: the site
+                    # reads yaml-source/data/ alone.
+                    "yaml-source/build/r.aux", "yaml-source/output/r.pdf",
+                    "yaml-source/variants/private/r.yml"):
             self.write(rel, "rewritten after the build")
         self.write("tools/__pycache__/x.cpython-314.pyc", "")
         self.write("data/.compress-cache/new.br", "")
+        self.write("yaml-source/variants/private/new.yml", "")
         self.assertEqual(self.check(), (0, []))
+        self.write("yaml-source/data/vita.yml", "rewritten after the build")
+        self.assertEqual(self.check(), (1, ["changed yaml-source/data/vita.yml"]))
 
     def test_record_replaces_the_manifest_whole(self) -> None:
         self.run_tool("record", *INPUTS)
