@@ -11,7 +11,7 @@ reads at every build. Nothing noticed when the two parted: on 2026-10-01
 
 The record, yaml-source/pdfs.sha256, holds one digest per PDF over its
 inputs: build.py, layouts.yml, every data/*.yml, every template, and the
-PDF's own variant file. check-site reads it too, as a warning. Checking
+PDF's variant file and its inheritance chain. check-site reads it too, as a warning. Checking
 needs no LaTeX.
 """
 
@@ -21,6 +21,8 @@ import hashlib
 import sys
 from pathlib import Path
 
+import yaml
+
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "yaml-source"
 RECORD = SOURCE / "pdfs.sha256"
@@ -28,8 +30,19 @@ PDFS = {"cv": "static/cv.pdf", "resume": "static/resume.pdf"}
 
 
 def inputs(variant: str, source: Path = SOURCE) -> list[Path]:
-    files = [source / "build.py", source / "layouts.yml",
-             source / "variants" / f"{variant}.yml"]
+    files = [source / "build.py", source / "layouts.yml"]
+    seen = set()
+    while variant:
+        if variant in seen:
+            raise ValueError(f"cyclic PDF variant inheritance at {variant!r}")
+        seen.add(variant)
+        path = source / "variants" / f"{variant}.yml"
+        files.append(path)
+        config = yaml.safe_load(path.read_text())
+        parent = config.get("extends") if isinstance(config, dict) else None
+        if parent is not None and (not isinstance(parent, str) or Path(parent).name != parent):
+            raise ValueError(f"invalid PDF variant parent in {path}")
+        variant = parent
     files += sorted((source / "data").glob("*.yml"))
     files += sorted(p for p in (source / "templates").rglob("*") if p.is_file())
     return files

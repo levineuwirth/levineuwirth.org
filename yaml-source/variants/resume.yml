@@ -1,5 +1,102 @@
 version: 1
-description: Website-facing one-page résumé (legacy content profile).
-layout: one-page-resume
+extends: ats-application
+abstract: false
+description: Canonical public one-page résumé for AI-safety research engineering.
 output: resume.pdf
-legacy_visibility: resume
+document_title: Research Engineer — Frontier AI Evaluation \& Assurance
+summary: >-
+  Research engineer designing frontier-model evaluations and reproducible Python
+  pipelines. Combines evaluator calibration and agent failure analysis with
+  systems engineering and rigorous validation of automated verifiers.
+
+# Use the same canonical evidence sets as the public CV. The content-free
+# ATS base keeps one-page selections independent of the CV's longer projects.
+sections:
+  - id: experience
+    label: Research \& Engineering Experience
+    entries:
+      - experience:mars-v
+      - experience:frontier-ai-contracting
+      - projects:proof-broker
+      - experience:shu-lab-undergrad
+  - id: education
+    label: Education
+    entries:
+      - education:brown-scb-math-cs
+  - id: technical-skills
+    label: Technical Skills
+    entries:
+      - skills:programming
+      - skills:ai-evaluation
+      - skills:ml-ai
+      - skills:formal-tooling
+      - skills:tools
+
+presentation_sets:
+  experience:
+    frontier-ai-contracting: evaluation-reliability
+    mars-v: empirical-assurance
+    shu-lab-undergrad: empirical-research-engineering
+
+overrides:
+  projects:
+    proof-broker:
+      label: '\href{https://github.com/levineuwirth/proof-broker}{Proof Broker — Independent Research}'
+      description: >-
+        Built an OCaml broker connecting Lean 4 and Rocq to untrusted solvers
+        and model-generated search through versioned evidence schemas,
+        independent certificate checks and kernel-checked proof terms.
+        \par
+        Built reproducible Python workflows with pinned tasks, deterministic
+        baselines and negative controls.
+        \par
+        Audited context dependencies in proofs; repaired integer-goal
+        reconstruction and the final normalizer. Offline replay produced
+        kernel-checked proofs from 36/36 retained certificates at four obligations
+        with no added axioms.
+      bullets: []
+  experience:
+    mars-v:
+      description: 'VerInf: zero-knowledge LLM inference research with James Petrie (Future of Life Institute).'
+      # Ten cases describes the suite, not ten independently confirmed verdicts.
+      # PR 31's corrected harness refuses silent/crashed verifier invocations.
+      bullets:
+        - >-
+          Built and upstreamed a Python workload profiler, versioned manifests,
+          execution DAGs and cost models; validated workload accounting against
+          an archived Llama-4 Maverick run and calibrated on NVIDIA B200 hardware.
+        - >-
+          Integrated a collaborator's expert-weight bridge; fixed enrollment-identity
+          binding, Merkle-index checks and sumcheck-round enforcement in Python
+          and Rust verification paths.
+        - >-
+          Implemented targeted causal softmax, SiLU and surprisal repairs with
+          a 10-case GPU regression suite; hardened the Rust-verifier harness
+          to distinguish explicit verdicts from crashes or missing output.
+    shu-lab-undergrad:
+      bullets:
+        - >-
+          Co-led Deep Sets outcome models developed on an 80M+ discharge cohort;
+          readmission AUROC was 0.750 versus 0.655 for the Charlson index on
+          3.23M temporally held-out discharges. Deployed the public calculator
+          with a Python/FastAPI backend; manuscript under review at JAMIA.
+        - >-
+          Technical lead for NeuroPose across four externally funded projects:
+          Python/TensorFlow inference, validated outputs, persistent
+          job state across crashes, Docker deployment and Rust-backed analysis.
+  skills:
+    programming:
+      label: Languages
+      items: [Python, Rust, C, C++, Go]
+    ai-evaluation:
+      label: Evaluation
+      items: [Harbor, Evaluator calibration, Agent scaffolds, Red-teaming]
+    ml-ai:
+      label: ML and data
+      items: [PyTorch, TensorFlow, NumPy, Pandas]
+    formal-tooling:
+      label: Verification
+      items: [Lean 4, Rocq, OCaml, "SMT (cvc4, cvc5, Z3)"]
+    tools:
+      label: Platforms (Linux)
+      items: [Git, Docker, SLURM]

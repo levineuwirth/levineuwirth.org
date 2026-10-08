@@ -61,6 +61,15 @@ profile. Company-specific research/technical CVs should normally extend
 section-driven `ats-application` base. Both reuse shared templates rather than
 introducing company-specific LaTeX.
 
+The public `cv` profile extends `application-cv` and presents a two-page
+research-engineering CV; the public `resume` extends `ats-application` and
+presents its one-page counterpart. Both lead with MARS V / VerInf, followed by
+frontier-model evaluation, Proof Broker and clinical research engineering. They select Brown
+education explicitly. The longer academic record remains on the Vita page;
+the legacy academic and one-page templates remain available. Rebuild and
+export both public PDFs with `make pdfs`, then refresh previews with
+`make pdf-thumbs`. The PDF freshness record includes inherited variant inputs.
+
 `ai-infra-assurance.yml` is a tracked role-family profile for AI infrastructure,
 verification, accelerator systems, trusted execution, and technical-assurance
 roles. Private employer-specific variants may extend or selectively replace it.

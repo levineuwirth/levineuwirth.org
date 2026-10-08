@@ -49,6 +49,30 @@ class CvPdfTests(unittest.TestCase):
         self.record.unlink()
         self.assertTrue(all("no record" in m for m in self.stale()))
 
+    def inherited_variants(self):
+        (self.src / "variants/cv.yml").write_text("extends: application-cv\n")
+        (self.src / "variants/resume.yml").write_text("extends: ats-application\n")
+        (self.src / "variants/ats-application.yml").write_text("extends: application-cv\n")
+        (self.src / "variants/application-cv.yml").write_text("abstract: true\n")
+        cv_pdfs.write(self.src, self.record)
+
+    def test_shared_ancestor_change_makes_both_pdfs_stale(self):
+        self.inherited_variants()
+        self.assertEqual(self.stale(), [])
+        (self.src / "variants/application-cv.yml").write_text("abstract: true\nsummary: updated\n")
+        self.assertEqual(len(self.stale()), 2)
+
+    def test_resume_parent_change_affects_only_resume(self):
+        self.inherited_variants()
+        (self.src / "variants/ats-application.yml").write_text("extends: application-cv\nsummary: updated\n")
+        self.assertEqual([m.split(":")[0] for m in self.stale()], ["static/resume.pdf"])
+
+    def test_cyclic_inheritance_fails_instead_of_hanging(self):
+        self.inherited_variants()
+        (self.src / "variants/application-cv.yml").write_text("extends: cv\n")
+        with self.assertRaisesRegex(ValueError, "cyclic PDF variant inheritance"):
+            self.stale()
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,5 +1,168 @@
 version: 1
-description: Canonical website curriculum vitae for academic and research audiences.
-layout: academic-cv
+extends: application-cv
+abstract: false
+description: Canonical public CV for AI-safety research engineering and technical assurance.
 output: cv.pdf
-legacy_visibility: cv
+document_title: Research Engineer — Frontier AI Evaluation \& Assurance
+summary: >-
+  Research engineer designing frontier-model evaluations and reproducible Python
+  pipelines. Combines evaluator calibration and agent failure analysis with
+  systems engineering and rigorous validation of automated verifiers.
+
+# Apollo's evaluation-first structure, using public, employer-neutral evidence.
+# The formal record remains on Vita; this is the public research-engineering CV.
+header:
+  links: [github, linkedin]
+
+sections:
+  - id: experience
+    label: Research \& Engineering Experience
+    entries:
+      - experience:mars-v
+      - experience:frontier-ai-contracting
+      - projects:proof-broker
+      - experience:shu-lab-undergrad
+  - id: technical-skills
+    label: Technical Skills
+    page_break_before: true
+    entries:
+      - skills:programming
+      - skills:ai-evaluation
+      - skills:ml-ai
+      - skills:formal-tooling
+      - skills:tools
+  - id: selected-projects
+    label: Selected Evaluation \& Systems Projects
+    entries:
+      - projects:specification-dilemma
+      - projects:levcs
+      - projects:pmacs
+      - projects:weenix
+      - projects:pqc-avx2
+  - id: education
+    label: Education
+    entries:
+      - education:brown-scb-math-cs
+  - id: selected-research
+    label: Selected Research \& Presentations
+    entries:
+      - publications:icd-embeddings-jamia
+      - presentations:mars-v-verified-inference
+      - publications:timed-guarding-degree-reduction-clouds
+      - publications:branch-tube-persistence
+      - publications:growing-radius-domination
+
+presentation_sets:
+  experience:
+    frontier-ai-contracting: evaluation-reliability
+    mars-v: empirical-assurance
+    shu-lab-undergrad: empirical-research-engineering
+  projects:
+    levcs: agent-platform-systems
+    weenix: software-engineering-systems
+    pqc-avx2: software-engineering-systems
+
+overrides:
+  projects:
+    proof-broker:
+      label: '\href{https://github.com/levineuwirth/proof-broker}{Proof Broker — Independent Research}'
+      description: >-
+        Built an OCaml broker connecting Lean 4 and Rocq to untrusted solvers
+        and model-generated search through versioned evidence schemas,
+        independent certificate checks and kernel-checked proof terms.
+      # R6-014's 15-obligation census and R6-016's locked offline replay are
+      # separate experiments. The 36 certificates are retained, not a universal
+      # success rate; 32 model proposals and four deterministic certificates.
+      # Workshop-paper draft remains unpublished and is not listed as a paper.
+      bullets:
+        - >-
+          Built reproducible Python evaluation workflows with pinned tasks,
+          deterministic baselines, negative controls and replayable records;
+          evaluated live-model certificate proposals on 15 fixed obligations.
+        - >-
+          Audited context dependencies in kernel-accepted proofs; repaired
+          integer-goal reconstruction, the final normalizer and audit parameter
+          binding to test whether certificates alone justified the result.
+        - >-
+          Offline replay produced kernel-checked proofs from 36/36 retained
+          certificates at four obligations with no added axioms.
+    specification-dilemma:
+      label: '\href{https://github.com/levineuwirth/specification-dilemma}{The Specification Dilemma}'
+    levcs:
+      label: '\href{https://levineuwirth.org/essays/levcs.html}{LeVCS}'
+      description: >-
+        Built a federated version control system in Rust with signed authority
+        chains and three storage modes. Implemented journaled transactions,
+        group commit, committed snapshots, idempotent retries and crash recovery.
+    pmacs:
+      label: '\href{https://github.com/levineuwirth/pmacs}{Pmacs}'
+      description: >-
+        Built a Rust-cored, Lua-scripted editor with a long-lived runtime and
+        thin terminal/GPU frontends over a typed protocol. Implemented process
+        supervision, reconnectable sessions and CRDT-backed shared buffers.
+    pqc-avx2:
+      label: '\href{https://levineuwirth.org/essays/where-does-simd-help-post-quantum-cryptography/}{Post-Quantum Cryptography / SIMD}'
+      description: >-
+        Benchmarked four ML-KEM / Kyber build variants on x86-64 AVX2,
+        separating compiler optimization, auto-vectorization and hand-written
+        SIMD. Measured 35--56× core NTT and 5.4--7.1× end-to-end speedups over
+        optimized portable C, with statistical analysis and a reproducible artifact.
+  experience:
+    mars-v:
+      description: 'VerInf: zero-knowledge LLM inference research with James Petrie (Future of Life Institute).'
+      # Merged PRs 21--23; the expert-weight bridge is a collaborator's work.
+      # The October 6 session-10 archive qualifies the negative-test verdicts:
+      # older harnesses treated missing ACCEPT as REJECT. Count the test suite,
+      # not unconfirmed rejections. PR 31 contains the corrected harness and
+      # model-binding repairs; the latter await their GPU gate and re-proof.
+      bullets:
+        - >-
+          Built and upstreamed a Python workload profiler, versioned manifests,
+          execution DAGs and cost models; validated workload accounting against
+          an archived Llama-4 Maverick run and calibrated on NVIDIA B200 hardware.
+        - >-
+          Implemented verifier-transparent weight splitting: partitioned proofs
+          matched the ordinary path byte for byte and passed the Rust verifier
+          on one GPU. Multi-device speedup has not been measured.
+        - >-
+          Integrated a collaborator's expert-weight bridge; fixed enrollment-identity
+          binding, Merkle-index checks and sumcheck-round enforcement in Python
+          and Rust verification paths.
+        - >-
+          Implemented targeted causal softmax, SiLU and surprisal repairs from
+          protocol-review findings, with a 10-case GPU regression suite.
+          Earlier full-scale proofs do not verify under the repaired constraints.
+        - >-
+          Identified unbound parameters in Maverick's inference driver; implemented
+          enrollment repairs awaiting GPU validation. Hardened the test harness
+          to distinguish explicit Rust verifier verdicts from crashes or missing output.
+    shu-lab-undergrad:
+      bullets:
+        - >-
+          Co-led Deep Sets outcome models developed on an 80M+ discharge cohort;
+          readmission AUROC was 0.750 versus 0.655 for the Charlson index on
+          3.23M temporally held-out discharges. Deployed the public calculator
+          with a Python/FastAPI backend; manuscript under review at JAMIA.
+        - >-
+          Technical lead for NeuroPose across four externally funded projects:
+          Python/TensorFlow inference, validated outputs, persistent
+          job state across crashes, Docker deployment and Rust-backed analysis.
+  publications:
+    icd-embeddings-jamia:
+      description: '† Equal contribution among undergraduate authors.'
+  skills:
+    programming:
+      label: Languages
+      items: [Python, Rust, C, C++, Go]
+    ai-evaluation:
+      label: Evaluation
+      items: [Harbor, Evaluation-environment design, Evaluator calibration, Agent scaffolds, Red-teaming]
+    ml-ai:
+      label: ML and data
+      items: [PyTorch, TensorFlow, NumPy, Pandas]
+    formal-tooling:
+      label: Verification
+      items: [Lean 4, Rocq, OCaml, "SMT (cvc4, cvc5, Z3)", Zero-knowledge proofs]
+    tools:
+      label: Platforms (Linux)
+      items: [Git, Docker, SLURM]

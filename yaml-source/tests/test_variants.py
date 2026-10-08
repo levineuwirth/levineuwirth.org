@@ -487,8 +487,8 @@ class RepositoryCompatibilityTests(unittest.TestCase):
 
     def test_backwards_compatible_targets(self):
         expected = {
-            "cv": ("cv.tex.j2", "cv.pdf"),
-            "resume": ("resume.tex.j2", "resume.pdf"),
+            "cv": ("application_cv.tex.j2", "cv.pdf"),
+            "resume": ("resume_ats.tex.j2", "resume.pdf"),
             "resume_ats": ("resume_ats.tex.j2", "resume_ats.pdf"),
         }
         for target, (template, output) in expected.items():
@@ -497,16 +497,22 @@ class RepositoryCompatibilityTests(unittest.TestCase):
                 self.assertEqual(resolved.template, template)
                 self.assertEqual(resolved.output, output)
 
-    def test_website_cv_is_academic_and_omits_dtu(self):
-        resolved = self.resolver.resolve("cv")
-        visible_education = {
-            entry["id"]
-            for entry in resolved.data["education"]
-            if entry.get("cv_visible")
-        }
-        self.assertEqual(resolved.config["legacy_visibility"], "cv")
-        self.assertIn("brown-scb-math-cs", visible_education)
-        self.assertNotIn("dtu-msc-cse", visible_education)
+    def test_public_documents_select_research_engineering_and_brown_only(self):
+        for name, parent in [("cv", "application-cv"), ("resume", "ats-application")]:
+            with self.subTest(name=name):
+                self.assertEqual(self.resolver.raw_variants[name]["extends"], parent)
+                resolved = self.resolver.resolve(name)
+                sections = resolved.data["variant_sections"]
+                self.assertEqual(
+                    [(entry["collection"], entry["id"]) for entry in sections[0]["entries"]],
+                    [("experience", "mars-v"), ("experience", "frontier-ai-contracting"),
+                     ("projects", "proof-broker"),
+                     ("experience", "shu-lab-undergrad")],
+                )
+                education = {entry["id"] for section in sections for entry in section["entries"]
+                             if entry["collection"] == "education"}
+                self.assertEqual(education, {"brown-scb-math-cs"})
+                self.assertNotIn("xAI", build.render(resolved.template, resolved.data))
 
     def test_gpu_inference_systems_is_a_brown_only_one_page_child(self):
         self.assertEqual(
