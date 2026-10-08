@@ -196,14 +196,19 @@
         var oneWord  = isSingleWord(text);
         var codeLang = (context === 'code') ? getCodeLanguage(sel) : null;
         var selLang  = (context === 'prose') ? getSelectionLang(sel) : null;
+        /* Highlights belong to the page's text: a selection in a popup,
+           the contents or the footer is not offered one (it used to
+           highlight the same words in the body instead). */
+        var body = document.getElementById('markdownBody');
+        var annotatable = !!body && body.contains(range.commonAncestorContainer);
 
-        popup.innerHTML = buildHTML(context, oneWord, codeLang, selLang);
+        popup.innerHTML = buildHTML(context, oneWord, codeLang, selLang, annotatable);
         popup.style.visibility = 'hidden';
         popup.classList.add('is-visible');
 
         position(rect);
         popup.style.visibility = '';
-        bindActions(text, rect);
+        bindActions(text, rect, range.cloneRange());
     }
 
     function hide() {
@@ -250,7 +255,7 @@
        HTML builder — context-aware button sets
     ------------------------------------------------------------------ */
 
-    function buildHTML(context, oneWord, codeLang, selLang) {
+    function buildHTML(context, oneWord, codeLang, selLang, annotatable) {
         if (context === 'code') {
             var provider = codeLang ? DOC_PROVIDERS[codeLang] : null;
             return btn('copy', 'Copy')
@@ -265,8 +270,8 @@
                  + btn('wolfram', 'Wolfram');
         }
 
-        /* Prose: Annotate · BibTeX · Copy · [Define] · DuckDuckGo · Here · [Translate] · Wikipedia */
-        return btn('annotate',  'Annotate')
+        /* Prose: [Annotate] · BibTeX · Copy · [Define] · DuckDuckGo · Here · [Translate] · Wikipedia */
+        return (annotatable ? btn('annotate', 'Annotate') : '')
              + btn('cite',      'BibTeX')
              + btn('copy',      'Copy')
              + (oneWord ? btn('define', 'Define') : '')
@@ -301,11 +306,11 @@
        Action bindings
     ------------------------------------------------------------------ */
 
-    function bindActions(text, rect) {
+    function bindActions(text, rect, range) {
         popup.querySelectorAll('[data-action]').forEach(function (el) {
             if (el.getAttribute('aria-disabled') === 'true') return;
             el.addEventListener('click', function () {
-                dispatch(el.getAttribute('data-action'), text, el, rect);
+                dispatch(el.getAttribute('data-action'), text, el, rect, range);
                 hide();
             });
         });
@@ -386,7 +391,7 @@
        Action dispatch
     ------------------------------------------------------------------ */
 
-    function dispatch(action, text, el, rect) {
+    function dispatch(action, text, el, rect, range) {
         var q = encodeURIComponent(text);
         if (action === 'search') {
             window.open('https://duckduckgo.com/?q=' + q, '_blank', 'noopener,noreferrer');
@@ -433,7 +438,7 @@
                         '_blank', 'noopener,noreferrer');
 
         } else if (action === 'annotate') {
-            showAnnotatePicker(text, rect);
+            showAnnotatePicker(text, rect, range);
         }
     }
 
@@ -441,7 +446,10 @@
        Annotate picker — color swatches + optional note input
     ------------------------------------------------------------------ */
 
-    function showAnnotatePicker(text, selRect) {
+    /* `range` is the selection the toolbar was shown for, which says
+       which occurrence of the text to highlight; the selection itself is
+       gone by the time the reader commits. */
+    function showAnnotatePicker(text, selRect, range) {
         if (!picker) {
             picker = document.createElement('div');
             picker.className = 'ann-picker';
@@ -482,7 +490,7 @@
 
         function commit() {
             if (window.Annotations &&
-                !window.Annotations.add(text, pickerColor, note.value.trim())) {
+                !window.Annotations.add(text, pickerColor, note.value.trim(), range)) {
                 /* Say so rather than close as if it had worked. */
                 var msg = picker.querySelector('.ann-picker-error');
                 if (!msg) {

@@ -9,11 +9,16 @@ inline element, code and math.
 
 Checked: a highlight across a line break is shown and found again after
 a reload (audit J02: it used to be stored but never shown), as is one
-across an inline element; a passage that cannot be highlighted says so
-and stores nothing; colours; the tooltip, its escaped note, Delete, and
-its keyboard path; the toolbar's buttons for prose, a single word, code
-and math, and what each action opens or copies (window.open and the
-clipboard are stubbed, so nothing leaves the machine).
+across an inline element, and one across a paragraph break, which leaves
+the paragraphs as they were (it used to make four of two); a phrase that
+occurs twice is highlighted, and found again, where it was selected, not
+at its first occurrence; malformed stored highlights are ignored, not
+fatal; a passage that cannot be highlighted says so and stores nothing;
+colours; the tooltip, its escaped note, Delete, and its keyboard path;
+the toolbar's buttons for prose, a single word, code, math and text
+outside the page's body (no Annotate), and what each action opens or
+copies (window.open and the clipboard are stubbed, so nothing leaves the
+machine).
 
     RUN_BROWSER_TESTS=1 python -m unittest tests.test_browser_annotations -v
 """
@@ -41,10 +46,13 @@ PAGE = """<!doctype html>
 accounts are given of the same event, each of them partial.</p>
 <p id="inline">A phrase with <em>emphasis inside</em> it, and then more.</p>
 <p id="plain">Serendipity favours the prepared mind.</p>
+<p id="echo">The same event, told again: each of them partial.</p>
 <pre><code class="language-python">def increment(x):
     return x + 1</code></pre>
 <p id="math">Consider <span class="math inline">x^2 + y^2</span> here.</p>
-</main></div></body></html>
+</main>
+<footer id="outside"><p>Serendipity, outside the text.</p></footer>
+</div></body></html>
 """
 
 KEY = "site-annotations"
@@ -105,10 +113,16 @@ class Annotations(unittest.TestCase):
             cls.browsers[name] = getattr(playwright, name).launch()
             cls.addClassCleanup(cls.browsers[name].close)
 
-    def fixture(self, browser: str):
+    def fixture(self, browser: str, stored: str | None = None):
+        """The reading fixture, with `stored` as the saved highlights if
+        given; the page's errors are checked at cleanup."""
         context = self.browsers[browser].new_context(viewport={"width": 1280, "height": 900})
         self.addCleanup(context.close)
         context.add_init_script(STUBS)
+        if stored is not None:
+            context.add_init_script(f"if (!sessionStorage.getItem('seeded')) {{"
+                                    f" localStorage.setItem('{KEY}', {json.dumps(stored)});"
+                                    f" sessionStorage.setItem('seeded', '1'); }}")
         page = context.new_page()
         errors = []
         page.on("pageerror", lambda e: errors.append(str(e)))
@@ -163,19 +177,116 @@ class Annotations(unittest.TestCase):
                 self.expect(page.locator("#wrapped mark.user-annotation")).to_have_text("three\naccounts")
                 self.assertEqual(len(self.stored(page)), 1)
 
+    def marks(self, page, selector: str = "main") -> list[dict]:
+        return page.eval_on_selector_all(
+            f"{selector} mark.user-annotation",
+            "ms => ms.map(m => ({text: m.textContent, cls: m.className, id: m.dataset.annId,"
+            " tab: m.getAttribute('tabindex'), in: m.parentElement.closest('p').id}))")
+
     def test_a_highlight_across_an_inline_element(self) -> None:
+        # A mark for each text node, the <em> left where it was.
+        shape = "Array.from(document.querySelector('#inline').childNodes, n => n.nodeName + ':' + n.textContent)"
         for browser in BROWSERS:
             with self.subTest(browser=browser):
                 page = self.fixture(browser)
+                before = page.evaluate(shape)
                 self.highlight(page, "#inline", "phrase", "emphasis", color="sage")
-                mark = page.locator("#inline mark.user-annotation")
-                self.expect(mark).to_have_count(1)
-                self.expect(mark).to_have_class("user-annotation user-annotation--sage")
-                self.assertEqual(self.collapsed(mark.inner_text()), "phrase with emphasis")
+                for when in ("made", "reloaded"):
+                    marks = self.marks(page, "#inline")
+                    self.assertEqual([(m["text"], m["cls"], m["tab"]) for m in marks], [
+                        ("phrase with ", "user-annotation user-annotation--sage ann-joins-next", "0"),
+                        ("emphasis", "user-annotation user-annotation--sage ann-joins-prev", None)],
+                        when)
+                    self.assertEqual(len({m["id"] for m in marks}), 1)
+                    self.assertEqual(page.evaluate("document.querySelectorAll('#inline em').length"), 1)
+                    self.assertEqual(self.collapsed(page.inner_text("#inline")),
+                                     "A phrase with emphasis inside it, and then more.")
+                    if when == "made":
+                        page.reload(wait_until="load")
+                        self.expect(page.locator("#inline mark")).to_have_count(2)
+                page.hover("#inline em mark")
+                page.click(".ann-tooltip.is-visible .ann-tooltip-delete")
+                self.assertEqual(page.evaluate(shape), before)
+
+    def test_a_highlight_across_a_paragraph_break(self) -> None:
+        # It used to be extracted into one inline <mark> between the two
+        # paragraphs, holding a clone of each half: two paragraphs became
+        # four, and stayed four after the highlight was deleted.
+        shape = ("Array.from(document.querySelectorAll('main > *'), e => e.tagName + '#' + e.id"
+                 " + ':' + e.childNodes.length)")
+        for browser in BROWSERS:
+            with self.subTest(browser=browser):
+                page = self.fixture(browser)
+                before = page.evaluate(shape)
+                text = self.highlight(page, "main", "prepared", "The same")
+                self.assertEqual(self.collapsed(text), "prepared mind. The same")
+                for when in ("made", "reloaded"):
+                    self.assertEqual([(m["text"], m["in"]) for m in self.marks(page)],
+                                     [("prepared mind.", "plain"), ("The same", "echo")], when)
+                    self.assertEqual(page.evaluate("document.querySelectorAll('main p').length"), 5)
+                    if when == "made":
+                        page.reload(wait_until="load")
+                        self.expect(page.locator("main mark")).to_have_count(2)
+                page.hover("#echo mark")
+                page.click(".ann-tooltip.is-visible .ann-tooltip-delete")
+                self.expect(page.locator("main mark")).to_have_count(0)
+                self.assertEqual(page.evaluate(shape), before)
+
+    def test_the_occurrence_selected(self) -> None:
+        # "each of them partial" ends #wrapped and #echo; selected in #echo,
+        # it used to be highlighted in #wrapped, the first.
+        for browser in BROWSERS:
+            with self.subTest(browser=browser):
+                page = self.fixture(browser)
+                self.highlight(page, "#echo", "each", "partial")
+                self.assertEqual([(m["text"], m["in"]) for m in self.marks(page)],
+                                 [("each of them partial", "echo")])
+                [ann] = self.stored(page)
+                self.assertTrue(ann["prefix"].endswith("The same event, told again: "), ann)
+                self.assertTrue(ann["suffix"].startswith(". def increment(x):"), ann)
                 page.reload(wait_until="load")
-                self.expect(page.locator("#inline mark.user-annotation--sage")).to_have_count(1)
-                self.assertEqual(self.collapsed(page.inner_text("#inline")),
-                                 "A phrase with emphasis inside it, and then more.")
+                self.expect(page.locator("main mark")).to_have_count(1)
+                self.assertEqual([m["in"] for m in self.marks(page)], ["echo"])
+                # One made before the context was kept has none: the first.
+                page.evaluate(f"""() => {{
+                    const [a] = JSON.parse(localStorage.getItem('{KEY}'));
+                    delete a.prefix; delete a.suffix;
+                    localStorage.setItem('{KEY}', JSON.stringify([a])); }}""")
+                page.reload(wait_until="load")
+                self.expect(page.locator("main mark")).to_have_count(1)
+                self.assertEqual([m["in"] for m in self.marks(page)], ["wrapped"])
+
+    def test_malformed_highlights_are_ignored(self) -> None:
+        # Any of these used to throw at load and on every ln:content-added,
+        # and made Annotate fail without its message.
+        good = {"id": 'a"b]', "url": "/__fixture/reading.html", "text": "Serendipity",
+                "color": "rose", "note": 7, "created": None}
+        cases = {
+            "an object": ("{}", 0),
+            "a string": ('"x"', 0),
+            "a null entry": ("[null]", 0),
+            "entries without text or id": (json.dumps([{"url": "/__fixture/reading.html"},
+                                                       {"id": 3, "text": "x", "url": "/"}]), 0),
+            "a quote in an id, odd fields": (json.dumps([good]), 1),
+            "not JSON": ("[{", 0),
+        }
+        for browser in BROWSERS:
+            for case, (stored, shown) in cases.items():
+                with self.subTest(browser=browser, case=case):
+                    page = self.fixture(browser, stored)
+                    self.expect(page.locator("main mark")).to_have_count(shown)
+                    if shown:
+                        self.expect(page.locator("#plain mark")).to_have_class(
+                            "user-annotation user-annotation--rose")
+                    self.highlight(page, "#echo", "told", "again")
+                    self.expect(page.locator("#echo mark")).to_have_count(1)
+                    self.expect(page.locator(".ann-picker.is-visible")).to_have_count(0)
+                    self.assertEqual(len(self.stored(page)), shown + 1)
+                    if shown:
+                        page.hover("#plain mark")
+                        page.click(".ann-tooltip.is-visible .ann-tooltip-delete")
+                        self.expect(page.locator("#plain mark")).to_have_count(0)
+                        self.assertEqual(len(self.stored(page)), 1)
 
     def test_what_cannot_be_highlighted_says_so(self) -> None:
         # Text already inside a highlight cannot be anchored again.
@@ -236,6 +347,9 @@ class Annotations(unittest.TestCase):
                          ["Annotate", "BibTeX", "Copy", "Define", "DuckDuckGo", "Here", "Wikipedia"]),
             "code": ("pre code", "return", "1", ["Copy", "Docs"]),
             "math": ("#math .math", "x^2", "y^2", ["Copy", "nLab", "OEIS", "Wolfram"]),
+            # Outside #markdownBody there is no highlighting the text.
+            "outside": ("#outside p", "Serendipity", "outside",
+                        ["BibTeX", "Copy", "DuckDuckGo", "Here", "Wikipedia"]),
         }
         for browser in BROWSERS:
             page = self.fixture(browser)

@@ -16,6 +16,20 @@ mark.user-annotation {
     box-decoration-break: clone;
 }
 
+/* A highlight across elements is a mark per text node (annotations.js):
+   where one joins the next, no padding or rounding between them, so the
+   text keeps its spacing and the highlight reads as one. */
+mark.user-annotation.ann-joins-prev {
+    padding-left: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+mark.user-annotation.ann-joins-next {
+    padding-right: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
 /* Double class = specificity (0,2,1), beats UA mark rule and the base reset above */
 mark.user-annotation.user-annotation--amber { background-color: rgba(245, 158,  11, 0.32); }
 mark.user-annotation.user-annotation--sage  { background-color: rgba(107, 158, 120, 0.34); }

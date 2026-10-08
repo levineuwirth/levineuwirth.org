@@ -1,15 +1,19 @@
 /* annotations.js — localStorage-based personal highlights and annotations.
-   Persists across sessions via localStorage. Re-anchors on page load via
-   exact text match using a TreeWalker text-stream search.
+   Persists across sessions via localStorage. Re-anchors on page load by
+   finding the highlighted text again in a TreeWalker text stream, at the
+   place whose surrounding text matches what was stored with it.
 
    Public API (window.Annotations):
-     .add(text, color, note) → ann object
+     .add(text, color, note, range) → ann object, or null
      .remove(id)
+     .clearAll()
 */
 (function () {
     'use strict';
 
     var STORAGE_KEY = 'site-annotations';
+    var COLORS      = ['amber', 'sage', 'steel', 'rose'];
+    var CONTEXT     = 32;   /* characters of surrounding text kept each side */
     var tooltip     = null;
     var tooltipTimer = null;
     var tooltipPinned = false; /* keyboard-opened: blur must not dismiss */
@@ -20,9 +24,31 @@
        Storage
     ------------------------------------------------------------------ */
 
+    /* A stored highlight is used only in the shape written here; any other
+       entry is dropped, and gone from storage at the next write. A value
+       that was not a list used to throw at every load and every
+       ln:content-added, so no highlight showed on any page, and Annotate
+       failed without its message. */
+    function wellFormed(a) {
+        return a !== null && typeof a === 'object'
+            && typeof a.id === 'string' && a.id !== ''
+            && typeof a.url === 'string' && typeof a.text === 'string';
+    }
+
     function loadAll() {
-        try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+        var list;
+        try { list = JSON.parse(localStorage.getItem(STORAGE_KEY)); }
         catch (e) { return []; }
+        return Array.isArray(list) ? list.filter(wellFormed) : [];
+    }
+
+    function str(v) { return typeof v === 'string' ? v : ''; }
+
+    /* Every <mark> of one highlight: a highlight across elements is
+       several. Ids are escaped: one is only as safe as storage. */
+    function marksOf(id) {
+        return document.querySelectorAll(
+            'mark.user-annotation[data-ann-id="' + CSS.escape(id) + '"]');
     }
 
     function saveAll(list) {
@@ -64,7 +90,7 @@
 
     function removeById(id) {
         saveAll(loadAll().filter(function (a) { return a.id !== id; }));
-        document.querySelectorAll('mark[data-ann-id="' + id + '"]').forEach(function (mark) {
+        marksOf(id).forEach(function (mark) {
             var parent = mark.parentNode;
             if (!parent) return;
             while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
@@ -75,31 +101,33 @@
     }
 
     /* ------------------------------------------------------------------
-       Text-stream search — finds the first occurrence of searchText in
-       the visible text of root, skipping existing annotation marks.
+       Text stream — the visible text of root as one string, with every
+       run of whitespace one space, and where each character came from.
 
        Both sides are compared with every run of whitespace as one space.
        Pandoc keeps a paragraph's source line breaks as newlines inside its
        text, and Selection.toString() gives them back as spaces, so a
        selection across a line break never matched: the highlight was
        stored but never shown (audit J02; 258 of 1,958 prose paragraphs).
-       `at` maps each character of the collapsed text back to its node and
-       offset.
+       at[i] is the [node, offset] of full[i]; held[i] is true where that
+       character is already highlighted. Highlighted text stays in the
+       stream, so the text around a highlight reads the same whichever
+       others are on the page.
     ------------------------------------------------------------------ */
 
     function collapse(text) {
         return text.replace(/\s+/g, ' ').trim();
     }
 
-    function findTextRange(searchText, root) {
+    function textStream(root) {
         var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
         var full = '';
-        var at   = [];   /* at[i] = [node, offset] of full[i] */
+        var at   = [];
+        var held = [];
         var lastWasSpace = false;
         var node;
         while ((node = walker.nextNode())) {
-            /* Skip text already inside an annotation mark */
-            if (node.parentElement && node.parentElement.closest('mark.user-annotation')) continue;
+            var inMark = !!(node.parentElement && node.parentElement.closest('mark.user-annotation'));
             var v = node.nodeValue;
             for (var j = 0; j < v.length; j++) {
                 var white = /\s/.test(v[j]);
@@ -110,16 +138,66 @@
                 lastWasSpace = white;
                 full += white ? ' ' : v[j];
                 at.push([node, j]);
+                held.push(inMark);
             }
         }
+        return { full: full, at: at, held: held };
+    }
 
-        var needle = collapse(searchText);
-        if (!needle) return null;
-        var idx = full.indexOf(needle);
-        if (idx === -1) return null;
-        var first = at[idx];
-        var last  = at[idx + needle.length - 1];
+    /* The stream index of the first character at or after the start of
+       range (a reader's selection): the characters are in document order,
+       so a binary search over Range.comparePoint. */
+    function streamIndex(stream, range) {
+        var lo = 0, hi = stream.at.length;
+        while (lo < hi) {
+            var mid = (lo + hi) >> 1;
+            if (range.comparePoint(stream.at[mid][0], stream.at[mid][1]) < 0) lo = mid + 1;
+            else hi = mid;
+        }
+        return lo;
+    }
 
+    function commonTail(a, b) {
+        var n = 0;
+        while (n < a.length && n < b.length && a[a.length - 1 - n] === b[b.length - 1 - n]) n++;
+        return n;
+    }
+
+    function commonHead(a, b) {
+        var n = 0;
+        while (n < a.length && n < b.length && a[n] === b[n]) n++;
+        return n;
+    }
+
+    /* Where needle (collapsed) occurs clear of existing highlights. With
+       `near`, the reader's selection says where: the occurrence starting
+       there, or one character on, past a space the selection began with.
+       Without it, the occurrence whose surroundings best match the stored
+       prefix and suffix; the first among equals, which for a highlight
+       stored with neither is the first. Highlights used to take the first
+       occurrence always: a phrase selected in the fourth paragraph was
+       highlighted in the first, and found there again on every load.
+       -1 if there is none. */
+    function locate(stream, needle, near, prefix, suffix) {
+        var full = stream.full;
+        var best = -1, bestScore = -1;
+        for (var idx = full.indexOf(needle); idx !== -1; idx = full.indexOf(needle, idx + 1)) {
+            if (stream.held.slice(idx, idx + needle.length).indexOf(true) !== -1) continue;
+            if (near !== null) {
+                if (idx === near || idx === near + 1) return idx;
+                continue;
+            }
+            var end   = idx + needle.length;
+            var score = commonTail(full.slice(Math.max(0, idx - prefix.length), idx), prefix)
+                      + commonHead(full.slice(end, end + suffix.length), suffix);
+            if (score > bestScore) { best = idx; bestScore = score; }
+        }
+        return best;
+    }
+
+    function rangeAt(stream, idx, length) {
+        var first = stream.at[idx];
+        var last  = stream.at[idx + length - 1];
         var range = document.createRange();
         range.setStart(first[0], first[1]);
         range.setEnd(last[0], last[1] + 1);
@@ -130,28 +208,78 @@
        Apply a single annotation to the DOM
     ------------------------------------------------------------------ */
 
-    function applyAnnotation(ann) {
-        var root  = document.getElementById('markdownBody') || document.body;
-        var range = findTextRange(ann.text, root);
-        if (!range) return false;
+    function annotationRoot() {
+        return document.getElementById('markdownBody') || document.body;
+    }
 
-        var mark = document.createElement('mark');
-        mark.className = 'user-annotation user-annotation--' + ann.color;
-        mark.setAttribute('data-ann-id', ann.id);
-        if (ann.note) mark.setAttribute('data-note', ann.note);
-        mark.setAttribute('data-created', ann.created || '');
+    function isBlock(node) {
+        return !!node && node.nodeType === 1 && !/^inline/.test(getComputedStyle(node).display);
+    }
 
-        try {
-            range.surroundContents(mark);
-        } catch (e) {
-            /* Range crosses element boundaries — extract and re-insert */
-            var frag = range.extractContents();
-            mark.appendChild(frag);
-            range.insertNode(mark);
+    /* Text outside HTML (SVG, MathML) cannot hold a <mark>, and the
+       whitespace between two blocks is not part of either. */
+    function wrappable(node, from, to) {
+        var parent = node.parentNode;
+        if (!parent || parent.namespaceURI !== 'http://www.w3.org/1999/xhtml') return false;
+        if (/\S/.test(node.nodeValue.slice(from, to))) return true;
+        return !isBlock(node.previousSibling) && !isBlock(node.nextSibling);
+    }
+
+    /* Wrap the text range covers in marks, one for each text node it
+       touches, leaving elements where they are. A range across elements
+       used to be extracted and put back inside one inline <mark>: across
+       a paragraph break that left cloned halves of both paragraphs inside
+       it, between the originals, and two paragraphs became four on every
+       load. Deleting unwraps each mark, and the text nodes join again.
+       The range starts and ends on text (rangeAt). Returns the marks. */
+    function wrap(range, ann) {
+        var sc = range.startContainer, so = range.startOffset;
+        var ec = range.endContainer,   eo = range.endOffset;
+        var nodes = [sc];
+        if (sc !== ec) {
+            var walker = document.createTreeWalker(range.commonAncestorContainer,
+                                                   NodeFilter.SHOW_TEXT, null);
+            walker.currentNode = sc;
+            var n;
+            while ((n = walker.nextNode())) {
+                nodes.push(n);
+                if (n === ec) break;
+            }
         }
+        var pieces = [];
+        nodes.forEach(function (node) {
+            var from = node === sc ? so : 0;
+            var to   = node === ec ? eo : node.nodeValue.length;
+            if (from < to && wrappable(node, from, to)) pieces.push([node, from, to]);
+        });
 
-        bindMarkEvents(mark, ann);
-        return true;
+        var color = COLORS.indexOf(ann.color) !== -1 ? ann.color : COLORS[0];
+        return pieces.map(function (piece, i) {
+            var node = piece[0];
+            if (piece[2] < node.nodeValue.length) node.splitText(piece[2]);
+            if (piece[1] > 0) node = node.splitText(piece[1]);
+            var mark = document.createElement('mark');
+            mark.className = 'user-annotation user-annotation--' + color
+                + (i > 0 ? ' ann-joins-prev' : '')
+                + (i < pieces.length - 1 ? ' ann-joins-next' : '');
+            mark.setAttribute('data-ann-id', ann.id);
+            if (ann.note) mark.setAttribute('data-note', ann.note);
+            mark.setAttribute('data-created', ann.created || '');
+            node.parentNode.insertBefore(mark, node);
+            mark.appendChild(node);
+            /* One tab stop for the highlight, on its first mark. */
+            bindMarkEvents(mark, ann, i === 0);
+            return mark;
+        });
+    }
+
+    function applyAnnotation(ann) {
+        var needle = collapse(ann.text);
+        if (!needle) return false;
+        var stream = textStream(annotationRoot());
+        var idx = locate(stream, needle, null, str(ann.prefix), str(ann.suffix));
+        if (idx === -1) return false;
+        return wrap(rangeAt(stream, idx, needle.length), ann).length > 0;
     }
 
     /* Re-anchor every stored annotation for this page that is not already
@@ -161,8 +289,12 @@
        now. Smaller finding 7. */
     function applyAll() {
         forPage().forEach(function (ann) {
-            if (document.querySelector('mark[data-ann-id="' + ann.id + '"]')) return;
-            applyAnnotation(ann);
+            if (marksOf(ann.id).length) return;
+            applyAnnotation({
+                id: ann.id, text: ann.text, color: ann.color,
+                note: str(ann.note), created: str(ann.created),
+                prefix: ann.prefix, suffix: ann.suffix,
+            });
         });
     }
 
@@ -257,12 +389,13 @@
         }
     }
 
-    function bindMarkEvents(mark, ann) {
+    function bindMarkEvents(mark, ann, focusable) {
         mark.addEventListener('mouseenter', function () {
             clearTimeout(tooltipTimer);
             showTooltip(mark, ann);
         });
         mark.addEventListener('mouseleave', function () { hideTooltip(false); });
+        if (!focusable) return;
 
         /* Keyboard: focus mirrors hover; Enter/Space pins the tooltip and
            moves focus to its Delete button; Escape dismisses. */
@@ -293,7 +426,19 @@
     ------------------------------------------------------------------ */
 
     window.Annotations = {
-        add: function (text, color, note) {
+        /* `range`, the reader's selection, says which occurrence of text
+           is meant; one outside the page's text is not highlighted. The
+           text either side is stored with it, to find the same place
+           again on the next load. */
+        add: function (text, color, note, range) {
+            var root   = annotationRoot();
+            var needle = collapse(text || '');
+            if (!needle) return null;
+            if (range && !root.contains(range.commonAncestorContainer)) return null;
+            var stream = textStream(root);
+            var idx = locate(stream, needle, range ? streamIndex(stream, range) : null, '', '');
+            if (idx === -1) return null;
+            var end = idx + needle.length;
             var ann = {
                 id:      uid(),
                 url:     pagePaths().current,
@@ -301,11 +446,13 @@
                 color:   color || 'amber',
                 note:    note  || '',
                 created: new Date().toISOString(),
+                prefix:  stream.full.slice(Math.max(0, idx - CONTEXT), idx),
+                suffix:  stream.full.slice(end, end + CONTEXT),
             };
             /* Stored only once it is on the page: an annotation that could
                not be anchored used to be saved anyway, invisible, and
                removable only by clearing them all. */
-            if (!applyAnnotation(ann)) return null;
+            if (!wrap(rangeAt(stream, idx, needle.length), ann).length) return null;
             addRaw(ann);
             return ann;
         },
