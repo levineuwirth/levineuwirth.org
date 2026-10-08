@@ -2,10 +2,12 @@
 
 tools/browser/axe_run.py runs axe-core (the version tools/browser/
 axe-version records; WCAG 2.0-2.2 A and AA rules and best practices) on
-every route at two widths in the light and dark themes, in Chromium;
-tools/browser/kbd_run.py walks the first forty Tab stops of the pages a
-reader moves through by keyboard, at two widths, in Chromium and Firefox.
-Both run offline against serve.py.
+every route but PDF.js's viewer (a vendored application, not the site's
+markup; axe_run.py's SKIP), at two widths in the light and dark themes,
+in Chromium; tools/browser/kbd_run.py walks the first forty Tab stops of
+the 16 pages a reader moves through by keyboard (its KROUTES), at two
+widths, in Chromium and Firefox. Both run offline against serve.py, and
+each report must hold a record for every page and variant asked of it.
 
 axe findings are recorded per route and rule, as the most elements any
 width or theme showed (tests/browser-baseline/axe.json). A rule on a
@@ -27,12 +29,17 @@ import unittest
 from collections import defaultdict
 from pathlib import Path
 
-from tests._browser import (BROWSERS, UPDATE_BASELINE, baseline, check_site, harness_routes,
-                            require_axe, require_playwright, requires_browser, run_harness,
-                            site_server)
+from tests._browser import (BROWSERS, UPDATE_BASELINE, assert_complete, baseline, check_site,
+                            harness_constant, harness_routes, require_axe, require_playwright,
+                            requires_browser, run_harness, site_server)
 
 ROUTES = harness_routes()
 SHARDS = 3
+THEMES = ("light", "dark")
+VIEWPORTS = ("1440x1000", "375x812")
+AXE_ROUTES = [r for r in ROUTES if r not in harness_constant("axe_run.py", "SKIP")]
+KBD_ROUTES = harness_constant("kbd_run.py", "KROUTES")
+KBD_WIDTHS = [w for w, _ in harness_constant("kbd_run.py", "VIEWPORTS")]
 
 
 @requires_browser
@@ -47,8 +54,8 @@ class Accessibility(unittest.TestCase):
         base = cls.enterClassContext(site_server(tmp))
         names = list(ROUTES)
         run_harness(cls, base, out,
-                    [["axe_run.py", "chromium", f"axe-{i}.json", "light,dark",
-                      "1440x1000,375x812", *names[i::SHARDS]] for i in range(SHARDS)]
+                    [["axe_run.py", "chromium", f"axe-{i}.json", ",".join(THEMES),
+                      ",".join(VIEWPORTS), *names[i::SHARDS]] for i in range(SHARDS)]
                     + [["kbd_run.py", b, f"kbd-{b}.json"] for b in BROWSERS])
         cls.axe = {}
         for i in range(SHARDS):
@@ -56,6 +63,8 @@ class Accessibility(unittest.TestCase):
         cls.kbd = {b: json.loads((out / f"kbd-{b}.json").read_text()) for b in BROWSERS}
 
     def test_axe_against_the_known_issues(self) -> None:
+        assert_complete(self, self.axe, {f"{r}|{vp}|{t}" for r in AXE_ROUTES
+                                         for vp in VIEWPORTS for t in THEMES}, "axe")
         found = defaultdict(dict)    # route -> rule -> most elements in any variant
         detail = {}                  # (route, rule) -> what axe said, for the message
         for key, result in self.axe.items():
@@ -81,6 +90,9 @@ class Accessibility(unittest.TestCase):
                                                "(UPDATE_BROWSER_BASELINE=1)")
 
     def test_keyboard(self) -> None:
+        for browser in BROWSERS:
+            assert_complete(self, self.kbd[browser],
+                            {f"{r}|{w}" for r in KBD_ROUTES for w in KBD_WIDTHS}, f"kbd {browser}")
         for browser in BROWSERS:
             for key, rec in self.kbd[browser].items():
                 with self.subTest(browser=browser, page=key):

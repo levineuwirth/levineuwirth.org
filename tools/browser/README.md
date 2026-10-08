@@ -16,7 +16,8 @@ gallery, and the score reader with its following (real scores and
 recordings); and, offline, `axe_run.py`, `kbd_run.py`, `overflow_run.py`,
 `motion_run.py` and `perf_run.py` (`tests/test_browser_a11y.py`,
 `tests/test_browser_layout.py`), against the known issues and budgets in
-`tests/browser-baseline/`. The
+`tests/browser-baseline/`, each report required to hold every page and
+variant asked of it. The
 other scripts here are still reports; `popup_run.py` meets the live
 providers, and `csp_run.py` the live model, which the tests do not.
 
@@ -54,12 +55,12 @@ server, and `BROWSER_OFFLINE=1` refuses every request that would leave it.
 | `serve.py` | serves `_site/` as the production vhost does: `try_files`, the internal 404 page, `.gz`/`.br` sidecars and Range, the security and framing headers, a given CSP (enforcing or report-only), `/proxy/*` → 404, `/csp-report` logged; with `--fixtures DIR` (e.g. `fixture/`), also `/__fixture/` from that directory |
 | `csp_run.py` | per route: CSP violations, console and page errors, element load errors, failed requests, feature probes (PDF.js pages, thumbnails and print among them) |
 | `interact_run.py` | keyboard interaction: settings, lightbox, slideshow, math gallery, popups, portals, filters |
-| `kbd_run.py` | tab order, focus visibility, skip link, traps, Escape |
-| `axe_run.py` | axe-core per route, viewport and theme |
+| `kbd_run.py` | tab order, focus visibility, skip link, traps, Escape, on the 16 pages of its `KROUTES` |
+| `axe_run.py` | axe-core per route (all but PDF.js's viewer, its `SKIP`), viewport and theme |
 | `nojs_run.py` | pages with JavaScript off |
-| `overflow_run.py` | horizontal overflow at several widths |
-| `motion_run.py` | reduced motion, from the OS and from the site's setting |
-| `perf_run.py` | requests, bytes, LCP and CLS on the local server |
+| `overflow_run.py` | horizontal overflow on every route at several widths |
+| `motion_run.py` | reduced motion, from the OS and from the site's setting, on the 14 pages of its `MROUTES` |
+| `perf_run.py` | requests, bytes, LCP and CLS on the local server, on the 21 pages of its `PROUTES` |
 | `popup_run.py` | every link-popup provider |
 | `printcheck.py` | PDF.js thumbnails and print images under the CSP |
 | `prod_smoke.py` | a few checks against production; aborts `/csp-report` so test traffic never reaches the report log |

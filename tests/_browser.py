@@ -50,14 +50,32 @@ def check_site() -> None:
         raise AssertionError(f"_site does not match its inputs; run `make build` first:\n  {listed}")
 
 
-def harness_routes() -> dict[str, str]:
-    """tools/browser/lib.py's ROUTES, name -> path, read without importing
-    lib, which makes its output directories."""
-    for node in ast.parse((HARNESS / "lib.py").read_text(encoding="utf-8")).body:
-        if isinstance(node, ast.Assign) and any(getattr(t, "id", None) == "ROUTES"
+def harness_constant(script: str, name: str):
+    """A literal a tools/browser script assigns to `name` at top level (a
+    route list, its widths), read without running the script: lib makes
+    its output directories on import, and the others launch browsers."""
+    for node in ast.parse((HARNESS / script).read_text(encoding="utf-8")).body:
+        if isinstance(node, ast.Assign) and any(getattr(t, "id", None) == name
                                                 for t in node.targets):
-            return dict(ast.literal_eval(node.value))
-    raise AssertionError("tools/browser/lib.py defines no ROUTES")
+            return ast.literal_eval(node.value)
+    raise AssertionError(f"tools/browser/{script} defines no {name}")
+
+
+def harness_routes() -> dict[str, str]:
+    """tools/browser/lib.py's ROUTES, name -> path."""
+    return dict(harness_constant("lib.py", "ROUTES"))
+
+
+def assert_complete(case: unittest.TestCase, report: dict, expected, what: str) -> None:
+    """A harness report holds a record for each key in `expected` and for
+    nothing else. Tests check the records there are, so a page the script
+    skipped, or a report it left empty, would otherwise pass unchecked."""
+    expected = set(expected)
+    case.assertTrue(expected, f"{what}: no records expected")
+    missing, extra = sorted(expected - set(report)), sorted(set(report) - expected)
+    if missing or extra:
+        case.fail(f"{what}: {len(missing)} record(s) missing {missing[:12]}, "
+                  f"{len(extra)} unexpected {extra[:12]}")
 
 
 def page_styles(path: str = "/essays/proof-broker/") -> str:

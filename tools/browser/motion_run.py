@@ -10,6 +10,7 @@ browser_name, outname = sys.argv[1], sys.argv[2]
 BASE = f'http://127.0.0.1:{PORT_NONE}'
 MROUTES = ['home', 'essay-r6', 'essay-proofbroker', 'photo-index', 'photo-series', 'photo-map', 'music-index',
            'composition', 'score-reader', 'search', 'colophon', 'library', 'memento', 'cv-about']
+MODES = ('os', 'site', 'none')
 
 PROBE = r"""
 () => {
@@ -39,7 +40,7 @@ def run():
     res = {}
     with sync_playwright() as p:
         browser = getattr(p, browser_name).launch()
-        for mode in ('os', 'site', 'none'):
+        for mode in MODES:
             ctx = browser.new_context(viewport={'width': 1440, 'height': 1000},
                                       reduced_motion='reduce' if mode == 'os' else 'no-preference')
             if mode == 'site':

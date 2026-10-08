@@ -11,6 +11,7 @@ STOPS = 40
 
 KROUTES = ['home', 'essay-proofbroker', 'essay-r6', 'essay-grd', 'photo-index', 'photo-series', 'photo-single',
            'search', 'composition', 'score-reader', 'links', 'library', 'commonplace', 'music-index', 'me', 'current']
+VIEWPORTS = [(1440, 1000), (375, 812)]
 
 FOCUS_INFO = r"""
 () => {
@@ -74,7 +75,7 @@ def run():
     res = {}
     with sync_playwright() as p:
         browser = getattr(p, browser_name).launch()
-        for vp in [(1440, 1000), (375, 812)]:
+        for vp in VIEWPORTS:
             ctx = browser.new_context(viewport={'width': vp[0], 'height': vp[1]}, reduced_motion='reduce')
             offline(ctx)
             page = ctx.new_page()

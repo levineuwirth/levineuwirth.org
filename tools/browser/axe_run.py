@@ -30,6 +30,10 @@ def summarize(viol):
         out.append({'id': v['id'], 'impact': v['impact'], 'count': len(v['nodes']), 'help': v['help'], 'nodes': nodes})
     return out
 
+# PDF.js's viewer is a vendored application, not the site's markup; the
+# CSP sweep loads it (tests/test_browser_csp.py).
+SKIP = ['pdfjs']
+
 def run():
     res = {}
     with sync_playwright() as p:
@@ -45,7 +49,7 @@ def run():
                 for name, path in ROUTES:
                     if only and name not in only:
                         continue
-                    if name in ('pdfjs',):
+                    if name in SKIP:
                         continue
                     key = f'{name}|{vp}|{theme}'
                     try:
