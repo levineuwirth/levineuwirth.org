@@ -3,6 +3,7 @@ title: Work
 work: true
 description: Research engineer working on technical AI assurance — verifiable inference, model evaluations, systems and cryptography.
 history:
+  - date: "2026-10-08"
   - date: "2026-09-24"
   - date: "2026-09-23"
   - date: "2026-09-05"
@@ -35,6 +36,12 @@ and mathematics at Brown.
 [Projects](/cv/projects/) · [Email](mailto:ln@levineuwirth.org)
 :::
 
+## Correspondence
+
+If this work connects with a question you are pursuing, I would be glad to
+hear from you. [Email me](mailto:ln@levineuwirth.org) with a little context,
+or read about [research conversations and correspondence](/meet/).
+
 ## Selected work
 
 ::: {.work-entry}
@@ -47,8 +54,8 @@ MARS V fellowship · Cambridge AI Safety Hub · ongoing
 An operator who claims to have run a model may not have, and the logs that would
 settle it are written by the party under suspicion.
 
-[VerInf](https://github.com/JamesPetrie/VerInf), a Future of Life Institute project led by James Petrie, proves
-LLM inference in zero knowledge with no trusted setup by bounding the
+[VerInf](https://github.com/JamesPetrie/VerInf), a Future of Life Institute project led by James Petrie,
+aims to prove LLM inference in zero knowledge with no trusted setup by bounding the
 *unexplained information* in an output stream rather than re-running the
 computation. I built the dry-run profiler (manifest contract, cost model,
 execution DAG, partition scorecard) and validated it against an archived
@@ -66,18 +73,20 @@ proving, which is the ceiling on model scale, context length, and
 mixture-of-experts breadth.
 
 ::: {.work-limit}
-**Ongoing.** The profiler, calibration tooling, and accounting corrections are
-merged upstream; the weight split, caches, and bridge hardening are on the
-public `weight-split-model` branch. The multi-GPU figures are projections from a
-validated cost model rather than measurements at that scale. The verifier fixes
-are targeted review, not a full construction audit. Technical write-up expected
-Q4 2026, for review and publication.
+**Ongoing.** Pull requests 21–25 are merged upstream, including the weight split,
+caches, bridge hardening, and subsequent constraint repairs. Archived Maverick
+proofs remain engineering evidence but lack complete model binding; the proposed
+repair in draft pull request 31 still needs its GPU gate, new enrollment, and
+re-proof. The bridge's intended confidentiality is unfinished. Multi-GPU figures
+are projections from a validated cost model rather than measurements at that
+scale. The verifier and constraint fixes are targeted review, not a full
+construction audit. Technical write-up expected Q4 2026, for review and publication.
 :::
 
 ::: {.work-entry-links}
 [Merged pull requests](https://github.com/JamesPetrie/VerInf/pulls?q=is%3Apr+author%3Alevineuwirth) ·
-[Weight-split branch](https://github.com/JamesPetrie/VerInf/tree/weight-split-model) ·
 [Pull request 21](https://github.com/JamesPetrie/VerInf/pull/21) ·
+[Model-binding finding](https://github.com/JamesPetrie/VerInf/pull/31) ·
 [Upstream repository](https://github.com/JamesPetrie/VerInf) ·
 [MARS](https://caish.org/mars)
 :::

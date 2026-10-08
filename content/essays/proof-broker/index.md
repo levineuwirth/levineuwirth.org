@@ -9,7 +9,7 @@ abstract: >
   kernel checks. Nothing behind the boundary is trusted, so the search
   behind it can be as aggressive, heterogeneous, or unreliable as finding
   proofs requires. This essay sets out the architecture, what it makes
-  possible, the evidence so far — 19 of 19 arithmetic obligations closed
+  possible, the first downstream demonstration — 19 of 19 arithmetic obligations closed
   in a real verification project — and the research program that
   evidence opens.
 tags:

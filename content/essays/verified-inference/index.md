@@ -20,6 +20,8 @@ scope: broad
 novelty: moderate
 practicality: moderate
 history:
+  - date: "2026-10-08"
+    note: "Merged pull requests 21–25, constraint-review qualifications, and the model-binding finding in draft pull request 31."
   - date: "2026-10-01"
   - date: "2026-09-24"
     note: "Verification section updated for the enrollment-identity anchor and the index-bound Merkle opening in pull request 21."
@@ -29,6 +31,8 @@ history:
   - date: "2026-08-30"
   - date: "2026-08-29"
 revised:
+  - date: "2026-10-08"
+    note: "Upstream merge status and the limits of archived Maverick proofs: constraint repairs and incomplete model binding."
   - date: "2026-09-24"
     note: "Verifier review: enrollment identity and index-bound Merkle openings."
   - date: "2026-09-22"
@@ -67,7 +71,7 @@ The intended end-to-end certificate has three parts:
 - **The integer forward pass.** Intermediate values upstream of the logits must be pinned by the constraints. Allowing the prover to choose among materially different intermediate values would give it control over the predictions being scored.
 - **The reported bound.** Once the logits are fixed, the calculation of the bound may allow some freedom, but only in a direction that makes the reported value larger. Rounding upward is one such allowance. The prover may overstate how much the model leaves unexplained; the constraints must prevent it from understating it.
 
-The model commitment and the public claim list also need to match what the verifier intended to approve. A valid proof of a statement the prover chose is not enough. The current full-proof path therefore checks externally supplied model-root and statement-digest policy. That anchors a particular statement; it does not automatically decide whether that statement constitutes an acceptable workload.
+The model commitment and the public claim list also need to match what the verifier intended to approve. A valid proof of a statement the prover chose is not enough. The current full-proof path therefore checks externally supplied model-root and statement-digest policy. Those comparisons authenticate only what the commitment and constraints actually bind; the Maverick model-binding finding below shows why they do not alone establish complete model identity. They also do not automatically decide whether a statement constitutes an acceptable workload.
 
 The claim list reveals the model's architecture. The intended [zero-knowledge](https://en.wikipedia.org/wiki/Zero-knowledge_proof) protection covers weights, activations, and tokens, subject to the masking and opening-budget requirements of the chosen protocol. The hash-based construction requires no trusted setup and is plausibly post-quantum. The system has not had a full security audit, and the experimental weight bridge described below does not yet provide the intended hiding of all its intermediate values.
 
@@ -80,6 +84,8 @@ Its central implementation choice is streaming. A proof of the full Maverick mod
 That made a large demonstration possible on one DGX Spark. The archived 1,000-token Maverick run reports 14.26 hours to prove, 17.67 hours for independent Rust verification, a 93.6 GB proof, and a 78.13 GB GPU peak. Its reported score was 0.8801 bits per continuation token.[^original-run] These are results from the original system, not measurements of my optimizations.
 
 The historical run establishes the scale of the computation and its checking, but its verifier acceptance does not establish all the confidentiality and adversarial-soundness properties described in the accompanying prose. The default path at that point used fixed public masking entropy and prederived challenges; later collaborator work changed both and required external policy.[^historical-security] Those conditions matter when moving from a computational demonstration to an adversarial deployment.
+
+**8 October 2026 — model binding.** The public session-10 probe and draft [pull request 31](https://github.com/JamesPetrie/VerInf/pull/31) identify a further limitation shared by the earlier Maverick proofs, including the August run and the saved session-6 proof. The driver committed all 97 RMSNorm gains, including the output gain `g_out`, as ordinary inputs outside the enrolled weight block. It also left `bc_ones`, which broadcasts the sigmoid gate over the routed mixture-of-experts input, unconstrained. A toy built from the driver's own pieces changed its output after either `bc_ones = 2` or an altered `g_out`, while the Rust verifier explicitly accepted it under the honest weight root and statement digest. The archived proofs bind the committed projection and expert weights, but lack complete model binding. They retain their engineering, performance, scale, and historical verifier-acceptance value; they do not certify complete model identity. The proposed repair enrolls every gain and pins every `bc_ones` entry to 1. As checked today, #31 is an unmerged draft, its GPU regressions have not run, and no new enrollment or re-proof of the headline results is reported. The repair requires both; the archived proofs do not verify under the new enrollment.[^model-binding]
 
 Streaming solves a memory problem by creating a regeneration problem. The model and its auxiliaries are revisited across proof stages. At small context lengths, loading and converting the weights can dominate even when little token computation is required. The upstream had already identified this effect. My initial task was to make the workload and its distribution measurable enough to decide what to do about it.
 
@@ -166,20 +172,33 @@ The same review added bridge geometry and opening-count checks and refused bridg
 
 A later review, before the branch was proposed for merge, went further on two points. The enrollment root alone was not enough: it did not fix where the enrolled weights end and the masks begin. The trusted anchor is now the enrollment's identity, a versioned digest of the root, the manifest, the geometry, the claims' row layout, and the padding rule, encoded identically by the Python and Rust verifiers.[^enrollment-identity]
 
-The second gap was in the main proof, not only the bridge. The verifier checked each opened column's Merkle path by walking the direction bits the proof supplied rather than deriving them from the challenged index, so a valid path for a different column could answer a query. The verifiers now derive the path from the queried index, require the tree's exact depth, and check that the index is in range. The fix applies to `main` as well.[^index-binding]
+The second gap was in the main proof, not only the bridge. The verifier checked each opened column's Merkle path by walking the direction bits the proof supplied rather than deriving them from the challenged index, so a valid path for a different column could answer a query. The verifiers now derive the path from the queried index, require the tree's exact depth, and check that the index is in range. The fix is merged into `main`.[^index-binding]
 
 These changes are distinct from the verifier-transparent weight split. They modify verification boundaries and need their own review and negative tests. They illustrate why a system can have correct arithmetic checks and still authenticate the wrong statement or accept an inadequately formed argument.
 
+## Constraint-review qualifications
+
+The verifier-boundary review was followed by a MARS collaborator's targeted review of the constraints, not a full construction audit. Merged [pull request 23](https://github.com/JamesPetrie/VerInf/pull/23) repairs freedoms in the causal attention mask, SiLU's branch index and zero-input sign, and the surprisal quotient and sum bound. Its counterexamples and honest controls passed GPU gates on B200 and H200. Earlier proofs, including both 1,000-token runs discussed here, prove a weaker relation and do not verify under the repaired constraints. [Pull request 24](https://github.com/JamesPetrie/VerInf/pull/24) separately corrects the specification's claims about integer decompositions and the logit bound needed by argmax.
+
+The subsequent [pull request 33](https://github.com/JamesPetrie/VerInf/pull/33), merged on 7 October, ranges the experimental LayerGKR quotient and corrects the paper's error sum and sequential Fiat–Shamir model. Its reported tests are CPU tests, with CUDA-dependent bodies skipped. It states the claim-graph and token-binding obligations without discharging them. These changes do not constitute a full audit or complete end-to-end validation.
+
+## A saved 1,000-token proof
+
+One more session, just before the repairs, tested the prover at the final head later merged as pull request 21, at full context. On one B200, with the bridge and both caches, a 1,000-token Maverick proof took 29.7 minutes to prove and 152.6 GiB of GPU memory at its peak. The proof, 19.67 GB, was written out, copied off the machine with its hash checked, and accepted by a Rust verifier built from the code that was merged, in a separate step after the prover exited.[^s1000]
+
+These qualifications travel with that result. The tokens were synthetic, generated from fixed seeds, so the run says nothing about how well the model explains real text. The verifier checked the proof against policy values that the same run produced, so it tests the proof's mechanics, not an independent enrollment of the model. It was proved under the constraints as they stood before the repairs, and it lacks complete model binding as described above. Nor is the comparison with the original 14-hour run a speedup: the card, the protocol, and the tokens all differ. What the run does show is where the time now goes at that length: verification took 90 minutes on a 20-CPU allocation, three times the prove.
+
 ## Current state and the next questions
 
-The profiler, calibration tooling, and earlier accounting corrections are merged upstream. The weight-split decomposition, caches, bridge integration and hardening, and later measurement archives are on the public [weight-split-model branch](https://github.com/JamesPetrie/VerInf/tree/weight-split-model). The latest external-weight profiler corrections are published there too, and [pull request 21](https://github.com/JamesPetrie/VerInf/pull/21) proposes the branch for merge into `main`. Implementation throughout this project is agent-assisted; I own the direction, experiments, review, and validation of the work described here as mine.
+The profiler and calibration tooling, weight split, caches, bridge integration and hardening, and measurement archives are merged into `main`: [pull request 21](https://github.com/JamesPetrie/VerInf/pull/21) merged on 1 October, as did [22](https://github.com/JamesPetrie/VerInf/pull/22) (the saved proof), [23](https://github.com/JamesPetrie/VerInf/pull/23) (constraint repairs), and [24](https://github.com/JamesPetrie/VerInf/pull/24) (specification corrections). [Pull request 25](https://github.com/JamesPetrie/VerInf/pull/25), top-k routing on a toy model, merged on 2 October. The model-binding repair in draft [31](https://github.com/JamesPetrie/VerInf/pull/31) remains unmerged and awaits its GPU gate, new enrollment, and re-proof. Historical acceptance of the archived proofs establishes neither complete model identity nor acceptance under the repaired system. Implementation throughout this project is agent-assisted; I own the direction, experiments, review, and validation of the work described here as mine.
 
 The immediate questions follow the current implementation:
 
 - **What does the bridged proof cost as a whole?** The profiler now excludes external weights from ordinary witness counts, but does not yet price their enrollment, the per-proof bridge pass, or the bridge proof section. The measured stage breakdown supplies starting points for that model. Completing the private bridge form is a separate protocol requirement.
 - **Which remaining work should run on additional devices?** The weight-split decomposition is validated on one GPU. A multi-device implementation must establish correct device-local execution and measure transfer and synchronization costs. Its baseline must reflect the protocol actually being distributed.
 - **How much regeneration should be replaced by storage?** Witness caching competes with weights and working memory. The useful tradeoff changes with context length, hardware capacity, and host storage; it cannot be settled by a single cache benchmark.
-- **What changes for larger and differently routed models?** Top-k routing and a second level of enrollment commitments are design work aimed at broader model support and smaller opening traffic. Neither is a demonstrated trillion-parameter deployment.
+- **What do the headline results look like under the repaired system?** Re-proving needs the merged constraint repairs and, once validated and merged, the model-binding repair with a new enrollment. No such full-scale result is reported yet.
+- **What changes for larger and differently routed models?** Top-k routing is merged and GPU-tested on a toy model with eight experts choosing three; full-model Kimi K2 validation remains separate. A second level of enrollment commitments remains design work aimed at smaller opening traffic. Neither is a demonstrated trillion-parameter deployment.
 
 The repository also contains a separate sampled-audit approach, with a different detection guarantee from a full proof. Its timings are not included in the comparisons here. Selecting a proof or audit mode requires specifying what a verifier needs to establish and what probability of missed violations is acceptable.
 
@@ -211,4 +230,8 @@ The larger assurance question remains open. A proof must be about an approved co
 
 [^enrollment-identity]: The [identity anchor](https://github.com/JamesPetrie/VerInf/commit/fd92b5e) and [its exact encoding](https://github.com/JamesPetrie/VerInf/commit/830d6fd) are described in [pull request 21](https://github.com/JamesPetrie/VerInf/pull/21).
 
-[^index-binding]: The [index-bound opening](https://github.com/JamesPetrie/VerInf/commit/84dcc67) and the bridge's [counterpart for enrollment openings](https://github.com/JamesPetrie/VerInf/commit/76ce501) are listed under the fixes that also apply to `main` in [pull request 21](https://github.com/JamesPetrie/VerInf/pull/21).
+[^index-binding]: The [index-bound opening](https://github.com/JamesPetrie/VerInf/commit/84dcc67) and the bridge's [counterpart for enrollment openings](https://github.com/JamesPetrie/VerInf/commit/76ce501) are listed among the fixes merged into `main` in [pull request 21](https://github.com/JamesPetrie/VerInf/pull/21).
+
+[^model-binding]: The [session-10 probe](https://github.com/JamesPetrie/VerInf/blob/3a2c83b2393b9ae708ff89f34d155d28493ca425/analysis/b200-session-10-archive.md#results) is on draft pull request 30. The [session-6 annotation](https://github.com/JamesPetrie/VerInf/blob/19b5d41f11474ce1376ba40d0e919860abd8f44c/analysis/b200-session-6-archive.md) at pull request 31's checked head explicitly distinguishes the weights that were bound from the gains and routed-input scale that were not. The proposed regressions use the driver's `build_model`; the public record reports a CPU gate but no GPU run.
+
+[^s1000]: The [session-6 archive](https://github.com/JamesPetrie/VerInf/blob/e86e46ebec0340e07c79f98677951a252f7aedd8/analysis/b200-session-6-archive.md#results) records the prove, proof hash, verifier revision and binary hash; the proof itself is kept off the repository. The verifier was built from `c5d72e5`, the head merged as pull request 21. See the later model-binding annotation above before interpreting its acceptance.
