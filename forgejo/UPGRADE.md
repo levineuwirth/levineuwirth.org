@@ -1108,4 +1108,19 @@ and none the site's own:
 Policy 2 drew nothing of its own. The browser checks (tests/test_browser_csp.py,
 every route in Chromium and Firefox under the enforcing line) pass, and the
 Docker rehearsal (`RUN_NGINX_TESTS=1`) loads the new snippet. Policy 1
-became the enforcing line in `security-headers.conf`; installed: pending.
+became the enforcing line in `security-headers.conf` (`5414522`).
+
+**Enforcing since 2026-10-09 12:11 UTC** (backup
+`/root/nginx-backup-20261009T121111Z`). Every page type serves two
+enforcing policies (the site's, matching the repository, and
+`frame-ancestors 'none'`) and the narrow one Report-Only. The browser pass,
+before and after, is `tools/browser/csp_run.py --base=https://levineuwirth.org`
+in Chromium and Firefox, which sends no report (`lib.suppress_reports`;
+aborting `/csp-report` let Firefox's through, so the Firefox pass before
+the change left four transformers.js reports in the log, 2026-10-09 about
+11:45 UTC). After: all 43 routes load, math, both search tabs, the map,
+the PDF.js viewer with thumbnails and print, and the archive snapshot all
+work in both browsers; the only violations are transformers.js's `eval`
+probe, now refused, and semantic search answers without it. (One
+Chromium PDF.js probe timed out in the sweep; rerun twice, it rendered
+both pages, thumbnails and print.)
