@@ -32,16 +32,49 @@
        opened, changes when a web font swaps in, and collapses to nothing
        under focus mode. A ResizeObserver on the header catches all five
        without a listener per cause. */
+    /* A deep link lands where the browser scrolled it, with whatever
+       --nav-height was in force then: base.css's estimate, before this
+       script has measured. And Firefox applies a new value to the scroll
+       padding a frame or two late, so even an immediate re-aim (as
+       collapse.js makes) can still use the estimate. A header taller than
+       the estimate (a phone, the Portals row, a larger text size) covered
+       the heading. While the page is landing, each new height aims at the
+       target again two frames on; never once the reader has moved, nor
+       later than a second after load. Returns the re-aim, or null. */
+    function landing() {
+        var id = '';
+        try { id = decodeURIComponent(location.hash.slice(1)); }
+        catch (_) { return null; }
+        var target = id && document.getElementById(id);
+        if (!target) return null;
+        var open = true;
+        function stop() { open = false; }
+        ['wheel', 'touchstart', 'keydown', 'pointerdown'].forEach(function (ev) {
+            window.addEventListener(ev, stop, { once: true, passive: true, capture: true });
+        });
+        window.addEventListener('load', function () { setTimeout(stop, 1000); });
+        return function () {
+            if (!open) return;
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    if (open) target.scrollIntoView({ block: 'start', behavior: 'instant' });
+                });
+            });
+        };
+    }
+
     function initNavHeight() {
         var header = document.querySelector('body > header:not(.essay-frontmatter)');
         if (!header) return;
 
+        var reaim = landing();
         var last = null;
         function sync() {
             var h = Math.round(header.getBoundingClientRect().height);
             if (h === last) return;          /* no needless style invalidation */
             last = h;
             document.documentElement.style.setProperty('--nav-height', h + 'px');
+            if (reaim) reaim();
         }
 
         sync();
@@ -61,6 +94,8 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
+        /* The Portals row first: the header's height includes it. */
+        initPortals();
         initNavHeight();
 
         // Return-to-top button. Scripted scrolling is motion the CSS
@@ -88,6 +123,9 @@
                 .catch(function () {});
         }
 
+    });
+
+    function initPortals() {
         const portals = document.querySelector('.nav-portals');
         const toggle  = document.querySelector('.nav-portal-toggle');
         if (!portals || !toggle) return;
@@ -100,6 +138,7 @@
 
         function setOpen(open) {
             portals.classList.toggle('is-open', open);
+            document.documentElement.toggleAttribute('data-portals-open', open);
             toggle.setAttribute('aria-expanded', String(open));
             // Rotate arrow indicator if present.
             const arrow = toggle.querySelector('.nav-portal-arrow');
@@ -114,5 +153,5 @@
         toggle.addEventListener('click', function () {
             setOpen(!portals.classList.contains('is-open'));
         });
-    });
+    }
 })();

@@ -33,4 +33,12 @@
     if (safeGet('reduce-motion')) {
         document.documentElement.setAttribute('data-reduce-motion', '');
     }
+
+    /* The Portals row, if the reader left it open (nav.js keeps this in
+       step). Restored by nav.js alone, it opened after the first paint:
+       the header grew under the reader, after nav.js had measured it, and
+       a deep link's heading landed under the taller header. */
+    if (safeGet('portals-open') === '1') {
+        document.documentElement.setAttribute('data-portals-open', '');
+    }
 })();

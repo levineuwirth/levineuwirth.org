@@ -502,7 +502,8 @@ nav.site-nav {
     }
 }
 
-/* Row 2: portal links — hidden until nav.js adds .is-open */
+/* Row 2: portal links — hidden until opened: nav.js adds .is-open, and
+   theme.js marks <html> before the first paint if it was left open. */
 .nav-portals {
     display: none;
     justify-content: center;
@@ -512,7 +513,8 @@ nav.site-nav {
     border-top: 1px solid var(--border);
 }
 
-.nav-portals.is-open {
+.nav-portals.is-open,
+[data-portals-open] .nav-portals {
     display: flex;
 }
 
