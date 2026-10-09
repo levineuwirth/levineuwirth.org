@@ -525,7 +525,11 @@
             if (e.key === 'Escape') { hidePicker(); }
         });
 
-        setTimeout(function () { note.focus({ preventScroll: true }); }, 0);
+        /* At once: the picker is visible as soon as it opens
+           (annotations.css). A deferred focus could run after the picker
+           had closed, and took focus from wherever the reader had moved,
+           the new highlight included. */
+        note.focus({ preventScroll: true });
     }
 
     function hidePicker() {

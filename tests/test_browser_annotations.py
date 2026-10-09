@@ -62,6 +62,10 @@ accounts are given of the same event, each of them partial.</p>
 
 KEY = "site-annotations"
 
+# Until no transition on the element is running. A transition replaced
+# before it ends rejects its `finished` (AbortError): that is settled too.
+SETTLED = "el => Promise.all(el.getAnimations().map(a => a.finished.catch(() => null)))"
+
 # window.open and the clipboard, recorded instead of used.
 STUBS = """
 window.__opened = [];
@@ -306,13 +310,25 @@ class Annotations(unittest.TestCase):
         box = "s => { const r = document.querySelector(s).getBoundingClientRect(); return [r.top, r.bottom]; }"
         for browser in BROWSERS:
             with self.subTest(browser=browser):
-                page = self.fixture(browser)
-                page.evaluate("window.scrollTo(0, document.getElementById('wrapped')"
-                              ".getBoundingClientRect().top + scrollY - 12)")
-                page.set_viewport_size({"width": 1280, "height": int(page.evaluate(span)["bottom"]) + 30})
+                # A short window, opened at that size (resizing one fires a
+                # scroll, which hides the toolbar), and a passage taller
+                # than it, from just below its top.
+                page = self.fixture(browser, height=280)
+                # Room below to scroll the passage to the top: the fixture
+                # alone is too short. Instantly: the site scrolls smoothly,
+                # and a scroll still moving hides the toolbar.
+                page.evaluate("document.body.style.paddingBottom = '3000px'")
+                page.evaluate("window.scrollTo({top: document.getElementById('wrapped')"
+                              ".getBoundingClientRect().top + scrollY - 8, behavior: 'instant'})")
+                # The scroll event of that jump comes a frame later, and a
+                # scroll hides the toolbar: let it pass before selecting.
+                page.evaluate("new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
                 self.select(page, "main", "As a result", "told again")
                 y = page.evaluate("scrollY")
-                page.click(".selection-popup [data-action=annotate]")
+                # Not with the pointer: a clicked button takes focus, and the
+                # page scrolls it clear of scroll-padding-bottom. What is
+                # tested is the picker's own placement and focus.
+                page.locator(".selection-popup [data-action=annotate]").evaluate("b => b.click()")
                 picker = page.locator(".ann-picker.is-visible")
                 self.expect(picker).to_be_visible()
                 self.expect(page.locator(".ann-picker-note")).to_be_focused()
@@ -371,11 +387,8 @@ class Annotations(unittest.TestCase):
                 mark = page.locator("#wrapped mark")
                 mark.focus()
                 self.expect(page.locator(".ann-tooltip.is-visible .ann-tooltip-note")).to_have_text("keys")
-                # Enter within a frame or two of the focus (no reader is that
-                # quick) lands while the tooltip is still fading in, and focus
-                # cannot enter it yet: wait for its transition to end.
-                page.locator(".ann-tooltip").evaluate(
-                    "t => Promise.all(t.getAnimations().map(a => a.finished))")
+                # At once: Enter re-shows the tooltip, and while it faded in
+                # through visibility the browser refused focus to Delete.
                 page.keyboard.press("Enter")
                 self.expect(page.locator(".ann-tooltip-delete")).to_be_focused()
                 page.keyboard.press("Escape")
@@ -423,7 +436,7 @@ class Annotations(unittest.TestCase):
                         page.mouse.click(1, 1)
                         self.select(page, selector, start, end)
                         toolbar = page.locator(".selection-popup.is-visible")
-                        toolbar.evaluate("t => Promise.all(t.getAnimations().map(a => a.finished))")
+                        toolbar.evaluate(SETTLED)
                         self.assertIn(button, self.toolbar(page))
                         found = page.eval_on_selector_all(
                             ".selection-popup.is-visible, .selection-popup.is-visible button", boxes)

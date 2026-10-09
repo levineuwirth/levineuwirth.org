@@ -80,14 +80,20 @@ mark.user-annotation:hover { filter: brightness(0.80); }
 
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.12s ease, visibility 0.12s ease;
+    /* Closing: hidden once the fade is over. */
+    transition: opacity 0.12s ease, visibility 0s linear 0.12s;
     pointer-events: none;
 }
 
+/* Opening: visible at once, as the picker below is. Enter on a highlight
+   moves focus to Delete, and showTooltip hides the tooltip for a moment
+   to measure it: with visibility fading in, the browser refused that
+   focus for 0.12s after every Enter, and keyboard focus stayed behind. */
 .ann-tooltip.is-visible {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
+    transition: opacity 0.12s ease, visibility 0s;
 }
 
 .ann-tooltip-note {
