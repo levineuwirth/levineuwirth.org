@@ -2,8 +2,8 @@
 #
 # `last-updated` is the page-level temporal stamp. Bump it whenever
 # you push any change here, even a one-line note edit; the value is
-# rendered prominently and a relative-time tail ("4 days ago") is
-# computed at build time.
+# rendered prominently; a relative-time tail ("4 days ago") is added
+# by the browser from the date, so static HTML cannot carry a stale age.
 #
 # `entries:` are active items. Each carries:
 #   - title    : display name
@@ -36,16 +36,16 @@
 # Sorted newest-first at render time. Curate by hand — items don't
 # auto-prune. Move things off the list when they stop earning the slot.
 
-last-updated: 2026-10-01
+last-updated: 2026-10-08
 
 entries:
   - title: "VerInf: Verified Inference and Scale-Out (MARS V)"
     section: research
     status: building
-    updated: 2026-09-24
+    updated: 2026-10-08
     priority: 2
     link: /essays/verified-inference/
-    note: "I own profiling and scale-out for VerInf, which develops proofs of language-model inference that mutually distrustful parties can check on their own hardware. The profiler and calibration tools are merged upstream; the weight split, caches, bridge integration, and a verifier correctness pass are proposed for merge in pull request 21. Weight splitting has passed proof-byte equivalence and independent Rust verification on one GPU; multi-device execution remains in progress. The experimental weight bridge's intended privacy protection and its profiler cost model remain unfinished. I work on this as a MARS V fellow, mentored by James Petrie (FLI)."
+    note: "I own profiling and scale-out for VerInf, which develops proofs of language-model inference that mutually distrustful parties can check on their own hardware. The profiler, weight split, caches, bridge integration, and subsequent constraint repairs are merged upstream (pull requests 21–25). Archived Maverick proofs lack complete model binding; draft pull request 31 proposes a repair, with its GPU gate, new enrollment, and re-proof still outstanding. Weight splitting has passed proof-byte equivalence and independent Rust verification on one GPU; multi-device execution remains in progress. The experimental weight bridge's intended privacy protection and its profiler cost model remain unfinished. I work on this as a MARS V fellow, mentored by James Petrie (FLI)."
 
   - title: "Proof Broker"
     section: research
