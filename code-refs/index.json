@@ -1,4 +1,18 @@
 {
+ "https://github.com/JamesPetrie/VerInf/blob/19b5d41f11474ce1376ba40d0e919860abd8f44c/analysis/b200-session-6-archive.md": {
+  "kind": "blob",
+  "host": "github",
+  "owner": "JamesPetrie",
+  "repo": "VerInf",
+  "ref": "19b5d41f11474ce1376ba40d0e919860abd8f44c",
+  "sha": "19b5d41f11474ce1376ba40d0e919860abd8f44c",
+  "path": "analysis/b200-session-6-archive.md",
+  "pinned": true,
+  "src": "/code-refs/github/JamesPetrie/VerInf/19b5d41f11474ce1376ba40d0e919860abd8f44c/blob/analysis/b200-session-6-archive.md.txt",
+  "commit": "/code-refs/github/JamesPetrie/VerInf/19b5d41f11474ce1376ba40d0e919860abd8f44c/commit.json",
+  "date": "2026-10-06T09:44:55Z",
+  "fetched": "2026-10-08"
+ },
  "https://github.com/JamesPetrie/VerInf/blob/2bdf823b08ea012cf5d26eeaac1c65698bb51e20/analysis/full-model-hidden-run-archive.md": {
   "kind": "blob",
   "host": "github",
@@ -111,6 +125,34 @@
   "date": "2026-09-20T18:11:15Z",
   "fetched": "2026-09-22"
  },
+ "https://github.com/JamesPetrie/VerInf/blob/3a2c83b2393b9ae708ff89f34d155d28493ca425/analysis/b200-session-10-archive.md": {
+  "kind": "blob",
+  "host": "github",
+  "owner": "JamesPetrie",
+  "repo": "VerInf",
+  "ref": "3a2c83b2393b9ae708ff89f34d155d28493ca425",
+  "sha": "3a2c83b2393b9ae708ff89f34d155d28493ca425",
+  "path": "analysis/b200-session-10-archive.md",
+  "pinned": true,
+  "src": "/code-refs/github/JamesPetrie/VerInf/3a2c83b2393b9ae708ff89f34d155d28493ca425/blob/analysis/b200-session-10-archive.md.txt",
+  "commit": "/code-refs/github/JamesPetrie/VerInf/3a2c83b2393b9ae708ff89f34d155d28493ca425/commit.json",
+  "date": "2026-10-06T09:33:27Z",
+  "fetched": "2026-10-08"
+ },
+ "https://github.com/JamesPetrie/VerInf/blob/e86e46ebec0340e07c79f98677951a252f7aedd8/analysis/b200-session-6-archive.md": {
+  "kind": "blob",
+  "host": "github",
+  "owner": "JamesPetrie",
+  "repo": "VerInf",
+  "ref": "e86e46ebec0340e07c79f98677951a252f7aedd8",
+  "sha": "e86e46ebec0340e07c79f98677951a252f7aedd8",
+  "path": "analysis/b200-session-6-archive.md",
+  "pinned": true,
+  "src": "/code-refs/github/JamesPetrie/VerInf/e86e46ebec0340e07c79f98677951a252f7aedd8/blob/analysis/b200-session-6-archive.md.txt",
+  "commit": "/code-refs/github/JamesPetrie/VerInf/e86e46ebec0340e07c79f98677951a252f7aedd8/commit.json",
+  "date": "2026-10-01T19:51:46Z",
+  "fetched": "2026-10-08"
+ },
  "https://github.com/JamesPetrie/VerInf/commit/3c47d54": {
   "kind": "commit",
   "host": "github",
@@ -222,20 +264,6 @@
   "commit": "/code-refs/github/JamesPetrie/VerInf/3508ef1d63d004686e85373f6100689ae94b922a/commit.json",
   "date": "2026-09-20T18:11:15Z",
   "fetched": "2026-09-22"
- },
- "https://github.com/JamesPetrie/VerInf/tree/weight-split-model": {
-  "kind": "tree",
-  "host": "github",
-  "owner": "JamesPetrie",
-  "repo": "VerInf",
-  "ref": "weight-split-model",
-  "sha": "c5d72e5d4efe802ddb06641662e88b37498653a6",
-  "path": "",
-  "pinned": false,
-  "src": "/code-refs/github/JamesPetrie/VerInf/c5d72e5d4efe802ddb06641662e88b37498653a6/tree/_root.json",
-  "commit": "/code-refs/github/JamesPetrie/VerInf/c5d72e5d4efe802ddb06641662e88b37498653a6/commit.json",
-  "date": "2026-09-30T19:20:11Z",
-  "fetched": "2026-10-01"
  },
  "https://github.com/levineuwirth/proof-broker/blob/fc9c011c2379c8656ecb4f034d58e8a1d586d8c1/experiments/r6/R6-QUALIFICATION-1-ADDENDUM-1.md": {
   "kind": "blob",

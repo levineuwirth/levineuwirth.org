@@ -1,0 +1,30 @@
+{
+ "sha": "e86e46ebec0340e07c79f98677951a252f7aedd8",
+ "message": "Merge pull request #24 from JamesPetrie/protocol-review-f07-f08\n\nProtocol review F07 and F08: what a decomposition certifies, and the argmax's logit bound",
+ "author": "Levi Neuwirth",
+ "date": "2026-10-01T19:51:46Z",
+ "parents": [
+  "ebf584ff217dd56c230d79fd7f7839ae97f235eb",
+  "2e02b8674cd2d149aa5caa3c82542ba6ca130235"
+ ],
+ "stats": {
+  "total": 22,
+  "additions": 13,
+  "deletions": 9
+ },
+ "files_total": 2,
+ "files": [
+  {
+   "filename": "analysis/docs/CLAIM_SPECS.md",
+   "status": "modified",
+   "additions": 5,
+   "deletions": 1
+  },
+  {
+   "filename": "paper.md",
+   "status": "modified",
+   "additions": 8,
+   "deletions": 8
+  }
+ ]
+}

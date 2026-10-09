@@ -1,0 +1,353 @@
+{
+ "sha": "3a2c83b2393b9ae708ff89f34d155d28493ca425",
+ "message": "session 10 archive: the K2 two-layer gate's records, the verdict evidence and what is outstanding",
+ "author": "Levi Neuwirth",
+ "date": "2026-10-06T09:33:27Z",
+ "parents": [
+  "2429d7abb40a203d84587c23125ba1b3a496b279"
+ ],
+ "stats": {
+  "total": 21073,
+  "additions": 21073,
+  "deletions": 0
+ },
+ "files_total": 56,
+ "files": [
+  {
+   "filename": "analysis/b200-session-10-archive.md",
+   "status": "added",
+   "additions": 162,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/k2-check-s100-long.json",
+   "status": "added",
+   "additions": 1453,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/k2-check-s100.json",
+   "status": "added",
+   "additions": 1453,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/k2-check-s1000-long.json",
+   "status": "added",
+   "additions": 1453,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/k2-check-s1000.json",
+   "status": "added",
+   "additions": 1453,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/k2-fidelity-s100-long.json",
+   "status": "added",
+   "additions": 1263,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/k2-fidelity-s100.json",
+   "status": "added",
+   "additions": 1262,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/k2-fidelity-s1000.json",
+   "status": "added",
+   "additions": 1297,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/k2-prove-s100-long.json",
+   "status": "added",
+   "additions": 150,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/k2-prove-s100.json",
+   "status": "added",
+   "additions": 199,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/k2-prove-s1000.json",
+   "status": "added",
+   "additions": 156,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/k2-s100.bin.policy.json",
+   "status": "added",
+   "additions": 9,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/k2-s1000.bin.policy.json",
+   "status": "added",
+   "additions": 9,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/kit/pull10.sh",
+   "status": "added",
+   "additions": 19,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/kit/stage1.sh",
+   "status": "added",
+   "additions": 41,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/kit/stage1b.sh",
+   "status": "added",
+   "additions": 17,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/kit/stage2.sh",
+   "status": "added",
+   "additions": 22,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/kit/stage3.sh",
+   "status": "added",
+   "additions": 29,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/kit/stage3b.sh",
+   "status": "added",
+   "additions": 22,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/kit/switch3b.sh",
+   "status": "added",
+   "additions": 10,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/cargo.log",
+   "status": "added",
+   "additions": 175,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/check-s100-long.log",
+   "status": "added",
+   "additions": 14,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/check-s100.log",
+   "status": "added",
+   "additions": 14,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/check-s1000-long.log",
+   "status": "added",
+   "additions": 14,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/check-s1000.log",
+   "status": "added",
+   "additions": 14,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/cuda-primitives.log",
+   "status": "added",
+   "additions": 36,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/env-record.log",
+   "status": "added",
+   "additions": 48,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/fidelity-s100-long.log",
+   "status": "added",
+   "additions": 6,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/fidelity-s100.log",
+   "status": "added",
+   "additions": 6,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/fidelity-s1000.log",
+   "status": "added",
+   "additions": 6,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/maverick-binding-probe.log",
+   "status": "added",
+   "additions": 1225,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/pip-install.log",
+   "status": "added",
+   "additions": 1,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/prove-s100-long.log",
+   "status": "added",
+   "additions": 371,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/prove-s100.log",
+   "status": "added",
+   "additions": 1791,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/prove-s1000.log",
+   "status": "added",
+   "additions": 326,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/pull.log",
+   "status": "added",
+   "additions": 7,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/rustup.log",
+   "status": "added",
+   "additions": 41,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/sampler.log",
+   "status": "added",
+   "additions": 2135,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/test_claims.log",
+   "status": "added",
+   "additions": 47,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/test_head_interleave.log",
+   "status": "added",
+   "additions": 61,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/test_k2_driver.log",
+   "status": "added",
+   "additions": 2111,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/test_protocol_review_negatives.log",
+   "status": "added",
+   "additions": 335,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/test_rope_scaling.log",
+   "status": "added",
+   "additions": 13,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/logs/test_topk_routing.log",
+   "status": "added",
+   "additions": 1490,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/proofs-local.sha256",
+   "status": "added",
+   "additions": 2,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/session10-env.txt",
+   "status": "added",
+   "additions": 48,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/session10-pins.txt",
+   "status": "added",
+   "additions": 153,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/session10-proofs.sha256",
+   "status": "added",
+   "additions": 9,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/session10-revision.txt",
+   "status": "added",
+   "additions": 2,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/session10-rustc.txt",
+   "status": "added",
+   "additions": 1,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/session10-verifier.sha256",
+   "status": "added",
+   "additions": 1,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/stage-logs/stage1.log",
+   "status": "added",
+   "additions": 11,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/stage-logs/stage1b.log",
+   "status": "added",
+   "additions": 36,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/stage-logs/stage3.log",
+   "status": "added",
+   "additions": 21,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/stage-logs/stage3b.log",
+   "status": "added",
+   "additions": 20,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-10/stage-logs/switch3b.log",
+   "status": "added",
+   "additions": 3,
+   "deletions": 0
+  }
+ ]
+}

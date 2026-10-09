@@ -1,0 +1,95 @@
+{
+ "sha": "19b5d41f11474ce1376ba40d0e919860abd8f44c",
+ "message": "Maverick proofs before the binding repair annotated as lacking complete model binding, August's included",
+ "author": "Levi Neuwirth",
+ "date": "2026-10-06T09:44:55Z",
+ "parents": [
+  "753e5ef6881f409f1d8e5385891a76370042def0"
+ ],
+ "stats": {
+  "total": 129,
+  "additions": 126,
+  "deletions": 3
+ },
+ "files_total": 13,
+ "files": [
+  {
+   "filename": "README.md",
+   "status": "modified",
+   "additions": 1,
+   "deletions": 1
+  },
+  {
+   "filename": "analysis/b200-session-3-archive.md",
+   "status": "modified",
+   "additions": 12,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-4-archive.md",
+   "status": "modified",
+   "additions": 12,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-5-archive.md",
+   "status": "modified",
+   "additions": 12,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/b200-session-6-archive.md",
+   "status": "modified",
+   "additions": 12,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/blackwell-session-1-archive.md",
+   "status": "modified",
+   "additions": 12,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/full-model-hidden-run-archive.md",
+   "status": "modified",
+   "additions": 12,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/full-model-sound-run-archive.md",
+   "status": "modified",
+   "additions": 12,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/h200-session-2-archive.md",
+   "status": "modified",
+   "additions": 12,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/routed-projected-status.md",
+   "status": "modified",
+   "additions": 8,
+   "deletions": 0
+  },
+  {
+   "filename": "analysis/small-context-runs-archive.md",
+   "status": "modified",
+   "additions": 12,
+   "deletions": 0
+  },
+  {
+   "filename": "demo/4h-production-runbook.md",
+   "status": "modified",
+   "additions": 7,
+   "deletions": 0
+  },
+  {
+   "filename": "paper.md",
+   "status": "modified",
+   "additions": 2,
+   "deletions": 2
+  }
+ ]
+}
