@@ -149,14 +149,17 @@ class NginxLogging(unittest.TestCase):
                 code, h = self.headers(path)
                 self.assertEqual(code, status)
                 self.assertEqual(h.get('cache-control'), ['no-cache'])
-                self.assertEqual(len(h.get('content-security-policy-report-only', [])), 2)
+                # The site's policy and the framing one; the narrow one measured.
+                self.assertEqual(len(h.get('content-security-policy', [])), 2)
+                self.assertEqual(len(h.get('content-security-policy-report-only', [])), 1)
                 self.assertIn('strict-transport-security', h)
                 self.assertEqual(h.get('x-frame-options'), [framing])
         code, h = self.headers('/archive/kept/')
         self.assertEqual(h.get('x-robots-tag'), ['noindex, noarchive'])
         code, h = self.headers('/fast.css')
         self.assertEqual(h.get('cache-control'), ['public, max-age=3600, must-revalidate'])
-        self.assertEqual(len(h.get('content-security-policy-report-only', [])), 2)
+        self.assertEqual(len(h.get('content-security-policy', [])), 2)
+        self.assertEqual(len(h.get('content-security-policy-report-only', [])), 1)
 
     def records(self, file):
         # USR1 flushes buffered logs, just as rotation does.

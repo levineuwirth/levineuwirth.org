@@ -7,9 +7,9 @@ with its thumbnails and print output, archive snapshots, the score reader, the l
 violations, page errors and responses. Here it runs against
 tools/browser/serve.py, the production vhost's emulation, with the
 enforcing `add_header Content-Security-Policy` line from
-nginx/security-headers.conf (the commented candidate while the live policy
-is Report-Only), and these tests assert on what it recorded. This is the
-check behind promoting that policy.
+nginx/security-headers.conf, and these tests assert on what it recorded.
+This was the check behind promoting that policy (2026-10-09), and is the
+one to rerun before changing it.
 
 It needs the network: popups, map tiles and semantic search's
 transformers.js come from their real origins, as in production. Popups are

@@ -98,8 +98,8 @@ def require_playwright() -> None:
 
 
 def enforcing_csp() -> str:
-    """The policy nginx/security-headers.conf enforces, or, while it is
-    still Report-Only, the commented candidate under "Promotion"."""
+    """The policy nginx/security-headers.conf enforces (before its
+    promotion on 2026-10-09, a commented candidate; either is read)."""
     text = (ROOT / "nginx" / "security-headers.conf").read_text(encoding="utf-8")
     found = re.findall(r'^(?:#\s+)?add_header Content-Security-Policy "([^"]+)" always;$',
                        text, re.M)

@@ -1089,3 +1089,23 @@ for the first Report-Only line only; the second, narrower one stays
 Report-Only until its own promotion (the file's "Promotion" block). The
 enforcing line is the first policy plus `upgrade-insecure-requests`.
 Deploy, repeat § 9.4's browser pass, and record the date here.
+
+**Reviewed 2026-10-09.** 463 reports from 2026-10-01 19:55 to 2026-10-09
+01:51 UTC (251 against policy 1, 212 against policy 2), every one explained
+and none the site's own:
+
+| reports | what |
+|---|---|
+| 301 | source-less `eval` at three fixed positions (4:70, 7:21, 9:27) per page load, all from a "Chrome 118, Windows" user agent at many addresses, mostly on photograph pages: a crawler's injected code |
+| 111 | `debugger eval code`, Firefox 155 on Linux, 2026-10-02: Playwright, our own production checks |
+| 31 | `phase1-deploy-verification.invalid`, 2026-10-02: the synthetic deploy probes |
+| 12 | transformers.js's `eval` probe on `/search.html`: expected |
+| 3 | the collector's install tests (2026-10-01, -03) |
+| 2 | an inline script a Chrome 92 client injected on `/`, one report per policy (line 7 of the page is a `<meta>`) |
+| 1 | `thumb.wikimedia.org`, closed 2026-10-02 |
+| 2 | `object-src` on the SIMD essay, 2026-10-01: its PDF figure embed, an SVG since 2026-10-02 (`332dda1`); no page has an `<object>` or `<embed>` |
+
+Policy 2 drew nothing of its own. The browser checks (tests/test_browser_csp.py,
+every route in Chromium and Firefox under the enforcing line) pass, and the
+Docker rehearsal (`RUN_NGINX_TESTS=1`) loads the new snippet. Policy 1
+became the enforcing line in `security-headers.conf`; installed: pending.

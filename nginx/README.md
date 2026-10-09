@@ -72,7 +72,8 @@ curl -s -o /dev/null -w '%{http_code}\n' https://levineuwirth.org/404.html      
 curl -s -o /dev/null -w '%{http_code}\n' https://levineuwirth.org/about                        # 200
 curl -sI https://levineuwirth.org/ https://levineuwirth.org/x-missing https://levineuwirth.org/archive/ \
   | grep -ci '^cache-control: no-cache'                                                          # 3: pages revalidate
-curl -sI https://levineuwirth.org/ | grep -ci '^content-security-policy-report-only'            # 2: the baseline survives
+curl -sI https://levineuwirth.org/ | grep -ci '^content-security-policy:'                        # 2: the policy and framing survive
+curl -sI https://levineuwirth.org/ | grep -ci '^content-security-policy-report-only'            # 1: the narrow policy, measured
 curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' https://levineuwirth.org/essays/proof-broker   # 301 …/proof-broker/
 curl -s --http2 -o /dev/null -w '%{http_version}\n' https://levineuwirth.org/ https://git.levineuwirth.org/   # 2, 2
 curl -sI https://git.levineuwirth.org/ | grep -i 'strict-transport\|nosniff\|referrer\|^server'
