@@ -1113,7 +1113,8 @@ became the enforcing line in `security-headers.conf` (`5414522`).
 **Enforcing since 2026-10-09 12:11 UTC** (backup
 `/root/nginx-backup-20261009T121111Z`). Every page type serves two
 enforcing policies (the site's, matching the repository, and
-`frame-ancestors 'none'`) and the narrow one Report-Only. The browser pass,
+the framing policy: `frame-ancestors 'none'` normally, `'self'` under
+`/pdfjs/` and `/archive/`) and the narrow one Report-Only. The browser pass,
 before and after, is `tools/browser/csp_run.py --base=https://levineuwirth.org`
 in Chromium and Firefox, which sends no report (`lib.suppress_reports`;
 aborting `/csp-report` let Firefox's through, so the Firefox pass before
