@@ -103,7 +103,12 @@
 /* Below the grid's breakpoint the marks stack under the title, where a
  * fixed narrow column makes no sense. */
 @media (max-width: 900px) {
+    /* A definite width: the stacked column centres its items at their
+       own width, and the cover's was the image's own, a 16px placeholder
+       until it loaded. Its arrival pushed the title and all below it
+       down (layout shift 0.15 at 375px). */
     .photo-series-frontmatter .frontmatter-mark-slot--left {
+        width: 100%;
         max-width: 22rem;
         margin: 0 auto;
     }
