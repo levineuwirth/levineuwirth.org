@@ -292,8 +292,11 @@
     --font-sans:       "Fira Sans", "Fira Sans on Arial", "Fira Sans on Roboto", "Helvetica Neue", "Arial", sans-serif;
     --font-mono:       "JetBrains Mono", "Consolas", "Menlo", monospace;
 
-    /* Scale & Rhythm (1 line = 33px or 1.65rem) */
-    --text-size:       20px;
+    /* Scale & Rhythm (1 line = 38px or 1.65rem). The default is the
+       middle of the settings panel's three sizes (TEXT_SIZES in
+       settings.js and theme.js, 20/23/26px); it was 20px, the smallest,
+       so on a first visit A- did nothing and A+ went straight to 26. */
+    --text-size:       23px;
     --text-size-small: 0.85em;
     --line-height:     1.65;
 

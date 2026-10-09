@@ -230,7 +230,7 @@ nav.site-nav {
     white-space: nowrap;
     line-height: 1.2;
 }
-.settings-btn:hover:not(:disabled) {
+.settings-btn:hover:not(:disabled):not([aria-disabled="true"]) {
     background: var(--border);
     color: var(--text);
 }
@@ -239,9 +239,16 @@ nav.site-nav {
     border-color: var(--text);
     color: var(--bg);
 }
-.settings-btn:disabled {
+.settings-btn:disabled,
+.settings-btn[aria-disabled="true"] {
     opacity: 0.35;
     cursor: default;
+}
+/* The text size between A- and A+, as a share of the default; it resets
+   it. Figures of one width, so the row does not shift as it changes. */
+.settings-text-size {
+    font-variant-numeric: tabular-nums;
+    min-width: 3.6em;
 }
 .settings-btn--full {
     width: 100%;
@@ -1651,6 +1658,7 @@ h3:hover .section-toggle,
 
 .search-tabs {
     display: flex;
+    flex-wrap: wrap;        /* at the largest text size they ran off a phone */
     gap: 0;
 }
 

@@ -52,6 +52,7 @@ ROUTES = [
     ('archive-pdf', '/archive/nist-fips-203/'),
     ('library', '/library.html'),
     ('work', '/work.html'),
+    ('meet', '/meet/'),
     ('new', '/new.html'),
     ('memento', '/memento-mori.html'),
     ('build', '/build/'),
@@ -84,6 +85,15 @@ CSP_INIT = r"""
   window.addEventListener('unhandledrejection', e => { window.__errs.push('unhandledrejection: ' + String(e.reason && (e.reason.stack || e.reason.message) || e.reason)); });
 })();
 """
+
+def options(args):
+    """--name=value options, and the other arguments in order."""
+    opts = dict(a[2:].split('=', 1) for a in args if a.startswith('--') and '=' in a)
+    return opts, [a for a in args if not a.startswith('--')]
+
+# A text size chosen in the settings panel, in px, stored as settings.js
+# stores it (--text-size=N to a script that takes it).
+TEXT_SIZE_INIT = "try { localStorage.setItem('text-size', '%d'); } catch (e) {}"
 
 THEME_INIT = """
 try { localStorage.setItem('theme', '%s'); } catch (e) {}

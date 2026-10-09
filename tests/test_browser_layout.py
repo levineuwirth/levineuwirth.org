@@ -7,9 +7,11 @@ recorded, once each report holds a record for every page and variant asked
 of it:
 
 - overflow_run.py, on every route, in Chromium and Firefox at 320, 375,
-  768 and 1440px: no page may scroll sideways (WCAG 1.4.10 asks for
-  320px). Known exceptions are recorded in tests/browser-baseline/
-  overflow.json.
+  768 and 1440px, and in Chromium at 320 and 1440px with the settings
+  panel's smallest and largest text (17 and 29px): no page may scroll
+  sideways (WCAG 1.4.10 asks for 320px). Known exceptions are recorded in
+  tests/browser-baseline/overflow.json, those at a chosen size with it
+  ("pdfjs|320|29px").
 - motion_run.py, on 14 pages (its MROUTES), in both browsers, with reduced
   motion asked for by the system or by the site's own setting: no
   animation, no transition, no smooth scrolling, and the slideshow does
@@ -43,6 +45,8 @@ MOTION_ROUTES = harness_constant("motion_run.py", "MROUTES")
 MOTION_MODES = harness_constant("motion_run.py", "MODES")
 PERF_ROUTES = harness_constant("perf_run.py", "PROUTES")
 WIDTHS = (1440, 375)
+TEXT_SIZES = (17, 29)       # the settings panel's ends (lnUtils.TEXT_SIZE)
+TEXT_SIZE_WIDTHS = (320, 1440)
 GROWTH = 1.15          # a page may grow this much before it fails its budget
 SLACK = {"requests": 2, "kB": 10}   # and this much on a small page
 CLS_GOOD = 0.1         # web.dev's line for a good cumulative layout shift
@@ -59,27 +63,35 @@ class Layout(unittest.TestCase):
         base = cls.enterClassContext(site_server(tmp, compress=True))
         run_harness(cls, base, out,
                     [["overflow_run.py", b, f"overflow-{b}.json"] for b in BROWSERS]
+                    + [["overflow_run.py", "chromium", f"overflow-{px}px.json", f"--text-size={px}",
+                        "--widths=" + ",".join(map(str, TEXT_SIZE_WIDTHS))] for px in TEXT_SIZES]
                     + [["motion_run.py", b, f"motion-{b}.json"] for b in BROWSERS]
                     + [["perf_run.py", f"perf-{w}.json", str(w)] for w in WIDTHS])
         load = lambda name: json.loads((out / name).read_text())
-        cls.overflow = {b: load(f"overflow-{b}.json") for b in BROWSERS}
+        # (browser, text size or None for the default) -> report
+        cls.overflow = {(b, None): load(f"overflow-{b}.json") for b in BROWSERS}
+        cls.overflow.update({("chromium", px): load(f"overflow-{px}px.json") for px in TEXT_SIZES})
         cls.motion = {b: load(f"motion-{b}.json") for b in BROWSERS}
         cls.perf = {w: load(f"perf-{w}.json") for w in WIDTHS}
 
     def test_no_sideways_scrolling(self) -> None:
-        for browser in BROWSERS:
-            assert_complete(self, self.overflow[browser],
-                            {f"{r}|{w}" for r in ROUTES for w in OVERFLOW_WIDTHS}, f"overflow {browser}")
-        found = sorted({key for b in BROWSERS for key, r in self.overflow[b].items()
-                        if r.get("over")})
+        def label(key: str, px) -> str:
+            return key if px is None else f"{key}|{px}px"
+
+        for (browser, px), report in self.overflow.items():
+            widths = OVERFLOW_WIDTHS if px is None else TEXT_SIZE_WIDTHS
+            assert_complete(self, report, {f"{r}|{w}" for r in ROUTES for w in widths},
+                            f"overflow {browser} {label('', px)}")
+        found = sorted({label(key, px) for (_, px), report in self.overflow.items()
+                        for key, r in report.items() if r.get("over")})
         known = baseline("overflow", found)
         if UPDATE_BASELINE:
             return
-        for browser in BROWSERS:
-            for key, r in sorted(self.overflow[browser].items()):
-                with self.subTest(browser=browser, page=key):
+        for (browser, px), report in sorted(self.overflow.items(), key=str):
+            for key, r in sorted(report.items()):
+                with self.subTest(browser=browser, text_size=px or "default", page=key):
                     self.assertNotIn("error", r)
-                    if key not in known:
+                    if label(key, px) not in known:
                         self.assertFalse(r["over"], f"{r['sw']}px wide in {r['cw']}px: "
                                                     f"{[o['el'] for o in r['offenders']]}")
         with self.subTest(part="known overflows still overflow"):

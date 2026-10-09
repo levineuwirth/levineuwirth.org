@@ -7,7 +7,7 @@
  },
  "colophon": {
   "region": 9,
-  "target-size": 3
+  "target-size": 1
  },
  "commonplace": {
   "region": 1
@@ -20,35 +20,33 @@
  "essay-grd": {
   "empty-table-header": 4,
   "region": 5,
-  "target-size": 5
+  "target-size": 3
  },
  "essay-notes": {
   "heading-order": 1,
-  "region": 7,
-  "target-size": 1
+  "region": 7
  },
  "essay-proofbroker": {
   "region": 10,
-  "target-size": 3
+  "target-size": 4
  },
  "essay-r6": {
   "region": 10
  },
  "essay-scaling": {
-  "region": 5,
-  "target-size": 1
+  "region": 5
  },
  "essay-simd": {
   "region": 5,
-  "target-size": 3
+  "target-size": 1
  },
  "essay-verified": {
   "region": 12,
-  "target-size": 3
+  "target-size": 1
  },
  "me": {
   "region": 9,
-  "target-size": 3
+  "target-size": 2
  },
  "memento": {
   "region": 6

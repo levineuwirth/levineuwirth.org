@@ -1,14 +1,17 @@
 """Horizontal overflow at several widths.
-usage: python overflow_run.py <browser> <outname> [route ...]
+usage: python overflow_run.py <browser> <outname> [--widths=320,1440] [--text-size=29] [route ...]
 """
 import sys
 from playwright.sync_api import sync_playwright
 from lib import *
 
 browser_name, outname = sys.argv[1], sys.argv[2]
-only = set(sys.argv[3:])
+opts, routes = options(sys.argv[3:])
+only = set(routes)
 BASE = f'http://127.0.0.1:{PORT_NONE}'
 WIDTHS = [320, 375, 768, 1440]
+RUN_WIDTHS = [int(w) for w in opts['widths'].split(',')] if 'widths' in opts else WIDTHS
+TEXT_SIZE = int(opts['text-size']) if 'text-size' in opts else None
 
 PROBE = r"""
 () => {
@@ -61,8 +64,10 @@ def run():
     res = {}
     with sync_playwright() as p:
         browser = getattr(p, browser_name).launch()
-        for w in WIDTHS:
+        for w in RUN_WIDTHS:
             ctx = browser.new_context(viewport={'width': w, 'height': 900}, reduced_motion='reduce')
+            if TEXT_SIZE:
+                ctx.add_init_script(TEXT_SIZE_INIT % TEXT_SIZE)
             offline(ctx)
             page = ctx.new_page()
             for name, path in ROUTES:

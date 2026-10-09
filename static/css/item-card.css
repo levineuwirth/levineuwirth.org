@@ -90,6 +90,7 @@
 
 .list-controls-options {
     display: flex;
+    flex-wrap: wrap;        /* at the largest text size they ran off a phone */
     gap: 0.3rem;
 }
 
@@ -378,12 +379,37 @@
    ============================================================ */
 
 @media (max-width: 540px) {
+    /* No indent: typography.css's `#markdownBody ul` outranks the list's
+       own padding: 0, and on a phone its 40px came out of the titles. */
+    #markdownBody .item-card-list {
+        padding-left: 0;
+    }
+
+    /* Kind and figure share a line above the title, which takes the
+       card's width. Beside them it had 70px at 320px and broke inside
+       words ("Verifie d Infere nce"), and less at a larger text size. */
     .item-card {
-        gap: 0.65rem;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.35rem 0.65rem;
+    }
+
+    .item-card-main {
+        flex-basis: 100%;
+    }
+
+    .item-card-monogram {
+        margin: 0 0 0 auto;
+    }
+
+    .item-card-monogram .frontmatter-mark {
+        width: 48px;
+        height: 48px;
     }
 
     .item-card-kind {
         min-width: 0;
+        margin-top: 0;
         font-size: 0.62rem;
     }
 

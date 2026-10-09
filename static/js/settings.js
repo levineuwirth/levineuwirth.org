@@ -1,14 +1,14 @@
 /* settings.js — Settings panel: theme, text size, print.
-   Must stay in sync with TEXT_SIZES in theme.js.
+   Text sizes are lnUtils.TEXT_SIZE (utils.js), which theme.js reads too.
 
    All localStorage access routes through window.lnUtils.safeStorage so
    Safari private-mode SecurityErrors on writes do not throw uncaught. */
 (function () {
     'use strict';
 
-    var TEXT_SIZES    = [20, 23, 26];
-    var TEXT_SIZE_DEFAULT = 1;      /* index of 23px */
     var TEXT_SIZE_KEY = 'text-size';
+    var SIZES = (window.lnUtils && window.lnUtils.TEXT_SIZE)
+        || { min: 17, max: 29, step: 2, base: 23 };
     var store = (window.lnUtils && window.lnUtils.safeStorage) || {
         get: function () { return null; },
         set: function () { return false; },
@@ -95,6 +95,7 @@
         else if (action === 'theme-cappuccino') setTheme('cappuccino');
         else if (action === 'text-smaller')  shiftSize(-1);
         else if (action === 'text-larger')   shiftSize(+1);
+        else if (action === 'text-reset')    setSize(SIZES.base);
         else if (action === 'focus-mode')    toggleDataAttr('focus-mode',    'data-focus-mode');
         else if (action === 'reduce-motion') toggleDataAttr('reduce-motion', 'data-reduce-motion');
         else if (action === 'print')             { setOpen(false); window.print(); }
@@ -123,23 +124,52 @@
 
     function syncThemeButtons() {
         var active = currentTheme();
+        /* aria-pressed says which: the class only showed it. */
         document.querySelectorAll('[data-action^="theme-"]').forEach(function (btn) {
-            btn.classList.toggle('is-active', btn.getAttribute('data-action') === 'theme-' + active);
+            var on = btn.getAttribute('data-action') === 'theme-' + active;
+            btn.classList.toggle('is-active', on);
+            btn.setAttribute('aria-pressed', on ? 'true' : 'false');
         });
     }
 
     /* Text size ------------------------------------------------------- */
 
-    function getSizeIndex() {
-        var n = parseInt(store.get(TEXT_SIZE_KEY), 10);
-        return (isNaN(n) || n < 0 || n >= TEXT_SIZES.length) ? TEXT_SIZE_DEFAULT : n;
+    /* Seven sizes, a step apart (lnUtils.TEXT_SIZE). The size in force is
+       the stored one, else the default; a size off the steps (the old
+       scale's 20 or 26px) steps to the nearest one in that direction. */
+    var lastSize = null;    /* the size this page last set, if storage cannot hold it */
+
+    function currentSize() {
+        var stored = window.lnUtils && window.lnUtils.storedTextSize
+            ? window.lnUtils.storedTextSize() : null;
+        if (stored !== null) return stored;
+        return lastSize !== null ? lastSize : SIZES.base;
+    }
+
+    function nextSize(px, delta) {
+        var s = delta > 0 ? SIZES.min : SIZES.max;
+        for (; s >= SIZES.min && s <= SIZES.max; s += delta > 0 ? SIZES.step : -SIZES.step) {
+            if (delta > 0 ? s > px : s < px) return s;
+        }
+        return px;
     }
 
     function shiftSize(delta) {
-        var idx = Math.max(0, Math.min(TEXT_SIZES.length - 1, getSizeIndex() + delta));
-        store.set(TEXT_SIZE_KEY, idx);
-        document.documentElement.style.setProperty('--text-size', TEXT_SIZES[idx] + 'px');
-        syncTextSizeButtons();
+        setSize(nextSize(currentSize(), delta));
+    }
+
+    /* The default is not stored, so the page follows base.css. */
+    function setSize(px) {
+        var html = document.documentElement;
+        lastSize = px;
+        if (px === SIZES.base) {
+            store.remove(TEXT_SIZE_KEY);
+            html.style.removeProperty('--text-size');
+        } else {
+            store.set(TEXT_SIZE_KEY, String(px));
+            html.style.setProperty('--text-size', px + 'px');
+        }
+        syncTextSizeButtons(true);
     }
 
     /* Boolean toggles (focus-mode, reduce-motion) -------------------- */
@@ -159,15 +189,30 @@
 
     function syncToggleButton(storageKey, attrName) {
         var btn = document.querySelector('[data-action="' + storageKey + '"]');
-        if (btn) btn.classList.toggle('is-active', document.documentElement.hasAttribute(attrName));
+        if (!btn) return;
+        var on = document.documentElement.hasAttribute(attrName);
+        btn.classList.toggle('is-active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     }
 
-    function syncTextSizeButtons() {
-        var idx     = getSizeIndex();
+    /* At an end of the range a step button says it does nothing, but is
+       not `disabled`: a disabled button gives up focus, and a reader
+       pressing A+ to the largest size was left on the page behind the
+       panel, outside its Tab loop. nextSize stops at the ends, so a press
+       there is harmless. Between the buttons, the size as a share of the
+       default, which resets it; a change is announced (`announce`), the
+       size at load is not. */
+    function syncTextSizeButtons(announce) {
+        var px      = currentSize();
         var smaller = document.querySelector('[data-action="text-smaller"]');
         var larger  = document.querySelector('[data-action="text-larger"]');
-        if (smaller) smaller.disabled = (idx === 0);
-        if (larger)  larger.disabled  = (idx === TEXT_SIZES.length - 1);
+        var value   = document.querySelector('[data-text-size]');
+        var status  = document.querySelector('[data-text-size-status]');
+        var pct     = Math.round(px / SIZES.base * 100) + '%';
+        if (smaller) smaller.setAttribute('aria-disabled', nextSize(px, -1) === px ? 'true' : 'false');
+        if (larger)  larger.setAttribute('aria-disabled', nextSize(px, +1) === px ? 'true' : 'false');
+        if (value)   value.textContent = pct;
+        if (status && announce) status.textContent = 'Text size ' + pct;
     }
 
     document.addEventListener('DOMContentLoaded', init);

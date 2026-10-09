@@ -44,6 +44,22 @@
         }
     };
 
+    /* The reader's text size (the settings panel; theme.js restores it
+       before the first paint): seven sizes, 17 to 29px in steps of 2,
+       around base.css's 23px. Stored as px, and only when not the
+       default; a stored 0, 1 or 2 is the earlier three-size scale
+       (20/23/26px), read as those sizes. Anything else is no choice. */
+    lnUtils.TEXT_SIZE = { min: 17, max: 29, step: 2, base: 23, legacy: [20, 23, 26] };
+
+    lnUtils.storedTextSize = function () {
+        var T   = lnUtils.TEXT_SIZE;
+        var raw = lnUtils.safeStorage.get('text-size');
+        if (raw === null || !/^\d{1,2}$/.test(raw)) return null;
+        var n = parseInt(raw, 10);
+        if (n < T.legacy.length) return T.legacy[n];
+        return (n >= T.min && n <= T.max) ? n : null;
+    };
+
     /* The page's identity for anything stored per-URL (audit C03).
 
        A directory-routed page — every content/<section>/<slug>/index.md —

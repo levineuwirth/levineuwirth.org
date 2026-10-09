@@ -1,14 +1,16 @@
 """axe-core per route x viewport x theme.
-usage: python axe_run.py <browser> <outname> <themes comma> <viewports comma e.g. 1440x1000,375x812> [route ...]
+usage: python axe_run.py <browser> <outname> <themes comma> <viewports comma e.g. 1440x1000,375x812> [--text-size=29] [route ...]
 """
 import sys, json, time
 from playwright.sync_api import sync_playwright
 from lib import *
 
 browser_name, outname, themes, vps = sys.argv[1], sys.argv[2], sys.argv[3].split(','), sys.argv[4].split(',')
-only = set(sys.argv[5:])
+opts, routes = options(sys.argv[5:])
+only = set(routes)
+TEXT_SIZE = int(opts['text-size']) if 'text-size' in opts else None
 BASE = f'http://127.0.0.1:{PORT_NONE}'
-AXE = os.path.join(HERE, 'axe.min.js')   # axe-core 4.13.0; gitignored, see README.md
+AXE = os.path.join(HERE, 'axe.min.js')   # the version axe-version records; gitignored, see README.md
 
 AXE_OPTS = {
     'runOnly': {'type': 'tag', 'values': ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice']},
@@ -44,6 +46,8 @@ def run():
                 ctx = browser.new_context(viewport={'width': w, 'height': h}, bypass_csp=True,
                                           reduced_motion='reduce')
                 ctx.add_init_script(THEME_INIT % theme)
+                if TEXT_SIZE:
+                    ctx.add_init_script(TEXT_SIZE_INIT % TEXT_SIZE)
                 offline(ctx)
                 page = ctx.new_page()
                 for name, path in ROUTES:

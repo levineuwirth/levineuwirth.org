@@ -8,7 +8,6 @@
    the synchronous bootstrap.
 */
 (function () {
-    var TEXT_SIZES = [20, 23, 26];
     var store = window.lnUtils && window.lnUtils.safeStorage;
     function safeGet(key) { return store ? store.get(key) : null; }
 
@@ -18,10 +17,11 @@
         document.documentElement.setAttribute('data-theme', storedTheme);
     }
 
-    /* Text size */
-    var storedSize = parseInt(safeGet('text-size'), 10);
-    if (!isNaN(storedSize) && storedSize >= 0 && storedSize < TEXT_SIZES.length) {
-        document.documentElement.style.setProperty('--text-size', TEXT_SIZES[storedSize] + 'px');
+    /* Text size: the reader's choice, read as settings.js reads it. */
+    var size = window.lnUtils && window.lnUtils.storedTextSize
+        ? window.lnUtils.storedTextSize() : null;
+    if (size !== null) {
+        document.documentElement.style.setProperty('--text-size', size + 'px');
     }
 
     /* Focus mode */

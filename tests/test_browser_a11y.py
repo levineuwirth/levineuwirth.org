@@ -4,7 +4,8 @@ tools/browser/axe_run.py runs axe-core (the version tools/browser/
 axe-version records; WCAG 2.0-2.2 A and AA rules and best practices) on
 every route but PDF.js's viewer (a vendored application, not the site's
 markup; axe_run.py's SKIP), at two widths in the light and dark themes,
-in Chromium; tools/browser/kbd_run.py walks the first forty Tab stops of
+and in the light theme with the settings panel's smallest and largest
+text (17 and 29px), in Chromium; tools/browser/kbd_run.py walks the first forty Tab stops of
 the 16 pages a reader moves through by keyboard (its KROUTES), at two
 widths, in Chromium and Firefox. Both run offline against serve.py, and
 each report must hold a record for every page and variant asked of it.
@@ -39,6 +40,7 @@ SHARDS = 3
 THEMES = ("light", "dark")
 VIEWPORTS = ("1440x1000", "375x812")
 AXE_ROUTES = [r for r in ROUTES if r not in harness_constant("axe_run.py", "SKIP")]
+TEXT_SIZES = (17, 29)       # the settings panel's ends (lnUtils.TEXT_SIZE)
 KBD_ROUTES = harness_constant("kbd_run.py", "KROUTES")
 KBD_WIDTHS = [w for w, _ in harness_constant("kbd_run.py", "VIEWPORTS")]
 
@@ -57,15 +59,23 @@ class Accessibility(unittest.TestCase):
         run_harness(cls, base, out,
                     [["axe_run.py", "chromium", f"axe-{i}.json", ",".join(THEMES),
                       ",".join(VIEWPORTS), *names[i::SHARDS]] for i in range(SHARDS)]
+                    + [["axe_run.py", "chromium", f"axe-{px}px.json", "light", ",".join(VIEWPORTS),
+                        f"--text-size={px}"] for px in TEXT_SIZES]
                     + [["kbd_run.py", b, f"kbd-{b}.json"] for b in BROWSERS])
         cls.axe = {}
         for i in range(SHARDS):
             cls.axe.update(json.loads((out / f"axe-{i}.json").read_text()))
+        # Each a variant of its route like a width or a theme: route|vp|theme|size.
+        cls.axe_sizes = {px: json.loads((out / f"axe-{px}px.json").read_text()) for px in TEXT_SIZES}
+        for px, report in cls.axe_sizes.items():
+            cls.axe.update({f"{key}|{px}px": result for key, result in report.items()})
         cls.kbd = {b: json.loads((out / f"kbd-{b}.json").read_text()) for b in BROWSERS}
 
     def test_axe_against_the_known_issues(self) -> None:
         assert_complete(self, self.axe, {f"{r}|{vp}|{t}" for r in AXE_ROUTES
-                                         for vp in VIEWPORTS for t in THEMES}, "axe")
+                                         for vp in VIEWPORTS for t in THEMES}
+                        | {f"{r}|{vp}|light|{px}px" for r in AXE_ROUTES
+                           for vp in VIEWPORTS for px in TEXT_SIZES}, "axe")
         found = defaultdict(dict)    # route -> rule -> most elements in any variant
         detail = {}                  # (route, rule) -> what axe said, for the message
         for key, result in self.axe.items():

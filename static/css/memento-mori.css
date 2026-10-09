@@ -261,7 +261,9 @@
 
 .countdown-value {
     font-family: var(--font-mono);
-    font-size: clamp(1.6rem, 5vw, 2.8rem);
+    /* A thirteen-figure number cannot wrap: no wider than the screen
+       allows, or at the largest text size it ran 75px off a phone. */
+    font-size: min(clamp(1.6rem, 5vw, 2.8rem), 9vw);
     font-weight: 400;
     color: var(--text);
     letter-spacing: -0.02em;
