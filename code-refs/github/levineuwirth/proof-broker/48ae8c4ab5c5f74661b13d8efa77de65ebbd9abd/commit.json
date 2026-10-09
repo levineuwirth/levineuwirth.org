@@ -1,0 +1,24 @@
+{
+ "sha": "48ae8c4ab5c5f74661b13d8efa77de65ebbd9abd",
+ "message": "Merge pull request #103 from levineuwirth/repo/linguist-vendored-html\n\nrepo: mark experiment HTML as vendored",
+ "author": "Levi Neuwirth",
+ "date": "2026-10-09T09:33:10Z",
+ "parents": [
+  "2eed25306046dbe24331763654b450fca74a3e7a",
+  "03c1ccf445cd87a57447ea3545012acbe42c2468"
+ ],
+ "stats": {
+  "total": 2,
+  "additions": 2,
+  "deletions": 0
+ },
+ "files_total": 1,
+ "files": [
+  {
+   "filename": ".gitattributes",
+   "status": "added",
+   "additions": 2,
+   "deletions": 0
+  }
+ ]
+}
