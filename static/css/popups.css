@@ -7,6 +7,13 @@
 
 .link-popup {
     position: absolute;
+    /* At the page's corner until placed. Appended last in <body> with no
+       position, a hidden popup sat after the footer and made the page
+       13px taller; placed on show, the page shrank, a reader at its foot
+       was pulled up, the pointer left the link, and the popup hid (the
+       footer's signature, in Firefox). positionPopup sets both. */
+    top: 0;
+    left: 0;
     z-index: 500;
     max-width: 420px;
     min-width: 200px;

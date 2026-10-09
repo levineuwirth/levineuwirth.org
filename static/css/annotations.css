@@ -66,6 +66,9 @@ mark.user-annotation:hover { filter: brightness(0.80); }
 
 .ann-tooltip {
     position: absolute;
+    /* At the page's corner until placed, not after the footer (popups.css). */
+    top: 0;
+    left: 0;
     z-index: 750;
     min-width: 8rem;
     max-width: 15rem;
@@ -137,6 +140,9 @@ mark.user-annotation:hover { filter: brightness(0.80); }
 
 .ann-picker {
     position: absolute;
+    /* At the page's corner until placed, not after the footer (popups.css). */
+    top: 0;
+    left: 0;
     z-index: 760;
     background: var(--text);
     color: var(--bg);

@@ -38,6 +38,7 @@
     var showTimer    = null;
     var hideTimer    = null;
     var activeTarget = null;
+    var returning    = false;   /* focus going back to a link on Escape: not a new visit */
     var cache        = Object.create(null);   /* url → html; only successful results stored */
     var annotations  = null;                  /* null = not yet loaded */
 
@@ -54,10 +55,20 @@
         popup.className = 'link-popup';
         popup.setAttribute('aria-live', 'polite');
         popup.setAttribute('aria-hidden', 'true');
+        /* Inert while hidden. The popup sits last in <body>, just after
+           the footer, so Tab from the footer's last link (the signature,
+           whose focus opens its popup) went into it, and Firefox makes its
+           scrollable <pre> a stop: the popup then hid around the focus. */
+        popup.inert = true;
         document.body.appendChild(popup);
 
         popup.addEventListener('mouseenter', cancelHide);
         popup.addEventListener('mouseleave', scheduleHide);
+        /* Focus inside keeps it open, as the pointer does. */
+        popup.addEventListener('focusin', cancelHide);
+        popup.addEventListener('focusout', function (e) {
+            if (!popup.contains(e.relatedTarget)) scheduleHide();
+        });
 
         /* Escape dismisses the popup at once, and a pending one with it;
            it stays away until the pointer or focus reaches a target anew
@@ -65,7 +76,16 @@
            already did this. Other Escape handlers still see the key. */
         document.addEventListener('keydown', function (e) {
             if (e.key !== 'Escape' || !activeTarget) return;
+            /* From inside the popup, back to the link that opened it, without
+               that focus opening it again (it reappeared after the show
+               delay). */
+            var back = popup.contains(document.activeElement) ? activeTarget : null;
             hideNow();
+            if (back) {
+                returning = true;
+                back.focus();
+                returning = false;
+            }
         });
 
         loadAnnotations().then(function () {
@@ -77,6 +97,9 @@
        shown on hover for filter labels, metadata strip items, etc. */
     var EP_DEFS = {
         status:       'A controlled vocabulary describing where the work stands: Draft, Working model, Durable, Refined, Superseded, or Deprecated.',
+        /* templates/partials/metadata-header.html tags this one too; it
+           had no entry, so hovering it showed nothing. After the colophon. */
+        'peer-status': 'The external review state: unreviewed, under review, peer reviewed, published, or retracted. Distinct from status, the author\u2019s own position: a piece can be Durable and unreviewed at the same time.',
         confidence:   'An integer from 0\u2013100, representing the author\u2019s credence in the central thesis.',
         importance:   'How much the author thinks this matters, on a 1\u20135 dot scale. Useful for orienting a reader who has limited time.',
         evidence:     'How well-evidenced the claims are, on a 1\u20135 scale. High importance and low evidence indicates a speculative position.',
@@ -235,9 +258,12 @@
            listeners on already-bound nodes. */
         if (el.dataset.popupBound === '1') return;
         el.dataset.popupBound = '1';
-        el.addEventListener('mouseenter', function () { scheduleShow(el, provider); });
+        el.addEventListener('mouseenter', function () {
+            /* Pointing elsewhere does not replace a popup the keyboard is in. */
+            if (!popup.contains(document.activeElement)) scheduleShow(el, provider);
+        });
         el.addEventListener('mouseleave', scheduleHide);
-        el.addEventListener('focus',      function () { scheduleShow(el, provider); });
+        el.addEventListener('focus',      function () { if (!returning) scheduleShow(el, provider); });
         el.addEventListener('blur',       scheduleHide);
     }
 
@@ -274,6 +300,7 @@
                 placeSourceMark(popup);
                 popup.classList.add('is-visible');
                 popup.setAttribute('aria-hidden', 'false');
+                popup.inert = false;
                 /* Images with width/height attrs reserve their space
                    before load; one without them grows the popup after
                    positioning and can push it past the viewport edge.
@@ -291,9 +318,25 @@
         }, SHOW_DELAY);
     }
 
+    /* Shown until hover *and* focus are gone (WCAG 1.4.13): not hidden
+       while focus is inside the popup, nor while the keyboard is on the
+       link that opened it. The pointer leaving used to hide a popup the
+       keyboard was reading, inert around its focus. A link focused by a
+       click is not :focus-visible, and lets its popup go. */
+    function stillWanted() {
+        var a = document.activeElement;
+        if (!a || !activeTarget) return false;
+        if (popup.contains(a)) return true;
+        try { return a === activeTarget && a.matches(':focus-visible'); }
+        catch (_) { return false; }
+    }
+
     function scheduleHide() {
         clearTimeout(showTimer);
-        hideTimer = setTimeout(hideNow, HIDE_DELAY);
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(function () {
+            if (!stillWanted()) hideNow();
+        }, HIDE_DELAY);
     }
 
     /* A provider still loading finds activeTarget changed and shows nothing. */
@@ -302,6 +345,7 @@
         clearTimeout(hideTimer);
         popup.classList.remove('is-visible');
         popup.setAttribute('aria-hidden', 'true');
+        popup.inert = true;
         activeTarget = null;
     }
 
@@ -1006,7 +1050,8 @@
         var term = target.dataset.epTerm;
         var def  = term && EP_DEFS[term];
         if (!def) return Promise.resolve(null);
-        var label = term.charAt(0).toUpperCase() + term.slice(1);
+        var words = term.replace(/-/g, ' ');           /* peer-status: "Peer status" */
+        var label = words.charAt(0).toUpperCase() + words.slice(1);
         return Promise.resolve(
             '<div class="popup-ep-term">'
             + '<div class="popup-source" data-popup-source="colophon">'

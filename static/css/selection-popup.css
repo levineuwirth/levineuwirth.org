@@ -9,6 +9,9 @@
 
 .selection-popup {
     position: absolute;
+    /* At the page's corner until placed, not after the footer (popups.css). */
+    top: 0;
+    left: 0;
     z-index: 700;
     display: flex;
     /* Rows where the window is narrower than the buttons: on a phone
