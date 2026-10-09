@@ -1,15 +1,9 @@
 /* now.js — Keep the Current page's "Last updated" relative phrase
    honest.
 
-   build/Now.hs renders `.now-stamp-relative` ("3 days ago") at build
-   time, relative to the build machine's clock. A page served days
-   later from cache/CDN would then lie. We recompute the phrase in the
-   browser from the `<time datetime>` attribute (an unambiguous
-   YYYY-MM-DD), against the visitor's own clock.
-
-   The bucket thresholds below mirror `relativeTime` in build/Now.hs
-   exactly — keep the two in sync. The server-rendered text remains the
-   no-JS fallback and is only replaced once we've recomputed.
+   The static page carries only the absolute `<time datetime>` date.
+   Add the relative phrase in the browser against the visitor's clock;
+   without JavaScript the absolute date remains accurate between builds.
 
    Bucket table (days = whole calendar days elapsed):
 
@@ -53,7 +47,7 @@
 
         // Calendar days between the stamp's date and the visitor's own
         // (lnUtils.isoDay/localDay, shared with the date popups). Without
-        // utils.js, or with an unparseable date, the SSR fallback stays.
+        // utils.js, or with an unparseable date, only the absolute date stays.
         var u = window.lnUtils;
         if (!u || !u.isoDay) return;
         var then = u.isoDay(timeEl.getAttribute('datetime'));

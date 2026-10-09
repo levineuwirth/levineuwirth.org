@@ -2,8 +2,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 -- | Now page: loads data/now.yaml and renders the active-projects view
 -- and the recently-shipped archive for /current.html. Page-level
--- "Last updated" stamp is exposed as a context field; relative time
--- ("4 days ago") is computed at build time from getCurrentTime.
+-- "Last updated" stamp is exposed as an absolute date; now.js adds
+-- relative time in the browser, so it cannot become stale between builds.
 module Now
     ( nowCtx
     , nowLastUpdated
@@ -240,37 +240,6 @@ renderShippedAll items = concat
     sorted = sortBy (comparing (Down . nsCompleted)) items
 
 -- ---------------------------------------------------------------------------
--- Date formatters — runs at build time
--- ---------------------------------------------------------------------------
-
-relativeTime :: Day -> String -> String
-relativeTime today iso =
-    case parseIsoDate iso :: Maybe Day of
-        Nothing -> ""
-        Just d  -> bucket (diffDays today d)
-  where
-    -- Mirrors static/js/now.js:relative exactly. The two must agree: the
-    -- server renders this string into the page and the script replaces it
-    -- on load, so a disagreement shows up as text that changes under the
-    -- reader for no reason.
-    --
-    -- The week bucket runs to 30, not 28 (smaller finding 2): at 28 days
-    -- the old threshold handed over to `div 30`, which answered "0 months
-    -- ago". The month bucket is capped at 11 for the same reason at the
-    -- other end — day 360 is `div 30` = 12, which would read "12 months
-    -- ago" the day before "1 year ago".
-    bucket n
-        | n <  0    = ""
-        | n == 0    = "today"
-        | n == 1    = "yesterday"
-        | n <  7    = show n ++ " days ago"
-        | n < 30    = pluralize (n `div` 7) "week"
-        | n < 365   = pluralize (min 11 (n `div` 30)) "month"
-        | otherwise = pluralize (n `div` 365) "year"
-    pluralize 1 unit = "1 " ++ unit ++ " ago"
-    pluralize k unit = show k ++ " " ++ unit ++ "s ago"
-
--- ---------------------------------------------------------------------------
 -- Load
 -- ---------------------------------------------------------------------------
 
@@ -308,15 +277,6 @@ nowCtx =
     constField "now" "true"
     <> field "now-last-updated" (\_ -> nowLastUpdated)
     <> field "now-last-updated-display" (\_ -> isoToWriterly . nLastUpdated <$> loadNow)
-    <> field "now-last-updated-relative" (\_ -> do
-        doc  <- loadNow
-        nowT <- unsafeCompiler getCurrentTime
-        let today = utctDay nowT
-            rel   = relativeTime today (nLastUpdated doc)
-        if null rel
-            then noResult "no relative time"
-            else return rel
-      )
     <> field "now-entries-html" (\_ -> do
         doc  <- loadNow
         nowT <- unsafeCompiler getCurrentTime

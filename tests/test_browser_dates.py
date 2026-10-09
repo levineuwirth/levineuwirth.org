@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import tempfile
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from tests._browser import (BROWSERS, check_site, enforcing_csp, require_playwright,
@@ -29,7 +29,7 @@ PAGE = """<!doctype html>
 <script src="/js/now.js" defer></script>
 </head><body><main id="markdownBody">
 <p class="now-stamp">Updated <time class="now-stamp-date" datetime="2026-10-01">1 October 2026</time>
-<span class="now-stamp-relative">as rendered</span></p>
+</p>
 <p><span id="single" data-date-start="2026-10-01">1 October 2026</span></p>
 <p><span id="range" data-date-start="2026-09-01" data-date-end="2026-09-29">September</span></p>
 </main></body></html>
@@ -91,6 +91,31 @@ class RelativeDates(unittest.TestCase):
         except Exception:
             return None
         return shown.inner_text().strip()
+
+    def test_current_age_between_builds(self) -> None:
+        for name, browser in self.browsers.items():
+            with self.subTest(browser=name):
+                context = browser.new_context(java_script_enabled=False)
+                try:
+                    page = context.new_page()
+                    page.goto(self.base + "/current.html")
+                    stamp = page.locator(".now-stamp-date").get_attribute("datetime")
+                    self.assertTrue(stamp)
+                    self.expect(page.locator(".now-stamp-relative")).to_have_count(0)
+                finally:
+                    context.close()
+                # The same built HTML supplies a fresh age on later visits.
+                for days, phrase in [(1, "yesterday"), (8, "1 week ago")]:
+                    context = browser.new_context(timezone_id="Europe/Copenhagen")
+                    try:
+                        context.clock.set_fixed_time(
+                            datetime.fromisoformat(stamp + "T12:00:00+02:00")
+                            + timedelta(days=days))
+                        page = context.new_page()
+                        page.goto(self.base + "/current.html")
+                        self.expect(page.locator(".now-stamp-relative")).to_have_text(phrase)
+                    finally:
+                        context.close()
 
     def test_phrases_in_each_time_zone(self) -> None:
         for browser in BROWSERS:
