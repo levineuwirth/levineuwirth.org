@@ -54,7 +54,7 @@ server, and `BROWSER_OFFLINE=1` refuses every request that would leave it.
 | script | checks |
 |---|---|
 | `serve.py` | serves `_site/` as the production vhost does: `try_files`, the internal 404 page, `.gz`/`.br` sidecars and Range, the security and framing headers, a given CSP (enforcing or report-only), `/proxy/*` → 404, `/csp-report` logged; with `--fixtures DIR` (e.g. `fixture/`), also `/__fixture/` from that directory |
-| `csp_run.py` | per route: CSP violations, console and page errors, element load errors, failed requests, feature probes (PDF.js pages, thumbnails and print among them) |
+| `csp_run.py` | per route: CSP violations, console and page errors, element load errors, failed requests, feature probes (PDF.js pages, thumbnails and print among them); with `--base=URL`, a live site, sending no CSP report (`lib.suppress_reports`) |
 | `interact_run.py` | keyboard interaction: settings, lightbox, slideshow, math gallery, popups, portals, filters |
 | `kbd_run.py` | tab order, focus visibility, skip link, traps, Escape, on the 16 pages of its `KROUTES` |
 | `axe_run.py` | axe-core per route (all but PDF.js's viewer, its `SKIP`), viewport and theme |
@@ -64,5 +64,5 @@ server, and `BROWSER_OFFLINE=1` refuses every request that would leave it.
 | `perf_run.py` | requests, bytes, LCP and CLS on the local server, and the other origins each page asks for, on the 21 pages of its `PROUTES` |
 | `popup_run.py` | every link-popup provider |
 | `printcheck.py` | PDF.js thumbnails and print images under the CSP |
-| `prod_smoke.py` | a few checks against production; aborts `/csp-report` so test traffic never reaches the report log |
+| `prod_smoke.py` | a few checks against production; `lib.suppress_reports`, so test traffic never reaches the report log (aborting `/csp-report` alone let Firefox's through) |
 | `cls_check.py`, `footer_check.py` | layout shift, and the footer build time from `/build/time.txt` |

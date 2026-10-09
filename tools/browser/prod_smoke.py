@@ -3,7 +3,7 @@ from lib import *
 with sync_playwright() as p:
     b = p.chromium.launch()
     ctx = b.new_context(viewport={'width': 1440, 'height': 1000})
-    ctx.route('**/csp-report', lambda route: route.abort())   # keep test traffic out of the author's report log
+    suppress_reports(ctx)   # keep test traffic out of the author's report log
     page = ctx.new_page()
     cons = []
     page.on('console', lambda m: cons.append(m.text[:220]))

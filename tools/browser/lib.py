@@ -106,6 +106,40 @@ def offline(ctx):
         ctx.route(re.compile(r'^(?!http://127\.0\.0\.1[:/])'), lambda route: route.abort())
 
 
+POLICY_HEADERS = ('content-security-policy', 'content-security-policy-report-only')
+
+
+def suppress_reports(ctx):
+    """No CSP report leaves the browser, for a run against a site whose
+    report log is someone's evidence (production). Aborting /csp-report
+    is not enough: Chromium's reports pass through routing, but Firefox
+    sends its own where routing never sees them. So each document's
+    policies lose their report-uri and report-to before the browser reads
+    them: still enforced as served, and a violation still fires the
+    page's securitypolicyviolation event (CSP_INIT records it), with
+    nowhere to send a report. Several policies of one name go back as one
+    header, comma-separated, as CSP reads them. /csp-report is aborted
+    too, in case a report finds another way."""
+    def strip(route):
+        if route.request.resource_type != 'document':
+            route.continue_()
+            return
+        resp = route.fetch()
+        headers = {}
+        for h in resp.headers_array:
+            name, value = h['name'].lower(), h['value']
+            if name in POLICY_HEADERS:
+                value = re.sub(r'\s*;?\s*report-(?:uri|to)\s+[^;,]*', '', value).strip().rstrip(';')
+                headers[name] = headers[name] + ', ' + value if name in headers else value
+            elif name in headers:
+                headers[name] += ', ' + value
+            else:
+                headers[name] = value
+        route.fulfill(response=resp, headers=headers)
+    ctx.route('**/*', strip)
+    ctx.route('**/csp-report', lambda route: route.abort())
+
+
 def dump(name, obj):
     p = os.path.join(OUT, name)
     with open(p, 'w') as f:

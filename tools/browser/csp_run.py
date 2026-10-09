@@ -1,14 +1,22 @@
 """CSP enforcement + console + failed requests + feature probes per route.
 
-usage: python csp_run.py <chromium|firefox> <port> <outname> [route-name ...]
+usage: python csp_run.py <chromium|firefox> <port> <outname> [--base=URL] [route-name ...]
+
+With --base (e.g. https://levineuwirth.org) it sweeps that site instead of
+serve.py on <port>, the site's own CSP in force, and sends no CSP report
+(lib.suppress_reports): test traffic must never reach the production
+report log. Violations are still recorded, from the page's
+securitypolicyviolation events.
 """
 import sys, json, time, re, os
 from playwright.sync_api import sync_playwright
 from lib import *
 
 browser_name, port, outname = sys.argv[1], int(sys.argv[2]), sys.argv[3]
-only = set(sys.argv[4:])
-BASE = f'http://127.0.0.1:{port}'
+opts, routes = options(sys.argv[4:])
+only = set(routes)
+BASE = opts.get('base', f'http://127.0.0.1:{port}').rstrip('/')
+LIVE = 'base' in opts      # any site named outright gets no reports from us
 
 
 def features(page, name):
@@ -260,6 +268,8 @@ def run():
                 continue
             ctx = browser.new_context(viewport={'width': 1440, 'height': 1000})
             ctx.add_init_script(CSP_INIT)
+            if LIVE:
+                suppress_reports(ctx)
             page = ctx.new_page()
             rec = {'path': path, 'console': [], 'pageerrors': [], 'failed': [], 'bad_status': [], 'requests': 0}
             page.on('console', lambda m, rec=rec: rec['console'].append({'type': m.type, 'text': m.text[:400], 'loc': (m.location or {}).get('url', '')}) if m.type in ('error', 'warning') else None)
