@@ -39,8 +39,7 @@ and mathematics at Brown.
 ## Correspondence
 
 If this work connects with a question you are pursuing, I would be glad to
-hear from you. [Email me](mailto:ln@levineuwirth.org) with a little context,
-or read about [research conversations and correspondence](/meet/).
+hear from you. [Email me](mailto:ln@levineuwirth.org) with a little context.
 
 ## Selected work
 
