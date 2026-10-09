@@ -28,14 +28,25 @@
         const pageTitleEl = document.querySelector('#markdownBody .page-title');
         const pageTitle   = pageTitleEl ? pageTitleEl.textContent.trim() : 'Contents';
 
+        /* The entry for the section being read is marked for assistive
+           technology too (aria-current): the class alone was visible only. */
+        function mark(id) {
+            links.forEach(function (a) {
+                const on = a.dataset.target === id;
+                a.classList.toggle('is-active', on);
+                if (on) a.setAttribute('aria-current', 'true');
+                else a.removeAttribute('aria-current');
+            });
+        }
+
         function activateTitle() {
-            links.forEach(a => a.classList.remove('is-active'));
+            mark(null);
             if (label) label.textContent = pageTitle;
             if (mobileLabel) mobileLabel.textContent = pageTitle;
         }
 
         function activate(id) {
-            links.forEach(a => a.classList.toggle('is-active', a.dataset.target === id));
+            mark(id);
             const activeLink = linkMap.get(id);
             /* data-label is the heading as plain text: a link's own text
                would carry KaTeX's markup for any math in it. */
