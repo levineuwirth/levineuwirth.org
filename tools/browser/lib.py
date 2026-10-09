@@ -52,7 +52,6 @@ ROUTES = [
     ('archive-pdf', '/archive/nist-fips-203/'),
     ('library', '/library.html'),
     ('work', '/work.html'),
-    ('meet', '/meet/'),
     ('new', '/new.html'),
     ('memento', '/memento-mori.html'),
     ('build', '/build/'),
