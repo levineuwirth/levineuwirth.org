@@ -3,6 +3,7 @@ title: "Symphony No. 6"
 date: 2026-09-29
 completed: 23 December 2025
 year: 2025
+opus: '18'
 composed: "August – December 2025"
 tags: [music]
 instrumentation: "orchestra"
