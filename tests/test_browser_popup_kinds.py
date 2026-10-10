@@ -11,7 +11,8 @@ leaving serve.py are refused and fail the test.
 
 Checked: every term a page tags has its definition (peer-status had none,
 and showed nothing); the figure previews the strip and the expanded block;
-the signature popup shows the page's .sig, by pointer and by keyboard,
+the signature popup shows the page's .sig (answered here: signing is a
+deploy step, so a built _site has none), by pointer and by keyboard,
 and stays while pointed at (a hidden popup after the footer made the page
 taller, and placing it pulled a reader at the foot off the link); the
 revision note gives the dates and the note the card carries; a pointer
@@ -34,12 +35,19 @@ from pathlib import Path
 
 from tests._browser import (BROWSERS, FakeNetwork, check_site, enforcing_csp, require_playwright,
                             requires_browser, site_server)
+from tests._browser import fake_answer as answer
 
 ESSAY = "/essays/proof-broker/"
 PEER_REVIEWED = "/essays/beyond-comorbidity-indices/"   # carries a peer-status
 LIST = "/new.html"
 
 POPUP = ".link-popup.is-visible"
+
+# The pages' .sig files come from signing at deploy (tools/sign-site.sh), not
+# from `make build`, so a freshly built _site has none: the signature popup
+# is answered here, as a same-origin request.
+SIGNATURE = ("-----BEGIN PGP SIGNATURE-----\n\niHUEABYKAB0WIQTJpCpvrURPvlZv1zhTG9wcwnBwZgUC"
+             "\n-----END PGP SIGNATURE-----\n")
 INSIDE = """() => { const r = document.querySelector('.link-popup').getBoundingClientRect();
     return r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight; }"""
 
@@ -64,7 +72,8 @@ class PopupKinds(unittest.TestCase):
         context = self.browsers[browser].new_context(viewport={"width": width, "height": 900},
                                                      reduced_motion="reduce")
         self.addCleanup(context.close)
-        net = FakeNetwork(context, self.base, {}, {})
+        net = FakeNetwork(context, self.base, {"sig": r"\.html\.sig$"},
+                          {"sig": answer(SIGNATURE, "application/pgp-signature")}, local=r".+\.html\.sig$")
         page = context.new_page()
         errors = []
         page.on("pageerror", lambda e: errors.append(str(e)))

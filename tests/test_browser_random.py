@@ -121,7 +121,9 @@ class RandomLink(unittest.TestCase):
                 with context.expect_page(timeout=10000) as opened:
                     page.click(LINK, modifiers=["ControlOrMeta"])
                 tab = opened.value
-                tab.wait_for_load_state()
+                # A new tab starts at about:blank: its load state can be that
+                # page's, before it navigates.
+                tab.wait_for_url(f"**{FALLBACK}", timeout=10000)
                 self.assertEqual(urlsplit(tab.url).path, FALLBACK)
                 self.assertEqual(urlsplit(page.url).path, "/")
 
