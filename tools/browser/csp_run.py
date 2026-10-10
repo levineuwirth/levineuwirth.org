@@ -105,6 +105,24 @@ def features(page, name):
     return out
 
 
+# Until the popup is shown with its images loaded, or `ms` have passed: its
+# requests are what meet the policy. A fixed 2.6 s per kind was most of an
+# essay's time. Polled in the page: wait_for_function's string predicate is
+# an eval, which the enforcing policy refuses.
+POPUP_READY = r"""
+ms => new Promise(done => {
+  const t0 = performance.now();
+  (function tick() {
+    const p = document.querySelector('.link-popup');
+    const ready = !!p && p.classList.contains('is-visible')
+      && [...p.querySelectorAll('img')].every(i => i.complete);
+    if (ready || performance.now() - t0 > ms) return done(ready);
+    setTimeout(tick, 50);
+  })();
+})
+"""
+
+
 def hover_popups(page):
     res = []
     pats = [
@@ -137,7 +155,8 @@ def hover_popups(page):
             el.scroll_into_view_if_needed(timeout=2000)
             page.mouse.move(0, 0); page.wait_for_timeout(300)
             el.hover(timeout=2000)
-            page.wait_for_timeout(2600)
+            if page.evaluate(POPUP_READY, 2600):
+                page.wait_for_timeout(200)     # a request the popup makes once shown
             info = page.evaluate("""(() => { const p = document.querySelector('.link-popup');
                 if (!p) return null;
                 const imgs = [...p.querySelectorAll('img')].map(i => ({src: i.currentSrc || i.src, ok: i.complete && i.naturalWidth > 0}));

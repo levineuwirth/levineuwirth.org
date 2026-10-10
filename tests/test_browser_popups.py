@@ -286,7 +286,9 @@ class LinkPopups(unittest.TestCase):
                     break
                 page.wait_for_timeout(100)
             self.assertGreater(net.hits[route], before, f"{link} asked nothing of {route}")
-        page.wait_for_timeout(800)
+        # A popup is drawn within a frame of its answer, and the answer is
+        # given as soon as asked for: this is time to have shown one.
+        page.wait_for_timeout(300)
         self.expect(page.locator(".link-popup.is-visible")).to_have_count(0)
 
     @staticmethod

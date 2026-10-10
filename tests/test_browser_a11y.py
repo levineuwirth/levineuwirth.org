@@ -59,14 +59,16 @@ class Accessibility(unittest.TestCase):
         run_harness(cls, base, out,
                     [["axe_run.py", "chromium", f"axe-{i}.json", ",".join(THEMES),
                       ",".join(VIEWPORTS), *names[i::SHARDS]] for i in range(SHARDS)]
-                    + [["axe_run.py", "chromium", f"axe-{px}px.json", "light", ",".join(VIEWPORTS),
-                        f"--text-size={px}"] for px in TEXT_SIZES]
+                    + [["axe_run.py", "chromium", f"axe-{px}px-{i}.json", "light", ",".join(VIEWPORTS),
+                        f"--text-size={px}", *names[i::2]] for px in TEXT_SIZES for i in range(2)]
                     + [["kbd_run.py", b, f"kbd-{b}.json"] for b in BROWSERS])
         cls.axe = {}
         for i in range(SHARDS):
             cls.axe.update(json.loads((out / f"axe-{i}.json").read_text()))
         # Each a variant of its route like a width or a theme: route|vp|theme|size.
-        cls.axe_sizes = {px: json.loads((out / f"axe-{px}px.json").read_text()) for px in TEXT_SIZES}
+        cls.axe_sizes = {px: {k: v for i in range(2)
+                              for k, v in json.loads((out / f"axe-{px}px-{i}.json").read_text()).items()}
+                         for px in TEXT_SIZES}
         for px, report in cls.axe_sizes.items():
             cls.axe.update({f"{key}|{px}px": result for key, result in report.items()})
         cls.kbd = {b: json.loads((out / f"kbd-{b}.json").read_text()) for b in BROWSERS}

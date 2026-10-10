@@ -27,15 +27,32 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests._browser import (BROWSERS, check_site, enforcing_csp, harness_routes,
+from tests._browser import (BROWSERS, ROOT, check_site, enforcing_csp, harness_routes,
                             require_playwright, requires_browser, run_harness, site_server)
 
 ROUTES = harness_routes()
 
-# Each browser's routes are split across this many csp_run.py processes,
-# all running at once; one process alone takes about seven minutes. The
-# whole sweep gets SWEEP_SECONDS.
-SHARDS = 3
+# Each browser's routes are split across csp_run.py processes (SHARDS
+# below), all running at once; the whole sweep gets SWEEP_SECONDS.
+# Chromium's sweep costs about twice Firefox's per route, so it has more
+# shards. Routes are dealt longest first to the least loaded shard, by what
+# each cost last time (recorded below; evenly the first time): the fixed
+# thirds left one Chromium shard 222 s against others' 82-160 s.
+SHARDS = {"chromium": 4, "firefox": 2}
+COSTS = ROOT / ".browser-runs" / "csp-route-secs.json"
+
+
+def shards(browser: str, names: list[str]) -> list[list[str]]:
+    try:
+        cost = json.loads(COSTS.read_text()).get(browser, {})
+    except (OSError, ValueError):
+        cost = {}
+    load, dealt = [0.0] * SHARDS[browser], [[] for _ in range(SHARDS[browser])]
+    for name in sorted(names, key=lambda r: -cost.get(r, 10.0)):
+        i = load.index(min(load))
+        dealt[i].append(name)
+        load[i] += cost.get(name, 10.0)
+    return dealt
 SWEEP_SECONDS = 1800
 
 # The 404 route is the only one whose document is not a 200.
@@ -66,14 +83,18 @@ class CspSweep(unittest.TestCase):
         names = list(ROUTES)
         port = base.rsplit(":", 1)[1]
         # Online: this sweep is the one meant to meet the live origins.
-        run_harness(cls, base, out, [["csp_run.py", browser, port, f"{browser}-{i}.json",
-                                      *names[i::SHARDS]]
-                                     for browser in BROWSERS for i in range(SHARDS)],
+        dealt = {b: shards(b, names) for b in BROWSERS}
+        run_harness(cls, base, out, [["csp_run.py", browser, port, f"{browser}-{i}.json", *routes]
+                                     for browser in BROWSERS for i, routes in enumerate(dealt[browser])],
                     offline=False, seconds=SWEEP_SECONDS)
         cls.results = {b: {} for b in BROWSERS}
         for browser in BROWSERS:
-            for i in range(SHARDS):
+            for i in range(SHARDS[browser]):
                 cls.results[browser].update(json.loads((out / f"{browser}-{i}.json").read_text()))
+        # What each route cost, for the next sweep's shards.
+        COSTS.parent.mkdir(exist_ok=True)
+        COSTS.write_text(json.dumps({b: {r: rec.get("secs") or 0 for r, rec in cls.results[b].items()}
+                                     for b in BROWSERS}, indent=1, sort_keys=True) + "\n")
 
     def visited(self) -> list[tuple[str, str, dict]]:
         """(browser, route, record) for each route visited in each browser;

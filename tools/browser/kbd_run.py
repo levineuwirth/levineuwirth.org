@@ -67,11 +67,36 @@ UNFOCUSED_STYLE = r"""
 (el) => { const cs = getComputedStyle(el); return {outline: cs.outlineStyle + ' ' + cs.outlineWidth + ' ' + cs.outlineColor, shadow: cs.boxShadow, bg: cs.backgroundColor, td: cs.textDecorationLine, border: cs.borderBottomStyle + ' ' + cs.borderBottomWidth + ' ' + cs.borderBottomColor}; }
 """
 
+# Until the focus has finished moving the page and changing how it looks:
+# two frames in a row with the same scroll position and the focused element
+# in the same place, and no CSS transition still running on it or an
+# ancestor (section toggles fade in on focus; measured mid-fade, a loaded
+# machine reads them at opacity 0), at most 1 s. Firefox finishes scrolling
+# focus into view about 60 ms after the key, and a fixed 150 ms per Tab was
+# most of a walk's time.
+FOCUS_SETTLED = r"""
+() => new Promise(done => {
+  const end = performance.now() + 1000;
+  let last = null, still = 0;
+  const fading = a => document.getAnimations().some(an =>
+    an instanceof CSSTransition && (an.pending || an.playState === 'running')
+    && an.effect && an.effect.target && an.effect.target.contains(a));
+  (function tick() {
+    const a = document.activeElement, r = a && a.getBoundingClientRect();
+    const key = scrollX + ',' + scrollY + ',' + (r ? r.top + ',' + r.left : '');
+    if (key === last) still++; else { still = 0; last = key; }
+    if ((still >= 2 && !(a && fading(a))) || performance.now() > end) return done();
+    requestAnimationFrame(tick);
+  })();
+})
+"""
+
+
 def tab_walk(page, n=STOPS):
     stops = []
     for i in range(n):
         page.keyboard.press('Tab')
-        page.wait_for_timeout(150)   # Firefox finishes scrolling focus into view after 60 ms
+        page.evaluate(FOCUS_SETTLED)
         info = page.evaluate(FOCUS_INFO)
         if info.get('body'):
             stops.append({'i': i, 'body': True}); continue

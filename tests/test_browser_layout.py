@@ -41,6 +41,7 @@ from tests._browser import (BROWSERS, UPDATE_BASELINE, assert_complete, baseline
 
 ROUTES = harness_routes()
 OVERFLOW_WIDTHS = harness_constant("overflow_run.py", "WIDTHS")
+OVERFLOW_HALVES = (OVERFLOW_WIDTHS[:len(OVERFLOW_WIDTHS) // 2], OVERFLOW_WIDTHS[len(OVERFLOW_WIDTHS) // 2:])
 MOTION_ROUTES = harness_constant("motion_run.py", "MROUTES")
 MOTION_MODES = harness_constant("motion_run.py", "MODES")
 PERF_ROUTES = harness_constant("perf_run.py", "PROUTES")
@@ -62,14 +63,19 @@ class Layout(unittest.TestCase):
         out = tmp / "runs"
         base = cls.enterClassContext(site_server(tmp, compress=True))
         run_harness(cls, base, out,
-                    [["overflow_run.py", b, f"overflow-{b}.json"] for b in BROWSERS]
+                    # Each browser's widths in two halves, run side by side
+                    # (one run of all four was the module's slowest job).
+                    [["overflow_run.py", b, f"overflow-{b}-{i}.json", "--widths=" + ",".join(map(str, ws))]
+                     for b in BROWSERS for i, ws in enumerate(OVERFLOW_HALVES)]
                     + [["overflow_run.py", "chromium", f"overflow-{px}px.json", f"--text-size={px}",
                         "--widths=" + ",".join(map(str, TEXT_SIZE_WIDTHS))] for px in TEXT_SIZES]
                     + [["motion_run.py", b, f"motion-{b}.json"] for b in BROWSERS]
                     + [["perf_run.py", f"perf-{w}.json", str(w)] for w in WIDTHS])
         load = lambda name: json.loads((out / name).read_text())
         # (browser, text size or None for the default) -> report
-        cls.overflow = {(b, None): load(f"overflow-{b}.json") for b in BROWSERS}
+        cls.overflow = {(b, None): {k: v for i in range(len(OVERFLOW_HALVES))
+                                    for k, v in load(f"overflow-{b}-{i}.json").items()}
+                        for b in BROWSERS}
         cls.overflow.update({("chromium", px): load(f"overflow-{px}px.json") for px in TEXT_SIZES})
         cls.motion = {b: load(f"motion-{b}.json") for b in BROWSERS}
         cls.perf = {w: load(f"perf-{w}.json") for w in WIDTHS}
