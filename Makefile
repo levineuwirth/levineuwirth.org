@@ -682,7 +682,10 @@ test-clean:
 # like `validate`, so no build or deploy rewrites _site underneath them.
 # Needs the network (popups, map tiles, transformers.js). `playwright
 # install` matches the browsers to the installed Playwright and is quick
-# when they already are.
+# when they already are. The modules share nothing, so tests/run_browser.py
+# runs BROWSER_JOBS of them at once (default 3; BROWSER_JOBS=1 for one at a
+# time), longest first, each one's output whole; BROWSER_TIMINGS=1 adds the
+# report scripts' times.
 test-browser:
 	@$(WITH_LOCK) $(MAKE) --no-print-directory test-browser-locked
 
@@ -690,7 +693,7 @@ test-browser-locked:
 	@test -x $(VENV_PY) || { echo "test-browser: .venv/ is absent — run 'uv sync'." >&2; exit 1; }
 	@.venv/bin/playwright install chromium firefox
 	@$(VENV_PY) tools/browser/fetch_axe.py
-	@RUN_BROWSER_TESTS=1 $(VENV_PY) -m unittest discover -s tests -p 'test_browser_*.py' -v
+	@$(VENV_PY) tests/run_browser.py
 
 # The deployment contract, checked in one command: both test suites plus
 # the finished-artifact gate over _site/. `deploy` depends on this, so a

@@ -11,12 +11,14 @@ have changed since it was built, they fail instead of skipping.
 from __future__ import annotations
 
 import ast
+import atexit
 import json
 import os
 import re
 import signal
 import subprocess
 import sys
+import threading
 import time
 import unittest
 import urllib.error
@@ -202,20 +204,74 @@ BASELINE = ROOT / "tests" / "browser-baseline"
 UPDATE_BASELINE = os.environ.get("UPDATE_BROWSER_BASELINE") == "1"
 
 
-def stop_process(proc: subprocess.Popen) -> None:
-    """A harness script still running, with its Playwright driver: SIGTERM
-    to its process group lets the driver close the browsers it launched
-    (they run in groups of their own); SIGKILL if it does not go."""
-    if proc.poll() is not None:
-        return
+def group_alive(pgid: int) -> bool:
+    """Any process left in the group (signal 0 tests, sends nothing)."""
     try:
-        os.killpg(proc.pid, signal.SIGTERM)
-        proc.wait(timeout=15)
-    except subprocess.TimeoutExpired:
-        os.killpg(proc.pid, signal.SIGKILL)
-        proc.wait()
+        os.killpg(pgid, 0)
+        return True
     except ProcessLookupError:
-        pass
+        return False
+    except PermissionError:
+        return True
+
+
+def stop_processes(procs, grace: float | None = None) -> None:
+    """Harness scripts still running, with their Playwright drivers: SIGTERM
+    to each one's process group lets the driver close the browsers it
+    launched (they run in groups of their own); then SIGKILL for any group
+    with a process left after `grace` seconds (BROWSER_HARNESS_GRACE,
+    default 10; tests/run_browser.py sets it below its own grace, since it
+    kills a module that has not stopped by then, and a module's harness
+    scripts, in sessions of their own, only by way of this cleanup),
+    counted once for them all. The group, not its leader: a leader can exit
+    on SIGTERM and leave a child that ignores it."""
+    if grace is None:
+        grace = float(os.environ.get("BROWSER_HARNESS_GRACE", "10"))
+    groups = [p for p in procs if p.poll() is None or group_alive(p.pid)]
+    for p in groups:
+        try:
+            os.killpg(p.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+    deadline = time.monotonic() + grace
+    # poll() reaps an exited leader, which would otherwise count as one left.
+    while time.monotonic() < deadline and any(p.poll() is None or group_alive(p.pid) for p in groups):
+        time.sleep(0.1)
+    for p in groups:
+        if p.poll() is None or group_alive(p.pid):
+            try:
+                os.killpg(p.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+    for p in groups:
+        try:
+            p.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            pass
+
+
+def stop_process(proc: subprocess.Popen) -> None:
+    stop_processes([proc])
+
+
+# Every harness script this process starts, stopped when it exits however
+# it exits: a class cleanup is not run when setUpClass is interrupted, and
+# the scripts run in sessions of their own, where no signal to this
+# process's group reaches them. SIGTERM (tests/run_browser.py stopping a
+# module) is raised as KeyboardInterrupt, which unittest lets through and
+# which ends the run; SystemExit, raised inside a test, would be reported
+# as that test's error and the run would go on.
+LAUNCHED: list[subprocess.Popen] = []
+atexit.register(lambda: stop_processes(LAUNCHED))
+
+
+def _terminated(signum, frame):
+    raise KeyboardInterrupt(f"signal {signum}")
+
+
+if threading.current_thread() is threading.main_thread() \
+        and signal.getsignal(signal.SIGTERM) is signal.SIG_DFL:
+    signal.signal(signal.SIGTERM, _terminated)
 
 
 def run_harness(case, base: str, out: Path, jobs: list[list[str]], *,
@@ -232,9 +288,16 @@ def run_harness(case, base: str, out: Path, jobs: list[list[str]], *,
         proc = subprocess.Popen([sys.executable, *job], cwd=HARNESS, env=env, text=True,
                                 start_new_session=True, stdout=subprocess.DEVNULL,
                                 stderr=subprocess.PIPE)
+        LAUNCHED.append(proc)
         case.addClassCleanup(stop_process, proc)
-        running.append((" ".join(job[:2]), proc))
-    deadline = time.monotonic() + seconds
+        running.append((" ".join(job[:4]), proc))
+    start = time.monotonic()
+    deadline = start + seconds
+    # Each job's own end, for BROWSER_TIMINGS (waiting in order would not say).
+    took = {}
+    for name, proc in running:
+        threading.Thread(target=lambda n=name, p=proc: (p.wait(), took.__setitem__(n, time.monotonic() - start)),
+                         daemon=True).start()
     failed = []
     for name, proc in running:
         try:
@@ -244,6 +307,10 @@ def run_harness(case, base: str, out: Path, jobs: list[list[str]], *,
             continue
         if proc.returncode:
             failed.append(f"{name} exited {proc.returncode}:\n{err[-2000:]}")
+    if os.environ.get("BROWSER_TIMINGS") == "1":
+        print(f"\n{case.__name__}: harness jobs, slowest first:", file=sys.stderr)
+        for name, t in sorted(took.items(), key=lambda kv: -kv[1]):
+            print(f"  {t:7.1f} s  {name}", file=sys.stderr)
     if failed:
         raise AssertionError("\n\n".join(failed))
 
