@@ -3,6 +3,7 @@ title: Work
 work: true
 description: Research engineer working on technical AI assurance — verifiable inference, model evaluations, systems and cryptography.
 history:
+  - date: "2026-10-13"
   - date: "2026-10-08"
   - date: "2026-09-24"
   - date: "2026-09-23"
@@ -24,9 +25,8 @@ not be trusted. That question spans cryptography, systems, evaluations, and
 mathematics, which is roughly the shape of my background.
 
 I am a MARS V fellow with the [Cambridge AI Safety Hub](https://caish.org/mars),
-mentored by James Petrie (Future of Life Institute), and a graduate student in
-computer science and engineering at DTU. I previously studied computer science
-and mathematics at Brown.
+mentored by James Petrie (Future of Life Institute). I previously studied
+computer science and mathematics at Brown.
 
 **Open to full-time research and research-engineering positions worldwide.**
 :::
