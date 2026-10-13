@@ -63,6 +63,11 @@ presentation_sets:
     pqc-avx2: software-engineering-systems
 
 overrides:
+  education:
+    brown-scb-math-cs:
+      notes: >-
+        Individual research grant: Brown Undergraduate Teaching and Research
+        Award (UTRA), Summer 2024.
   projects:
     proof-broker:
       label: '\href{https://github.com/levineuwirth/proof-broker}{Proof Broker — Independent Research}'

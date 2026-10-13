@@ -39,6 +39,11 @@ presentation_sets:
     shu-lab-undergrad: empirical-research-engineering
 
 overrides:
+  education:
+    brown-scb-math-cs:
+      notes: >-
+        \space Individual research grant: Brown Undergraduate Teaching and Research
+        Award (UTRA), Summer 2024.
   projects:
     proof-broker:
       label: '\href{https://github.com/levineuwirth/proof-broker}{Proof Broker — Independent Research}'

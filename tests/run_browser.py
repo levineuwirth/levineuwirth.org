@@ -13,6 +13,10 @@ build lock.
     tests/run_browser.py nav toc          # some ("test_browser_" optional)
     BROWSER_JOBS=1 tests/run_browser.py   # one at a time, as before
 
+BROWSER_TIMINGS=1 adds each module's ten slowest tests (unittest
+--durations; a class's setup, where the report modules do their work, is
+not counted) and its harness jobs, slowest first.
+
 Memory: a module starts only while BROWSER_MIN_FREE_GB (default 4) is
 available. Six at once, on a machine already using most of its memory,
 left 5 GB and was stopped. With nothing running and too little memory the
@@ -138,6 +142,7 @@ def main() -> int:
     # Longest first, so the long ones do not start last; unknown ones first of all.
     todo.sort(key=lambda m: -took.get(m, float("inf")))
     env = dict(os.environ, RUN_BROWSER_TESTS="1", BROWSER_HARNESS_GRACE=f"{grace / 3:g}")
+    durations = ["--durations=10"] if os.environ.get("BROWSER_TIMINGS") == "1" else []
     running: dict[str, tuple[subprocess.Popen, float, object]] = {}
     results: dict[str, tuple[int, float]] = {}
     not_run: list[str] = []
@@ -165,7 +170,7 @@ def main() -> int:
                 low_since = None
                 m = todo.pop(0)
                 log = tempfile.TemporaryFile(mode="w+")
-                proc = subprocess.Popen([sys.executable, "-m", "unittest", "-v", f"tests.{m}"],
+                proc = subprocess.Popen([sys.executable, "-m", "unittest", "-v", *durations, f"tests.{m}"],
                                         cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT,
                                         text=True, start_new_session=True)
                 running[m] = (proc, time.monotonic(), log)
