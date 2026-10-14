@@ -149,6 +149,64 @@ class SiteDiff(unittest.TestCase):
         self.assertTrue(sitediff.compare(self.base, self.new, entries=entries).clean)
         self.assertEqual([e.used for e in entries], [0, 1])
 
+    def test_patterns_match_the_original_bytes_not_each_others_leftovers(self):
+        # Removing X from "aXb" leaves "ab", which the second pattern would
+        # then remove: the unmatched a and b must still count as a change.
+        self.write(self.base, "index.html", "<body>aXb</body>")
+        self.write(self.new, "index.html", "<body></body>")
+        entries = self.allow("- path: \"*.html\"\n  pattern: 'X'\n  reason: x\n"
+                             "- path: \"*.html\"\n  pattern: 'ab'\n  reason: ab\n")
+        self.assertEqual(sitediff.compare(self.base, self.new, entries=entries).not_permitted,
+                         [("changed", "index.html")])
+
+    def test_matching_unchanged_content_is_not_covering_a_change(self):
+        # Only the author changes. The title entry matches, on both sides, a
+        # title that did not change: it covered nothing, so --strict fails.
+        # The meta tag and the title are adjacent, so their spans touch.
+        page = '<head><meta name="author" content="A"><title>T</title></head><body></body>\n'
+        self.write(self.base, "index.html", page)
+        self.write(self.new, "index.html", page.replace('content="A"', 'content="B"'))
+        path = self.root / "allow.yaml"
+        path.write_text(
+            "- path: \"*.html\"\n  pattern: '<meta name=\"author\" content=\"[^\"]*\">'\n  reason: author\n"
+            "- path: \"*.html\"\n  pattern: '<meta [^>]*>'\n  reason: any meta tag\n"
+            "- path: \"*.html\"\n  pattern: '<title>[^<]*</title>'\n  reason: titles\n",
+            encoding="utf-8")
+        entries = sitediff.load_allowlist(path)
+        result = sitediff.compare(self.base, self.new, entries=entries)
+        self.assertTrue(result.clean)
+        self.assertEqual([e.used for e in entries], [1, 1, 0])
+        code, out = self.run_main("--allow", str(path), "--strict")
+        self.assertEqual(code, 1)
+        self.assertIn("unused:", out)
+
+    def test_a_match_beside_an_inserted_one_is_not_covering_it(self):
+        # The new meta tag lands right against the unchanged title: the two
+        # spans touch, and only the inserted one is a change.
+        self.write(self.base, "index.html", "<head><title>T</title></head>")
+        self.write(self.new, "index.html", '<head><meta name="a"><title>T</title></head>')
+        entries = self.allow("- path: \"*.html\"\n  pattern: '<meta [^>]*>'\n  reason: meta\n"
+                             "- path: \"*.html\"\n  pattern: '<title>[^<]*</title>'\n  reason: titles\n")
+        self.assertTrue(sitediff.compare(self.base, self.new, entries=entries).clean)
+        self.assertEqual([e.used for e in entries], [1, 0])
+
+    def test_overlapping_entries_are_named_for_the_change_they_share(self):
+        self.write(self.base, "index.html", '<body><meta name="author" content="A"></body>')
+        self.write(self.new, "index.html", '<body><meta name="author" content="B"></body>')
+        entries = self.allow(
+            "- path: \"*.html\"\n  pattern: '<meta name=\"author\" content=\"[^\"]*\">'\n  reason: author\n"
+            "- path: \"*.html\"\n  pattern: '<meta [^>]*>'\n  reason: any meta tag\n")
+        result = sitediff.compare(self.base, self.new, entries=entries)
+        self.assertTrue(result.clean)
+        self.assertEqual(result.shared, [("index.html", (entries[0].source, entries[1].source))])
+
+    def test_a_moved_match_is_a_change_inside_the_matches(self):
+        self.write(self.base, "index.html", "<body>aXa</body>")
+        self.write(self.new, "index.html", "<body>aaX</body>")
+        entries = self.allow("- path: \"*.html\"\n  pattern: 'X'\n  reason: x\n")
+        self.assertTrue(sitediff.compare(self.base, self.new, entries=entries).clean)
+        self.assertEqual(entries[0].used, 1)
+
     def test_strict_fails_on_an_unused_entry(self):
         path = self.root / "allow.yaml"
         path.write_text('- path: "css/*.css"\n  reason: palette\n', encoding="utf-8")

@@ -40,9 +40,14 @@ An allowlist is a YAML list of the changes a step permits:
       reason: identity meta tags (A9)
 
 A difference is permitted when entries cover it; several pattern entries
-can cover one file together. An entry that covered nothing is reported,
-and --strict makes that an error, for a step whose list means "exactly
-these changes".
+can cover one file together. Every pattern is matched against the original
+bytes, and the union of the matches is removed from both files, which must
+then be equal. An entry covers a change only where the two files differ
+inside its matches: matching unchanged text covers nothing. A change inside
+the matches of more than one entry counts for each, and is reported as
+shared, so a redundant entry shows. An entry that covered nothing is
+reported, and --strict makes that an error, for a step whose list means
+"exactly these changes".
 """
 
 from __future__ import annotations
@@ -84,6 +89,8 @@ class Result:
     new_count: int
     not_permitted: list[tuple[str, str]] = field(default_factory=list)
     permitted: list[tuple[str, str]] = field(default_factory=list)
+    # A change that more than one entry covered: (path, the entries' sources).
+    shared: list[tuple[str, tuple[str, ...]]] = field(default_factory=list)
 
     @property
     def clean(self) -> bool:
@@ -158,28 +165,77 @@ def body(data: bytes) -> bytes:
     return HEAD.sub(b"", data, count=1)
 
 
-def strip(data: bytes, patterns: list[re.Pattern[bytes]]) -> bytes:
-    for rx in patterns:
-        data = rx.sub(b"", data)
-    return data
+Removed = dict[int, list[tuple[bytes, frozenset[int]]]]
 
 
-def covering(rel: str, a: bytes, b: bytes, entries: list[Entry]) -> list[Entry] | None:
-    """The entries that together permit a changed file, or None."""
+def split(data: bytes, entries: list[Entry]) -> tuple[bytes, Removed]:
+    """`data` without every entry's matches, and what was removed.
+
+    Every pattern is matched against the original bytes, never against what
+    another pattern left: removing one match must not create another. Spans
+    that overlap are merged; spans that merely touch stay apart, so text an
+    entry matched is never credited to its neighbor's change. The result
+    maps each offset in the remaining bytes to the spans removed there, in
+    order, each with the indexes of the entries whose matches make it up."""
+    found = sorted((m.start(), m.end(), i) for i, e in enumerate(entries)
+                   for m in e.pattern.finditer(data) if m.end() > m.start())
+    merged: list[tuple[int, int, set[int]]] = []
+    for start, end, i in found:
+        if merged and start < merged[-1][1]:
+            s, e, ids = merged[-1]
+            merged[-1] = (s, max(e, end), ids | {i})
+        else:
+            merged.append((start, end, {i}))
+    kept: list[bytes] = []
+    removed: Removed = {}
+    pos = length = 0
+    for start, end, ids in merged:
+        kept.append(data[pos:start])
+        length += start - pos
+        removed.setdefault(length, []).append((data[start:end], frozenset(ids)))
+        pos = end
+    kept.append(data[pos:])
+    return b"".join(kept), removed
+
+
+def covering(rel: str, a: bytes, b: bytes, entries: list[Entry]
+             ) -> tuple[list[Entry], list[tuple[Entry, ...]]] | None:
+    """The entries that permit a changed file, with any change that several
+    entries covered together; None when the file is not permitted.
+
+    With pattern entries, the two files must be equal once the matches are
+    removed. The removed spans then line up by their offset in what remains,
+    and the spans at one offset are aligned in order. A span both sides
+    removed unchanged covers nothing; the entries behind every other span,
+    on either side, covered a change."""
     applicable = [e for e in entries if e.covers(rel, "changed")]
     whole = [e for e in applicable if e.pattern is None]
     if whole:
-        return whole[:1]
+        return whole[:1], []
     patterned = [e for e in applicable if e.pattern is not None]
-    if not patterned or strip(a, [e.pattern for e in patterned]) != strip(b, [e.pattern for e in patterned]):
+    if not patterned:
         return None
-    # An entry counts as used when the others alone would not have sufficed.
-    needed = []
-    for e in patterned:
-        rest = [o.pattern for o in patterned if o is not e]
-        if strip(a, rest) != strip(b, rest):
-            needed.append(e)
-    return needed or [e for e in patterned if e.pattern.search(a) or e.pattern.search(b)]
+    kept_a, removed_a = split(a, patterned)
+    kept_b, removed_b = split(b, patterned)
+    if kept_a != kept_b:
+        return None
+    used: set[int] = set()
+    shared: set[frozenset[int]] = set()
+    for offset in removed_a.keys() | removed_b.keys():
+        spans_a, spans_b = removed_a.get(offset, []), removed_b.get(offset, [])
+        bytes_a, bytes_b = [s for s, _ in spans_a], [s for s, _ in spans_b]
+        if bytes_a == bytes_b:
+            continue
+        matcher = difflib.SequenceMatcher(None, bytes_a, bytes_b, autojunk=False)
+        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+            if tag == "equal":
+                continue
+            for _, ids in spans_a[i1:i2] + spans_b[j1:j2]:
+                used |= ids
+                if len(ids) > 1:
+                    shared.add(ids)
+    return ([patterned[i] for i in sorted(used)],
+            sorted(tuple(patterned[i] for i in sorted(ids)) for ids in shared))
 
 
 def compare(base: Path, new: Path, *, body_only: bool = False,
@@ -192,13 +248,15 @@ def compare(base: Path, new: Path, *, body_only: bool = False,
         if kind == "changed":
             found = covering(rel, a, b, entries)
         else:
-            found = next(([e] for e in entries if e.pattern is None and e.covers(rel, kind)), None)
-        if found:
-            for e in found:
-                e.used += 1
-            result.permitted.append((kind, rel))
-        else:
+            found = next((([e], []) for e in entries if e.pattern is None and e.covers(rel, kind)), None)
+        if found is None:
             result.not_permitted.append((kind, rel))
+            return
+        users, shared = found
+        for e in users:
+            e.used += 1
+        result.permitted.append((kind, rel))
+        result.shared += [(rel, tuple(e.source for e in group)) for group in shared]
 
     for rel in sorted(a_files - b_files):
         judge(rel, "removed")
@@ -291,6 +349,10 @@ def main(argv: list[str] | None = None) -> int:
     for e in entries:
         if e.used:
             print(f"  permitted by {e.source} ({e.reason}): {e.used}")
+    for rel, sources in result.shared[:args.limit]:
+        print(f"  shared: {rel}: one change covered by {' and '.join(sources)}")
+    if len(result.shared) > args.limit:
+        print(f"  … {len(result.shared) - args.limit} more shared")
     unused = [e for e in entries if not e.used]
     for e in unused:
         print(f"  unused: {e.source} ({e.reason})")
