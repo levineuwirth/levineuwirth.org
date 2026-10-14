@@ -14,7 +14,7 @@ import           Data.Text            (Text)
 import qualified Data.Text            as T
 import           Text.Pandoc.Definition
 import           Text.Pandoc.Walk     (walk)
-import           Config               (SiteConfig (..))
+import           Config               (SiteConfig (..), siteOwnHosts)
 import           Utils                (isPdfUrl, pdfViewerUrl)
 
 -- | Apply link classification to the entire document.
@@ -100,8 +100,8 @@ isInternalPage url
 
 -- | True if the URL points outside the site's content host.
 --
---   Only the configured host and its @www.@ alias count as the content
---   site itself. Sibling subdomains like the configured forge host are
+--   Only the configured host, with and without @www.@ ('siteOwnHosts'),
+--   counts as the content site itself. Sibling subdomains like the configured forge host are
 --   distinct services and are classified as external so they receive their
 --   brand icon, @target=_blank@, and @rel=noopener noreferrer@.
 --
@@ -112,9 +112,7 @@ isExternal :: SiteConfig -> Text -> Bool
 isExternal cfg url =
     case extractHost url of
         Nothing   -> False
-        Just host -> host /= ownHost && host /= "www." <> ownHost
-  where
-    ownHost = T.pack (siteHost cfg)
+        Just host -> host `notElem` map T.pack (siteOwnHosts cfg)
 
 -- | Extract the lowercased hostname from an absolute http(s) URL,
 --   stripping any userinfo (@user:pass\@@) and port. Returns 'Nothing'

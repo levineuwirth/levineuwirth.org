@@ -6,6 +6,7 @@ module Config
     ( SiteConfig (..), FeedSpec (..), FeedSection (..)
     , configRules, readSiteConfig, loadConfig, configField
     , renderSiteFeed, configMake, photoFeed, sectionName, loadFeed
+    , siteOwnHosts
     ) where
 
 import Control.Monad (unless, when)
@@ -18,13 +19,15 @@ import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 import Data.Char (isControl, toLower, toUpper)
 import Data.List (find, intercalate, isPrefixOf, isSuffixOf, nub, stripPrefix)
+import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format (defaultTimeLocale, formatTime)
 import qualified Data.Yaml as Yaml
-import Hakyll
+import Hakyll hiding (escapeHtml)
 import System.FilePath (splitDirectories)
+import Utils (escapeHtml)
 
 data SiteConfig = SiteConfig
     { siteTitle :: String
@@ -116,10 +119,11 @@ instance FromJSON SiteConfig where
             [("url", siteUrl c), ("source-repo", siteSourceRepo c)]
         mapM_ (\value -> unless (all (`elem` (['a'..'z'] ++ ['0'..'9'] ++ ".-")) value) $
             fail "host and forge-host must be lowercase hostnames") [siteHost c, siteForgeHost c]
-        -- Links to the host (or its www. alias) are this site's own; a host
-        -- that disagrees with url would mark the site's links external.
-        unless (urlHost (siteUrl c) `elem` [siteHost c, "www." ++ siteHost c]) $
-            fail "host must be url's hostname, with or without a leading www."
+        -- Links to the host, with or without www., are this site's own; a
+        -- host that disagrees with url would mark the site's links external.
+        when (null (bareHost c)) $ fail "host must name a domain, not just www."
+        unless (urlHost (siteUrl c) `elem` siteOwnHosts c) $
+            fail "url's hostname must be host, with or without a leading www."
         mapM_ (\value -> unless (all (`elem` (['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ "-._")) value) $
             fail "license identifiers must be safe file names") [siteContentLicense c, siteCodeLicense c]
         unless (safePath (siteSourceBranch c)) $ fail "source-branch must be a relative path without traversal"
@@ -169,6 +173,15 @@ urlHost url = map toLower (takeWhile (/= ':') (afterUserinfo authority))
         (_, '@' : rest) -> rest
         _ -> a
 
+-- | The hostnames that are this site's own: the configured host with and
+--   without a leading @www.@, whichever of the two site.yaml names. Link
+--   classification and the url check share this one definition.
+siteOwnHosts :: SiteConfig -> [String]
+siteOwnHosts c = [bareHost c, "www." ++ bareHost c]
+
+bareHost :: SiteConfig -> String
+bareHost c = fromMaybe (siteHost c) (stripPrefix "www." (siteHost c))
+
 photoFeed :: FeedSpec -> Bool
 photoFeed f = feedSections f == [Photos]
 
@@ -195,10 +208,15 @@ loadFeed path = do
 configField :: String -> (SiteConfig -> String) -> Context a
 configField name get = field name $ \_ -> get <$> loadConfig
 
+-- | Hakyll interpolates these into its feed templates as they are ("field
+--   values are not escaped", @Hakyll.Web.Feed@), so a title such as
+--   @Art & photography@ would make the feed invalid XML. Each is escaped
+--   here, at the one place configuration meets the feed.
 atomConfig :: SiteConfig -> FeedSpec -> FeedConfiguration
 atomConfig c f = FeedConfiguration
-    { feedTitle = feedName f, feedDescription = feedSummary f
-    , feedAuthorName = siteAuthor c, feedAuthorEmail = siteEmail c, feedRoot = siteUrl c }
+    { feedTitle = escapeHtml (feedName f), feedDescription = escapeHtml (feedSummary f)
+    , feedAuthorName = escapeHtml (siteAuthor c), feedAuthorEmail = escapeHtml (siteEmail c)
+    , feedRoot = escapeHtml (siteUrl c) }
 
 -- | Render a configured Atom feed, giving an empty one a valid @\<updated\>@.
 --

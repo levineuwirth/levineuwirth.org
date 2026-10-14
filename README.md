@@ -63,8 +63,9 @@ switches are not configured here yet.
 Compilers load `site.yaml` as a Hakyll dependency. The freshness check also
 hashes it, so changing settings that alter routes forces a clean rebuild.
 The feed author uses `email`; `contact-email` is the separate contact
-address. `host` must be the hostname of `url`, with or without a leading
-`www.`; links to either count as the site's own.
+address. `url`'s hostname must be `host`, with or without a leading `www.`;
+links to the host in either form count as the site's own. Feed titles,
+descriptions and the author are escaped for the feed's XML.
 
 ## Requirements
 
