@@ -5,6 +5,7 @@ import Control.Monad         (when)
 import Data.Time.Clock.POSIX (getPOSIXTime)
 import System.Directory      (createDirectoryIfMissing)
 import System.Environment    (getArgs)
+import Config                (readSiteConfig, configMake)
 import SiteThreads           (siteThreads)
 import Hakyll                (hakyllWith, toFilePath)
 import Golden                (renderFixture)
@@ -51,7 +52,9 @@ writeBuildStamp = do
 -- run instead ('withoutUnpublished', build/Drafts.hs): @ignoreFile@ sees
 -- only bare file names, and a draft is known by its path.
 --
--- Commands Hakyll does not see: @site render-fixture <file.md>@ renders
+-- Commands Hakyll does not see: @site config@ prints the typed site.yaml as
+-- JSON; @site config --make@ prints an includable make fragment.
+-- @site render-fixture <file.md>@ renders
 -- a test fixture through the essay pipeline and writes nothing
 -- (build/Golden.hs); @site footer-data@ splits the backlinks and
 -- similar-links maps into per-page files between the two compile passes
@@ -75,6 +78,8 @@ main :: IO ()
 main = do
     args <- getArgs
     case args of
+        ["config"] -> readSiteConfig >>= LBS.putStrLn . Aeson.encode
+        ["config", "--make"] -> readSiteConfig >>= putStr . configMake
         ["render-fixture", path] -> renderFixture path
         ["list-unpublished"] -> scanUnpublished "content" >>= mapM_ putStrLn . unpublishedSummary
         ["shared-rules"] -> LBS.putStrLn (Aeson.encode sharedRules)

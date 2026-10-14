@@ -19,7 +19,6 @@ module Utils
     , splitOn
     , authorSlugify
     , authorNameOf
-    , defaultAuthor
     , itemAuthors
     , authorUrl
     , metadataKeywords
@@ -204,7 +203,7 @@ trim = dropWhileEnd isSpace . dropWhile isSpace
 -- by this one function and collapsing runs now would move existing
 -- author URLs.
 --
--- Used for author URL slugs (e.g. @"Levi Neuwirth" → "levi-neuwirth"@).
+-- Used for author URL slugs (e.g. @"Example Author" → "example-author"@).
 -- Centralised here so 'Authors' and 'Contexts' cannot drift on Unicode
 -- edge cases.
 authorSlugify :: String -> String
@@ -225,16 +224,13 @@ splitOn c xs = case break (== c) xs of
     (before, [])       -> [before]
     (before, _ : rest) -> before : splitOn c rest
 
-defaultAuthor :: String
-defaultAuthor = "Levi Neuwirth"
-
 -- | The authors an item credits: the name of each @authors:@ entry (the
 -- part before any @| url@), dropping entries with no usable name or slug,
 -- and the site's author when none remain. The byline and the author index
 -- pages both read this, so a malformed entry can no longer build an
 -- @/authors//@ page that no byline links to.
-itemAuthors :: Metadata -> [String]
-itemAuthors meta =
+itemAuthors :: String -> Metadata -> [String]
+itemAuthors defaultAuthor meta =
     let entries = fromMaybe [] (lookupStringList "authors" meta)
         usable  = filter (\n -> not (null n) && not (null (authorSlugify n)))
                          (map authorNameOf entries)

@@ -411,7 +411,7 @@ pdfs:
 # here as an untracked input, in seconds, instead of shipping uncommitted
 # (it did on 2026-10-01, audit X1). The root files are those published
 # verbatim under /source/ or compiled into the generator.
-DIRTY_PATHS := build templates static data yaml-source tools nginx Makefile levineuwirth.cabal \
+DIRTY_PATHS := build templates static data yaml-source tools nginx Makefile levineuwirth.cabal site.yaml \
 	code-refs archive cabal.project cabal.project.freeze pyproject.toml uv.lock \
 	LICENSE LICENSE-CONTENT THIRD-PARTY.md README.md WRITING.md PHOTOGRAPHY.md
 

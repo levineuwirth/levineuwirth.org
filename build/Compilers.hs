@@ -15,6 +15,7 @@ module Compilers
     , buildTOC
     ) where
 
+import           Config (SiteConfig, loadConfig)
 import           Hakyll
 import           Text.Pandoc.Definition     (Pandoc (..), Block (..),
                                              Inline (..), Citation (..),
@@ -141,6 +142,7 @@ trackBibliographyInputs bibIdent = do
 --   Saves toc/word-count/reading-time/bibliography snapshots.
 essayCompilerWith :: ReaderOptions -> Compiler (Item String)
 essayCompilerWith rOpts = do
+    cfg <- loadConfig
     -- Raw Markdown source (used for word count / reading time).
     body <- getResourceBody
     let src = itemBody body
@@ -187,7 +189,7 @@ essayCompilerWith rOpts = do
             fromMaybe False (lookupString "figure-numbering" meta >>= parseBool)
 
     (pandocFiltered, bibHtml, furtherHtml) <- unsafeCompiler $
-        transformDocument frKeys bibPath numberFigures srcDir (itemBody pandocItem)
+        transformDocument cfg frKeys bibPath numberFigures srcDir (itemBody pandocItem)
     let pandocItem'    = itemSetBody pandocFiltered pandocItem
 
     -- Build TOC from the filtered AST.
@@ -224,13 +226,13 @@ essayCompilerWith rOpts = do
 --
 --   Returns the filtered document, the bibliography HTML and the
 --   further-reading HTML.
-transformDocument :: [T.Text] -> T.Text -> Bool -> FilePath -> Pandoc
+transformDocument :: SiteConfig -> [T.Text] -> T.Text -> Bool -> FilePath -> Pandoc
                   -> IO (Pandoc, T.Text, T.Text)
-transformDocument frKeys bibPath numberFigures srcDir doc = do
+transformDocument cfg frKeys bibPath numberFigures srcDir doc = do
     (withCites, bibHtml, furtherHtml) <- Citations.applyCitations frKeys bibPath doc
     withScores <- Score.inlineScores srcDir withCites
     withViz    <- Viz.inlineViz srcDir withScores
-    filtered   <- applyAll numberFigures srcDir withViz
+    filtered   <- applyAll cfg numberFigures srcDir withViz
     return (filtered, bibHtml, furtherHtml)
 
 -- | Compiler for essays.
@@ -304,10 +306,11 @@ pageCompiler = do
 --   writer. Returns the raw source too, for the word count.
 filteredPage :: Compiler (String, Item String)
 filteredPage = do
+    cfg <- loadConfig
     body     <- getResourceBody
     filePath <- getResourceFilePath
     let src = itemBody body
     pandocItem <- readPandocWith readerOpts (itemSetBody (preprocessSource src) body)
     filtered   <- unsafeCompiler $
-        applyAll False (takeDirectory filePath) (itemBody pandocItem)
+        applyAll cfg False (takeDirectory filePath) (itemBody pandocItem)
     return (src, writePandocWith writerOpts (itemSetBody filtered pandocItem))

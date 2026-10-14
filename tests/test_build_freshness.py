@@ -79,6 +79,7 @@ class BuildFreshnessTestCase(unittest.TestCase):
         self.git("config", "user.name", "Freshness Test")
 
         # The inputs rules_hash() digests.
+        self.write("site.yaml", "title: Example\n")
         self.write("build/Site.hs", "main = pure ()\n")
         self.write("levineuwirth.cabal", "name: site\n")
         self.write("cabal.project", "packages: .\n")
@@ -127,6 +128,11 @@ class BuildFreshnessTestCase(unittest.TestCase):
         return result.stderr
 
     # -- baseline ----------------------------------------------------------
+
+    def test_site_config_change_forces_clean_without_a_commit(self):
+        self.write("site.yaml", "title: Changed\n")
+        self.check()
+        self.assertTrue(self.cleaned())
 
     def test_unchanged_tree_builds_incrementally(self):
         self.assertIn("incremental build OK", self.check())

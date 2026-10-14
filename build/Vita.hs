@@ -581,7 +581,7 @@ renderContact p = section "contact" "Contact" $ concat
     -- Chips carry the label, not personal.yml's `display` value. The CV
     -- prints "ORCID: 0009-0002-0162-3587" because a printed page cannot be
     -- clicked; a chip reading "0009-0002-0162-3587" alone identifies
-    -- nothing, and "github.com/levineuwirth" is a URL doing a label's job.
+    -- nothing, and "github.com/example" is a URL doing a label's job.
     one l = concat
         [ "<a class=\"vita-chip\" href=\"", escapeHtml (plHref l), "\">"
         , tex (plLabel l)

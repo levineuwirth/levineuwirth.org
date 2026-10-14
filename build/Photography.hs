@@ -40,6 +40,7 @@ import qualified Data.Text.Lazy.Encoding    as TLE
 import qualified Data.Vector            as V
 import qualified Data.Scientific        as Sci
 import           Hakyll
+import           Config                (SiteConfig (..), FeedSpec (..), loadConfig, loadFeed, renderSiteFeed, photoFeed)
 import           Compilers              (pageCompiler, photographyCompiler)
 import           Contexts               (feedTitleField, photographyCtx, pageCtx, siteCtx,
                                          recentFirstByDisplay, feedMetaFields,
@@ -63,8 +64,8 @@ import           Utils                  (exposureISO, formatBytes, inDefault, st
 --     3. Section landing at @/photography/@ — loaded after the
 --        photo entries so its @loadAll photographyPattern@ resolves
 --        each photo's frontmatter through 'photographyCtx'.
-photographyRules :: Rules ()
-photographyRules = do
+photographyRules :: SiteConfig -> Rules ()
+photographyRules cfg = do
     -- A directory is a "series" iff it has @.md@ siblings alongside
     -- its @index.md@. Collected once at rule-gen time so the entry
     -- rule can branch on series-landing template selection without
@@ -98,7 +99,7 @@ photographyRules = do
     photographyLandingRules
     photographyMapDataRule
     photographyMapPageRule
-    photographyFeedRule
+    forM_ (filter photoFeed (siteFeeds cfg)) photographyFeedRule
     photographyByYearRules
     photographyContactSheetRule
 
@@ -606,25 +607,13 @@ photographyMapPageRule =
 -- Atom feed (Phase 5)
 -- ---------------------------------------------------------------------------
 
--- | Configuration for the photography-only Atom feed at
---   @/photography/feed.xml@. Distinct from the main @/feed.xml@ so
---   text-primary subscribers don't unexpectedly get image-heavy
---   entries in their reader.
-photographyFeedConfig :: FeedConfiguration
-photographyFeedConfig = FeedConfiguration
-    { feedTitle       = "Levi Neuwirth — Photography"
-    , feedDescription = "New photographs by Levi Neuwirth"
-    , feedAuthorName  = "Levi Neuwirth"
-    , feedAuthorEmail = "levi@levineuwirth.org"
-    , feedRoot        = "https://levineuwirth.org"
-    }
-
 -- | Description field for Atom feed entries: prepends an absolute-URL
 --   @<img>@ tag (so the photograph displays inline in the reader) to
 --   the rendered prose body. Composed ABOVE 'bodyField' so it wins
 --   when @$description$@ is consumed by the Atom template.
 photographyFeedDescription :: Context String
 photographyFeedDescription = field "description" $ \item -> do
+    cfg <- loadConfig
     let ident = itemIdentifier item
     body <- itemBody <$> (loadSnapshot ident "content" :: Compiler (Item String))
     meta <- getMetadata ident
@@ -641,7 +630,7 @@ photographyFeedDescription = field "description" $ \item -> do
             Just p | not (null p) ->
                 let src = if isFlat then "/photography/" ++ p
                                     else "/photography/" ++ slug ++ "/" ++ p
-                in  "<p><img src=\"https://levineuwirth.org"
+                in  "<p><img src=\"" ++ siteUrl cfg
                     ++ src ++ "\" alt=\"\"></p>\n"
             _ -> ""
     return (imgTag ++ body)
@@ -649,12 +638,13 @@ photographyFeedDescription = field "description" $ \item -> do
 -- | @/photography/feed.xml@ — Atom feed of the most recent 30 photo
 --   entries, with each photograph embedded inline at the top of its
 --   entry description.
-photographyFeedRule :: Rules ()
-photographyFeedRule =
-    create ["photography/feed.xml"] $ do
+photographyFeedRule :: FeedSpec -> Rules ()
+photographyFeedRule feed =
+    create [fromFilePath (feedPath feed)] $ do
         route idRoute
         compile $ do
-            photos <- fmap (take 30) . recentFirst
+            (cfg, spec) <- loadFeed (feedPath feed)
+            photos <- fmap (maybe id take (feedLimit spec)) . recentFirst
                   =<< loadAllSnapshots
                           (P.allPhotoEntries .&&. hasNoVersion)
                           "content"
@@ -668,7 +658,7 @@ photographyFeedRule =
                     <> photographyFeedDescription
                     <> bodyField "description"
                     <> defaultContext
-            renderAtom photographyFeedConfig feedCtx photos
+            renderSiteFeed cfg spec feedCtx photos
 
 -- ---------------------------------------------------------------------------
 -- By-year pages (Phase 5)

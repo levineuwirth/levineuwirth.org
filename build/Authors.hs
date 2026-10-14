@@ -3,11 +3,11 @@
 -- | Author system — treats authors like tags.
 --
 --   Author pages live at /authors/{slug}/index.html.
---   Items with no "authors" frontmatter key default to Levi Neuwirth.
+--   Items with no "authors" frontmatter key default to the configured author.
 --
 --   Frontmatter format (name-only or name|url — url part is ignored now):
 --     authors:
---       - "Levi Neuwirth"
+--       - "Example Author"
 --       - "Alice Smith | https://alice.example"   -- url ignored; link goes to /authors/alice-smith/
 module Authors
     ( buildAllAuthors
@@ -39,8 +39,8 @@ allContent = authorIndexable
 
 -- | The authors an identifier credits ('Utils.itemAuthors'), the same
 --   list its byline shows.
-getAuthors :: MonadMetadata m => Identifier -> m [String]
-getAuthors ident = itemAuthors <$> getMetadata ident
+getAuthors :: MonadMetadata m => String -> Identifier -> m [String]
+getAuthors author ident = itemAuthors author <$> getMetadata ident
 
 -- | Canonical identifier for an author's index page (page 1).
 authorIdentifier :: String -> Identifier
@@ -57,8 +57,8 @@ authorPageId slug n = fromFilePath $ "authors/" ++ slug ++ "/page/" ++ show n ++
 -- Build + rules
 -- ---------------------------------------------------------------------------
 
-buildAllAuthors :: Rules Tags
-buildAllAuthors = buildTagsWith getAuthors allContent authorIdentifier
+buildAllAuthors :: String -> Rules Tags
+buildAllAuthors author = buildTagsWith (getAuthors author) allContent authorIdentifier
 
 applyAuthorRules :: Tags -> Context String -> Rules ()
 applyAuthorRules authors baseCtx = anchoredTagsRules "_dependencies/authors" authors $ \name pat -> do

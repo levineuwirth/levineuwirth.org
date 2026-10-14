@@ -79,6 +79,7 @@ import Stability    (stabilityField, lastReviewedField, lastReviewedIsoField,
                      versionHistoryPrimaryField, versionHistoryRestField,
                      versionHistoryRangeField, versionHistoryRangeStartField,
                      versionHistoryRangeEndField, versionHistoryCommitsField)
+import Config       (loadConfig, configField, siteTitle, siteUrl, siteAuthor)
 import Utils        (authorUrl, canonicalUrlPath, confidencePercent, escapeHtml, formatIso, formatWriterly, isoDate, isProvedConfidence, itemAuthors, metadataKeywords, parseIsoDate, trim, trustScore, writerlyDate)
 
 -- ---------------------------------------------------------------------------
@@ -291,7 +292,8 @@ keywordLinksField fieldName = listFieldWith fieldName ctx $ \item -> do
 --   $for(author-links)$<a href="$author-url$">$author-name$</a>$sep$, $endfor$
 authorLinksField :: Context a
 authorLinksField = listFieldWith "author-links" ctx $ \item -> do
-    names <- itemAuthors <$> getMetadata (itemIdentifier item)
+    cfg <- loadConfig
+    names <- itemAuthors (siteAuthor cfg) <$> getMetadata (itemIdentifier item)
     return $ map (\n -> Item (fromFilePath "") (n, authorUrl n)) names
   where
     ctx = field "author-name" (return . fst . itemBody)
@@ -668,9 +670,9 @@ summaryField = field "summary" $ \item -> do
 
 siteCtx :: Context String
 siteCtx =
-    constField "site-title" "Levi Neuwirth"
+    configField "site-title" siteTitle
     <> plainField
-    <> constField "site-url" "https://levineuwirth.org"
+    <> configField "site-url" siteUrl
     <> canonicalUrlField
     <> pageScriptsField
     <> pageFeatureFields

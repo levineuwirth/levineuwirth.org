@@ -5,15 +5,13 @@ module Site (rules, siteConfiguration, siteConfigurationFor, refusedPath) where
 import Control.Monad (forM, forM_, void, when)
 import Control.Monad.Except (catchError)
 import Data.Char     (isSpace, toUpper)
-import Data.List     (groupBy, isInfixOf, isPrefixOf, isSuffixOf, sort, sortBy, stripPrefix)
+import Data.List     (groupBy, isInfixOf, isPrefixOf, isSuffixOf, sort, sortBy)
 import Data.Map.Strict (Map)
 import Data.Maybe    (catMaybes, fromMaybe, listToMaybe)
 import Data.Ord      (Down (..), comparing)
 import Data.Set      (Set)
 import qualified Data.Set as Set
 import qualified Data.Text as T
-import Data.Time.Clock (getCurrentTime)
-import Data.Time.Format (defaultTimeLocale, formatTime)
 import System.Directory (listDirectory)
 import System.FilePath (splitDirectories, takeDirectory, takeFileName, takeExtension,
                         dropExtension, (</>))
@@ -22,6 +20,8 @@ import qualified Data.Aeson as Aeson
 import qualified Data.ByteString.Lazy.Char8 as LBS
 import qualified Data.Map.Strict as Map
 import Hakyll
+import Config     (SiteConfig (..), FeedSpec (..), FeedSection (..), configRules,
+                   readSiteConfig, loadConfig, loadFeed, renderSiteFeed, photoFeed)
 import Archive    (archiveRules)
 import Authors    (buildAllAuthors, applyAuthorRules)
 import Backlinks  (backlinkRules)
@@ -173,24 +173,6 @@ libraryShelfMax = 5
 libraryIntroId :: Identifier
 libraryIntroId = fromFilePath "content/library.md"
 
-feedConfig :: FeedConfiguration
-feedConfig = FeedConfiguration
-    { feedTitle       = "Levi Neuwirth"
-    , feedDescription = "Essays, notes, and creative work by Levi Neuwirth"
-    , feedAuthorName  = "Levi Neuwirth"
-    , feedAuthorEmail = "levi@levineuwirth.org"
-    , feedRoot        = "https://levineuwirth.org"
-    }
-
-musicFeedConfig :: FeedConfiguration
-musicFeedConfig = FeedConfiguration
-    { feedTitle       = "Levi Neuwirth — Music"
-    , feedDescription = "New compositions by Levi Neuwirth"
-    , feedAuthorName  = "Levi Neuwirth"
-    , feedAuthorEmail = "levi@levineuwirth.org"
-    , feedRoot        = "https://levineuwirth.org"
-    }
-
 -- | Item context shared by both Atom feeds.
 --
 --   Three timestamps, three meanings (audit F11):
@@ -235,6 +217,8 @@ homeCtx = listField "portals" portalItemCtx portalItems <> pageCtx
 
 rules :: Rules ()
 rules = do
+    cfg <- preprocess readSiteConfig
+    configRules
     -- ---------------------------------------------------------------------------
     -- Build mode. SITE_ENV=dev (set by `make dev` / `make watch`) includes
     -- drafts under content/drafts/**; anything else (unset, "deploy", "build")
@@ -261,7 +245,7 @@ rules = do
     -- ---------------------------------------------------------------------------
     -- Author index pages
     -- ---------------------------------------------------------------------------
-    authors <- buildAllAuthors
+    authors <- buildAllAuthors (siteAuthor cfg)
     applyAuthorRules authors siteCtx
 
     -- ---------------------------------------------------------------------------
@@ -341,7 +325,7 @@ rules = do
     -- The repository and the public site carry the same licence texts.
     match (fromList ["LICENSE", "LICENSE-CONTENT"]) $ do
         route $ customRoute $ \ident -> "licenses/" ++
-            if toFilePath ident == "LICENSE" then "MIT.txt" else "CC-BY-NC-SA-4.0.txt"
+            (if toFilePath ident == "LICENSE" then siteCodeLicense cfg else siteContentLicense cfg) ++ ".txt"
         compile copyFileCompiler
     match "THIRD-PARTY.md" $ do
         route $ constRoute "licenses.html"
@@ -797,7 +781,7 @@ rules = do
     -- Photography — single-photo entries, asset copy, and section landing.
     -- See build/Photography.hs and PHOTOGRAPHY.md for the design.
     -- ---------------------------------------------------------------------------
-    photographyRules
+    photographyRules cfg
 
     -- ---------------------------------------------------------------------------
     -- Archive — link-archiving system: per-entry /archive/<slug>/ pages and
@@ -1246,66 +1230,57 @@ rules = do
             makeItem $ LBS.unpack (Aeson.encode metaMap)
 
     -- ---------------------------------------------------------------------------
-    -- Atom feed — all content sorted by date
+    -- Text feeds. The site owns their routes, section sets, limits and identity.
+    -- Photography uses its image-bearing entry context in Photography.hs.
     -- ---------------------------------------------------------------------------
-    create ["feed.xml"] $ do
-        route idRoute
-        compile $ do
-            posts <- fmap (take 30) . recentFirst
-                        =<< loadAllSnapshots
-                                (   (    allEssays
-                                    .||. P.blogPattern
-                                    .||. P.fictionPattern
-                                    .||. P.poetryPattern
-                                    .||. P.musicPattern
-                                    )
-                                .&&. hasNoVersion
-                                )
-                                "content"
-            renderAtom feedConfig feedCtx posts
-
-    -- ---------------------------------------------------------------------------
-    -- Music feed — compositions only
-    -- ---------------------------------------------------------------------------
-    create ["music/feed.xml"] $ do
-        route idRoute
-        compile $ do
-            compositions <- recentFirst
-                        =<< loadAllSnapshots
-                                (P.musicPattern .&&. hasNoVersion)
-                                "content"
-            renderAtom musicFeedConfig feedCtx compositions
-                >>= repairEmptyFeedUpdated (null compositions)
+    forM_ (filter (not . photoFeed) (siteFeeds cfg)) $ \feed ->
+        create [fromFilePath (feedPath feed)] $ do
+            route idRoute
+            compile $ do
+                (current, spec) <- loadFeed (feedPath feed)
+                let sectionPattern section = case section of
+                        Essays -> allEssays
+                        Blog -> P.blogPattern
+                        Fiction -> P.fictionPattern
+                        Poetry -> P.poetryPattern
+                        Music -> P.musicPattern
+                        Photos -> P.allPhotoEntries
+                    pat = foldr1 (.||.) (map sectionPattern (feedSections spec))
+                items <- recentFirst =<< loadAllSnapshots (pat .&&. hasNoVersion) "content"
+                let posts = maybe id take (feedLimit spec) items
+                renderSiteFeed current spec feedCtx posts
 
     -- ---------------------------------------------------------------------------
     -- robots.txt — minimal, just points crawlers at the sitemap
     -- ---------------------------------------------------------------------------
     create ["robots.txt"] $ do
         route idRoute
-        compile $ makeItem $ unlines
-            -- /archive/ is *deliberately not* disallowed. Crawlers must be
-            -- able to reach the wrapper pages (and snapshot.html) to see
-            -- their <meta name=robots content="noindex, noarchive">; a
-            -- robots.txt Disallow would block that and a URL blocked only
-            -- by robots.txt can still appear in results when linked. The
-            -- raw PDFs cannot carry meta — they need an `X-Robots-Tag`
-            -- HTTP header from the deploy webserver (see nginx/archive.conf).
-            --
-            -- /proxy/ *is* disallowed, and for the opposite reason. Those
-            -- locations (nginx/popup-proxy.conf) fetch and re-serve
-            -- third-party pages — arXiv, archive.org, PubMed — under this
-            -- origin so the hover popups can read them same-origin. They
-            -- are a reading affordance, not this site's content: indexing
-            -- them would put someone else's pages in the index under
-            -- levineuwirth.org URLs. Unlike the archive wrappers there is
-            -- no HTML of ours to carry a noindex meta, so robots.txt is
-            -- the only control available at build time.
-            [ "User-agent: *"
-            , "Allow: /"
-            , "Disallow: /proxy/"
-            , ""
-            , "Sitemap: https://levineuwirth.org/sitemap.xml"
-            ]
+        compile $ do
+            current <- loadConfig
+            makeItem $ unlines
+                -- /archive/ is *deliberately not* disallowed. Crawlers must be
+                -- able to reach the wrapper pages (and snapshot.html) to see
+                -- their <meta name=robots content="noindex, noarchive">; a
+                -- robots.txt Disallow would block that and a URL blocked only
+                -- by robots.txt can still appear in results when linked. The
+                -- raw PDFs cannot carry meta — they need an `X-Robots-Tag`
+                -- HTTP header from the deploy webserver (see nginx/archive.conf).
+                --
+                -- /proxy/ *is* disallowed, and for the opposite reason. Those
+                -- locations (nginx/popup-proxy.conf) fetch and re-serve
+                -- third-party pages — arXiv, archive.org, PubMed — under this
+                -- origin so the hover popups can read them same-origin. They
+                -- are a reading affordance, not this site's content: indexing
+                -- them would put someone else's pages in the index under
+                -- this site's URLs. Unlike the archive wrappers there is
+                -- no HTML of ours to carry a noindex meta, so robots.txt is
+                -- the only control available at build time.
+                [ "User-agent: *"
+                , "Allow: /"
+                , "Disallow: /proxy/"
+                , ""
+                , "Sitemap: " ++ siteUrl current ++ "/sitemap.xml"
+                ]
 
     -- ---------------------------------------------------------------------------
     -- 404.html — custom not-found page.
@@ -1416,7 +1391,8 @@ rules = do
 
             entries <- sitemapEntries corpus
 
-            let siteRoot = "https://levineuwirth.org"
+            current <- loadConfig
+            let siteRoot = siteUrl current
                 sitemapItemCtx =
                     constField "root" siteRoot
                     <> field "url" (return . fst . itemBody)
@@ -1569,44 +1545,6 @@ sitemapEntry ident = do
 --   and @feed.xml@ out of the photography-index sweep.
 isHtmlIdentifier :: FilePath -> Bool
 isHtmlIdentifier = isSuffixOf ".html"
-
--- ---------------------------------------------------------------------------
--- Feed repair
--- ---------------------------------------------------------------------------
-
--- | Give an empty Atom feed a valid @\<updated\>@ element.
---
---   Hakyll's 'renderAtom' derives the feed-level @updated@ from the first
---   item and falls back to the literal string @Unknown@ when the item
---   list is empty (@Hakyll.Web.Feed.renderFeed@). @Unknown@ is not an RFC
---   3339 timestamp, so the feed is invalid — and the music feed is
---   advertised unconditionally from @templates\/partials\/head.html@,
---   which means a reader's aggregator sees the broken document rather
---   than nothing at all. The catalog being empty is a legitimate state
---   (it is a young section), so the feed is kept and given the build
---   time: honest, well-formed, and it stops changing the moment the first
---   composition lands and a real entry date takes over.
---
---   No-op when the feed has entries, so a populated feed is never
---   restamped on every build.
-repairEmptyFeedUpdated :: Bool -> Item String -> Compiler (Item String)
-repairEmptyFeedUpdated False item = return item
-repairEmptyFeedUpdated True  item = do
-    stamp <- unsafeCompiler $
-        formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ" <$> getCurrentTime
-    return $ fmap (replaceFirst placeholder ("<updated>" ++ stamp ++ "</updated>")) item
-  where
-    placeholder = "<updated>Unknown</updated>"
-
--- | Replace the first occurrence of a literal substring. Returns the
---   input unchanged when the needle is absent.
-replaceFirst :: String -> String -> String -> String
-replaceFirst needle replacement = go
-  where
-    go [] = []
-    go s@(c:cs) = case stripPrefix needle s of
-        Just rest -> replacement ++ rest
-        Nothing   -> c : go cs
 
 -- ---------------------------------------------------------------------------
 -- Epistemic metadata extraction

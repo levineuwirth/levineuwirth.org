@@ -101,3 +101,21 @@ def interrupt_when(args: list[str], env: dict[str, str], marker: Path,
         finally:
             os.killpg(process.pid, signal.SIGTERM)
             process.communicate(timeout=5)
+
+
+def write_site_config(root: Path, **overrides) -> dict:
+    """Explicit neutral identity for scratch builds that evaluate Site.rules."""
+    import json
+
+    config = {
+        "title": "Example Site", "author": "Example Author",
+        "author-sort": "Author, Example", "email": "author@example.org",
+        "contact-email": "contact@example.org", "url": "https://example.org",
+        "host": "example.org", "source-repo": "https://git.example.org/author/site",
+        "source-branch": "main", "forge-host": "git.example.org",
+        "content-license": "CC-BY-NC-SA-4.0", "code-license": "MIT", "feeds": [],
+    }
+    config.update(overrides)
+    # JSON is also YAML; no Python YAML defaults or schema reader.
+    (root / "site.yaml").write_text(json.dumps(config), encoding="utf-8")
+    return config

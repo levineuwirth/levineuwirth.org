@@ -14,7 +14,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests._helpers import ROOT, requires_cabal, script_env, site_binary
+from tests._helpers import ROOT, requires_cabal, script_env, site_binary, write_site_config
 
 
 @requires_cabal
@@ -55,6 +55,7 @@ class SiteThreadsTests(unittest.TestCase):
         # stop this scratch build. Keep runtime integration counts small.
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
+            write_site_config(root)
             (root / "data").mkdir()
             essay = root / "content" / "essays" / "a.md"
             essay.parent.mkdir(parents=True)

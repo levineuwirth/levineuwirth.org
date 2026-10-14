@@ -8,7 +8,7 @@
 --   * Inline @\`build\/Filters\/Links.hs\`@ — Markdown inline code whose
 --     text passes a conservative source-path heuristic.
 --   * A Markdown link to
---     @https:\/\/git.levineuwirth.org\/neuwirth\/levineuwirth.org\/(src|raw)\/branch\/<branch>\/<path>@.
+--     the configured source repository, under @(src|raw)/branch/<branch>/<path>@.
 --
 --   Both produce
 --   @\<a class="source-ref" data-source-path="…" href="…">@. The href
@@ -33,6 +33,7 @@ module Filters.SourceRefs
     , sourcePreviewGlobs
     ) where
 
+import           Config               (SiteConfig (..))
 import           Control.Monad        (when)
 import           Data.IORef           (IORef, atomicModifyIORef', newIORef, readIORef)
 import qualified Data.Map.Strict      as Map
@@ -54,16 +55,16 @@ import           Text.Pandoc.Walk     (walkM)
 --   @data/backlinks.json@ that look like source but are Hakyll build
 --   artifacts produced into @_site/@ — wrapping those would emit a
 --   link whose popup is guaranteed to 404.
-apply :: Pandoc -> IO Pandoc
-apply doc = do
-    afterLinks <- walkM classifyExistingLink doc
-    walkM wrapInlineCode afterLinks
+apply :: SiteConfig -> Pandoc -> IO Pandoc
+apply cfg doc = do
+    afterLinks <- walkM (classifyExistingLink cfg) doc
+    walkM (wrapInlineCode cfg) afterLinks
 
 -- | Inline @`path`@ → @\<a class="source-ref" data-source-path="path"\>\<code\>path\<\/code\>\<\/a\>@.
 --   The original 'Code' node is preserved as the link's body so the
 --   inline-code chrome (mono font, background) survives unchanged.
-wrapInlineCode :: Inline -> IO Inline
-wrapInlineCode orig@(Code (cIdent, cClasses, cKvs) txt)
+wrapInlineCode :: SiteConfig -> Inline -> IO Inline
+wrapInlineCode cfg orig@(Code (cIdent, cClasses, cKvs) txt)
     | "source-ref" `notElem` cClasses
     , isSourcePath txt = do
         exists <- existsCached txt
@@ -77,9 +78,9 @@ wrapInlineCode orig@(Code (cIdent, cClasses, cKvs) txt)
                       ]
                     )
                     [Code (cIdent, cClasses, cKvs) txt]
-                    (sourceHref txt, "")
+                    (sourceHref cfg txt, "")
             else pure orig
-wrapInlineCode x = pure x
+wrapInlineCode _ x = pure x
 
 -- | Click-through target for a wrapped source path.
 --
@@ -94,10 +95,10 @@ wrapInlineCode x = pure x
 --   The two categories are distinguished by 'isGeneratedPath' rather than
 --   by asking Git, so this stays a pure string decision inside a filter
 --   that already runs once per page.
-sourceHref :: Text -> Text
-sourceHref path
+sourceHref :: SiteConfig -> Text -> Text
+sourceHref cfg path
     | isGeneratedPath path = "/source/" <> path
-    | otherwise            = forgejoSourceUrl path
+    | otherwise            = forgejoSourceUrl cfg path
 
 -- | Paths that exist on disk during a build but are not tracked by Git —
 --   the @data\/@ artifacts named in @.gitignore@'s \"generated at build
@@ -109,10 +110,10 @@ isGeneratedPath path = path `elem` [ "data/similar-links.json" ]
 -- | Existing Markdown link to a Forgejo source URL on this site's git
 --   host → tagged @source-ref@ and given a @data-source-path@ pointing
 --   at the same path the popup provider expects.
-classifyExistingLink :: Inline -> IO Inline
-classifyExistingLink orig@(Link (ident, classes, kvs) ils (url, title))
+classifyExistingLink :: SiteConfig -> Inline -> IO Inline
+classifyExistingLink cfg orig@(Link (ident, classes, kvs) ils (url, title))
     | "source-ref" `notElem` classes
-    , Just path <- forgejoSourcePath url
+    , Just path <- forgejoSourcePath cfg url
     , isSourcePath path = do
         exists <- existsCached path
         if exists
@@ -123,7 +124,7 @@ classifyExistingLink orig@(Link (ident, classes, kvs) ils (url, title))
                     )
                     ils (url, title)
             else pure orig
-classifyExistingLink x = pure x
+classifyExistingLink _ x = pure x
 
 -- ---------------------------------------------------------------------------
 -- Heuristic
@@ -243,26 +244,28 @@ existsCached path = do
 -- Forgejo URL helpers
 -- ---------------------------------------------------------------------------
 
--- | Forgejo source-viewer URL for a repo-relative path. Pinned to the
---   @main@ branch so previews always reflect the deployed tip.
-forgejoSourceUrl :: Text -> Text
-forgejoSourceUrl path =
-    "https://git.levineuwirth.org/neuwirth/levineuwirth.org/src/branch/main/"
+-- | Forgejo source-viewer URL for a repo-relative path, on the configured branch.
+forgejoSourceUrl :: SiteConfig -> Text -> Text
+forgejoSourceUrl cfg path =
+    T.pack (siteSourceRepo cfg ++ "/src/branch/" ++ siteSourceBranch cfg ++ "/")
     <> path
 
 -- | Inverse of 'forgejoSourceUrl': extract the repo-relative path from
 --   a Forgejo URL on this site's git host. Recognises both the
 --   @\/src\/branch\/<b>\/@ web view and the @\/raw\/branch\/<b>\/@
 --   variants. Returns 'Nothing' for any other URL.
-forgejoSourcePath :: Text -> Maybe Text
-forgejoSourcePath url = do
+forgejoSourcePath :: SiteConfig -> Text -> Maybe Text
+forgejoSourcePath cfg url = do
     rest <- T.stripPrefix repoBase url
     afterBranch <-
         case T.stripPrefix "src/branch/" rest of
             Just r  -> Just r
             Nothing -> T.stripPrefix "raw/branch/" rest
-    let (_branch, slashAndPath) = T.breakOn "/" afterBranch
-        path                    = T.drop 1 slashAndPath
+    -- The configured branch may itself contain slashes. Recognise it
+    -- before the historical single-segment fallback for other branches.
+    let path = case T.stripPrefix (T.pack (siteSourceBranch cfg) <> "/") afterBranch of
+            Just p -> p
+            Nothing -> T.drop 1 (snd (T.breakOn "/" afterBranch))
     if T.null path then Nothing else Just path
   where
-    repoBase = "https://git.levineuwirth.org/neuwirth/levineuwirth.org/"
+    repoBase = T.pack (siteSourceRepo cfg ++ "/")

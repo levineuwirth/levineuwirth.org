@@ -14,7 +14,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests._helpers import requires_cabal, script_env, site_binary
+from tests._helpers import requires_cabal, script_env, site_binary, write_site_config
 
 
 def page(path: Path, front: str, body: str = "Body.") -> None:
@@ -40,6 +40,7 @@ def scratch_site(root: Path) -> None:
 @requires_cabal
 class RouteCheckTests(unittest.TestCase):
     def run_site(self, root: Path, *args: str) -> subprocess.CompletedProcess[str]:
+        write_site_config(root)
         return subprocess.run([str(site_binary()), *args], cwd=root, env=script_env(),
                               capture_output=True, text=True, timeout=120)
 

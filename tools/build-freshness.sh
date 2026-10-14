@@ -79,12 +79,13 @@ PENDING_MARKER="$STATE_DIR/.full-rebuild-pending"
 DRAFT_HASH_FILE="$STATE_DIR/unpublished-hash.txt"
 
 # Everything that changes the compiled site generator: the Haskell rules
-# and the cabal metadata (dependency-bound moves change behaviour too).
+# and the cabal metadata (dependency-bound moves change behaviour too),
+# plus site.yaml: identity and feed settings can change route shape.
 # Templates are deliberately absent — Hakyll tracks those itself.
 rules_hash() {
     {
         find build -name '*.hs' -print0
-        printf '%s\0' levineuwirth.cabal cabal.project cabal.project.freeze
+        printf '%s\0' levineuwirth.cabal cabal.project cabal.project.freeze site.yaml
     } | sort -z | xargs -0 sha256sum | sha256sum | cut -d' ' -f1
 }
 
@@ -179,7 +180,7 @@ check() {
     if [ ! -f "$RULES_HASH_FILE" ]; then
         reasons+=("no rules-hash on record (first run under freshness tracking)")
     elif [ "$(rules_hash)" != "$(cat "$RULES_HASH_FILE")" ]; then
-        reasons+=("build rules changed (build/**/*.hs or cabal metadata)")
+        reasons+=("build rules changed (build/**/*.hs, cabal metadata or site.yaml)")
     fi
 
     base=""

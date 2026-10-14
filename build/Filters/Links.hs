@@ -14,6 +14,7 @@ import           Data.Text            (Text)
 import qualified Data.Text            as T
 import           Text.Pandoc.Definition
 import           Text.Pandoc.Walk     (walk)
+import           Config               (SiteConfig (..))
 import           Utils                (isPdfUrl, pdfViewerUrl)
 
 -- | Apply link classification to the entire document.
@@ -22,8 +23,8 @@ import           Utils                (isPdfUrl, pdfViewerUrl)
 --   explicitly skips anchors the PDF pass already claimed — the viewer URL
 --   is root-relative, so without that guard it would also be classified as
 --   an internal page link and get double chrome.
-apply :: Pandoc -> Pandoc
-apply = walk classifyLink . walk classifyPdfLink
+apply :: SiteConfig -> Pandoc -> Pandoc
+apply cfg = walk (classifyLink cfg) . walk classifyPdfLink
 
 -- | Rewrite root-relative PDF links to open via the vendored PDF.js viewer.
 --   Preserves the original path in @data-pdf-src@ so the popup thumbnail
@@ -52,8 +53,8 @@ pdfViewerTarget url
         in  Just (T.pack (pdfViewerUrl (T.unpack path)) <> fragment, path)
     | otherwise = Nothing
 
-classifyLink :: Inline -> Inline
-classifyLink l@(Link (_, classes, _) _ _)
+classifyLink :: SiteConfig -> Inline -> Inline
+classifyLink _ l@(Link (_, classes, _) _ _)
     -- Source-ref links are owned by Filters.SourceRefs: they keep the
     -- inline-code chrome of their body, must not receive an external
     -- brand icon stamp, and have their own popup provider. Leave them
@@ -64,9 +65,9 @@ classifyLink l@(Link (_, classes, _) _ _)
     -- pass; without this guard they would be double-classified as
     -- internal page links.
     | "pdf-link" `elem` classes = l
-classifyLink (Link (ident, classes, kvs) ils (url, title))
-    | isExternal url =
-        let icon     = domainIcon url
+classifyLink cfg (Link (ident, classes, kvs) ils (url, title))
+    | isExternal cfg url =
+        let icon     = domainIcon cfg url
             classes' = classes ++ ["link-external"]
             kvs'     = kvs
                        ++ [("target",             "_blank")]
@@ -80,7 +81,7 @@ classifyLink (Link (ident, classes, kvs) ils (url, title))
                        ++ [("data-link-icon",      "internal")]
                        ++ [("data-link-icon-type", "svg")]
         in  Link (ident, classes', kvs') ils (url, title)
-classifyLink x = x
+classifyLink _ x = x
 
 -- ---------------------------------------------------------------------------
 -- Helpers
@@ -99,21 +100,21 @@ isInternalPage url
 
 -- | True if the URL points outside the site's content host.
 --
---   Only @levineuwirth.org@ and @www.levineuwirth.org@ count as the content
---   site itself. Sibling subdomains like @git.levineuwirth.org@ (Forgejo) are
+--   Only the configured host and its @www.@ alias count as the content
+--   site itself. Sibling subdomains like the configured forge host are
 --   distinct services and are classified as external so they receive their
 --   brand icon, @target=_blank@, and @rel=noopener noreferrer@.
 --
 --   Uses strict hostname comparison rather than substring matching, so a
---   hostile lookalike like @evil-levineuwirth.org.attacker.com@ is also
+--   hostile lookalike like @example.org.attacker.com@ is also
 --   correctly classified as external.
-isExternal :: Text -> Bool
-isExternal url =
+isExternal :: SiteConfig -> Text -> Bool
+isExternal cfg url =
     case extractHost url of
         Nothing   -> False
-        Just host -> host /= siteHost && host /= "www." <> siteHost
+        Just host -> host /= ownHost && host /= "www." <> ownHost
   where
-    siteHost = "levineuwirth.org"
+    ownHost = T.pack (siteHost cfg)
 
 -- | Extract the lowercased hostname from an absolute http(s) URL,
 --   stripping any userinfo (@user:pass\@@) and port. Returns 'Nothing'
@@ -137,11 +138,11 @@ extractHost url
 --   Matches on the URL's host only, never on the full URL — a path like
 --   @https://example.org/why-x.com-failed@ must not get the Twitter
 --   icon. URLs with no extractable host get the generic icon.
-domainIcon :: Text -> Text
-domainIcon url = maybe "external" iconForHost (extractHost url)
+domainIcon :: SiteConfig -> Text -> Text
+domainIcon cfg url = maybe "external" (iconForHost cfg) (extractHost url)
 
-iconForHost :: Text -> Text
-iconForHost host
+iconForHost :: SiteConfig -> Text -> Text
+iconForHost cfg host
     -- Scholarly / reference
     | m "wikipedia.org"        = "wikipedia"
     | m "arxiv.org"            = "arxiv"
@@ -151,7 +152,7 @@ iconForHost host
     | m "archive.org"          = "internet-archive"
     -- Code / software
     | m "github.com"           = "github"
-    | m "git.levineuwirth.org" = "forgejo"
+    | m (T.pack (siteForgeHost cfg)) = "forgejo"
     | m "tensorflow.org"       = "tensorflow"
     -- AI companies (consumer products share a brand icon with the lab)
     | m "anthropic.com"        = "anthropic"

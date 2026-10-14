@@ -29,6 +29,7 @@ import           System.FilePath       (takeDirectory)
 import           System.IO             (hPutStrLn, stderr)
 import           Text.Pandoc           (readMarkdown, runPure, writeHtml5String)
 
+import           Config                (readSiteConfig)
 import           Compilers             (readerOpts, writerOpts, transformDocument,
                                         buildTOC)
 import           Hakyll.Core.Provider.Metadata (parsePage)
@@ -40,6 +41,7 @@ import qualified Filters.Headings      as Headings
 --   bibliography and the further-reading list, each under a marker line.
 renderFixture :: FilePath -> IO ()
 renderFixture path = do
+    cfg <- readSiteConfig
     (meta, body) <- parsePage <$> readFile path
                     >>= either (die . Yaml.prettyPrintParseException) return
     let frKeys        = map T.pack (fromMaybe [] (lookupStringList "further-reading" meta))
@@ -48,7 +50,7 @@ renderFixture path = do
     parsed <- either (die . show) return $
         runPure (readMarkdown readerOpts (T.pack (preprocessSource body)))
     (doc, bibHtml, furtherHtml) <-
-        transformDocument frKeys bibPath numberFigures (takeDirectory path)
+        transformDocument cfg frKeys bibPath numberFigures (takeDirectory path)
                           (Headings.normalizeLevels parsed)
     html <- either (die . show) return $ runPure (writeHtml5String writerOpts doc)
     mapM_ (\(name, part) -> TIO.putStrLn ("<!-- render-fixture: " <> name <> " -->")

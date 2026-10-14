@@ -7,6 +7,7 @@ module Filters
     ) where
 
 import           Text.Pandoc.Definition (Pandoc)
+import           Config (SiteConfig)
 
 import qualified Filters.Sidenotes  as Sidenotes
 import qualified Filters.Typography as Typography
@@ -38,16 +39,16 @@ import qualified Filters.FigureRefs as FigureRefs
 --   @figure-numbering: true@, read by "Compilers"). It runs last, and
 --   outermost: it rewrites the @\<figure\>@ HTML that Images and Viz emit,
 --   so both must have produced their markup before it looks for any.
-applyAll :: Bool -> FilePath -> Pandoc -> IO Pandoc
-applyAll numberFigures srcDir doc = do
+applyAll :: SiteConfig -> Bool -> FilePath -> Pandoc -> IO Pandoc
+applyAll cfg numberFigures srcDir doc = do
     imagesDone     <- Images.apply     srcDir doc
-    sourceRefsDone <- SourceRefs.apply imagesDone
+    sourceRefsDone <- SourceRefs.apply cfg imagesDone
     pure
         . (if numberFigures then FigureRefs.apply else id)
         . Aftermatter.apply
         . Sidenotes.apply
         . Typography.apply
-        . Links.apply
+        . Links.apply cfg
         . CodeRefs.apply
         . Archive.apply
         . Smallcaps.apply

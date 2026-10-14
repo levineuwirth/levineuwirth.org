@@ -1,0 +1,33 @@
+# Site-owned identity and Atom feeds. Taxonomy, standalone pages and
+# feature switches follow in later extraction steps.
+title: Levi Neuwirth
+author: Levi Neuwirth
+author-sort: Neuwirth, Levi
+email: levi@levineuwirth.org
+contact-email: ln@levineuwirth.org
+url: https://levineuwirth.org
+host: levineuwirth.org
+source-repo: https://git.levineuwirth.org/neuwirth/levineuwirth.org
+source-branch: main
+forge-host: git.levineuwirth.org
+content-license: CC-BY-NC-SA-4.0
+code-license: MIT
+feeds:
+  - path: feed.xml
+    title: Levi Neuwirth
+    description: Essays, notes, and creative work by Levi Neuwirth
+    sections: [essays, blog, fiction, poetry, music]
+    advertise: true
+    limit: 30
+  - path: music/feed.xml
+    title: Levi Neuwirth — Music
+    description: New compositions by Levi Neuwirth
+    sections: [music]
+    advertise: true
+    limit: null
+  - path: photography/feed.xml
+    title: Levi Neuwirth — Photography
+    description: New photographs by Levi Neuwirth
+    sections: [photography]
+    advertise: true
+    limit: 30

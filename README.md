@@ -45,6 +45,27 @@ will have no `.webp` companion and a fresh PDF will have no thumbnail
 until a full `make build` regenerates them. Once the companions exist
 they survive subsequent `make dev` runs.
 
+## Site configuration
+
+`site.yaml` owns the Haskell build's identity and Atom feed settings.
+`cabal run -v0 site -- config` prints the validated configuration as JSON;
+`cabal run -v0 site -- config --make` prints an includable GNU make fragment
+with `SITE_*` variables and `SITE_CONFIG_JSON`. The latter contains literal
+make values, so quote them appropriately if passing them to a shell.
+
+Each feed declares its output `path`, `title`, `description`, `sections`,
+`advertise`, and `limit` (`null` means all entries). Photography uses a
+separate image-bearing feed context and cannot be mixed with text sections.
+A feed with no entries yet is still valid: its `<updated>` is the build time.
+The feed advertisements in the templates, the section taxonomy and the feature
+switches are not configured here yet.
+
+Compilers load `site.yaml` as a Hakyll dependency. The freshness check also
+hashes it, so changing settings that alter routes forces a clean rebuild.
+The feed author uses `email`; `contact-email` is the separate contact
+address. `host` must be the hostname of `url`, with or without a leading
+`www.`; links to either count as the site's own.
+
 ## Requirements
 
 - GHC and `cabal` (`cabal run site` builds the generator on first use).

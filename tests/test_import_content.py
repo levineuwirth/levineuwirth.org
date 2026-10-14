@@ -6,7 +6,7 @@ import io
 import tempfile
 import unittest
 from pathlib import Path
-from tests._helpers import load_tool, requires_cabal
+from tests._helpers import load_tool, requires_cabal, write_site_config
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -134,6 +134,7 @@ class ImportContentTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "data").mkdir()
+            write_site_config(root)
             essay = root / "content" / "essays" / "a.md"
             essay.parent.mkdir(parents=True)
             essay.write_text("---\ntitle: A\ndate: 2026-01-01\ntags: [notes]\n---\n\nBody.\n",
