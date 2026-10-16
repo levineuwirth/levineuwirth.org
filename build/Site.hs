@@ -20,7 +20,7 @@ import qualified Data.Aeson as Aeson
 import qualified Data.ByteString.Lazy.Char8 as LBS
 import qualified Data.Map.Strict as Map
 import Hakyll
-import Config     (SiteConfig (..), FeedSpec (..), FeedSection (..), configRules,
+import Config     (SiteConfig (..), FeedSpec (..), FeedSection (..), configRules, manifestRules,
                    readSiteConfig, loadConfig, loadFeed, renderSiteFeed, photoFeed)
 import Archive    (archiveRules)
 import Authors    (buildAllAuthors, applyAuthorRules)
@@ -219,6 +219,7 @@ rules :: Rules ()
 rules = do
     cfg <- preprocess readSiteConfig
     configRules
+    manifestRules
     -- ---------------------------------------------------------------------------
     -- Build mode. SITE_ENV=dev (set by `make dev` / `make watch`) includes
     -- drafts under content/drafts/**; anything else (unset, "deploy", "build")

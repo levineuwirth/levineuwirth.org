@@ -1,0 +1,117 @@
+# Site-owned migration policy, not an engine default.
+#
+# Every file Git sees has one owner: tests/engine-paths.txt (the engine),
+# site-files, or vendored-files. An entry ending in / covers a directory; an
+# engine path inside a site directory stays the engine's. Files that will move
+# as they are belong to the engine even when they carry identity, which the
+# frozen allowances then record. The site keeps its prose (README, design
+# docs, licenses, THIRD-PARTY), ops, content tests, baselines and identity
+# overrides; the engine writes its own documents and notices at extraction
+# (A10, Q3). Vendored files are third-party, unscanned, and move with the
+# engine; downloaded ones need not be present.
+#
+# fixed-strings match case-insensitively, as the identity from `site config`
+# does. fixed-patterns are case-sensitive regular expressions for the ln
+# namespace, renamed in A9; they catch new names in it as well as old ones.
+fixed-strings:
+- LN Sans                                    # Fira's rename; fonts.yaml in A6e
+- 619844703EC398E70B0045D7150F08179CFEEFE3   # the signing subkey's keygrip
+fixed-patterns:
+- '\bln[A-Z]\w*'          # lnUtils, window.lnEnhance, dataset.lnEnhanced
+- '\bln:[\w-]+'           # ln:content-added
+- '\bdata-ln-[\w-]+'
+- '--ln-[\w-]+'
+site-files:
+- .env.example
+- .github/workflows/tests.yml
+- .gitignore
+- ARCHIVE.md
+- LICENSE
+- LICENSE-CONTENT
+- MARKS.md
+- PHOTOGRAPHY.md
+- README.md
+- THIRD-PARTY.md
+- WRITING.md
+- anki-sync/
+- anubis/
+- archive/
+- cabal.project
+- cabal.project.freeze
+- code-refs/
+- content/
+- couchdb/
+- data/
+- forgejo/
+- nginx/
+- paper/
+- site.yaml
+- static/apple-touch-icon.png
+- static/cv.pdf
+- static/cv.thumb.png
+- static/favicon-96x96.png
+- static/favicon.ico
+- static/favicon.svg
+- static/fonts/
+- static/gpg/
+- static/images/canto31.jpg
+- static/images/dingbats/
+- static/images/link-icons/internal.svg
+- static/licenses/VerInf-MIT.txt
+- static/logo-sprite.svg
+- static/og-image.png
+- static/papers/
+- static/resume.pdf
+- static/resume.thumb.png
+- static/web-app-manifest-192x192.png
+- static/web-app-manifest-512x512.png
+- systemd/
+- templates/404.html
+- templates/partials/footer.html
+- templates/projects.html
+- templates/vita.html
+- tests/browser-baseline/axe.json
+- tests/browser-baseline/budgets.json
+- tests/browser-baseline/outside.json
+- tests/browser-baseline/overflow.json
+- tests/engine-paths.txt
+- tests/identity-allowances.yaml
+- tests/identity-policy.yaml
+- tests/test_anubis.py
+- tests/test_anubis_update.py
+- tests/test_backup_pair.py
+- tests/test_bibliography.py
+- tests/test_couchdb_backup.py
+- tests/test_couchdb_update.py
+- tests/test_cv_pdfs.py
+- tests/test_forgejo_backup_offhost.py
+- tests/test_forgejo_update.py
+- tests/test_frontmatter.py
+- tests/test_licenses.py
+- tests/test_nginx_logging.py
+- tests/test_sections.py
+- tests/test_vps_config_backup.py
+- tools/anki-sync-backup.sh
+- tools/anki-sync-hash
+- tools/anki-sync-upgrade.sh
+- tools/anubis-update.py
+- tools/backup-pair.sh
+- tools/borg-offhost.sh
+- tools/browser/prod_smoke.py
+- tools/build-graph-papers.py
+- tools/couchdb-backup.sh
+- tools/couchdb-update.sh
+- tools/cv-pdfs.py
+- tools/font-sources.json
+- tools/forgejo-backup.sh
+- tools/forgejo-sync.sh
+- tools/forgejo-update.sh
+- tools/vps-config-backup.sh
+- tools/vps-offsite-verify.sh
+- tools/vps-status
+- yaml-source/
+vendored-files:
+- static/js/prism.min.js
+- static/katex/
+- tools/bin/monolith
+- tools/browser/axe.min.js

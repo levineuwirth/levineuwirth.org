@@ -1,16 +1,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-$if(home)$<title>Levi Neuwirth</title>$else$$if(title)$<title>$plain(title)$ — Levi Neuwirth</title>$else$<title>Levi Neuwirth</title>$endif$$endif$
+$if(home)$<title>$site-title$</title>$else$$if(title)$<title>$plain(title)$ — $site-title$</title>$else$<title>$site-title$</title>$endif$$endif$
 $if(description)$<meta name="description" content="$description$">$endif$
 $if(noindex)$<meta name="robots" content="noindex">$endif$
 <link rel="canonical" href="$site-url$$canonical-url$">
-<link rel="alternate" type="application/atom+xml" title="Levi Neuwirth" href="/feed.xml">
-<link rel="alternate" type="application/atom+xml" title="Levi Neuwirth — music" href="/music/feed.xml">
-<link rel="alternate" type="application/atom+xml" title="Levi Neuwirth — photography" href="/photography/feed.xml">
+$for(site-feeds)$<link rel="alternate" type="application/atom+xml" title="$feed-title$" href="$feed-url$">$sep$
+$endfor$
 
 <!-- OpenGraph / Twitter (link-preview unfurling) -->
-<meta property="og:site_name" content="Levi Neuwirth">
-$if(home)$<meta property="og:title" content="Levi Neuwirth">$else$$if(work)$<meta property="og:title" content="Levi Neuwirth — Work">$else$$if(title)$<meta property="og:title" content="$plain(title)$">$endif$$endif$$endif$
+<meta property="og:site_name" content="$site-title$">
+$if(home)$<meta property="og:title" content="$site-title$">$else$$if(work)$<meta property="og:title" content="$site-title$ — Work">$else$$if(title)$<meta property="og:title" content="$plain(title)$">$endif$$endif$$endif$
 $if(description)$<meta property="og:description" content="$description$">$endif$
 <meta property="og:url" content="$site-url$$canonical-url$">
 $if(date)$<meta property="og:type" content="article">$else$<meta property="og:type" content="website">$endif$

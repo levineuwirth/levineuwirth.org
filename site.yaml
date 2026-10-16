@@ -12,6 +12,13 @@ source-branch: main
 forge-host: git.levineuwirth.org
 content-license: CC-BY-NC-SA-4.0
 code-license: MIT
+signing-fingerprint: C9A42A6F AD444FBE 566FD738 531BDC1C C2707066
+manifest:
+  name: Levi Neuwirth
+  short-name: ln
+  description: Personal site of Levi Neuwirth — essays, research, music, and photography.
+  theme-color: '#16140f'
+  background-color: '#16140f'
 feeds:
   - path: feed.xml
     title: Levi Neuwirth
@@ -21,12 +28,14 @@ feeds:
     limit: 30
   - path: music/feed.xml
     title: Levi Neuwirth — Music
+    advertise-title: Levi Neuwirth — music
     description: New compositions by Levi Neuwirth
     sections: [music]
     advertise: true
     limit: null
   - path: photography/feed.xml
     title: Levi Neuwirth — Photography
+    advertise-title: Levi Neuwirth — photography
     description: New photographs by Levi Neuwirth
     sections: [photography]
     advertise: true

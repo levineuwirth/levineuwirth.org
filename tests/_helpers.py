@@ -114,6 +114,10 @@ def write_site_config(root: Path, **overrides) -> dict:
         "host": "example.org", "source-repo": "https://git.example.org/author/site",
         "source-branch": "main", "forge-host": "git.example.org",
         "content-license": "CC-BY-NC-SA-4.0", "code-license": "MIT", "feeds": [],
+        "signing-fingerprint": "",
+        "manifest": {"name": "Example Site", "short-name": "Example",
+                     "description": "An example site.", "theme-color": "#16140f",
+                     "background-color": "#16140f"},
     }
     config.update(overrides)
     # JSON is also YAML; no Python YAML defaults or schema reader.

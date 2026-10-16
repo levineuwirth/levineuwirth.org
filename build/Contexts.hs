@@ -79,7 +79,7 @@ import Stability    (stabilityField, lastReviewedField, lastReviewedIsoField,
                      versionHistoryPrimaryField, versionHistoryRestField,
                      versionHistoryRangeField, versionHistoryRangeStartField,
                      versionHistoryRangeEndField, versionHistoryCommitsField)
-import Config       (loadConfig, configField, siteTitle, siteUrl, siteAuthor)
+import Config       (loadConfig, identityContext, siteAuthor)
 import Utils        (authorUrl, canonicalUrlPath, confidencePercent, escapeHtml, formatIso, formatWriterly, isoDate, isProvedConfidence, itemAuthors, metadataKeywords, parseIsoDate, trim, trustScore, writerlyDate)
 
 -- ---------------------------------------------------------------------------
@@ -670,9 +670,8 @@ summaryField = field "summary" $ \item -> do
 
 siteCtx :: Context String
 siteCtx =
-    configField "site-title" siteTitle
+    identityContext
     <> plainField
-    <> configField "site-url" siteUrl
     <> canonicalUrlField
     <> pageScriptsField
     <> pageFeatureFields

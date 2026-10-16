@@ -75,6 +75,10 @@ class ConfigTests(unittest.TestCase):
             {"titel": "misspelled"}, {"author": ""}, {"title": "one\ntwo"},
             {"url": "example.org"}, {"url": "https://example.org/"},
             {"host": "example.org/path"}, {"code-license": "../outside"},
+            {"manifest": self.config["manifest"] | {"unknown": "value"}},
+            {"manifest": self.config["manifest"] | {"name": ""}},
+            {"manifest": self.config["manifest"] | {"description": "one\ntwo"}},
+            {"signing-fingerprint": "one\ntwo"},
             {"host": "other.example"}, {"host": "www."}, {"host": "www.other.example"},
             {"feeds": [feed, feed]},
             *[{"feeds": [dict(feed, **change)]} for change in (

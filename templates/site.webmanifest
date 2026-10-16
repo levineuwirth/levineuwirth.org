@@ -1,7 +1,7 @@
 {
-  "name": "Levi Neuwirth",
-  "short_name": "ln",
-  "description": "Personal site of Levi Neuwirth — essays, research, music, and photography.",
+  "name": $name$,
+  "short_name": $short-name$,
+  "description": $description$,
   "start_url": "/",
   "scope": "/",
   "icons": [
@@ -30,7 +30,7 @@
       "purpose": "maskable"
     }
   ],
-  "theme_color": "#16140f",
-  "background_color": "#16140f",
+  "theme_color": $theme-color$,
+  "background_color": $background-color$,
   "display": "standalone"
 }

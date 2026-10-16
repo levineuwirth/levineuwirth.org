@@ -3,10 +3,10 @@
 -- in 'preprocess'; compilers use 'loadConfig', so site.yaml is a real Hakyll
 -- dependency. There is deliberately no process-global configuration.
 module Config
-    ( SiteConfig (..), FeedSpec (..), FeedSection (..)
+    ( SiteConfig (..), FeedSpec (..), FeedSection (..), ManifestConfig (..)
     , configRules, readSiteConfig, loadConfig, configField
     , renderSiteFeed, configMake, photoFeed, sectionName, loadFeed
-    , siteOwnHosts
+    , siteOwnHosts, identityContext, manifestRules
     ) where
 
 import Control.Monad (unless, when)
@@ -42,6 +42,8 @@ data SiteConfig = SiteConfig
     , siteForgeHost :: String
     , siteContentLicense :: String
     , siteCodeLicense :: String
+    , siteSigningFingerprint :: String
+    , siteManifest :: ManifestConfig
     , siteFeeds :: [FeedSpec]
     } deriving (Eq, Show)
 
@@ -75,19 +77,22 @@ data FeedSpec = FeedSpec
     , feedName :: String
     , feedSummary :: String
     , feedSections :: [FeedSection]
+    , feedAdvertiseTitle :: String
     , feedAdvertise :: Bool
     , feedLimit :: Maybe Int
     } deriving (Eq, Show)
 
 instance FromJSON FeedSpec where
     parseJSON = withObject "feed" $ \o -> do
-        onlyKeys ["path", "title", "description", "sections", "advertise", "limit"] o
-        f <- FeedSpec <$> o .: "path" <*> o .: "title" <*> o .: "description"
-                      <*> o .: "sections" <*> o .:? "advertise" .!= True
+        onlyKeys ["path", "title", "description", "sections", "advertise-title", "advertise", "limit"] o
+        title <- o .: "title"
+        f <- FeedSpec <$> o .: "path" <*> pure title <*> o .: "description"
+                      <*> o .: "sections" <*> o .:? "advertise-title" .!= title
+                      <*> o .:? "advertise" .!= True
                       <*> o .:? "limit"
         mapM_ (uncurry singleLine)
             [("feed path", feedPath f), ("feed title", feedName f),
-             ("feed description", feedSummary f)]
+             ("feed description", feedSummary f), ("feed advertise-title", feedAdvertiseTitle f)]
         unless (safePath (feedPath f) && ".xml" `isSuffixOf` feedPath f) $
             fail "feed path must be a relative .xml path without traversal"
         when (null (feedSections f) || nub (feedSections f) /= feedSections f) $
@@ -102,18 +107,48 @@ instance ToJSON FeedSpec where
     toJSON f = object
         [ "path" .= feedPath f, "title" .= feedName f
         , "description" .= feedSummary f, "sections" .= feedSections f
+        , "advertise-title" .= feedAdvertiseTitle f
         , "advertise" .= feedAdvertise f, "limit" .= feedLimit f ]
+
+-- | Identity in the web-app manifest. Icon routes and the application shell
+-- live in its overridable template; text values are JSON-encoded at rendering.
+data ManifestConfig = ManifestConfig
+    { manifestName :: String
+    , manifestShortName :: String
+    , manifestDescription :: String
+    , manifestThemeColor :: String
+    , manifestBackgroundColor :: String
+    } deriving (Eq, Show)
+
+instance FromJSON ManifestConfig where
+    parseJSON = withObject "manifest" $ \o -> do
+        onlyKeys ["name", "short-name", "description", "theme-color", "background-color"] o
+        m <- ManifestConfig <$> o .: "name" <*> o .: "short-name" <*> o .: "description"
+                            <*> o .: "theme-color" <*> o .: "background-color"
+        mapM_ (uncurry singleLine) (manifestValues m)
+        pure m
+
+manifestValues :: ManifestConfig -> [(String, String)]
+manifestValues m = [("name", manifestName m), ("short-name", manifestShortName m),
+                    ("description", manifestDescription m), ("theme-color", manifestThemeColor m),
+                    ("background-color", manifestBackgroundColor m)]
+
+instance ToJSON ManifestConfig where
+    toJSON m = object [Key.fromString k .= v | (k, v) <- manifestValues m]
 
 instance FromJSON SiteConfig where
     parseJSON = withObject "site config" $ \o -> do
-        onlyKeys (map Key.fromString identityKeys ++ ["feeds"]) o
+        onlyKeys (map Key.fromString identityKeys ++ ["feeds", "manifest", "signing-fingerprint"]) o
         c <- SiteConfig <$> o .: "title" <*> o .: "author" <*> o .: "author-sort"
                         <*> o .: "email" <*> o .: "contact-email"
                         <*> o .: "url" <*> o .: "host"
                         <*> o .: "source-repo" <*> o .:? "source-branch" .!= "main"
                         <*> o .: "forge-host" <*> o .: "content-license"
-                        <*> o .: "code-license" <*> o .: "feeds"
+                        <*> o .: "code-license" <*> o .:? "signing-fingerprint" .!= ""
+                        <*> o .: "manifest" <*> o .: "feeds"
         mapM_ (uncurry singleLine) (identityValues c)
+        when (any isControl (siteSigningFingerprint c)) $
+            fail "signing-fingerprint must be a single-line string"
         mapM_ (\(name, value) -> unless (absoluteUrl value && not ("/" `isSuffixOf` value)) $
             fail (name ++ " must be an absolute HTTP(S) URL without a trailing slash"))
             [("url", siteUrl c), ("source-repo", siteSourceRepo c)]
@@ -133,7 +168,8 @@ instance FromJSON SiteConfig where
 
 instance ToJSON SiteConfig where
     toJSON c = object ([Key.fromString k .= v | (k, v) <- identityValues c]
-                       ++ ["feeds" .= siteFeeds c])
+                       ++ ["feeds" .= siteFeeds c, "manifest" .= siteManifest c,
+                           "signing-fingerprint" .= siteSigningFingerprint c])
 
 identityKeys :: [String]
 identityKeys = ["title", "author", "author-sort", "email", "contact-email", "url", "host",
@@ -208,6 +244,34 @@ loadFeed path = do
 configField :: String -> (SiteConfig -> String) -> Context a
 configField name get = field name $ \_ -> get <$> loadConfig
 
+-- | HTML-facing identity, escaped once at the output boundary. Keep the
+-- underlying config raw for non-HTML consumers (JSON, filters, tools).
+identityContext :: Context String
+identityContext = mconcat
+    [ configField name (escapeHtml . get)
+    | (name, get) <- [("site-title", siteTitle), ("site-url", siteUrl),
+                     ("site-host", siteHost), ("site-email", siteEmail),
+                     ("site-contact-email", siteContactEmail), ("site-source-repo", siteSourceRepo),
+                     ("site-code-license", siteCodeLicense),
+                     ("site-signing-fingerprint", siteSigningFingerprint)] ]
+    <> listField "site-feeds" feedContext advertisedFeeds
+  where
+    advertisedFeeds = do
+        cfg <- loadConfig
+        mapM makeItem (filter feedAdvertise (siteFeeds cfg))
+    feedContext = field "feed-title" (pure . escapeHtml . feedAdvertiseTitle . itemBody)
+               <> field "feed-url" (pure . escapeHtml . ("/" ++) . feedPath . itemBody)
+
+manifestRules :: Rules ()
+manifestRules = create ["site.webmanifest"] $ do
+    route idRoute
+    compile $ do
+        cfg <- loadConfig
+        let jsonString = T.unpack . TE.decodeUtf8 . LBS.toStrict . encode
+            ctx = mconcat [constField name (jsonString value)
+                          | (name, value) <- manifestValues (siteManifest cfg)]
+        makeItem ("" :: String) >>= loadAndApplyTemplate "templates/site.webmanifest" ctx
+
 -- | Hakyll interpolates these into its feed templates as they are ("field
 --   values are not escaped", @Hakyll.Web.Feed@), so a title such as
 --   @Art & photography@ would make the feed invalid XML. Each is escaped
@@ -257,7 +321,8 @@ configMake :: SiteConfig -> String
 configMake c = concatMap define
     ([("SITE_" ++ map (\x -> if x == '-' then '_' else toUpper x) k, v)
       | (k, v) <- identityValues c]
-     ++ [("SITE_FEEDS", unwords (map feedPath (siteFeeds c))),
+     ++ [("SITE_SIGNING_FINGERPRINT", siteSigningFingerprint c),
+         ("SITE_FEEDS", unwords (map feedPath (siteFeeds c))),
          ("SITE_CONFIG_JSON", T.unpack (TE.decodeUtf8 (LBS.toStrict (encode c))))])
   where
     define (name, value) = "define " ++ name ++ " :=\n"

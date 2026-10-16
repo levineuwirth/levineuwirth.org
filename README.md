@@ -47,18 +47,25 @@ they survive subsequent `make dev` runs.
 
 ## Site configuration
 
-`site.yaml` owns the Haskell build's identity and Atom feed settings.
+`site.yaml` owns the build and template identity, web-app manifest and Atom feed settings.
 `cabal run -v0 site -- config` prints the validated configuration as JSON;
 `cabal run -v0 site -- config --make` prints an includable GNU make fragment
 with `SITE_*` variables and `SITE_CONFIG_JSON`. The latter contains literal
 make values, so quote them appropriately if passing them to a shell.
 
 Each feed declares its output `path`, `title`, `description`, `sections`,
-`advertise`, and `limit` (`null` means all entries). Photography uses a
+`advertise`, and `limit` (`null` means all entries). `advertise-title` defaults
+to the feed title and controls the label of its HTML discovery link. Only feeds
+with `advertise: true` appear in the head. Photography uses a
 separate image-bearing feed context and cannot be mixed with text sections.
 A feed with no entries yet is still valid: its `<updated>` is the build time.
-The feed advertisements in the templates, the section taxonomy and the feature
-switches are not configured here yet.
+The section taxonomy and feature switches are not configured here yet.
+
+`manifest` contains `name`, `short-name`, `description`, `theme-color` and
+`background-color`. The build generates `/site.webmanifest` from these values
+and `templates/site.webmanifest`; the template owns the icon routes and app
+shell settings. `signing-fingerprint` is the displayed signing subkey in the
+footer. Template identity is HTML-escaped; manifest values are JSON-encoded.
 
 Compilers load `site.yaml` as a Hakyll dependency. The freshness check also
 hashes it, so changing settings that alter routes forces a clean rebuild.
@@ -66,6 +73,24 @@ The feed author uses `email`; `contact-email` is the separate contact
 address. `url`'s hostname must be `host`, with or without a leading `www.`;
 links to the host in either form count as the site's own. Feed titles,
 descriptions and the author are escaped for the feed's XML.
+
+## Engine identity check
+
+`make test` checks the files listed in `tests/engine-paths.txt` against the
+identity returned by `site config`. `tests/identity-policy.yaml` records the
+site's files and directories, vendored files, legacy names, and case-sensitive
+patterns for the `ln` namespace. Every file Git sees (tracked, or untracked and
+not ignored) must have exactly one owner, so a new file is classified before it
+is committed. Downloaded vendor files need not be present to run this check.
+
+`tests/identity-allowances.yaml` is a frozen migration inventory. Each stable
+ID covers exactly one string at a file, line and column. Delete an entry when
+its occurrence is removed; update only its location for a reviewed move or
+nearby edit. Do not regenerate the list or reuse a removed ID. The test checks
+committed history as well as the working copy, so shrinking the list cannot
+make room for new entries. Keep full Git history while these allowances exist.
+The initial population is permitted only on its recorded bootstrap parent;
+the first commit containing it freezes that population.
 
 ## Requirements
 
