@@ -39,8 +39,8 @@ import Data.Maybe (fromMaybe, isNothing, maybeToList)
 import Data.Ord   (comparing)
 import Data.Set   (Set)
 import qualified Data.Set as Set
-import Hakyll
-import Utils (inDefault, writerlyDate)
+import Hakyll hiding (escapeHtml)
+import Utils (escapeHtml, inDefault, writerlyDate)
 import Config     (SiteConfig)
 import Patterns   (tagIndexable)
 import Sections   (sectionOwnedTopLevelTags)
@@ -227,7 +227,7 @@ displayNameFor portalPairs t =
 -- | Item-level context for See Also entries. Body is a tag path string.
 seeAlsoItemCtx :: [(String, String)] -> Context String
 seeAlsoItemCtx portalPairs =
-       field "see-also-name" (\i -> return (displayNameFor portalPairs (itemBody i)))
+       field "see-also-name" (\i -> return (escapeHtml (displayNameFor portalPairs (itemBody i))))
     <> field "see-also-url"  (\i -> return $ "/" ++ itemBody i ++ "/")
     <> portalTooltipField (sidecarIdentifier . itemBody)
 

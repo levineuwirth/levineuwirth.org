@@ -54,7 +54,7 @@ data SiteConfig = SiteConfig
     } deriving (Eq, Show)
 
 data FeedSection = Essays | Blog | Fiction | Poetry | Music | Photos
-    deriving (Eq, Show)
+    deriving (Eq, Show, Enum, Bounded)
 
 sectionName :: FeedSection -> String
 sectionName s = case s of
@@ -155,12 +155,24 @@ data Section = Section
     , sectionLanding :: Bool          -- ^ it owns the landing @<dir>/index.html@
     } deriving (Eq, Show)
 
+-- The current rules own these section namespaces. This is a routing contract,
+-- not another set of display defaults: names come from the engine's section
+-- enumeration, while labels and ornaments remain site-owned. When rules become
+-- conditional, their enabled sections must also determine this contract.
+sectionRoutes :: [(String, Bool)]
+sectionRoutes = [(sectionName s, True) | s <- [minBound .. maxBound]]
+             ++ [("memento-mori", False)]
+
 instance FromJSON Section where
     parseJSON = withObject "section" $ \o -> do
         onlyKeys ["dir", "kind", "dingbat", "landing"] o
         s <- Section <$> o .: "dir" <*> o .: "kind" <*> o .:? "dingbat"
                      <*> o .:? "landing" .!= True
         unless (slug (sectionDir s)) $ fail "section dir must be a lowercase slug"
+        case lookup (sectionDir s) sectionRoutes of
+            Nothing -> fail ("unsupported section directory: " ++ sectionDir s)
+            Just landing -> unless (sectionLanding s == landing) $
+                fail ("section landing disagrees with engine route: " ++ sectionDir s)
         singleLine "section kind" (sectionKind s)
         forM_ (sectionDingbat s) $ \d -> unless (d `elem` knownDingbats) $
             fail ("unknown dingbat " ++ d ++ "; known: " ++ unwords knownDingbats)
@@ -284,6 +296,9 @@ instance FromJSON SiteConfig where
         let dirs = map sectionDir (siteSections c)
             tags = map portalTag (sitePortals c)
         when (nub dirs /= dirs) $ fail "section dirs must be unique"
+        let missing = filter (`notElem` dirs) (map fst sectionRoutes)
+        unless (null missing) $
+            fail ("sections must include the engine's routed sections: " ++ intercalate ", " missing)
         when (nub tags /= tags) $ fail "portal tags must be unique"
         pure c
 

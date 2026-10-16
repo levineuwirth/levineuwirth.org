@@ -121,7 +121,8 @@ def write_site_config(root: Path, **overrides) -> dict:
         # The sections the engine has rules for, until A8's switches.
         "sections": [{"dir": d, "kind": k, "dingbat": None, "landing": True} for d, k in (
             ("essays", "Essay"), ("blog", "Post"), ("poetry", "Poem"), ("fiction", "Fiction"),
-            ("music", "Composition"), ("photography", "Photo"))],
+            ("music", "Composition"), ("photography", "Photo"))]
+                    + [{"dir": "memento-mori", "kind": "Page", "dingbat": None, "landing": False}],
         "portals": [{"name": "Notes", "tag": "notes"}],
         "nav-primary": [{"label": "Home", "href": "/"}],
         "library": {"shelf-cap": 4, "shelf-max": 5, "description": "Every shelf.",

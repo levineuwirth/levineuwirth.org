@@ -65,6 +65,12 @@ Feature switches are not configured here yet.
 `sections` lists the content directories (`dir`), the label their pages carry
 on the New page (`kind`), their default ornament (`dingbat`, optional) and
 whether the section owns a landing at `/<dir>/` (`landing`, default true).
+The current engine requires all seven section declarations: essays, blog,
+poetry, fiction, music and photography with `landing: true`, and memento-mori
+with `landing: false`. Labels, ornaments and ordering are configurable;
+adding, omitting or changing the route shape of a section is rejected until
+the engine supports changing those routes. Ordinary page collections do not
+need section declarations.
 `portals` are the home page's top-level tags in order (`name`, `tag`); the
 library shelves follow that order and the navigation lists them
 alphabetically. `nav-primary` is the first navigation row (`label`, `href`),

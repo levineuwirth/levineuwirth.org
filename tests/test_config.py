@@ -91,7 +91,7 @@ class ConfigTests(unittest.TestCase):
                 {"adveritse": True}, {"advertise": "yes"},
             )],
             {"sections": None}, {"portals": None}, {"nav-primary": None}, {"library": None},
-            *[{"sections": [dict(section, **change)]} for change in (
+            *[{"sections": [dict(section, **change)] + self.config["sections"][1:]} for change in (
                 {"dir": "Essays"}, {"dir": "essays/old"}, {"dir": "-essays"}, {"dir": ""},
                 {"kind": ""}, {"dingbat": "unknown"}, {"landing": "no"}, {"order": 1},
             )],
@@ -118,10 +118,30 @@ class ConfigTests(unittest.TestCase):
                 self.assertNotEqual(done.returncode, 0, done.stdout)
                 self.assertIn("site.yaml", done.stderr)
 
+    def test_taxonomy_rejects_declarations_the_routes_cannot_honor(self):
+        original = self.config["sections"]
+        cases = [
+            (original + [{"dir": "notes", "kind": "Note"}], "unsupported section directory"),
+            ([dict(s, landing=not s["landing"]) if s["dir"] == "essays" else s
+              for s in original], "landing disagrees"),
+            ([dict(s, landing=True) if s["dir"] == "memento-mori" else s
+              for s in original], "landing disagrees"),
+            *[([s for s in original if s["dir"] != omitted["dir"]], "must include")
+              for omitted in original],
+        ]
+        for sections, error in cases:
+            with self.subTest(sections=sections):
+                self.config["sections"] = sections
+                self.write_config()
+                # Refuse at rule construction, before content can be dropped
+                # or a wikilink can be directed to a nonexistent landing.
+                done = self.run_site("list-routes")
+                self.assertNotEqual(done.returncode, 0)
+                self.assertIn(error, done.stderr)
+
     def test_taxonomy_lists_derive_from_sections_and_portals(self):
-        self.config["sections"] = [
-            {"dir": "notes", "kind": "Note", "dingbat": "fleuron", "landing": True},
-            {"dir": "colophon-page", "kind": "Page", "dingbat": None, "landing": False}]
+        self.config["sections"] = [dict(s, kind="Custom label", dingbat="trefoil")
+                                   for s in reversed(self.config["sections"])]
         self.config["portals"] = [{"name": "Walks", "tag": "walks"}]
         self.write_config()
         done = self.run_site("shared-rules")
@@ -130,27 +150,36 @@ class ConfigTests(unittest.TestCase):
         reserved, owned, slugs = (set(rules[k]) for k in
                                   ("reserved-sections", "section-owned-tags", "directory-slugs"))
         self.assertEqual(rules["reserved-sections"], sorted(reserved))
-        # Every section's directory is reserved; only a landing owns its
-        # URL; a portal's tag page is a directory but keeps its tag page.
-        self.assertTrue({"notes", "colophon-page"} <= reserved)
-        self.assertIn("notes", owned & slugs)
-        self.assertNotIn("colophon-page", owned | slugs)
+        self.assertTrue({"essays", "memento-mori"} <= reserved)
+        self.assertIn("essays", owned & slugs)
+        self.assertNotIn("memento-mori", owned | slugs)
         self.assertIn("walks", slugs - owned - reserved)
-        # Nothing of the real site's taxonomy is left behind.
-        self.assertFalse({"essays", "poetry", "research", "photography"} & (reserved | owned | slugs))
+        self.assertNotIn("research", slugs)
 
-        # Tag pages and wikilinks follow the same lists.
         tagged = subprocess.run([str(self.binary), "expand-tags"], cwd=self.root, env=script_env(),
-                                input="notes\nwalks\nnotes/field\n", capture_output=True,
+                                input="essays\nwalks\nessays/field\n", capture_output=True,
                                 text=True, timeout=60)
         self.assertEqual(tagged.returncode, 0, tagged.stderr)
-        self.assertEqual(tagged.stdout.split(), ["walks", "notes/field"])
-        page = self.root / "content/page.md"
-        page.parent.mkdir()
-        page.write_text("---\ntitle: Page\n---\n[[Walks]], [[Notes]] and [[Colophon Page]]\n")
+        self.assertEqual(tagged.stdout.split(), ["walks", "essays/field"])
+        (self.root / "data").mkdir()
+        page = self.root / "content/essays/page.md"
+        page.parent.mkdir(parents=True)
+        page.write_text("---\ntitle: Page\ndate: 2026-01-01\ntags: [walks]\n---\n[[Walks]], [[Essays]] and [[Memento Mori]]\n")
+        memento = self.root / "content/memento-mori/index.md"
+        memento.parent.mkdir()
+        memento.write_text("---\ntitle: Memento\n---\nBody\n")
+        notes = self.root / "content/notes/a.md"
+        notes.parent.mkdir()
+        notes.write_text("---\ntitle: Note\n---\nBody\n")
         links = self.run_site("list-links", "content")
         self.assertEqual(links.returncode, 0, links.stderr)
-        self.assertEqual(links.stdout.split(), ["/colophon-page.html", "/notes/", "/walks/"])
+        self.assertEqual(links.stdout.split(), ["/essays/", "/memento-mori.html", "/walks/"])
+        done = self.run_site("list-routes")
+        self.assertEqual(done.returncode, 0, done.stderr)
+        routes = {line.split("\t")[0] for line in done.stdout.splitlines()}
+        self.assertIn("notes/a.html", routes)  # ordinary collections still compile
+        for url in links.stdout.split():
+            self.assertIn(url.lstrip("/") + ("index.html" if url.endswith("/") else ""), routes)
 
     def test_url_may_be_the_www_alias_of_host(self):
         self.config["url"] = "https://www.example.org"

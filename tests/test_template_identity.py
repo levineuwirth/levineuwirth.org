@@ -22,11 +22,16 @@ class TemplateIdentityTests(unittest.TestCase):
         build = Path(tmp.name)
         (build / "Probe.hs").write_text('''{-# LANGUAGE OverloadedStrings #-}
 import Config
+import Contexts (contentKindField)
+import qualified Tags as T
 import Hakyll
 import Utils (stripHtmlComments)
 import Control.Monad (forM_)
 main = hakyll $ do
+    cfg <- preprocess readSiteConfig
     configRules
+    tags <- T.buildAllTags cfg
+    match "content/essays/*.md" $ compile getResourceBody
     manifestRules
     match "templates/**" $ compile $ do
         item <- getResourceBody
@@ -41,6 +46,16 @@ main = hakyll $ do
         create [fromFilePath name] $ do
             route idRoute
             compile $ makeItem ("" :: String) >>= loadAndApplyTemplate (fromFilePath ("templates/" ++ name)) ctx
+    create ["essays/card.html"] $ do
+        route idRoute
+        compile $ makeItem ("" :: String) >>= loadAndApplyTemplate "templates/partials/item-card.html"
+            (contentKindField <> constField "title" "Example" <> constField "canonical-url" "/essays/example/"
+             <> constField "date-iso" "2026-01-01" <> constField "date-display" "January 1")
+    create ["see-also.html"] $ do
+        route idRoute
+        compile $ makeItem ("" :: String) >>= loadAndApplyTemplate "templates/tag-index.html"
+            (T.seeAlsoContext [(portalName p, portalTag p) | p <- sitePortals cfg] tags "first"
+             <> constField "title" "First")
 ''')
         cls.binary = build / "probe"
         done = subprocess.run(["cabal", "exec", "--", "ghc", "-v0", "-ibuild",
@@ -104,3 +119,29 @@ main = hakyll $ do
                                                         for l in config["nav-primary"]])
                 self.assertEqual(links("nav-portals"), [(f"/{p['tag']}/", html.escape(p["name"])) for p in
                                                         sorted(config["portals"], key=lambda p: p["name"].lower())])
+
+    def test_taxonomy_labels_remain_text_in_cards_and_see_also(self):
+        with tempfile.TemporaryDirectory(prefix="taxonomy-labels-") as tmp:
+            root = Path(tmp)
+            shutil.copytree(ROOT / "templates", root / "templates")
+            config = write_site_config(root)
+            kind = 'Study <Draft> & "notes"'
+            portal = "Art & <Craft> 'work'"
+            config["sections"][0]["kind"] = kind
+            config["portals"] = [{"name": "First", "tag": "first"},
+                                 {"name": portal, "tag": "second"}]
+            (root / "site.yaml").write_text(json.dumps(config))
+            page = root / "content/essays/example.md"
+            page.parent.mkdir(parents=True)
+            page.write_text("---\ntitle: Example\ntags: [first, second]\n---\nBody.\n")
+            done = subprocess.run([str(self.binary), "build"], cwd=root, env=script_env(),
+                                  capture_output=True, text=True, timeout=60)
+            self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
+            card = (root / "_site/essays/card.html").read_text()
+            see_also = (root / "_site/see-also.html").read_text()
+            kind_text = re.search(r'<span class="item-card-kind">([^<]*)</span>', card)
+            portal_text = re.search(r'<a class="see-also-name" href="/second/">([^<]*)</a>', see_also)
+            self.assertIsNotNone(kind_text, card)
+            self.assertIsNotNone(portal_text, see_also)
+            self.assertEqual(html.unescape(kind_text.group(1)), kind)
+            self.assertEqual(html.unescape(portal_text.group(1)), portal)

@@ -128,7 +128,7 @@ contentKindField :: Context String
 contentKindField = field "item-kind" $ \item -> do
     cfg <- loadConfig
     r <- getRoute (itemIdentifier item)
-    return $ maybe "Page" sectionKind (sectionOfRoute cfg =<< r)
+    return $ escapeHtml $ maybe "Page" sectionKind (sectionOfRoute cfg =<< r)
 
 -- ---------------------------------------------------------------------------
 -- Site-wide context
