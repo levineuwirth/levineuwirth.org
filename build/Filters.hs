@@ -8,6 +8,7 @@ module Filters
 
 import           Text.Pandoc.Definition (Pandoc)
 import           Config (SiteConfig)
+import           Sections (directoryRouteSlugs)
 
 import qualified Filters.Sidenotes  as Sidenotes
 import qualified Filters.Typography as Typography
@@ -60,5 +61,6 @@ applyAll cfg numberFigures srcDir doc = do
 -- | Apply source-level preprocessors to the raw Markdown string.
 --   Order matters: EmbedPdf must run before Transclusion, because the
 --   transclusion parser would otherwise treat {{pdf:...}} as a broken slug.
-preprocessSource :: String -> String
-preprocessSource = Transclusion.preprocess . EmbedPdf.preprocess . Wikilinks.preprocess
+preprocessSource :: SiteConfig -> String -> String
+preprocessSource cfg = Transclusion.preprocess slugs . EmbedPdf.preprocess . Wikilinks.preprocess slugs
+  where slugs = directoryRouteSlugs cfg

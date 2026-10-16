@@ -51,6 +51,7 @@ import           Text.Pandoc.Definition     (Block (..), Inline (..), Pandoc (..
 import           Text.Pandoc.Options        (WriterOptions (..), HTMLMathMethod (..))
 import           Text.Pandoc.Walk           (query, walk)
 import           Hakyll
+import           Config                     (SiteConfig, loadConfig)
 import           Compilers                  (readerOpts, writerOpts)
 import           Filters                    (preprocessSource)
 import qualified Patterns                   as P
@@ -296,9 +297,10 @@ extractLinksWithContext (Pandoc _ blocks) = concatMap go blocks
 -- extract internal links with their paragraph context, and serialise as JSON.
 linksCompiler :: Compiler (Item String)
 linksCompiler = do
+    cfg  <- loadConfig
     body <- getResourceBody
     let src   = itemBody body
-    let body' = itemSetBody (preprocessSource src) body
+    let body' = itemSetBody (preprocessSource cfg src) body
     pandocItem <- readPandocWith readerOpts body'
     let entries = nubBy sameEntry
                         (extractLinksWithContext (itemBody pandocItem))
@@ -337,7 +339,7 @@ archiveFragment u = case archiveSlugFor u of
 -- propagate to backlinks).
 -- ---------------------------------------------------------------------------
 
-allContent :: Pattern
+allContent :: SiteConfig -> Pattern
 allContent = P.allContent
 
 -- ---------------------------------------------------------------------------
@@ -346,17 +348,17 @@ allContent = P.allContent
 
 -- | Register the @version "links"@ rules for all content and the
 -- @create ["data/backlinks.json"]@ rule.  Call this from 'Site.rules'.
-backlinkRules :: Rules ()
-backlinkRules = do
+backlinkRules :: SiteConfig -> Rules ()
+backlinkRules cfg = do
     -- Pass 1: extract links + context from each content file.
-    match allContent $ version "links" $
+    match (allContent cfg) $ version "links" $
         compile linksCompiler
 
     -- Pass 2: invert the map and write the backlinks JSON.
     create ["data/backlinks.json"] $ do
         route   idRoute
         compile $ do
-            items <- loadAll (allContent .&&. hasVersion "links")
+            items <- loadAll (allContent cfg .&&. hasVersion "links")
                         :: Compiler [Item String]
             pairs <- concat <$> mapM toSourcePairs items
             makeItem . TL.unpack . TLE.decodeUtf8 . Aeson.encode

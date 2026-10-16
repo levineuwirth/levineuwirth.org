@@ -19,8 +19,8 @@
 --
 -- Adding a new ornament:
 --
---   1. Add its name to 'knownDingbats'.
---   2. Optionally make it a section's default in "Sections".
+--   1. Add its name to 'knownDingbats' ("Config").
+--   2. Optionally make it a section's default in site.yaml.
 --   3. Add a matching @body[data-dingbat="…"]@ rule in typography.css.
 module Dingbat
     ( dingbatField
@@ -29,37 +29,25 @@ module Dingbat
 
 import Data.Maybe          (fromMaybe)
 import Hakyll
+import Config              (SiteConfig, knownDingbats, loadConfig)
 import Sections            (Section (..), sectionOfRoute)
-
--- | Curated palette. Extend here when adding a new ornament.
-knownDingbats :: [String]
-knownDingbats =
-    [ "asterism"    -- ⁂ typographic asterism (neutral fallback)
-    , "asterisks"   -- * * * spaced asterisks (classic scene break)
-    , "fleuron"     -- Aldine leaf (literary essays)
-    , "trefoil"     -- three-lobed ornament (poetry)
-    , "lozenge"     -- diamond/rhombus (blog)
-    , "clef"        -- musical ornament (music)
-    , "memento"     -- mourning ornament (memento-mori)
-    , "tech"        -- tech ornament
-    , "ai"          -- AI ornament (the cute robot)
-    ]
 
 -- | Last-resort default when neither frontmatter nor section rule applies.
 fallbackDingbat :: String
 fallbackDingbat = "asterism"
 
--- | The section's default ornament ("Sections"); a route in no section,
+-- | The section's default ornament (site.yaml); a route in no section,
 --   or in one without a default, uses 'fallbackDingbat'.
-sectionDefault :: String -> String
-sectionDefault r = fromMaybe fallbackDingbat (sectionOfRoute r >>= sectionDingbat)
+sectionDefault :: SiteConfig -> String -> String
+sectionDefault cfg r = fromMaybe fallbackDingbat (sectionOfRoute cfg r >>= sectionDingbat)
 
 -- | @$dingbat$@: name of the ornament to use on this page.
 dingbatField :: Context a
 dingbatField = field "dingbat" $ \item -> do
+    cfg  <- loadConfig
     meta <- getMetadata (itemIdentifier item)
     r    <- fromMaybe "" <$> getRoute (itemIdentifier item)
-    let sectionD = sectionDefault r
+    let sectionD = sectionDefault cfg r
     case lookupString "dingbat" meta of
         Nothing -> return sectionD
         Just name

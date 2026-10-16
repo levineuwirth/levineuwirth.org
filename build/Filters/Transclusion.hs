@@ -26,12 +26,12 @@ import qualified Utils as U
 
 -- | Apply transclusion substitution to the raw Markdown source string,
 --   skipping lines inside fenced code blocks.
-preprocess :: String -> String
-preprocess = mapOutsideFences processLine
+preprocess :: [String] -> String -> String
+preprocess slugs = mapOutsideFences (processLine slugs)
 
-processLine :: String -> String
-processLine line =
-    case parseDirective (U.trim line) of
+processLine :: [String] -> String -> String
+processLine slugs line =
+    case parseDirective slugs (U.trim line) of
         Nothing             -> line
         Just (url, secAttr) ->
             "<div class=\"transclude\" data-src=\"" ++ U.escapeHtml url ++ "\""
@@ -74,15 +74,15 @@ noscriptFallback url secAttr =
 --   The section name is HTML-escaped before being interpolated into the
 --   @data-section@ attribute, so a stray @\"@, @&@, @<@, or @>@ in a
 --   section name cannot break the surrounding markup.
-parseDirective :: String -> Maybe (String, String)
-parseDirective s = do
+parseDirective :: [String] -> String -> Maybe (String, String)
+parseDirective slugs s = do
     inner <- stripPrefix "{{" s >>= stripSuffix "}}"
     case break (== '#') inner of
         ("", _)            -> Nothing
-        (slug, "")         -> Just (slugToUrl slug, "")
+        (slug, "")         -> Just (slugToUrl slugs slug, "")
         (slug, '#' : sec)
-            | null sec     -> Just (slugToUrl slug, "")
-            | otherwise    -> Just (slugToUrl slug,
+            | null sec     -> Just (slugToUrl slugs slug, "")
+            | otherwise    -> Just (slugToUrl slugs slug,
                                     " data-section=\"" ++ U.escapeHtml sec ++ "\"")
         _                  -> Nothing
 
@@ -107,17 +107,17 @@ parseDirective s = do
 --       @.html@ to everything else. That table is shared with the
 --       wikilink preprocessor so @[[Build]]@ and @{{build}}@ resolve to
 --       the same existing route.
-slugToUrl :: String -> String
-slugToUrl slug
+slugToUrl :: [String] -> String -> String
+slugToUrl slugs slug
     | "/" `isSuffixOf` slug, "/" `isPrefixOf` slug     = slug
     | "/" `isSuffixOf` slug                            = "/" ++ slug
     | "index.html" `isSuffixOf` slug, "/" `isPrefixOf` slug
-                                                       = "/" ++ slugUrlPath (drop 1 slug)
-    | "index.html" `isSuffixOf` slug                   = "/" ++ slugUrlPath slug
+                                                       = "/" ++ slugUrlPath slugs (drop 1 slug)
+    | "index.html" `isSuffixOf` slug                   = "/" ++ slugUrlPath slugs slug
     | ".html" `isSuffixOf` slug, "/" `isPrefixOf` slug = slug
     | ".html" `isSuffixOf` slug                        = "/" ++ slug
-    | "/" `isPrefixOf` slug                            = "/" ++ slugUrlPath (drop 1 slug)
-    | otherwise                                        = "/" ++ slugUrlPath slug
+    | "/" `isPrefixOf` slug                            = "/" ++ slugUrlPath slugs (drop 1 slug)
+    | otherwise                                        = "/" ++ slugUrlPath slugs slug
 
 -- | Strip a suffix from a string, returning Nothing if not present.
 stripSuffix :: String -> String -> Maybe String

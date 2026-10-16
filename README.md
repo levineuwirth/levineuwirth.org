@@ -47,7 +47,8 @@ they survive subsequent `make dev` runs.
 
 ## Site configuration
 
-`site.yaml` owns the build and template identity, web-app manifest and Atom feed settings.
+`site.yaml` owns the build and template identity, web-app manifest, Atom feed
+settings, taxonomy and navigation.
 `cabal run -v0 site -- config` prints the validated configuration as JSON;
 `cabal run -v0 site -- config --make` prints an includable GNU make fragment
 with `SITE_*` variables and `SITE_CONFIG_JSON`. The latter contains literal
@@ -59,7 +60,19 @@ to the feed title and controls the label of its HTML discovery link. Only feeds
 with `advertise: true` appear in the head. Photography uses a
 separate image-bearing feed context and cannot be mixed with text sections.
 A feed with no entries yet is still valid: its `<updated>` is the build time.
-The section taxonomy and feature switches are not configured here yet.
+Feature switches are not configured here yet.
+
+`sections` lists the content directories (`dir`), the label their pages carry
+on the New page (`kind`), their default ornament (`dingbat`, optional) and
+whether the section owns a landing at `/<dir>/` (`landing`, default true).
+`portals` are the home page's top-level tags in order (`name`, `tag`); the
+library shelves follow that order and the navigation lists them
+alphabetically. `nav-primary` is the first navigation row (`label`, `href`),
+and `library` holds the shelf sizes (`shelf-cap`, raised by a portal's
+`featured:` list up to `shelf-max`), the page's `description` and its
+`see-also` links. The build derives the rest: the content directories a page
+collection may not use, the tags that may not have a tag page, and the
+wikilink slugs whose page is a directory (`site shared-rules`).
 
 `manifest` contains `name`, `short-name`, `description`, `theme-color` and
 `background-color`. The build generates `/site.webmanifest` from these values

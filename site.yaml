@@ -1,4 +1,4 @@
-# Site-owned identity and Atom feeds. Taxonomy, standalone pages and
+# Site-owned identity, feeds, taxonomy and navigation. Standalone pages and
 # feature switches follow in later extraction steps.
 title: Levi Neuwirth
 author: Levi Neuwirth
@@ -40,3 +40,45 @@ feeds:
     sections: [photography]
     advertise: true
     limit: 30
+# Content sections, keyed by directory: their pages' label on the New page
+# (kind) and default ornament (dingbat). landing: false for a section whose
+# one page sits beside its directory (memento-mori.html).
+sections:
+  - {dir: essays, kind: Essay, dingbat: fleuron}
+  - {dir: blog, kind: Post, dingbat: lozenge}
+  - {dir: poetry, kind: Poem, dingbat: trefoil}
+  - {dir: fiction, kind: Fiction, dingbat: asterisks}
+  - {dir: music, kind: Composition, dingbat: clef}
+  - {dir: photography, kind: Photo}
+  - {dir: memento-mori, kind: Page, dingbat: memento, landing: false}
+# Home-page portals in order; each is a top-level tag with a page at /<tag>/.
+portals:
+  - {name: Research, tag: research}
+  - {name: Nonfiction, tag: nonfiction}
+  - {name: Fiction, tag: fiction}
+  - {name: Poetry, tag: poetry}
+  - {name: Music, tag: music}
+  - {name: Photography, tag: photography}
+  - {name: AI, tag: ai}
+  - {name: Tech, tag: tech}
+  - {name: Miscellany, tag: miscellany}
+nav-primary:
+  - {label: Home, href: /}
+  - {label: Current, href: /current.html}
+  - {label: Library, href: /library.html}
+  - {label: Links, href: /links.html}
+  - {label: Me, href: /me.html}
+  - {label: New, href: /new.html}
+  - {label: Search, href: /search.html}
+  - {label: Work, href: /work.html}
+library:
+  shelf-cap: 4
+  shelf-max: 5
+  description: >-
+    Everything on this site, arranged by shelf: essays, fiction, poetry,
+    music, photography, and research.
+  see-also:
+    - {label: New, href: /new.html}
+    - {label: Commonplace, href: /commonplace.html}
+    - {label: Colophon, href: /colophon.html}
+    - {label: Bibliography, href: /bibliography/}

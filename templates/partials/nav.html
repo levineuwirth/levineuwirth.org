@@ -10,14 +10,8 @@
                  renders. -->
             <a href="/" class="nav-logo" aria-label="Home"><svg class="nav-logo__mark" aria-hidden="true" focusable="false"><use href="/logo-sprite.svg#logo-mark"/></svg></a>
             <div class="nav-primary">
-                <a href="/">Home</a>
-                <a href="/current.html">Current</a>
-                <a href="/library.html">Library</a>
-                <a href="/links.html">Links</a>
-                <a href="/me.html">Me</a>
-                <a href="/new.html">New</a>
-                <a href="/search.html">Search</a>
-                <a href="/work.html">Work</a>
+                $for(nav-primary)$<a href="$href$">$label$</a>$sep$
+                $endfor$
             </div>
             <div class="nav-controls">
                 <button type="button" class="nav-portal-toggle" aria-label="Toggle portals" aria-expanded="false">
@@ -58,17 +52,10 @@
                 </div>
             </div>
         </div>
-        <!-- Row 2: portal links (collapsed by default, nav.js manages) -->
+        <!-- Row 2: portal links, alphabetical (collapsed by default, nav.js manages) -->
         <div class="nav-portals">
-            <a href="/ai/">AI</a>
-            <a href="/fiction/">Fiction</a>
-            <a href="/miscellany/">Miscellany</a>
-            <a href="/music/">Music</a>
-            <a href="/nonfiction/">Nonfiction</a>
-            <a href="/photography/">Photography</a>
-            <a href="/poetry/">Poetry</a>
-            <a href="/research/">Research</a>
-            <a href="/tech/">Tech</a>
+            $for(nav-portals)$<a href="$portal-url$">$portal-name$</a>$sep$
+            $endfor$
         </div>
     </nav>
 </header>

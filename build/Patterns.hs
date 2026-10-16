@@ -20,7 +20,6 @@ module Patterns
     , allPhotoEntries
     , standalonePagesPattern
     , pageCollectionPattern
-    , reservedSectionDirs
       -- * Withheld (@draft: true@)
     , unpublished
       -- * Aggregated patterns
@@ -30,7 +29,9 @@ module Patterns
     ) where
 
 import Hakyll
+import Config (SiteConfig)
 import Drafts (currentUnpublished, unpublishedPattern)
+import Sections (reservedSectionDirs)
 
 -- | Pages a production build withholds for @draft: true@, and the files
 -- that go with them (build/Drafts.hs). Every per-section pattern below
@@ -126,34 +127,23 @@ allPhotoEntries = published $
        photographyPattern
   .||. ("content/photography/*/*.md" .&&. complement "content/photography/*/index.md")
 
--- | Page collection entries live one directory below @content/@. Known
--- section directories are excluded so their files retain specialized
--- compilers and routes.
-pageCollectionPattern :: Pattern
-pageCollectionPattern = published $
+-- | Page collection entries live one directory below @content/@. The
+-- reserved directories ("Sections") are excluded so their files retain
+-- specialized compilers and routes.
+pageCollectionPattern :: SiteConfig -> Pattern
+pageCollectionPattern cfg = published $
     "content/*/*.md" .&&. complement reservedSectionPages
   where
     reservedSectionPages =
-        foldr1 (.||.) [fromGlob ("content/" ++ d ++ "/*.md") | d <- reservedSectionDirs]
-
--- | The directories under @content/@ that belong to a section or its
--- sidecars, never to a generic page collection. tools/import-content.py
--- refuses a page collection by one of these names, reading this list
--- through @site shared-rules@; the two kept separate copies, and
--- both lacked @bibliography-meta@, whose sidecars a page collection
--- would also have compiled.
-reservedSectionDirs :: [String]
-reservedSectionDirs =
-    [ "bibliography-meta", "blog", "cv", "drafts", "essays", "fiction", "me"
-    , "memento-mori", "music", "photography", "poetry", "scripts", "tag-meta" ]
+        foldr1 (.||.) [fromGlob ("content/" ++ d ++ "/*.md") | d <- reservedSectionDirs cfg]
 
 -- | Top-level standalone pages, curated CV routing pages, and generic page
 -- collections.
-standalonePagesPattern :: Pattern
-standalonePagesPattern = published $
+standalonePagesPattern :: SiteConfig -> Pattern
+standalonePagesPattern cfg = published $
        "content/*.md"
   .||. "content/cv/*.md"
-  .||. pageCollectionPattern
+  .||. pageCollectionPattern cfg
 
 -- ---------------------------------------------------------------------------
 -- Aggregations
@@ -175,14 +165,14 @@ standalonePagesPattern = published $
 -- give the graph, so indexing 240-odd of them would cost a compile
 -- pass each and return nothing. Revisit if photo bodies start
 -- carrying real prose.
-allContent :: Pattern
-allContent =
+allContent :: SiteConfig -> Pattern
+allContent cfg =
        essayPattern
   .||. blogPattern
   .||. poetryPattern
   .||. fictionPattern
   .||. musicPattern
-  .||. standalonePagesPattern
+  .||. standalonePagesPattern cfg
   .||. "content/me/index.md"
   .||. "content/memento-mori/index.md"
 

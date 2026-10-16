@@ -24,7 +24,6 @@ module Filters.Wikilinks
     ( preprocess
     , mapOutsideFences
       -- * Route-shape awareness (shared with 'Filters.Transclusion')
-    , directoryRouteSlugs
     , slugUrlPath
     ) where
 
@@ -36,11 +35,13 @@ import qualified Utils        as U
 --   with standard Markdown link syntax. Processing is line-by-line and
 --   skips fenced code blocks; a wikilink therefore cannot span a line
 --   break (which was never a sensible authoring form).
-preprocess :: String -> String
-preprocess = mapOutsideFences replaceWikilinks
+--   @slugs@ are the bare slugs whose page is a directory index
+--   ('Sections.directoryRouteSlugs').
+preprocess :: [String] -> String -> String
+preprocess slugs = mapOutsideFences (replaceWikilinks slugs)
 
-replaceWikilinks :: String -> String
-replaceWikilinks = go
+replaceWikilinks :: [String] -> String -> String
+replaceWikilinks slugs = go
   where
     go [] = []
     -- Inline code span: a backtick run opens a span closed by a run of
@@ -57,7 +58,7 @@ replaceWikilinks = go
         case break (== ']') rest of
             (inner, ']':']':after)
                 | not (null inner) ->
-                    toMarkdownLink inner ++ go after
+                    toMarkdownLink slugs inner ++ go after
             _ -> '[' : '[' : go rest
     go (c:rest) = c : go rest
 
@@ -149,45 +150,26 @@ stripFenceIndent l =
 --   link syntax. The URL itself is produced by 'slugify' and therefore only
 --   ever contains @[a-z0-9-]@, so no URL-side encoding is needed — adding
 --   one would be defense against a character set we can't produce.
-toMarkdownLink :: String -> String
-toMarkdownLink inner =
+toMarkdownLink :: [String] -> String -> String
+toMarkdownLink slugs inner =
     let (title, display) = splitOnPipe inner
-        url              = "/" ++ slugUrlPath (slugify title)
+        url              = "/" ++ slugUrlPath slugs (slugify title)
     in "[" ++ escMdLinkText display ++ "](" ++ url ++ ")"
 
 -- ---------------------------------------------------------------------------
 -- Route shape
 -- ---------------------------------------------------------------------------
 
--- | Top-level slugs whose Hakyll route is a directory index
---   (@\<slug\>\/index.html@, served as @\/\<slug\>\/@) rather than the
---   flat @\<slug\>.html@ every other standalone page uses.
+-- | Root-relative path (no leading slash) for a bare slug: the directory
+--   form for one of @slugs@, @\<slug\>.html@ otherwise.
 --
---   Both source-level preprocessors resolve a bare slug to a URL
---   without access to Hakyll's route table — the substitution happens
---   on the raw Markdown string, long before any route exists — so the
---   handful of generated pages that route to a directory have to be
---   named here: every @\<slug\>\/index.html@ route in @build\/@ (the
---   telemetry pages, the section indexes, the archive and the blog) and the
---   portal tags of 'Site.homePortals', whose tag pages are directories too.
---   A slug missing from this list produces a link to a page that does not
---   exist (the @\/build.html@ 404 that motivated it; @[[Essays]]@ went to
---   @\/essays.html@ the same way). @tests\/test_wikilink_routes.py@ checks
---   the list against the routes and the portals.
---
---   Authors can also bypass the table entirely by writing the directory
---   form explicitly — @{{build\/}}@ — which 'Filters.Transclusion' maps
---   to itself.
-directoryRouteSlugs :: [String]
-directoryRouteSlugs =
-    [ "build", "stats"                                     -- telemetry
-    , "essays", "poetry", "fiction", "music", "photography" -- section indexes
-    , "bibliography", "archive", "blog"
-    , "research", "nonfiction", "ai", "tech", "miscellany"  -- portal tags
-    ]
-
--- | Root-relative path (no leading slash) for a bare slug: the
---   directory form for 'directoryRouteSlugs', @\<slug\>.html@ otherwise.
+--   Both source-level preprocessors resolve a bare slug to a URL without
+--   access to Hakyll's route table — the substitution happens on the raw
+--   Markdown string, long before any route exists — so the slugs whose
+--   page is a directory index come from the taxonomy
+--   ('Sections.directoryRouteSlugs'). Authors can also bypass the table
+--   by writing the directory form explicitly — @{{build\/}}@ — which
+--   'Filters.Transclusion' maps to itself.
 --
 --   A slug that already spells out a directory index —
 --   @essays\/deep-dive\/index.html@, which is the shape of the Hakyll
@@ -197,10 +179,10 @@ directoryRouteSlugs =
 --   link, the sitemap, the backlink join, and the per-page localStorage
 --   keys in @annotations.js@ and @collapse.js@. Only one of them can be
 --   the address, and everywhere else on the site it is @\/essays\/x\/@.
-slugUrlPath :: String -> String
-slugUrlPath slug
+slugUrlPath :: [String] -> String -> String
+slugUrlPath slugs slug
     | Just dir <- stripDirIndex slug  = dir ++ "/"
-    | slug `elem` directoryRouteSlugs = slug ++ "/"
+    | slug `elem` slugs               = slug ++ "/"
     | otherwise                       = slug ++ ".html"
   where
     -- "a/b/index.html" → Just "a/b"; "index.html" → Just ""; else Nothing.

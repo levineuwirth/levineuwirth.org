@@ -41,7 +41,9 @@ import Data.Set   (Set)
 import qualified Data.Set as Set
 import Hakyll
 import Utils (inDefault, writerlyDate)
+import Config     (SiteConfig)
 import Patterns   (tagIndexable)
+import Sections   (sectionOwnedTopLevelTags)
 import Contexts   (abstractField, contentKindField, identifierDisplayUTC,
                    recentFirstByDisplay, revisionDateFields, siteCtx,
                    tagLinksFieldExcludingScope)
@@ -83,38 +85,17 @@ expandTag t =
     let segs = wordsBy (== '/') t
     in  [ intercalate "/" (take n segs) | n <- [1 .. length segs] ]
 
--- | Top-level tags that own a section URL outside the tag system, and
---   therefore must NOT be created as tag pages — doing so would
---   collide with a section landing route. The build refuses two items
---   on one route ("RouteCheck"), so an essay tagged e.g. @music@ would
---   otherwise stop it by claiming @music/index.html@ (before that check,
---   an incremental build let one silently replace the other). The set
---   therefore lists every namespace that
---   owns a @<name>/index.html@ route, not just the tags currently in
---   use: @photography@ (every photo's @tags:@ list begins with it, per
---   the section convention) plus the other section landings and
---   generated index namespaces.
---
---   Sub-tags (@photography/landscape@, @photography/film@, …) are
---   unaffected; they keep their tag pages because no section landing
---   claims those URLs.
-sectionOwnedTopLevelTags :: [String]
-sectionOwnedTopLevelTags =
-    [ "photography", "poetry", "fiction", "music", "essays", "blog"
-    , "cv", "archive", "authors", "bibliography", "build", "stats"
-    ]
-
 -- | All expanded tags for an item (reads the "tags" metadata field).
-getExpandedTags :: MonadMetadata m => Identifier -> m [String]
-getExpandedTags ident = pagedTags <$> getTags ident
+getExpandedTags :: MonadMetadata m => SiteConfig -> Identifier -> m [String]
+getExpandedTags cfg ident = pagedTags cfg <$> getTags ident
 
 -- | The tags that get a page for a list of tags as written: each with its
 --   ancestors, empty path segments dropped ("photography//a" pages
---   @photography/a@), less the 'sectionOwnedTopLevelTags', which would
---   collide with section landings. @site expand-tags@ answers this for
+--   @photography/a@), less the 'Sections.sectionOwnedTopLevelTags', which
+--   would collide with section landings. @site expand-tags@ answers this for
 --   tools/scaffold-photos.py, whose own copy kept the empty segments.
-pagedTags :: [String] -> [String]
-pagedTags = filter (`notElem` sectionOwnedTopLevelTags) . nub . concatMap expandTag
+pagedTags :: SiteConfig -> [String] -> [String]
+pagedTags cfg = filter (`notElem` sectionOwnedTopLevelTags cfg) . nub . concatMap expandTag
 
 
 -- ---------------------------------------------------------------------------
@@ -139,9 +120,9 @@ sidecarIdentifier tag = fromFilePath ("content/tag-meta/" ++ tag ++ ".md")
 -- ---------------------------------------------------------------------------
 
 -- | Scan all essays and blog posts and build the Tags index.
-buildAllTags :: Rules Tags
-buildAllTags =
-    buildTagsWith getExpandedTags tagIndexable tagIdentifier
+buildAllTags :: SiteConfig -> Rules Tags
+buildAllTags cfg =
+    buildTagsWith (getExpandedTags cfg) tagIndexable tagIdentifier
 
 
 -- ---------------------------------------------------------------------------

@@ -1,7 +1,9 @@
-"""Real templates and the web manifest render alternate identity and track edits."""
+"""Real templates and the web manifest render alternate identity and
+navigation, and track edits."""
 import html
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -30,10 +32,11 @@ main = hakyll $ do
         item <- getResourceBody
         tpl <- compileTemplateItem (fmap stripHtmlComments item)
         pure (itemSetBody tpl item)
-    let ctx = identityContext <> constField "home" "true" <> constField "title" "Piece"
+    let ctx = identityContext <> navigationContext <> constField "home" "true" <> constField "title" "Piece"
               <> constField "url" "/probe" <> constField "canonical-url" "/probe"
               <> bodyField "body"
-    forM_ ["partials/head.html", "partials/footer.html", "partials/archive-removal-notice.html",
+    forM_ ["partials/head.html", "partials/footer.html", "partials/nav.html",
+           "partials/archive-removal-notice.html",
            "404.html", "score-reader-default.html"] $ \\name ->
         create [fromFilePath name] $ do
             route idRoute
@@ -55,7 +58,11 @@ main = hakyll $ do
             manifest = {"name": title, "short-name": 'A "B"', "description": "Art & photos",
                         "theme-color": "#123456", "background-color": "#abcdef"}
             feed = {"path": "news.xml", "title": title, "description": "News", "sections": ["essays"]}
-            config = dict(title=title, email="a&b@example.org", **{
+            portals = [{"name": "Zines", "tag": "zines"}, {"name": "Art & <Craft>", "tag": "art"},
+                       {"name": "beekeeping", "tag": "bees"}]
+            nav = [{"label": "Home", "href": "/"}, {"label": "Q&A", "href": "/q.html?a=1&b=2"}]
+            config = dict(title=title, email="a&b@example.org", portals=portals, **{
+                "nav-primary": nav,
                 "contact-email": "contact&us@example.org", "signing-fingerprint": "ABC DEF",
                 "manifest": manifest, "feeds": [feed, dict(feed, path="hidden.xml", advertise=False)]})
             write_site_config(root, **config)
@@ -65,6 +72,7 @@ main = hakyll $ do
                     config["title"] = "Changed identity"
                     config["manifest"] = manifest | {"name": "Changed manifest"}
                     config["feeds"] = [dict(feed, **{"advertise-title": "Changed advertisement"})]
+                    config["portals"] = portals[:1] + [{"name": "Archery", "tag": "archery"}]
                     write_site_config(root, **config)
                     os.utime(root / "site.yaml", (before + 2, before + 2))
                 done = subprocess.run([str(self.binary), "build"], cwd=root, env=script_env(),
@@ -88,3 +96,11 @@ main = hakyll $ do
                 parsed = json.loads(read("site.webmanifest"))
                 for key, value in config["manifest"].items():
                     self.assertEqual(parsed[key.replace("-", "_")], value)
+                rendered = read("partials/nav.html")
+                def links(row):
+                    return re.findall(r'<a href="([^"]*)">([^<]*)</a>',
+                                      re.search(row + r'">(.*?)</div>', rendered, re.S).group(1))
+                self.assertEqual(links("nav-primary"), [(html.escape(l["href"]), html.escape(l["label"]))
+                                                        for l in config["nav-primary"]])
+                self.assertEqual(links("nav-portals"), [(f"/{p['tag']}/", html.escape(p["name"])) for p in
+                                                        sorted(config["portals"], key=lambda p: p["name"].lower())])

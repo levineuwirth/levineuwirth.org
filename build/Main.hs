@@ -5,7 +5,7 @@ import Control.Monad         (when)
 import Data.Time.Clock.POSIX (getPOSIXTime)
 import System.Directory      (createDirectoryIfMissing)
 import System.Environment    (getArgs)
-import Config                (readSiteConfig, configMake)
+import Config                (SiteConfig, readSiteConfig, configMake)
 import SiteThreads           (siteThreads)
 import Hakyll                (hakyllWith, toFilePath)
 import Golden                (renderFixture)
@@ -18,7 +18,7 @@ import Marks                 (epistemicVocabulary)
 import PageScan              (pageLinks, publishedPages)
 import qualified Data.Text    as T
 import qualified Data.Text.IO as TIO
-import Patterns              (reservedSectionDirs)
+import Sections              (reservedSectionDirs, sectionOwnedTopLevelTags, directoryRouteSlugs)
 import Contexts              (photoVariantWidths)
 import qualified Data.Aeson  as Aeson
 import qualified Data.ByteString.Lazy.Char8 as LBS
@@ -82,11 +82,12 @@ main = do
         ["config", "--make"] -> readSiteConfig >>= putStr . configMake
         ["render-fixture", path] -> renderFixture path
         ["list-unpublished"] -> scanUnpublished "content" >>= mapM_ putStrLn . unpublishedSummary
-        ["shared-rules"] -> LBS.putStrLn (Aeson.encode sharedRules)
+        ["shared-rules"] -> readSiteConfig >>= LBS.putStrLn . Aeson.encode . sharedRules
         ["private-paths"] -> getContents >>= mapM_ putStrLn . filter refusedPath . lines
         ["normalize-url"] -> TIO.getContents >>= mapM_ (TIO.putStrLn . normalizeUrl) . T.lines
         ["list-links", root] -> do
-            urls <- concat <$> (publishedPages root >>= mapM pageLinks)
+            cfg <- readSiteConfig
+            urls <- concat <$> (publishedPages root >>= mapM (pageLinks cfg))
             mapM_ TIO.putStrLn (Set.toAscList (Set.fromList urls))
         ["bib-extras", path] -> do
             extras <- parseBibExtras path
@@ -98,11 +99,14 @@ main = do
             dev <- isDevBuild
             routed <- siteRoutes (siteConfigurationFor dev) (withoutUnpublished currentUnpublished rules)
             mapM_ (\(path, ident) -> putStrLn (path ++ "\t" ++ toFilePath ident)) routed
-        ["expand-tags"] -> getContents >>= mapM_ putStrLn . pagedTags . lines
+        ["expand-tags"] -> do
+            cfg <- readSiteConfig
+            getContents >>= mapM_ putStrLn . pagedTags cfg . lines
         ["strip-template-comments"] -> interact stripHtmlComments
         ["list-tags"] -> do
             dev <- isDevBuild
-            tags <- siteRulesValue (siteConfigurationFor dev) buildAllTags
+            cfg <- readSiteConfig
+            tags <- siteRulesValue (siteConfigurationFor dev) (buildAllTags cfg)
             mapM_ (putStrLn . fst) (tagsMap tags)
         ["footer-data"] -> do
             dev <- isDevBuild
@@ -118,10 +122,12 @@ main = do
 -- | The lists the Python tools and tests must agree with the generator on,
 --   read through @site shared-rules@ (tools/shared_rules.py) rather than
 --   copied: each list is defined once, in its module, because copies drifted.
-sharedRules :: Map.Map String Aeson.Value
-sharedRules = Map.fromList
+sharedRules :: SiteConfig -> Map.Map String Aeson.Value
+sharedRules cfg = Map.fromList
     [ ("epistemic-vocabulary", Aeson.toJSON (Map.fromList epistemicVocabulary))
-    , ("reserved-sections",    Aeson.toJSON reservedSectionDirs)
+    , ("reserved-sections",    Aeson.toJSON (reservedSectionDirs cfg))
+    , ("section-owned-tags",   Aeson.toJSON (sectionOwnedTopLevelTags cfg))
+    , ("directory-slugs",      Aeson.toJSON (directoryRouteSlugs cfg))
     , ("photo-variant-widths", Aeson.toJSON photoVariantWidths)
     , ("archive-tracking-params", Aeson.toJSON trackingParams)
     , ("boolean-spellings",    Aeson.toJSON (Map.fromList

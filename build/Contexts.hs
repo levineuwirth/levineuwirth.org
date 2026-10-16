@@ -79,7 +79,7 @@ import Stability    (stabilityField, lastReviewedField, lastReviewedIsoField,
                      versionHistoryPrimaryField, versionHistoryRestField,
                      versionHistoryRangeField, versionHistoryRangeStartField,
                      versionHistoryRangeEndField, versionHistoryCommitsField)
-import Config       (loadConfig, identityContext, siteAuthor)
+import Config       (loadConfig, identityContext, navigationContext, siteAuthor)
 import Utils        (authorUrl, canonicalUrlPath, confidencePercent, escapeHtml, formatIso, formatWriterly, isoDate, isProvedConfidence, itemAuthors, metadataKeywords, parseIsoDate, trim, trustScore, writerlyDate)
 
 -- ---------------------------------------------------------------------------
@@ -126,8 +126,9 @@ affiliationField = listFieldWith "affiliation-links" ctx $ \item -> do
 -- Used on the New page to label each entry (Essay, Post, Poem, etc.).
 contentKindField :: Context String
 contentKindField = field "item-kind" $ \item -> do
+    cfg <- loadConfig
     r <- getRoute (itemIdentifier item)
-    return $ maybe "Page" sectionKind (sectionOfRoute =<< r)
+    return $ maybe "Page" sectionKind (sectionOfRoute cfg =<< r)
 
 -- ---------------------------------------------------------------------------
 -- Site-wide context
@@ -671,6 +672,7 @@ summaryField = field "summary" $ \item -> do
 siteCtx :: Context String
 siteCtx =
     identityContext
+    <> navigationContext
     <> plainField
     <> canonicalUrlField
     <> pageScriptsField

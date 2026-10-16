@@ -22,6 +22,7 @@ import           Text.Pandoc.Definition         (Inline (..))
 import           Text.Pandoc.Walk               (query)
 
 import           Compilers                      (readerOpts)
+import           Config                         (SiteConfig)
 import           Drafts                         (isUnpublished, markdownUnder, scanUnpublished)
 import           Filters                        (preprocessSource)
 import           Site                           (refusedPath)
@@ -40,13 +41,13 @@ publishedPages root = do
 -- | The target of every link in a page's body, read as the compilers read
 --   it (Hakyll's split, the source preprocessors, 'Compilers.readerOpts').
 --   A page whose front matter or Markdown does not parse has none.
-pageLinks :: FilePath -> IO [T.Text]
-pageLinks fp = do
+pageLinks :: SiteConfig -> FilePath -> IO [T.Text]
+pageLinks cfg fp = do
     src <- T.unpack . TE.decodeUtf8With TEE.lenientDecode <$> BS.readFile fp
     return $ case parsePage src of
         Left _          -> []
         Right (_, body) ->
-            case runPure (readMarkdown readerOpts (T.pack (preprocessSource body))) of
+            case runPure (readMarkdown readerOpts (T.pack (preprocessSource cfg body))) of
                 Left _    -> []
                 Right doc -> query target doc
   where

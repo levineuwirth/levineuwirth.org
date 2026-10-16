@@ -148,7 +148,7 @@ essayCompilerWith rOpts = do
     let src = itemBody body
 
     -- Apply source-level preprocessors (wikilinks, etc.) before parsing.
-    let body' = itemSetBody (preprocessSource src) body
+    let body' = itemSetBody (preprocessSource cfg src) body
 
     -- Parse to Pandoc AST.
     --
@@ -310,7 +310,7 @@ filteredPage = do
     body     <- getResourceBody
     filePath <- getResourceFilePath
     let src = itemBody body
-    pandocItem <- readPandocWith readerOpts (itemSetBody (preprocessSource src) body)
+    pandocItem <- readPandocWith readerOpts (itemSetBody (preprocessSource cfg src) body)
     filtered   <- unsafeCompiler $
         applyAll cfg False (takeDirectory filePath) (itemBody pandocItem)
     return (src, writePandocWith writerOpts (itemSetBody filtered pandocItem))

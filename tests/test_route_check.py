@@ -63,6 +63,8 @@ class RouteCheckTests(unittest.TestCase):
 
     def test_expand_tags_is_the_build_expansion(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
+            # The sections' landings come from site.yaml.
+            write_site_config(Path(directory))
             done = subprocess.run([str(site_binary()), "expand-tags"], cwd=directory,
                                   input="photography//denmark/harbor\nmusic\nnotes/a/\n",
                                   env=script_env(), capture_output=True, text=True, timeout=60)

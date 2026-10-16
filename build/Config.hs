@@ -4,12 +4,14 @@
 -- dependency. There is deliberately no process-global configuration.
 module Config
     ( SiteConfig (..), FeedSpec (..), FeedSection (..), ManifestConfig (..)
+    , Section (..), Portal (..), NavLink (..), LibraryConfig (..)
     , configRules, readSiteConfig, loadConfig, configField
     , renderSiteFeed, configMake, photoFeed, sectionName, loadFeed
-    , siteOwnHosts, identityContext, manifestRules
+    , siteOwnHosts, identityContext, navigationContext, manifestRules
+    , knownDingbats
     ) where
 
-import Control.Monad (unless, when)
+import Control.Monad (forM_, unless, when)
 import Data.Aeson (FromJSON (..), ToJSON (..), Object,
                    withObject, withText, object, (.:), (.:?), (.!=), (.=), encode)
 import Data.Aeson.Types (Parser)
@@ -17,8 +19,8 @@ import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.KeyMap as KM
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
-import Data.Char (isControl, toLower, toUpper)
-import Data.List (find, intercalate, isPrefixOf, isSuffixOf, nub, stripPrefix)
+import Data.Char (isControl, isSpace, toLower, toUpper)
+import Data.List (find, intercalate, isPrefixOf, isSuffixOf, nub, sortOn, stripPrefix)
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
@@ -45,6 +47,10 @@ data SiteConfig = SiteConfig
     , siteSigningFingerprint :: String
     , siteManifest :: ManifestConfig
     , siteFeeds :: [FeedSpec]
+    , siteSections :: [Section]
+    , sitePortals :: [Portal]
+    , siteNavPrimary :: [NavLink]
+    , siteLibrary :: LibraryConfig
     } deriving (Eq, Show)
 
 data FeedSection = Essays | Blog | Fiction | Poetry | Music | Photos
@@ -136,9 +142,118 @@ manifestValues m = [("name", manifestName m), ("short-name", manifestShortName m
 instance ToJSON ManifestConfig where
     toJSON m = object [Key.fromString k .= v | (k, v) <- manifestValues m]
 
+-- | A content section, keyed by the route its pages take: @<dir>/…@, or
+--   @<dir>.html@ for a section whose one page sits beside its directory.
+--   Its kind labels its pages (@$item-kind$@); its dingbat is their
+--   default ornament. The reserved content directories, the tags that may
+--   not have pages and the wikilink directory slugs derive from these and
+--   the portals ("Sections").
+data Section = Section
+    { sectionDir     :: String        -- ^ its pages: @<dir>/…@, or @<dir>.html@
+    , sectionKind    :: String        -- ^ @$item-kind$@
+    , sectionDingbat :: Maybe String  -- ^ default ornament; 'Nothing' takes the fallback
+    , sectionLanding :: Bool          -- ^ it owns the landing @<dir>/index.html@
+    } deriving (Eq, Show)
+
+instance FromJSON Section where
+    parseJSON = withObject "section" $ \o -> do
+        onlyKeys ["dir", "kind", "dingbat", "landing"] o
+        s <- Section <$> o .: "dir" <*> o .: "kind" <*> o .:? "dingbat"
+                     <*> o .:? "landing" .!= True
+        unless (slug (sectionDir s)) $ fail "section dir must be a lowercase slug"
+        singleLine "section kind" (sectionKind s)
+        forM_ (sectionDingbat s) $ \d -> unless (d `elem` knownDingbats) $
+            fail ("unknown dingbat " ++ d ++ "; known: " ++ unwords knownDingbats)
+        pure s
+
+instance ToJSON Section where
+    toJSON s = object [ "dir" .= sectionDir s, "kind" .= sectionKind s
+                      , "dingbat" .= sectionDingbat s, "landing" .= sectionLanding s ]
+
+-- | A home-page portal: a top-level tag whose page is @/<tag>/@, in
+--   home-page order. The navigation lists them alphabetically.
+data Portal = Portal
+    { portalName :: String
+    , portalTag  :: String
+    } deriving (Eq, Show)
+
+instance FromJSON Portal where
+    parseJSON = withObject "portal" $ \o -> do
+        onlyKeys ["name", "tag"] o
+        p <- Portal <$> o .: "name" <*> o .: "tag"
+        singleLine "portal name" (portalName p)
+        unless (slug (portalTag p)) $ fail "portal tag must be a lowercase slug"
+        pure p
+
+instance ToJSON Portal where
+    toJSON p = object ["name" .= portalName p, "tag" .= portalTag p]
+
+-- | A labelled link in the navigation or among the library's see-also
+--   links: root-relative, or an absolute HTTP(S) URL.
+data NavLink = NavLink
+    { navLabel :: String
+    , navHref  :: String
+    } deriving (Eq, Show)
+
+instance FromJSON NavLink where
+    parseJSON = withObject "link" $ \o -> do
+        onlyKeys ["label", "href"] o
+        l <- NavLink <$> o .: "label" <*> o .: "href"
+        singleLine "link label" (navLabel l)
+        let href = navHref l
+            rootRelative = "/" `isPrefixOf` href && not ("//" `isPrefixOf` href)
+        unless ((rootRelative || absoluteUrl href) && not (any isSpace href)) $
+            fail "link href must be root-relative or an absolute HTTP(S) URL"
+        pure l
+
+instance ToJSON NavLink where
+    toJSON l = object ["label" .= navLabel l, "href" .= navHref l]
+
+-- | The library page: shelf sizes (a shelf shows the cap, raised by its
+--   sidecar's @featured:@ list up to the maximum), the page's description
+--   and its see-also links.
+data LibraryConfig = LibraryConfig
+    { libraryShelfCap     :: Int
+    , libraryShelfMax     :: Int
+    , libraryDescription  :: String
+    , librarySeeAlso      :: [NavLink]
+    } deriving (Eq, Show)
+
+instance FromJSON LibraryConfig where
+    parseJSON = withObject "library" $ \o -> do
+        onlyKeys ["shelf-cap", "shelf-max", "description", "see-also"] o
+        l <- LibraryConfig <$> o .: "shelf-cap" <*> o .: "shelf-max"
+                           <*> o .: "description" <*> o .: "see-also"
+        unless (1 <= libraryShelfCap l && libraryShelfCap l <= libraryShelfMax l) $
+            fail "library shelf-cap must be at least 1 and at most shelf-max"
+        singleLine "library description" (libraryDescription l)
+        pure l
+
+instance ToJSON LibraryConfig where
+    toJSON l = object [ "shelf-cap" .= libraryShelfCap l, "shelf-max" .= libraryShelfMax l
+                      , "description" .= libraryDescription l, "see-also" .= librarySeeAlso l ]
+
+-- | The ornaments the stylesheet draws (@body[data-dingbat="…"]@ in
+--   typography.css), for a page's @dingbat:@ and a section's default.
+--   Extend here when adding one ("Dingbat").
+knownDingbats :: [String]
+knownDingbats =
+    [ "asterism"    -- ⁂ typographic asterism (neutral fallback)
+    , "asterisks"   -- * * * spaced asterisks (classic scene break)
+    , "fleuron"     -- Aldine leaf (literary essays)
+    , "trefoil"     -- three-lobed ornament (poetry)
+    , "lozenge"     -- diamond/rhombus (blog)
+    , "clef"        -- musical ornament (music)
+    , "memento"     -- mourning ornament (memento-mori)
+    , "tech"        -- tech ornament
+    , "ai"          -- AI ornament (the cute robot)
+    ]
+
 instance FromJSON SiteConfig where
     parseJSON = withObject "site config" $ \o -> do
-        onlyKeys (map Key.fromString identityKeys ++ ["feeds", "manifest", "signing-fingerprint"]) o
+        onlyKeys (map Key.fromString identityKeys
+                  ++ ["feeds", "manifest", "signing-fingerprint", "sections", "portals",
+                      "nav-primary", "library"]) o
         c <- SiteConfig <$> o .: "title" <*> o .: "author" <*> o .: "author-sort"
                         <*> o .: "email" <*> o .: "contact-email"
                         <*> o .: "url" <*> o .: "host"
@@ -146,6 +261,8 @@ instance FromJSON SiteConfig where
                         <*> o .: "forge-host" <*> o .: "content-license"
                         <*> o .: "code-license" <*> o .:? "signing-fingerprint" .!= ""
                         <*> o .: "manifest" <*> o .: "feeds"
+                        <*> o .: "sections" <*> o .: "portals"
+                        <*> o .: "nav-primary" <*> o .: "library"
         mapM_ (uncurry singleLine) (identityValues c)
         when (any isControl (siteSigningFingerprint c)) $
             fail "signing-fingerprint must be a single-line string"
@@ -164,12 +281,18 @@ instance FromJSON SiteConfig where
         unless (safePath (siteSourceBranch c)) $ fail "source-branch must be a relative path without traversal"
         let paths = map feedPath (siteFeeds c)
         when (nub paths /= paths) $ fail "feed paths must be unique"
+        let dirs = map sectionDir (siteSections c)
+            tags = map portalTag (sitePortals c)
+        when (nub dirs /= dirs) $ fail "section dirs must be unique"
+        when (nub tags /= tags) $ fail "portal tags must be unique"
         pure c
 
 instance ToJSON SiteConfig where
     toJSON c = object ([Key.fromString k .= v | (k, v) <- identityValues c]
                        ++ ["feeds" .= siteFeeds c, "manifest" .= siteManifest c,
-                           "signing-fingerprint" .= siteSigningFingerprint c])
+                           "signing-fingerprint" .= siteSigningFingerprint c,
+                           "sections" .= siteSections c, "portals" .= sitePortals c,
+                           "nav-primary" .= siteNavPrimary c, "library" .= siteLibrary c])
 
 identityKeys :: [String]
 identityKeys = ["title", "author", "author-sort", "email", "contact-email", "url", "host",
@@ -194,6 +317,12 @@ safePath :: FilePath -> Bool
 safePath path = not (null path) && not ("/" `isPrefixOf` path)
     && all (`notElem` [".", "..", ""]) (splitDirectories path)
     && not (any (`elem` ("\\?#:" :: String)) path)
+
+-- | A lowercase name for a URL path segment or a content directory.
+slug :: String -> Bool
+slug value = case value of
+    c : _ -> c /= '-' && all (`elem` (['a'..'z'] ++ ['0'..'9'] ++ "-")) value
+    []    -> False
 
 absoluteUrl :: String -> Bool
 absoluteUrl value = any (`isPrefixOf` value) ["https://", "http://"]
@@ -261,6 +390,21 @@ identityContext = mconcat
         mapM makeItem (filter feedAdvertise (siteFeeds cfg))
     feedContext = field "feed-title" (pure . escapeHtml . feedAdvertiseTitle . itemBody)
                <> field "feed-url" (pure . escapeHtml . ("/" ++) . feedPath . itemBody)
+
+-- | The navigation the templates loop over, escaped like 'identityContext':
+--   @nav-primary@ (@$label$@, @$href$@) and @nav-portals@ (@$portal-name$@,
+--   @$portal-url$@), the portals alphabetically by name.
+navigationContext :: Context String
+navigationContext =
+       listField "nav-primary" linkContext (configItems siteNavPrimary)
+    <> listField "nav-portals" portalContext
+           (configItems (sortOn (map toLower . portalName) . sitePortals))
+  where
+    configItems get = loadConfig >>= mapM makeItem . get
+    linkContext = field "label" (pure . escapeHtml . navLabel . itemBody)
+               <> field "href" (pure . escapeHtml . navHref . itemBody)
+    portalContext = field "portal-name" (pure . escapeHtml . portalName . itemBody)
+                 <> field "portal-url" (pure . escapeHtml . (\t -> "/" ++ t ++ "/") . portalTag . itemBody)
 
 manifestRules :: Rules ()
 manifestRules = create ["site.webmanifest"] $ do

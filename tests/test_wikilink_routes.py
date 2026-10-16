@@ -1,19 +1,29 @@
 """Wikilinks resolve a bare slug without Hakyll's route table, so the slugs
-that route to a directory index are listed by hand in
-build/Filters/Wikilinks.hs. A slug missing there links to <slug>.html, which
-404s. This keeps the list complete against the routes and portals in build/."""
+whose page is a directory index are derived from the taxonomy
+(build/Sections.hs: the section landings in site.yaml, the generated
+indexes and the portal tags). A slug missing there links to <slug>.html,
+which 404s. This keeps the derivation complete against every
+"<slug>/index.html" route written in build/."""
 
 import re
 import unittest
 from pathlib import Path
 
-BUILD = Path(__file__).resolve().parents[1] / "build"
+import yaml
+
+ROOT = Path(__file__).resolve().parents[1]
+BUILD = ROOT / "build"
 
 
-def listed_slugs() -> set[str]:
-    src = (BUILD / "Filters" / "Wikilinks.hs").read_text(encoding="utf-8")
-    body = re.search(r"^directoryRouteSlugs =(.*?)\]", src, re.M | re.S).group(1)
-    return set(re.findall(r'"([^"]+)"', re.sub(r"--[^\n]*", "", body)))
+def generated_indexes() -> set[str]:
+    src = (BUILD / "Sections.hs").read_text(encoding="utf-8")
+    body = re.search(r"^generatedIndexes = \[(.*?)\]", src, re.M | re.S).group(1)
+    return set(re.findall(r'"([^"]+)"', body))
+
+
+def section_landings() -> set[str]:
+    config = yaml.safe_load((ROOT / "site.yaml").read_text(encoding="utf-8"))
+    return {s["dir"] for s in config["sections"] if s.get("landing", True)}
 
 
 def directory_routes() -> set[str]:
@@ -23,20 +33,17 @@ def directory_routes() -> set[str]:
     return found
 
 
-def portal_tags() -> set[str]:
-    src = (BUILD / "Site.hs").read_text(encoding="utf-8")
-    body = re.search(r"^homePortals =(.*?)\n\s*\]", src, re.M | re.S).group(1)
-    return {slug for _, slug in re.findall(r'\("([^"]+)",\s*"([^"]+)"\)', body)}
-
-
 class DirectoryRouteSlugs(unittest.TestCase):
     def test_sources_were_read(self):
         self.assertIn("build", directory_routes())
-        self.assertIn("research", portal_tags())
+        self.assertIn("build", generated_indexes())
+        self.assertTrue(section_landings())
 
-    def test_every_directory_route_and_portal_is_listed(self):
-        missing = (directory_routes() | portal_tags()) - listed_slugs()
-        self.assertEqual(missing, set(), "add these to directoryRouteSlugs in build/Filters/Wikilinks.hs")
+    def test_every_directory_route_is_derived(self):
+        missing = directory_routes() - generated_indexes() - section_landings()
+        self.assertEqual(missing, set(),
+                         "a generated index belongs in generatedIndexes in build/Sections.hs; "
+                         "a section landing in site.yaml's sections")
 
 
 if __name__ == "__main__":

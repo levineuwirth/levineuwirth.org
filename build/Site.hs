@@ -19,8 +19,9 @@ import Text.Read     (readMaybe)
 import qualified Data.Aeson as Aeson
 import qualified Data.ByteString.Lazy.Char8 as LBS
 import qualified Data.Map.Strict as Map
-import Hakyll
-import Config     (SiteConfig (..), FeedSpec (..), FeedSection (..), configRules, manifestRules,
+import Hakyll hiding (escapeHtml)
+import Config     (SiteConfig (..), FeedSpec (..), FeedSection (..), LibraryConfig (..),
+                   NavLink (..), Portal (..), configRules, manifestRules,
                    readSiteConfig, loadConfig, loadFeed, renderSiteFeed, photoFeed)
 import Archive    (archiveRules)
 import Authors    (buildAllAuthors, applyAuthorRules)
@@ -47,7 +48,7 @@ import Tags       (buildAllTags, applyTagRules, sidecarIdentifier,
 import Pagination (blogPaginateRules)
 import Stability  (resolveStability)
 import Stats      (statsRules)
-import Utils      (cacheDirFor, confidencePercent, contentPageRoute, formatIso, inDefault, stripHtmlComments,
+import Utils      (cacheDirFor, confidencePercent, contentPageRoute, escapeHtml, formatIso, inDefault, stripHtmlComments,
                    isDevBuild, metadataKeywords, outputDirFor, stripPrefixRoute,
                    trustScore)
 
@@ -139,34 +140,17 @@ neverPublish path =
         -- Planning checklists, at any depth.
         , "checklist.md" ]
 
--- | Home-page portal grid order. Canonical ordering authority for every
--- rendering of the portals (currently: the home page; future
--- consumers follow this list). Each entry is (display name, tag name);
--- the tag name is the key to everything else — URL (@/\<tag\>/@),
--- sidecar path (@content\/tag-meta\/\<tag\>.md@), and the Tags.hs
--- machinery that already keys off it. Edit this list to change order;
--- do not introduce an @order:@ frontmatter field on sidecars.
-homePortals :: [(String, String)]
-homePortals =
-    [ ("Research",    "research")
-    , ("Nonfiction",  "nonfiction")
-    , ("Fiction",     "fiction")
-    , ("Poetry",      "poetry")
-    , ("Music",       "music")
-    , ("Photography", "photography")
-    , ("AI",          "ai")
-    , ("Tech",        "tech")
-    , ("Miscellany",  "miscellany")
-    ]
+-- | One library shelf: a portal and the cards it shows, and whether the
+--   portal holds more than that.
+data Shelf = Shelf
+    { shelfPortal  :: Portal
+    , shelfEntries :: [Item String]
+    , shelfHasMore :: Bool
+    }
 
--- | Default number of cards shown per library shelf. The sidecar
---   'featured:' list may push this up to 'libraryShelfMax'.
-libraryShelfCap :: Int
-libraryShelfCap = 4
-
--- | Hard ceiling on cards per shelf, regardless of sidecar length.
-libraryShelfMax :: Int
-libraryShelfMax = 5
+-- | A portal as the home page and the tag pages take it: (name, tag).
+portalPair :: Portal -> (String, String)
+portalPair p = (portalName p, portalTag p)
 
 -- | Optional prose intro lifted into @$library-intro$@ on the library
 --   page. Matched but not routed; consumed via the @"body"@ snapshot.
@@ -197,7 +181,7 @@ feedCtx =
     <> defaultContext
 
 -- | Context for the home page. Extends 'pageCtx' with a @portals@
--- listField iterating 'homePortals' in order. Each item exposes
+-- listField iterating site.yaml's portals in order. Each item exposes
 -- @$portal-name$@, @$portal-url$@, and (if the sidecar's tooltip is
 -- populated) @$portal-tooltip$@, consumed by @templates/home.html@.
 -- Tooltip lookup uses 'portalTooltipField' — the same function
@@ -207,11 +191,11 @@ homeCtx :: Context String
 homeCtx = listField "portals" portalItemCtx portalItems <> pageCtx
   where
     portalItems :: Compiler [Item (String, String)]
-    portalItems = return (map (Item (fromFilePath "")) homePortals)
+    portalItems = map (Item (fromFilePath "") . portalPair) . sitePortals <$> loadConfig
 
     portalItemCtx :: Context (String, String)
     portalItemCtx =
-           field "portal-name" (return . fst . itemBody)
+           field "portal-name" (return . escapeHtml . fst . itemBody)
         <> field "portal-url"  (\i -> return $ "/" ++ snd (itemBody i) ++ "/")
         <> portalTooltipField (sidecarIdentifier . snd . itemBody)
 
@@ -241,7 +225,7 @@ rules = do
     -- Backlinks (pass 1: link extraction; pass 2: JSON generation)
     -- Must run before content rules so dependencies resolve correctly.
     -- ---------------------------------------------------------------------------
-    backlinkRules
+    backlinkRules cfg
 
     -- ---------------------------------------------------------------------------
     -- Author index pages
@@ -268,8 +252,8 @@ rules = do
     -- ---------------------------------------------------------------------------
     -- Tag index pages
     -- ---------------------------------------------------------------------------
-    tags <- buildAllTags
-    applyTagRules tags homePortals siteCtx
+    tags <- buildAllTags cfg
+    applyTagRules tags (map portalPair (sitePortals cfg)) siteCtx
     statsRules tags
 
     -- Per-page JS files — authored alongside content in content/**/*.js.
@@ -521,7 +505,7 @@ rules = do
 
     -- Generic page collections
     -- (content/<collection>/<slug>.md → <collection>/<slug>.html).
-    match P.pageCollectionPattern $ do
+    match (P.pageCollectionPattern cfg) $ do
         route   contentPageRoute
         compile $ pageCompiler
             >>= inDefault "templates/page.html" pageCtx
@@ -893,19 +877,21 @@ rules = do
     -- Library — portal-grouped view over the /new.html dataset, deduplicated
     -- by primary portal. An item's primary portal is the top segment of the
     -- first tag in its frontmatter 'tags:' list whose top segment matches a
-    -- known portal (those in 'homePortals'). Items with no such tag are
+    -- known portal (those in site.yaml). Items with no such tag are
     -- silently dropped from the library (they remain on /new.html and on any
     -- tag pages their frontmatter produces).
     --
-    -- Each shelf is capped at 'libraryShelfCap' items by default. A portal's
+    -- Each shelf is capped at the library's shelf-cap by default. A portal's
     -- tag-meta sidecar may carry a 'featured:' list of content-rooted paths
     -- (e.g. @content/essays/foo.md@); featured items are placed first, in
     -- listed order, and the remainder is filled by recency up to a hard
-    -- ceiling of 'libraryShelfMax'. Featured paths that don't resolve to an
+    -- ceiling of its shelf-max. Featured paths that don't resolve to an
     -- item in the portal (wrong primary portal, or typo) are silently
     -- dropped. When the unfiltered portal has more items than the shelf
-    -- shows, @$<slug>-has-more$@ is exposed so the template can render a
+    -- shows, the shelf's @$has-more$@ is set so the template can render a
     -- "More on this shelf →" affordance linking to the portal's tag page.
+    -- The template loops over @library-shelves@ in portal order; a shelf
+    -- with no cards has no @$entries$@ and renders nothing.
     --
     -- Each card uses the shared item-card partial, with cross-portal filings
     -- rendered in the card's tag footer via 'tagLinksFieldExcludingTopSegment',
@@ -914,10 +900,12 @@ rules = do
     create ["library.html"] $ do
         route idRoute
         compile $ do
+            current <- loadConfig
             sidecarIds <- getMatches ("content/tag-meta/*.md"
                                  .||. "content/tag-meta/**/*.md")
-            let sidecarSet   = Set.fromList sidecarIds
-                knownPortals = map snd homePortals
+            let library      = siteLibrary current
+                sidecarSet   = Set.fromList sidecarIds
+                knownPortals = map portalTag (sitePortals current)
 
                 -- Top segment of the first tag that names a known portal.
                 -- Nothing when no tag matches — item is excluded from library.
@@ -982,11 +970,11 @@ rules = do
                                 else return html
                     else return mempty
 
-            -- One shelf's context contribution: the @<slug>-entries@
-            -- listField (or absent via noResult when the shelf is
-            -- empty) plus an optional @<slug>-has-more@ gate.
-            let portalSection p = do
-                    let portalItems = fromMaybe [] (Map.lookup p itemsByPortal)
+            -- One shelf: its cards, featured first, and whether the portal
+            -- holds more than the shelf shows.
+            let shelfOf portal = do
+                    let p           = portalTag portal
+                        portalItems = fromMaybe [] (Map.lookup p itemsByPortal)
                     sorted <- recentFirstByDisplay portalItems
 
                     featuredPaths <-
@@ -1006,34 +994,40 @@ rules = do
                             , Just i <- [listToMaybe
                                 (filter ((== ident) . itemIdentifier) portalItems)]
                             ]
-                        cap = min libraryShelfMax
-                                  (max libraryShelfCap (length featuredItems))
+                        cap = min (libraryShelfMax library)
+                                  (max (libraryShelfCap library) (length featuredItems))
                         featuredIds =
                             Set.fromList (map itemIdentifier featuredItems)
                         rest = filter (\i -> not (itemIdentifier i `Set.member` featuredIds)) sorted
                         merged = take cap (featuredItems ++ rest)
 
-                    let entriesFld =
-                            listField (p ++ "-entries") (portalItemCtx p)
-                                (if null merged
-                                    then noResult ("no items in portal " ++ p)
-                                    else return merged)
-                        hasMoreFld
-                            | length portalItems > length merged =
-                                constField (p ++ "-has-more") "true"
-                            | otherwise = mempty
+                    return (Shelf portal merged (length portalItems > length merged))
 
-                    return (entriesFld <> hasMoreFld)
+            -- Shelf order follows the portals — single ordering authority.
+            shelves <- mapM shelfOf (sitePortals current)
 
-            -- Section order follows homePortals — single ordering authority.
-            sections <- mapM portalSection knownPortals
+            -- @$entries$@ is a list whose cards hide the shelf's own portal
+            -- tag, so its context depends on the shelf; absent when empty,
+            -- so @$if(entries)$@ skips the shelf.
+            let shelfCtx =
+                       field "tag"  (return . escapeHtml . portalTag . shelfPortal . itemBody)
+                    <> field "name" (return . escapeHtml . portalName . shelfPortal . itemBody)
+                    <> boolField "has-more" (shelfHasMore . itemBody)
+                    <> Context (\key _ item ->
+                           let shelf = itemBody item
+                           in  if key == "entries" && not (null (shelfEntries shelf))
+                                   then return (ListField (portalItemCtx (portalTag (shelfPortal shelf)))
+                                                          (shelfEntries shelf))
+                                   else noResult ("no " ++ key ++ " on this shelf"))
+                seeAlsoCtx =
+                       field "label" (return . escapeHtml . navLabel . itemBody)
+                    <> field "href"  (return . escapeHtml . navHref . itemBody)
 
-            let ctx = mconcat sections
+            let ctx = listField "library-shelves" shelfCtx (mapM makeItem shelves)
+                   <> listField "library-see-also" seeAlsoCtx (mapM makeItem (librarySeeAlso library))
                    <> libraryIntroFld
                    <> constField "title"   "Library"
-                   <> constField "description"
-                        ("Everything on this site, arranged by shelf: essays, "
-                         ++ "fiction, poetry, music, photography, and research.")
+                   <> constField "description" (escapeHtml (libraryDescription library))
                    <> constField "library" "true"
                    <> constField "portal"  "true"
                    <> siteCtx

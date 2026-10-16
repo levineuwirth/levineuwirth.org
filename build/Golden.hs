@@ -48,7 +48,7 @@ renderFixture path = do
         bibPath       = T.pack (fromMaybe "data/bibliography.bib" (lookupString "bibliography" meta))
         numberFigures = fromMaybe False (lookupString "figure-numbering" meta >>= parseBool)
     parsed <- either (die . show) return $
-        runPure (readMarkdown readerOpts (T.pack (preprocessSource body)))
+        runPure (readMarkdown readerOpts (T.pack (preprocessSource cfg body)))
     (doc, bibHtml, furtherHtml) <-
         transformDocument cfg frKeys bibPath numberFigures (takeDirectory path)
                           (Headings.normalizeLevels parsed)
