@@ -19,6 +19,7 @@ module Patterns
     , photographyPattern
     , allPhotoEntries
     , standalonePagesPattern
+    , standaloneSources
     , pageCollectionPattern
       -- * Withheld (@draft: true@)
     , unpublished
@@ -29,7 +30,7 @@ module Patterns
     ) where
 
 import Hakyll
-import Config (SiteConfig)
+import Config (SiteConfig (..), Standalone (..))
 import Drafts (currentUnpublished, unpublishedPattern)
 import Sections (reservedSectionDirs)
 
@@ -137,23 +138,28 @@ pageCollectionPattern cfg = published $
     reservedSectionPages =
         foldr1 (.||.) [fromGlob ("content/" ++ d ++ "/*.md") | d <- reservedSectionDirs cfg]
 
--- | Top-level standalone pages, curated CV routing pages, and generic page
+-- | Top-level pages, the standalone pages in site.yaml, and generic page
 -- collections.
 standalonePagesPattern :: SiteConfig -> Pattern
 standalonePagesPattern cfg = published $
        "content/*.md"
-  .||. "content/cv/*.md"
+  .||. standaloneSources cfg
   .||. pageCollectionPattern cfg
+
+-- | The sources of site.yaml's standalone pages, as globs: a 'fromList'
+-- pattern matches only the unversioned identifier, and the backlinks pass
+-- compiles each page as @version "links"@.
+standaloneSources :: SiteConfig -> Pattern
+standaloneSources = foldr ((.||.) . fromGlob . standaloneSource) (fromList []) . siteStandalone
 
 -- ---------------------------------------------------------------------------
 -- Aggregations
 -- ---------------------------------------------------------------------------
 
 -- | Every content file the backlinks pass should index. Includes music
--- landing pages and top-level standalone pages, in addition to writings,
--- plus the two directory-form standalone essays (@content/me/index.md@
--- and @content/memento-mori/index.md@) — full essays rendered with
--- backlinks, whose outgoing links must be visible to the link graph.
+-- landing pages and the standalone pages, in addition to writings: the
+-- directory-form ones (@content/me/index.md@) are full essays rendered
+-- with backlinks, whose outgoing links must be visible to the link graph.
 --
 -- Photography is deliberately excluded, but note what this pattern
 -- governs: link *sources*. Photo pages DO render the backlinks block
@@ -173,8 +179,6 @@ allContent cfg =
   .||. fictionPattern
   .||. musicPattern
   .||. standalonePagesPattern cfg
-  .||. "content/me/index.md"
-  .||. "content/memento-mori/index.md"
 
 -- | Content shown on author index pages — essays + blog posts.
 -- (Poetry and fiction have their own dedicated indexes and are not

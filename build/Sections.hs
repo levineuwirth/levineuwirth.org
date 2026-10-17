@@ -1,7 +1,7 @@
 {-# LANGUAGE GHC2021 #-}
--- | The site's taxonomy: its content sections and portals (site.yaml,
---   "Config") and the lists derived from them, which used to be kept by
---   hand in five modules and two templates.
+-- | The site's taxonomy: its content sections, portals and standalone
+--   pages (site.yaml, "Config") and the lists derived from them, which used
+--   to be kept by hand in five modules and two templates.
 --
 --   * 'sectionOfRoute': a page's section, for its label on the New page
 --     (@$item-kind$@, "Contexts") and its default ornament ("Dingbat").
@@ -20,17 +20,16 @@ module Sections
     , generatedIndexes
     ) where
 
-import Data.List (find, isPrefixOf, nub, sort)
-import Config    (SiteConfig (..), Section (..), Portal (..))
+import Data.List  (find, isPrefixOf, nub, sort)
+import Data.Maybe (mapMaybe)
+import Config     (SiteConfig (..), Section (..), Portal (..), Standalone (..),
+                   engineContentDirs, standaloneDir)
 
--- | The section a route belongs to. A section whose one page is routed
---   beside its directory counts too: memento-mori's is @memento-mori.html@,
---   and matching only @memento-mori/@ gave it the fallback ornament
---   instead of its own until 2026-10-04.
+-- | The section a route belongs to.
 sectionOfRoute :: SiteConfig -> FilePath -> Maybe Section
 sectionOfRoute cfg r = find owns (siteSections cfg)
   where
-    owns s = (sectionDir s ++ "/") `isPrefixOf` r || r == sectionDir s ++ ".html"
+    owns s = (sectionDir s ++ "/") `isPrefixOf` r
 
 -- | The pages the engine generates at @<name>/index.html@.
 --   @tests/test_wikilink_routes.py@ checks this against the routes in
@@ -43,28 +42,23 @@ generatedIndexes = ["archive", "bibliography", "build", "stats"]
 generatedNamespaces :: [String]
 generatedNamespaces = ["authors"]
 
--- | Directories under @content/@ the engine reads for itself: the tag and
---   bibliography sidecars, drafts, and per-page scripts.
-engineContentDirs :: [String]
-engineContentDirs = ["bibliography-meta", "drafts", "scripts", "tag-meta"]
-
--- | The directories of the one-off pages under @content/@, and those whose
---   routes are a directory (@/cv/projects/@). A4's standalone-page table
---   replaces both lists.
-standaloneDirs, standaloneNamespaces :: [String]
-standaloneDirs       = ["cv", "me"]
-standaloneNamespaces = ["cv"]
+-- | The directories the standalone pages' sources sit in (@content/me/@),
+--   and the URL namespaces their routes open (@/cv/projects/@).
+standaloneDirs, standaloneNamespaces :: SiteConfig -> [String]
+standaloneDirs cfg = mapMaybe standaloneDir (siteStandalone cfg)
+standaloneNamespaces cfg =
+    [ dir | p <- siteStandalone cfg, (dir, '/' : _) <- [break (== '/') (standaloneRoute p)] ]
 
 landings :: SiteConfig -> [String]
-landings cfg = [sectionDir s | s <- siteSections cfg, sectionLanding s]
+landings = map sectionDir . siteSections
 
--- | The directories under @content/@ that belong to a section, a one-off
+-- | The directories under @content/@ that belong to a section, a standalone
 --   page or the engine, never to a generic page collection.
 --   tools/import-content.py refuses a page collection by one of these
 --   names, reading this list through @site shared-rules@.
 reservedSectionDirs :: SiteConfig -> [String]
 reservedSectionDirs cfg = sort . nub $
-    engineContentDirs ++ map sectionDir (siteSections cfg) ++ standaloneDirs
+    engineContentDirs ++ map sectionDir (siteSections cfg) ++ standaloneDirs cfg
 
 -- | Top-level tags that must NOT get a tag page, because a section landing
 --   or a generated page already owns @<tag>/index.html@. The build refuses
@@ -79,7 +73,7 @@ reservedSectionDirs cfg = sort . nub $
 --   claims those URLs.
 sectionOwnedTopLevelTags :: SiteConfig -> [String]
 sectionOwnedTopLevelTags cfg = nub $
-    landings cfg ++ standaloneNamespaces ++ generatedIndexes ++ generatedNamespaces
+    landings cfg ++ standaloneNamespaces cfg ++ generatedIndexes ++ generatedNamespaces
 
 -- | The bare wikilink slugs whose page is a directory index: the section
 --   landings, the generated indexes and the portal tags, whose tag pages

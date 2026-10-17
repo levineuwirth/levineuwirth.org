@@ -63,14 +63,12 @@ A feed with no entries yet is still valid: its `<updated>` is the build time.
 Feature switches are not configured here yet.
 
 `sections` lists the content directories (`dir`), the label their pages carry
-on the New page (`kind`), their default ornament (`dingbat`, optional) and
-whether the section owns a landing at `/<dir>/` (`landing`, default true).
-The current engine requires all seven section declarations: essays, blog,
-poetry, fiction, music and photography with `landing: true`, and memento-mori
-with `landing: false`. Labels, ornaments and ordering are configurable;
-adding, omitting or changing the route shape of a section is rejected until
-the engine supports changing those routes. Ordinary page collections do not
-need section declarations.
+on the New page (`kind`) and their default ornament (`dingbat`, optional);
+each section has a landing at `/<dir>/`. The current engine requires all six
+section declarations: essays, blog, poetry, fiction, music and photography.
+Labels, ornaments and ordering are configurable; adding or omitting a section
+is rejected until the engine supports changing those routes. Ordinary page
+collections do not need section declarations.
 `portals` are the home page's top-level tags in order (`name`, `tag`); the
 library shelves follow that order and the navigation lists them
 alphabetically. `nav-primary` is the first navigation row (`label`, `href`),
@@ -79,6 +77,17 @@ and `library` holds the shelf sizes (`shelf-cap`, raised by a portal's
 `see-also` links. The build derives the rest: the content directories a page
 collection may not use, the tags that may not have a tag page, and the
 wikilink slugs whose page is a directory (`site shared-rules`).
+
+`standalone` lists the one-off pages: each `source` (`content/<page>.md` or
+`content/<dir>/<page>.md`), its `route`, its `template` under `templates/`
+and the `context` it is compiled with: `essay` (the essay pipeline, whose
+citations reach `/bibliography/`), `page`, `now` (`data/now.yaml`), `vita` or
+`projects` (`yaml-source/data`). `scores: true` copies and tracks the score
+fragments in `content/<dir>/scores/`; `dingbat` is the page's default
+ornament; each of `flags` is a template boolean. Every standalone page is in
+the sitemap and the backlink graph. A source's directory is the page's own: a
+Markdown file there without an entry stops the build. Top-level pages that
+need no special handling (`content/<page>.md` → `/<page>.html`) need no entry.
 
 `manifest` contains `name`, `short-name`, `description`, `theme-color` and
 `background-color`. The build generates `/site.webmanifest` from these values

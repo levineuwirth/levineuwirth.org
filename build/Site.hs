@@ -2,12 +2,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Site (rules, siteConfiguration, siteConfigurationFor, refusedPath) where
 
-import Control.Monad (forM, forM_, void, when)
+import Control.Monad (forM, forM_, unless, void, when)
 import Control.Monad.Except (catchError)
 import Data.Char     (isSpace, toUpper)
-import Data.List     (groupBy, isInfixOf, isPrefixOf, isSuffixOf, sort, sortBy)
+import Data.List     (groupBy, isInfixOf, isPrefixOf, isSuffixOf, nub, sort, sortBy)
 import Data.Map.Strict (Map)
-import Data.Maybe    (catMaybes, fromMaybe, listToMaybe)
+import Data.Maybe    (catMaybes, fromMaybe, listToMaybe, mapMaybe)
 import Data.Ord      (Down (..), comparing)
 import Data.Set      (Set)
 import qualified Data.Set as Set
@@ -21,7 +21,8 @@ import qualified Data.ByteString.Lazy.Char8 as LBS
 import qualified Data.Map.Strict as Map
 import Hakyll hiding (escapeHtml)
 import Config     (SiteConfig (..), FeedSpec (..), FeedSection (..), LibraryConfig (..),
-                   NavLink (..), Portal (..), configRules, manifestRules,
+                   NavLink (..), Portal (..), Standalone (..), PageKind (..),
+                   engineSources, standaloneDir, configRules, manifestRules,
                    readSiteConfig, loadConfig, loadFeed, renderSiteFeed, photoFeed)
 import Archive    (archiveRules)
 import Authors    (buildAllAuthors, applyAuthorRules)
@@ -152,6 +153,40 @@ data Shelf = Shelf
 portalPair :: Portal -> (String, String)
 portalPair p = (portalName p, portalTag p)
 
+-- | The rules for one of site.yaml's standalone pages: the page at its
+--   route, compiled with its context's compiler and rendered into its
+--   template, and, with @scores@, the score fragments beside its source.
+--
+--   Co-located score fragments are inlined by Filters.Score inside
+--   'unsafeCompiler' — Hakyll sees the page depending on its source and
+--   nothing else, so re-engraving a score left the page serving the old
+--   SVG (audit B11; the essay figure dependency is the model). The page
+--   depends on the fragments' pattern, which their copy rule claims. The
+--   Score filter reads paths relative to the source's directory, which is
+--   why a page with scores lives in a directory of its own.
+standaloneRules :: Standalone -> Rules ()
+standaloneRules page = do
+    scoreDeps <- case (standaloneScores page, standaloneDir page) of
+        (True, Just dir) -> do
+            let scores = fromGlob ("content/" ++ dir ++ "/scores/*.svg")
+            match scores $ do
+                route   $ stripPrefixRoute ("content/" ++ dir ++ "/")
+                compile copyFileCompiler
+            (: []) <$> makePatternDependency scores
+        _ -> return []
+    rulesExtraDependencies scoreDeps $ match (fromList [fromFilePath (standaloneSource page)]) $ do
+        route   $ constRoute (standaloneRoute page)
+        compile $ compiler
+            >>= inDefault (fromFilePath ("templates/" ++ standaloneTemplate page)) (flags <> ctx)
+  where
+    flags = mconcat [constField flag "true" | flag <- standaloneFlags page]
+    (compiler, ctx) = case standaloneContext page of
+        EssayPage    -> (essayCompiler, essayCtx)
+        PlainPage    -> (pageCompiler, pageCtx)
+        NowPage      -> (pageCompiler, nowCtx)
+        VitaPage     -> (pageCompiler, vitaCtx)
+        ProjectsPage -> (pageCompiler, projectsCtx)
+
 -- | Optional prose intro lifted into @$library-intro$@ on the library
 --   page. Matched but not routed; consumed via the @"body"@ snapshot.
 libraryIntroId :: Identifier
@@ -218,8 +253,9 @@ rules = do
         -- saves each page's "cite-keys" snapshot for /bibliography/.
         essayPipeline = allEssays .||. P.blogPattern .||. P.poetryPattern
                    .||. P.fictionPattern .||. "content/music/*/index.md"
-                   .||. fromList [ "content/me/index.md", "content/memento-mori/index.md"
-                                 , "content/colophon.md" ]
+                   .||. fromList [ fromFilePath (standaloneSource page)
+                                 | page <- siteStandalone cfg
+                                 , standaloneContext page == EssayPage ]
 
     -- ---------------------------------------------------------------------------
     -- Backlinks (pass 1: link extraction; pass 2: JSON generation)
@@ -421,43 +457,20 @@ rules = do
             >>= inDefault "templates/home.html" homeCtx
 
     -- ---------------------------------------------------------------------------
-    -- Standalone pages (me/, colophon.md, …)
+    -- Standalone pages: site.yaml's table (me, colophon, current, …)
     -- ---------------------------------------------------------------------------
-    -- Co-located score fragments are inlined by Filters.Score inside
-    -- 'unsafeCompiler' — Hakyll sees the page depending on index.md and
-    -- nothing else, so re-engraving a score left the page serving the old
-    -- SVG (audit B11; the essay figure dependency above is the model). The
-    -- SVGs are already claimed by the copy rules further down, so naming
-    -- them in a pattern dependency is all that is needed here.
-    scoreDep <- makePatternDependency $
-                      "content/me/scores/*.svg"
-                 .||. "content/memento-mori/scores/*.svg"
+    forM_ (siteStandalone cfg) standaloneRules
 
-    -- me/index.md — compiled as a full essay (TOC, metadata block, sidenotes).
-    -- Lives in its own directory so co-located SVG score fragments resolve
-    -- correctly: the Score filter reads paths relative to the source file's
-    -- directory (content/me/), not the content root.
-    rulesExtraDependencies [scoreDep] $ match "content/me/index.md" $ do
-        route   $ constRoute "me.html"
-        compile $ essayCompiler
-            >>= inDefault "templates/essay.html" essayCtx
-
-    -- SVG score fragments co-located with me/index.md.
-    match "content/me/scores/*.svg" $ do
-        route   $ stripPrefixRoute "content/me/"
-        compile copyFileCompiler
-
-    -- memento-mori/index.md — lives in its own directory so co-located SVG
-    -- score fragments resolve correctly (same pattern as me/index.md).
-    rulesExtraDependencies [scoreDep] $ match "content/memento-mori/index.md" $ do
-        route   $ constRoute "memento-mori.html"
-        compile $ essayCompiler
-            >>= inDefault "templates/essay.html" (constField "memento-mori" "true" <> essayCtx)
-
-    -- SVG score fragments co-located with memento-mori/index.md.
-    match "content/memento-mori/scores/*.svg" $ do
-        route   $ stripPrefixRoute "content/memento-mori/"
-        compile copyFileCompiler
+    -- A Markdown file in a standalone page's own directory that no entry
+    -- claims would be compiled by no rule at all (the directory is kept
+    -- from page collections), so refuse it instead of dropping it.
+    let claimed = map standaloneSource (siteStandalone cfg)
+    forM_ (nub (mapMaybe standaloneDir (siteStandalone cfg))) $ \dir -> do
+        pages <- getMatches (fromGlob ("content/" ++ dir ++ "/*.md"))
+        let unclaimed = filter (`notElem` claimed) (map toFilePath pages)
+        unless (null unclaimed) $ preprocess $ ioError $ userError $
+            "site.yaml: no standalone entry for " ++ unwords unclaimed
+            ++ " (content/" ++ dir ++ "/ belongs to a standalone page)"
 
     -- ---------------------------------------------------------------------------
     -- Commonplace book
@@ -467,38 +480,9 @@ rules = do
         compile $ pageCompiler
             >>= inDefault "templates/commonplace.html" commonplaceCtx
 
-    -- ---------------------------------------------------------------------------
-    -- Now — research-first status page driven by data/now.yaml. Same
-    -- structural pattern as the commonplace page: markdown body
-    -- (optional intro prose) + structured YAML rendered into HTML by
-    -- Now.nowCtx, then assembled by templates/current.html.
-    -- ---------------------------------------------------------------------------
-    match "content/current.md" $ do
-        route   $ constRoute "current.html"
-        compile $ pageCompiler
-            >>= inDefault "templates/current.html" nowCtx
-
-    match "content/colophon.md" $ do
-        route   $ constRoute "colophon.html"
-        compile $ essayCompiler
-            >>= inDefault "templates/essay.html" essayCtx
-
-    -- Vita — the academic-homepage view, driven by yaml-source/data/*.yml.
-    -- Prose (research interests, pointers, contact) stays in the markdown
-    -- body; education, publications, presentations, and experience are
-    -- generated by Vita.vitaCtx and assembled by templates/vita.html.
-    match "content/about.md" $ do
-        route   contentPageRoute
-        compile $ pageCompiler
-            >>= inDefault "templates/vita.html" vitaCtx
-
-    match ("content/*.md"
-            .&&. complement "content/index.md"
-            .&&. complement "content/about.md"
-            .&&. complement "content/commonplace.md"
-            .&&. complement "content/colophon.md"
-            .&&. complement "content/current.md"
-            .&&. complement "content/library.md") $ do
+    -- Every other top-level page.
+    match ("content/*.md" .&&. complement (fromList (map fromFilePath engineSources)
+                                             .||. P.standaloneSources cfg)) $ do
         route   contentPageRoute
         compile $ pageCompiler
             >>= inDefault "templates/page.html" pageCtx
@@ -507,31 +491,6 @@ rules = do
     -- (content/<collection>/<slug>.md → <collection>/<slug>.html).
     match (P.pageCollectionPattern cfg) $ do
         route   contentPageRoute
-        compile $ pageCompiler
-            >>= inDefault "templates/page.html" pageCtx
-
-    -- ---------------------------------------------------------------------------
-    -- CV routing pages (content/cv/*.md → /cv/<slug>/).
-    -- These are narrative overlays pointing into the library; they render
-    -- with the same page.html pipeline as top-level standalone pages, but
-    -- route to directory-style URLs (/cv/projects/ rather than /cv/projects.html)
-    -- so nginx serves them via index-file resolution and the URLs stay stable
-    -- if the underlying files are later reorganized into co-located directories.
-    -- ---------------------------------------------------------------------------
-    -- The project index is generated from yaml-source/data/projects.yml —
-    -- the same file that feeds the CV's and résumé's project sections — so
-    -- it gets projectsCtx and its own template. The markdown keeps only the
-    -- page's framing prose. Individual project writeups stay as essays.
-    match "content/cv/projects.md" $ do
-        route $ constRoute "cv/projects/index.html"
-        compile $ pageCompiler
-            >>= inDefault "templates/projects.html" projectsCtx
-
-    match ("content/cv/*.md" .&&. complement "content/cv/projects.md") $ do
-        route $ customRoute $ \ident ->
-            let fname = takeFileName (toFilePath ident)
-                slug  = takeWhile (/= '.') fname
-            in "cv/" ++ slug ++ "/index.html"
         compile $ pageCompiler
             >>= inDefault "templates/page.html" pageCtx
 
@@ -697,7 +656,7 @@ rules = do
     -- Music — catalog index
     -- ---------------------------------------------------------------------------
     -- Every rule below whose context reads scores carries this one pattern.
-    -- Same unsafeCompiler blind spot as the me/ and memento-mori score
+    -- Same unsafeCompiler blind spot as the standalone pages' score
     -- fragments (B11): Filters.Score reads content/music/<slug>/scores/*.svg
     -- relative to the source file. The SVG copy rule claims them, so the
     -- dependency can fire. The timing map is in the pattern too: the
@@ -1355,20 +1314,18 @@ rules = do
             photoIndexIds <- filter (isHtmlIdentifier . toFilePath)
                                 <$> getMatches ("photography/**" .&&. hasNoVersion)
 
-            -- CV routing pages (/cv/<slug>/).
-            cvIds <- getMatches ("content/cv/*.md" .&&. hasNoVersion)
-
-            let standaloneIds = map fromFilePath
-                    -- Authored standalone pages.
-                    [ "content/about.md"            -- /about.html (vita)
-                    , "content/work.md"
+            -- site.yaml's standalone pages; a page compiled from now.yaml
+            -- takes its date from there.
+            current <- loadConfig
+            let standaloneIds = map (fromFilePath . standaloneSource) (siteStandalone current)
+                nowIds = [ fromFilePath (standaloneSource page)
+                         | page <- siteStandalone current, standaloneContext page == NowPage ]
+                otherIds = map fromFilePath
+                    -- Other authored top-level pages.
+                    [ "content/work.md"
                     , "content/links.md"
                     , "content/gpg.md"
-                    , "content/colophon.md"
-                    , "content/current.md"
                     , "content/commonplace.md"
-                    , "content/me/index.md"
-                    , "content/memento-mori/index.md"
                     -- Section landings.
                     , "content/photography/index.md"
                     , "content/music/index.md"
@@ -1382,11 +1339,10 @@ rules = do
                     ]
 
                 corpus = datedIds ++ photoIds ++ photoIndexIds
-                      ++ cvIds ++ standaloneIds
+                      ++ standaloneIds ++ otherIds
 
-            entries <- sitemapEntries corpus
+            entries <- sitemapEntries nowIds corpus
 
-            current <- loadConfig
             let siteRoot = siteUrl current
                 sitemapItemCtx =
                     constField "root" siteRoot
@@ -1420,8 +1376,8 @@ rules = do
 --     photography corpus. Both needed a matched-but-unrouted rule first:
 --     Hakyll intersects its modified set with the identifiers some rule
 --     claims, so a dependency on an unclaimed file can never fire.
---   * Score fragments read by "Filters.Score" — 'scoreDep' (me/,
---     memento-mori/) and 'musicScoreDep' (music compositions). Essay score
+--   * Score fragments read by "Filters.Score" — 'standaloneRules' (pages
+--     with @scores@) and 'musicScoreDep' (music compositions). Essay score
 --     fragments live under @content/essays/**/figures/**@ or beside the
 --     essay and are carried by 'figureDep'.
 --   * @.bib@ databases and the CSL style read by citeproc —
@@ -1502,16 +1458,16 @@ collectionCtx childPattern childCtx baseCtx = do
 --   page), duplicates are collapsed, and the site root is dropped because
 --   @templates\/sitemap.xml@ emits it unconditionally. Rows come back in
 --   URL order, which keeps the generated file stable across builds.
-sitemapEntries :: [Identifier] -> Compiler [Item (String, Maybe String)]
-sitemapEntries idents = do
-    rows <- mapM sitemapEntry idents
+sitemapEntries :: [Identifier] -> [Identifier] -> Compiler [Item (String, Maybe String)]
+sitemapEntries nowIds idents = do
+    rows <- mapM (sitemapEntry nowIds) idents
     let unique = Map.toAscList (Map.fromList
                     [ (u, d) | Just (u, d) <- rows, u /= "/" ])
     return [ Item (fromFilePath u) (u, d) | (u, d) <- unique ]
 
 -- | One sitemap row, or 'Nothing' when the identifier has no route.
-sitemapEntry :: Identifier -> Compiler (Maybe (String, Maybe String))
-sitemapEntry ident = do
+sitemapEntry :: [Identifier] -> Identifier -> Compiler (Maybe (String, Maybe String))
+sitemapEntry nowIds ident = do
     mRoute <- getRoute ident
     case mRoute of
         Nothing -> return Nothing
@@ -1526,9 +1482,9 @@ sitemapEntry ident = do
             -- rather than repeating its creation date to crawlers.
             -- 'identifierDisplayUTC' falls back to the creation date when
             -- there is no `revised:` entry.
-            mDay <- if ident == fromFilePath "content/current.md"
-                -- Current's content lives in now.yaml, which also owns the
-                -- date shown in its masthead. Loading it tracks the sitemap
+            mDay <- if ident `elem` nowIds
+                -- Such a page's content lives in now.yaml, which also owns
+                -- the date shown in its masthead. Loading it tracks the sitemap
                 -- dependency when that date changes.
                 then Just <$> nowLastUpdated
                 else fmap Just (formatIso

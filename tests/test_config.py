@@ -12,6 +12,12 @@ from xml.etree import ElementTree
 from tests._helpers import ROOT, requires_cabal, script_env, site_binary, write_site_config
 
 
+def standalone(source, route, **settings):
+    page = {"source": source, "route": route, "template": "page.html", "context": "page",
+            "scores": False, "dingbat": None, "flags": []}
+    return page | settings
+
+
 @requires_cabal
 class ConfigTests(unittest.TestCase):
     @classmethod
@@ -74,6 +80,8 @@ class ConfigTests(unittest.TestCase):
         section = self.config["sections"][0]
         portal = self.config["portals"][0]
         link = self.config["nav-primary"][0]
+        page = {"source": "content/me/index.md", "route": "me.html", "template": "essay.html",
+                "context": "essay", "scores": True, "dingbat": None, "flags": []}
         bad = [
             {"titel": "misspelled"}, {"author": ""}, {"title": "one\ntwo"},
             {"url": "example.org"}, {"url": "https://example.org/"},
@@ -108,6 +116,18 @@ class ConfigTests(unittest.TestCase):
                 {"shelf-cap": 0}, {"shelf-cap": 6}, {"description": "one\ntwo"},
                 {"see-also": [dict(link, href="relative.html")]}, {"shelves": 3},
             )],
+            {"standalone": None},
+            *[{"standalone": [dict(page, **change)]} for change in (
+                {"source": "pages/me.md"}, {"source": "content/a/b/c.md"}, {"source": "content/me.txt"},
+                {"source": "content/../me.md"}, {"source": "content/*.md"}, {"source": "content/index.md"},
+                {"route": "/me.html"}, {"route": "me"}, {"template": "../essay.html"},
+                {"template": "essay.txt"}, {"context": "blog"}, {"scores": True, "source": "content/me.md"},
+                {"dingbat": "unknown"}, {"flags": ["Not A Slug"]}, {"order": 1},
+            )],
+            {"standalone": [page, page]},
+            {"standalone": [page, dict(page, source="content/other/index.md")]},
+            {"standalone": [dict(page, source="content/essays/me.md", scores=False)]},
+            {"standalone": [dict(page, source="content/tag-meta/me.md", scores=False)]},
         ]
         original = self.config.copy()
         for overrides in bad:
@@ -122,10 +142,10 @@ class ConfigTests(unittest.TestCase):
         original = self.config["sections"]
         cases = [
             (original + [{"dir": "notes", "kind": "Note"}], "unsupported section directory"),
-            ([dict(s, landing=not s["landing"]) if s["dir"] == "essays" else s
-              for s in original], "landing disagrees"),
-            ([dict(s, landing=True) if s["dir"] == "memento-mori" else s
-              for s in original], "landing disagrees"),
+            # A page beside its directory is a standalone page now.
+            (original + [{"dir": "memento-mori", "kind": "Page"}], "unsupported section directory"),
+            ([dict(s, landing=False) if s["dir"] == "essays" else s
+              for s in original], "unknown configuration keys"),
             *[([s for s in original if s["dir"] != omitted["dir"]], "must include")
               for omitted in original],
         ]
@@ -143,6 +163,9 @@ class ConfigTests(unittest.TestCase):
         self.config["sections"] = [dict(s, kind="Custom label", dingbat="trefoil")
                                    for s in reversed(self.config["sections"])]
         self.config["portals"] = [{"name": "Walks", "tag": "walks"}]
+        self.config["standalone"] = [
+            standalone("content/memento-mori/index.md", "memento-mori.html"),
+            standalone("content/people/team.md", "people/team/index.html")]
         self.write_config()
         done = self.run_site("shared-rules")
         self.assertEqual(done.returncode, 0, done.stderr)
@@ -150,11 +173,14 @@ class ConfigTests(unittest.TestCase):
         reserved, owned, slugs = (set(rules[k]) for k in
                                   ("reserved-sections", "section-owned-tags", "directory-slugs"))
         self.assertEqual(rules["reserved-sections"], sorted(reserved))
-        self.assertTrue({"essays", "memento-mori"} <= reserved)
+        # A standalone page's directory is reserved; a route under a
+        # directory claims that namespace from the tags.
+        self.assertTrue({"essays", "memento-mori", "people"} <= reserved)
         self.assertIn("essays", owned & slugs)
+        self.assertIn("people", owned - slugs)
         self.assertNotIn("memento-mori", owned | slugs)
         self.assertIn("walks", slugs - owned - reserved)
-        self.assertNotIn("research", slugs)
+        self.assertFalse({"research", "cv", "me"} & (reserved | owned | slugs))
 
         tagged = subprocess.run([str(self.binary), "expand-tags"], cwd=self.root, env=script_env(),
                                 input="essays\nwalks\nessays/field\n", capture_output=True,
@@ -171,6 +197,9 @@ class ConfigTests(unittest.TestCase):
         notes = self.root / "content/notes/a.md"
         notes.parent.mkdir()
         notes.write_text("---\ntitle: Note\n---\nBody\n")
+        team = self.root / "content/people/team.md"
+        team.parent.mkdir()
+        team.write_text("---\ntitle: Team\n---\nBody\n")
         links = self.run_site("list-links", "content")
         self.assertEqual(links.returncode, 0, links.stderr)
         self.assertEqual(links.stdout.split(), ["/essays/", "/memento-mori.html", "/walks/"])
@@ -178,8 +207,27 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(done.returncode, 0, done.stderr)
         routes = {line.split("\t")[0] for line in done.stdout.splitlines()}
         self.assertIn("notes/a.html", routes)  # ordinary collections still compile
+        self.assertTrue({"memento-mori.html", "people/team/index.html"} <= routes)
         for url in links.stdout.split():
             self.assertIn(url.lstrip("/") + ("index.html" if url.endswith("/") else ""), routes)
+
+    def test_unclaimed_pages_in_a_standalone_directory_are_refused(self):
+        self.config["standalone"] = [standalone("content/people/team.md", "people/team/index.html")]
+        self.write_config()
+        (self.root / "data").mkdir()
+        people = self.root / "content/people"
+        people.mkdir(parents=True)
+        for name in ("team.md", "other.md"):
+            (people / name).write_text("---\ntitle: Page\n---\nBody\n")
+        # The directory is reserved from page collections, so other.md would
+        # otherwise be compiled by no rule at all.
+        done = self.run_site("list-routes")
+        self.assertNotEqual(done.returncode, 0)
+        self.assertIn("no standalone entry for content/people/other.md", done.stderr)
+        (people / "other.md").unlink()
+        done = self.run_site("list-routes")
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertIn("people/team/index.html\tcontent/people/team.md", done.stdout.splitlines())
 
     def test_url_may_be_the_www_alias_of_host(self):
         self.config["url"] = "https://www.example.org"

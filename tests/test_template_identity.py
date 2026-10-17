@@ -23,6 +23,8 @@ class TemplateIdentityTests(unittest.TestCase):
         (build / "Probe.hs").write_text('''{-# LANGUAGE OverloadedStrings #-}
 import Config
 import Contexts (contentKindField)
+import Dingbat (dingbatField)
+import qualified Patterns as P
 import qualified Tags as T
 import Hakyll
 import Utils (stripHtmlComments)
@@ -51,6 +53,15 @@ main = hakyll $ do
         compile $ makeItem ("" :: String) >>= loadAndApplyTemplate "templates/partials/item-card.html"
             (contentKindField <> constField "title" "Example" <> constField "canonical-url" "/essays/example/"
              <> constField "date-iso" "2026-01-01" <> constField "date-display" "January 1")
+    forM_ ["essays/ornament.html", "memento.html", "elsewhere.html"] $ \\name ->
+        create [fromFilePath name] $ do
+            route idRoute
+            compile $ makeItem ("$dingbat$" :: String) >>= applyAsTemplate dingbatField
+    -- The backlinks pass compiles each page as version "links".
+    create ["link-graph.txt"] $ do
+        route idRoute
+        compile $ makeItem (show (matches (P.allContent cfg)
+                                    (setVersion (Just "links") "content/memento/index.md")))
     create ["see-also.html"] $ do
         route idRoute
         compile $ makeItem ("" :: String) >>= loadAndApplyTemplate "templates/tag-index.html"
@@ -145,3 +156,22 @@ main = hakyll $ do
             self.assertIsNotNone(portal_text, see_also)
             self.assertEqual(html.unescape(kind_text.group(1)), kind)
             self.assertEqual(html.unescape(portal_text.group(1)), portal)
+
+    def test_standalone_pages_take_their_ornament_and_join_the_link_graph(self):
+        with tempfile.TemporaryDirectory(prefix="ornaments-") as tmp:
+            root = Path(tmp)
+            shutil.copytree(ROOT / "templates", root / "templates")
+            config = write_site_config(root)
+            config["sections"][0]["dingbat"] = "fleuron"  # essays
+            config["standalone"] = [{"source": "content/memento/index.md", "route": "memento.html",
+                                     "template": "essay.html", "context": "essay", "scores": False,
+                                     "dingbat": "memento", "flags": []}]
+            (root / "site.yaml").write_text(json.dumps(config))
+            done = subprocess.run([str(self.binary), "build"], cwd=root, env=script_env(),
+                                  capture_output=True, text=True, timeout=60)
+            self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
+            ornaments = {name: (root / "_site" / name).read_text()
+                         for name in ("essays/ornament.html", "memento.html", "elsewhere.html")}
+            self.assertEqual(ornaments, {"essays/ornament.html": "fleuron",
+                                         "memento.html": "memento", "elsewhere.html": "asterism"})
+            self.assertEqual((root / "_site/link-graph.txt").read_text(), "True")

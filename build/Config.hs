@@ -5,6 +5,7 @@
 module Config
     ( SiteConfig (..), FeedSpec (..), FeedSection (..), ManifestConfig (..)
     , Section (..), Portal (..), NavLink (..), LibraryConfig (..)
+    , Standalone (..), PageKind (..), standaloneDir, engineSources, engineContentDirs
     , configRules, readSiteConfig, loadConfig, configField
     , renderSiteFeed, configMake, photoFeed, sectionName, loadFeed
     , siteOwnHosts, identityContext, navigationContext, manifestRules
@@ -21,7 +22,7 @@ import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 import Data.Char (isControl, isSpace, toLower, toUpper)
 import Data.List (find, intercalate, isPrefixOf, isSuffixOf, nub, sortOn, stripPrefix)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, isNothing)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import Data.Time.Clock (getCurrentTime)
@@ -51,6 +52,7 @@ data SiteConfig = SiteConfig
     , sitePortals :: [Portal]
     , siteNavPrimary :: [NavLink]
     , siteLibrary :: LibraryConfig
+    , siteStandalone :: [Standalone]
     } deriving (Eq, Show)
 
 data FeedSection = Essays | Blog | Fiction | Poetry | Music | Photos
@@ -142,37 +144,32 @@ manifestValues m = [("name", manifestName m), ("short-name", manifestShortName m
 instance ToJSON ManifestConfig where
     toJSON m = object [Key.fromString k .= v | (k, v) <- manifestValues m]
 
--- | A content section, keyed by the route its pages take: @<dir>/…@, or
---   @<dir>.html@ for a section whose one page sits beside its directory.
---   Its kind labels its pages (@$item-kind$@); its dingbat is their
---   default ornament. The reserved content directories, the tags that may
---   not have pages and the wikilink directory slugs derive from these and
---   the portals ("Sections").
+-- | A content section, keyed by the route its pages take (@<dir>/…@), with
+--   a landing at @<dir>/index.html@. Its kind labels its pages
+--   (@$item-kind$@); its dingbat is their default ornament. The reserved
+--   content directories, the tags that may not have pages and the wikilink
+--   directory slugs derive from these, the portals and the standalone pages
+--   ("Sections").
 data Section = Section
-    { sectionDir     :: String        -- ^ its pages: @<dir>/…@, or @<dir>.html@
+    { sectionDir     :: String        -- ^ its pages: @<dir>/…@
     , sectionKind    :: String        -- ^ @$item-kind$@
     , sectionDingbat :: Maybe String  -- ^ default ornament; 'Nothing' takes the fallback
-    , sectionLanding :: Bool          -- ^ it owns the landing @<dir>/index.html@
     } deriving (Eq, Show)
 
 -- The current rules own these section namespaces. This is a routing contract,
 -- not another set of display defaults: names come from the engine's section
 -- enumeration, while labels and ornaments remain site-owned. When rules become
 -- conditional, their enabled sections must also determine this contract.
-sectionRoutes :: [(String, Bool)]
-sectionRoutes = [(sectionName s, True) | s <- [minBound .. maxBound]]
-             ++ [("memento-mori", False)]
+sectionRoutes :: [String]
+sectionRoutes = [sectionName s | s <- [minBound .. maxBound]]
 
 instance FromJSON Section where
     parseJSON = withObject "section" $ \o -> do
-        onlyKeys ["dir", "kind", "dingbat", "landing"] o
+        onlyKeys ["dir", "kind", "dingbat"] o
         s <- Section <$> o .: "dir" <*> o .: "kind" <*> o .:? "dingbat"
-                     <*> o .:? "landing" .!= True
         unless (slug (sectionDir s)) $ fail "section dir must be a lowercase slug"
-        case lookup (sectionDir s) sectionRoutes of
-            Nothing -> fail ("unsupported section directory: " ++ sectionDir s)
-            Just landing -> unless (sectionLanding s == landing) $
-                fail ("section landing disagrees with engine route: " ++ sectionDir s)
+        unless (sectionDir s `elem` sectionRoutes) $
+            fail ("unsupported section directory: " ++ sectionDir s)
         singleLine "section kind" (sectionKind s)
         forM_ (sectionDingbat s) $ \d -> unless (d `elem` knownDingbats) $
             fail ("unknown dingbat " ++ d ++ "; known: " ++ unwords knownDingbats)
@@ -180,7 +177,7 @@ instance FromJSON Section where
 
 instance ToJSON Section where
     toJSON s = object [ "dir" .= sectionDir s, "kind" .= sectionKind s
-                      , "dingbat" .= sectionDingbat s, "landing" .= sectionLanding s ]
+                      , "dingbat" .= sectionDingbat s ]
 
 -- | A home-page portal: a top-level tag whose page is @/<tag>/@, in
 --   home-page order. The navigation lists them alphabetically.
@@ -245,6 +242,92 @@ instance ToJSON LibraryConfig where
     toJSON l = object [ "shelf-cap" .= libraryShelfCap l, "shelf-max" .= libraryShelfMax l
                       , "description" .= libraryDescription l, "see-also" .= librarySeeAlso l ]
 
+-- | The engine context a standalone page is compiled with: its compiler and
+--   the fields its template reads ("Site").
+data PageKind = EssayPage | PlainPage | NowPage | VitaPage | ProjectsPage
+    deriving (Eq, Show, Enum, Bounded)
+
+pageKindName :: PageKind -> String
+pageKindName k = case k of
+    EssayPage    -> "essay"     -- the essay pipeline: TOC, citations, sidenotes, scores
+    PlainPage    -> "page"
+    NowPage      -> "now"       -- data/now.yaml
+    VitaPage     -> "vita"      -- yaml-source/data
+    ProjectsPage -> "projects"  -- yaml-source/data/projects.yml
+
+instance FromJSON PageKind where
+    parseJSON = withText "page context" $ \t ->
+        case lookup (T.unpack t) [(pageKindName k, k) | k <- [minBound .. maxBound]] of
+            Just k  -> pure k
+            Nothing -> fail ("unknown page context " ++ T.unpack t ++ "; known: "
+                             ++ unwords (map pageKindName [minBound .. maxBound]))
+
+instance ToJSON PageKind where
+    toJSON = toJSON . pageKindName
+
+-- | A one-off page: its source, the route it takes, its template (under
+--   @templates/@) and the engine context it is compiled with. @scores@
+--   copies and tracks the score fragments beside a source in its own
+--   directory (@content/<dir>/scores/*.svg@, served at @/scores/@);
+--   @dingbat@ is its default ornament; each flag is a template boolean
+--   (@$if(<flag>)$@).
+data Standalone = Standalone
+    { standaloneSource   :: FilePath
+    , standaloneRoute    :: FilePath
+    , standaloneTemplate :: FilePath
+    , standaloneContext  :: PageKind
+    , standaloneScores   :: Bool
+    , standaloneDingbat  :: Maybe String
+    , standaloneFlags    :: [String]
+    } deriving (Eq, Show)
+
+instance FromJSON Standalone where
+    parseJSON = withObject "standalone page" $ \o -> do
+        onlyKeys ["source", "route", "template", "context", "scores", "dingbat", "flags"] o
+        p <- Standalone <$> o .: "source" <*> o .: "route" <*> o .: "template"
+                        <*> o .: "context" <*> o .:? "scores" .!= False
+                        <*> o .:? "dingbat" <*> o .:? "flags" .!= []
+        let source = standaloneSource p
+        unless (safePath source && ".md" `isSuffixOf` source && '*' `notElem` source
+                && take 1 (splitDirectories source) == ["content"]
+                && length (splitDirectories source) `elem` [2, 3]) $
+            fail "standalone source must be content/<page>.md or content/<dir>/<page>.md"
+        when (source `elem` engineSources) $
+            fail ("standalone source is one of the engine's own pages: " ++ source)
+        forM_ [("route", standaloneRoute p), ("template", standaloneTemplate p)] $ \(name, path) ->
+            unless (safePath path && ".html" `isSuffixOf` path) $
+                fail ("standalone " ++ name ++ " must be a relative .html path without traversal")
+        when (standaloneScores p && isNothing (standaloneDir p)) $
+            fail "standalone scores need a source in its own directory"
+        forM_ (standaloneDingbat p) $ \d -> unless (d `elem` knownDingbats) $
+            fail ("unknown dingbat " ++ d ++ "; known: " ++ unwords knownDingbats)
+        unless (all slug (standaloneFlags p)) $ fail "standalone flags must be lowercase slugs"
+        pure p
+
+instance ToJSON Standalone where
+    toJSON p = object
+        [ "source" .= standaloneSource p, "route" .= standaloneRoute p
+        , "template" .= standaloneTemplate p, "context" .= standaloneContext p
+        , "scores" .= standaloneScores p, "dingbat" .= standaloneDingbat p
+        , "flags" .= standaloneFlags p ]
+
+-- | The directory a standalone page's source sits in under @content/@,
+--   if it has one of its own: @me@ for @content/me/index.md@.
+standaloneDir :: Standalone -> Maybe String
+standaloneDir p = case splitDirectories (standaloneSource p) of
+    ["content", dir, _] -> Just dir
+    _                   -> Nothing
+
+-- | Top-level pages the engine compiles with rules of its own: the home
+--   page, the library's intro and the commonplace book.
+engineSources :: [FilePath]
+engineSources = ["content/index.md", "content/library.md", "content/commonplace.md"]
+
+-- | Directories under @content/@ the engine reads for itself: the tag and
+--   bibliography sidecars, drafts, and per-page scripts.
+engineContentDirs :: [String]
+engineContentDirs = ["bibliography-meta", "drafts", "scripts", "tag-meta"]
+
 -- | The ornaments the stylesheet draws (@body[data-dingbat="…"]@ in
 --   typography.css), for a page's @dingbat:@ and a section's default.
 --   Extend here when adding one ("Dingbat").
@@ -265,7 +348,7 @@ instance FromJSON SiteConfig where
     parseJSON = withObject "site config" $ \o -> do
         onlyKeys (map Key.fromString identityKeys
                   ++ ["feeds", "manifest", "signing-fingerprint", "sections", "portals",
-                      "nav-primary", "library"]) o
+                      "nav-primary", "library", "standalone"]) o
         c <- SiteConfig <$> o .: "title" <*> o .: "author" <*> o .: "author-sort"
                         <*> o .: "email" <*> o .: "contact-email"
                         <*> o .: "url" <*> o .: "host"
@@ -275,6 +358,7 @@ instance FromJSON SiteConfig where
                         <*> o .: "manifest" <*> o .: "feeds"
                         <*> o .: "sections" <*> o .: "portals"
                         <*> o .: "nav-primary" <*> o .: "library"
+                        <*> o .: "standalone"
         mapM_ (uncurry singleLine) (identityValues c)
         when (any isControl (siteSigningFingerprint c)) $
             fail "signing-fingerprint must be a single-line string"
@@ -296,10 +380,17 @@ instance FromJSON SiteConfig where
         let dirs = map sectionDir (siteSections c)
             tags = map portalTag (sitePortals c)
         when (nub dirs /= dirs) $ fail "section dirs must be unique"
-        let missing = filter (`notElem` dirs) (map fst sectionRoutes)
+        let missing = filter (`notElem` dirs) sectionRoutes
         unless (null missing) $
             fail ("sections must include the engine's routed sections: " ++ intercalate ", " missing)
         when (nub tags /= tags) $ fail "portal tags must be unique"
+        let sources = map standaloneSource (siteStandalone c)
+            routes  = map standaloneRoute (siteStandalone c)
+        when (nub sources /= sources || nub routes /= routes) $
+            fail "standalone sources and routes must be unique"
+        forM_ (siteStandalone c) $ \p -> forM_ (standaloneDir p) $ \dir ->
+            when (dir `elem` dirs ++ engineContentDirs) $
+                fail ("standalone source is inside a section or engine directory: " ++ standaloneSource p)
         pure c
 
 instance ToJSON SiteConfig where
@@ -307,7 +398,8 @@ instance ToJSON SiteConfig where
                        ++ ["feeds" .= siteFeeds c, "manifest" .= siteManifest c,
                            "signing-fingerprint" .= siteSigningFingerprint c,
                            "sections" .= siteSections c, "portals" .= sitePortals c,
-                           "nav-primary" .= siteNavPrimary c, "library" .= siteLibrary c])
+                           "nav-primary" .= siteNavPrimary c, "library" .= siteLibrary c,
+                           "standalone" .= siteStandalone c])
 
 identityKeys :: [String]
 identityKeys = ["title", "author", "author-sort", "email", "contact-email", "url", "host",

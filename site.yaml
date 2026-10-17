@@ -1,5 +1,5 @@
-# Site-owned identity, feeds, taxonomy and navigation. Standalone pages and
-# feature switches follow in later extraction steps.
+# Site-owned identity, feeds, taxonomy, navigation and standalone pages.
+# Feature switches follow in a later extraction step.
 title: Levi Neuwirth
 author: Levi Neuwirth
 author-sort: Neuwirth, Levi
@@ -41,8 +41,8 @@ feeds:
     advertise: true
     limit: 30
 # Content sections, keyed by directory: their pages' label on the New page
-# (kind) and default ornament (dingbat). landing: false for a section whose
-# one page sits beside its directory (memento-mori.html).
+# (kind) and default ornament (dingbat). The engine's section routes are
+# fixed: exactly these six directories.
 sections:
   - {dir: essays, kind: Essay, dingbat: fleuron}
   - {dir: blog, kind: Post, dingbat: lozenge}
@@ -50,7 +50,6 @@ sections:
   - {dir: fiction, kind: Fiction, dingbat: asterisks}
   - {dir: music, kind: Composition, dingbat: clef}
   - {dir: photography, kind: Photo}
-  - {dir: memento-mori, kind: Page, dingbat: memento, landing: false}
 # Home-page portals in order; each is a top-level tag with a page at /<tag>/.
 portals:
   - {name: Research, tag: research}
@@ -82,3 +81,17 @@ library:
     - {label: Commonplace, href: /commonplace.html}
     - {label: Colophon, href: /colophon.html}
     - {label: Bibliography, href: /bibliography/}
+# One-off pages: source, route, template (under templates/) and the engine
+# context they are compiled with (essay, page, now, vita, projects). scores
+# copies the score fragments beside a source in its own directory; dingbat is
+# the page's default ornament; flags are template booleans.
+standalone:
+  - {source: content/me/index.md, route: me.html, template: essay.html, context: essay,
+     scores: true}
+  - {source: content/memento-mori/index.md, route: memento-mori.html, template: essay.html,
+     context: essay, scores: true, dingbat: memento, flags: [memento-mori]}
+  - {source: content/current.md, route: current.html, template: current.html, context: now}
+  - {source: content/colophon.md, route: colophon.html, template: essay.html, context: essay}
+  - {source: content/about.md, route: about.html, template: vita.html, context: vita}
+  - {source: content/cv/projects.md, route: cv/projects/index.html, template: projects.html,
+     context: projects}

@@ -23,7 +23,7 @@ def generated_indexes() -> set[str]:
 
 def section_landings() -> set[str]:
     config = yaml.safe_load((ROOT / "site.yaml").read_text(encoding="utf-8"))
-    return {s["dir"] for s in config["sections"] if s.get("landing", True)}
+    return {s["dir"] for s in config["sections"]}
 
 
 def directory_routes() -> set[str]:

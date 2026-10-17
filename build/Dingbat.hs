@@ -11,7 +11,8 @@
 -- Resolution order:
 --
 --   1. @dingbat:@ frontmatter key on the page (must be in 'knownDingbats').
---   2. Section default derived from the item's route ('sectionDefault').
+--   2. Default for the item's route: its section's, or its standalone
+--      page's ('routeDefault').
 --   3. Fallback ('fallbackDingbat').
 --
 -- Best practice: set @dingbat:@ explicitly in frontmatter. The section
@@ -29,17 +30,23 @@ module Dingbat
 
 import Data.Maybe          (fromMaybe)
 import Hakyll
-import Config              (SiteConfig, knownDingbats, loadConfig)
+import Data.List           (find)
+import Config              (SiteConfig (..), Standalone (..), knownDingbats, loadConfig)
 import Sections            (Section (..), sectionOfRoute)
 
 -- | Last-resort default when neither frontmatter nor section rule applies.
 fallbackDingbat :: String
 fallbackDingbat = "asterism"
 
--- | The section's default ornament (site.yaml); a route in no section,
---   or in one without a default, uses 'fallbackDingbat'.
-sectionDefault :: SiteConfig -> String -> String
-sectionDefault cfg r = fromMaybe fallbackDingbat (sectionOfRoute cfg r >>= sectionDingbat)
+-- | The default ornament for a route (site.yaml): its section's, or its
+--   standalone page's (memento-mori's is @memento-mori.html@, beside its
+--   directory; matching only @memento-mori/@ gave it the fallback until
+--   2026-10-04). Anything else uses 'fallbackDingbat'.
+routeDefault :: SiteConfig -> String -> String
+routeDefault cfg r = fromMaybe fallbackDingbat $
+    case sectionOfRoute cfg r of
+        Just s  -> sectionDingbat s
+        Nothing -> find ((== r) . standaloneRoute) (siteStandalone cfg) >>= standaloneDingbat
 
 -- | @$dingbat$@: name of the ornament to use on this page.
 dingbatField :: Context a
@@ -47,7 +54,7 @@ dingbatField = field "dingbat" $ \item -> do
     cfg  <- loadConfig
     meta <- getMetadata (itemIdentifier item)
     r    <- fromMaybe "" <$> getRoute (itemIdentifier item)
-    let sectionD = sectionDefault cfg r
+    let sectionD = routeDefault cfg r
     case lookupString "dingbat" meta of
         Nothing -> return sectionD
         Just name
