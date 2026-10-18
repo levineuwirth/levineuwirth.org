@@ -20,7 +20,7 @@ module Sections
     , generatedIndexes
     ) where
 
-import Data.List  (find, isPrefixOf, nub, sort)
+import Data.List  (find, isPrefixOf, isSuffixOf, nub, sort)
 import Data.Maybe (mapMaybe)
 import Config     (SiteConfig (..), Section (..), Portal (..), Standalone (..),
                    engineContentDirs, standaloneDir)
@@ -76,11 +76,17 @@ sectionOwnedTopLevelTags cfg = nub $
     landings cfg ++ standaloneNamespaces cfg ++ generatedIndexes ++ generatedNamespaces
 
 -- | The bare wikilink slugs whose page is a directory index: the section
---   landings, the generated indexes and the portal tags, whose tag pages
---   are directories too. Source-level preprocessors resolve a slug without
---   Hakyll's route table, so a slug missing here links to @<slug>.html@,
---   a page that does not exist (the @/build.html@ 404 that motivated the
---   list; @[[Essays]]@ went to @/essays.html@ the same way).
+--   landings, the generated indexes, the portal tags, whose tag pages
+--   are directories too, and the standalone pages routed to
+--   @<slug>/index.html@ (@cv/projects@). Source-level preprocessors
+--   resolve a slug without Hakyll's route table, so a slug missing here
+--   links to @<slug>.html@, a page that does not exist (the @/build.html@
+--   404 that motivated the list; @[[Essays]]@ went to @/essays.html@ the
+--   same way).
 directoryRouteSlugs :: SiteConfig -> [String]
 directoryRouteSlugs cfg = nub $
     landings cfg ++ generatedIndexes ++ map portalTag (sitePortals cfg)
+    ++ [ take (length r - length index) r
+       | p <- siteStandalone cfg, let r = standaloneRoute p, index `isSuffixOf` r ]
+  where
+    index = "/index.html"

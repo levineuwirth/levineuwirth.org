@@ -53,7 +53,8 @@ main = hakyll $ do
         compile $ makeItem ("" :: String) >>= loadAndApplyTemplate "templates/partials/item-card.html"
             (contentKindField <> constField "title" "Example" <> constField "canonical-url" "/essays/example/"
              <> constField "date-iso" "2026-01-01" <> constField "date-display" "January 1")
-    forM_ ["essays/ornament.html", "memento.html", "elsewhere.html"] $ \\name ->
+    forM_ ["essays/ornament.html", "essays/profile.html", "essays/plain.html", "memento.html",
+           "elsewhere.html"] $ \\name ->
         create [fromFilePath name] $ do
             route idRoute
             compile $ makeItem ("$dingbat$" :: String) >>= applyAsTemplate dingbatField
@@ -163,15 +164,20 @@ main = hakyll $ do
             shutil.copytree(ROOT / "templates", root / "templates")
             config = write_site_config(root)
             config["sections"][0]["dingbat"] = "fleuron"  # essays
-            config["standalone"] = [{"source": "content/memento/index.md", "route": "memento.html",
-                                     "template": "essay.html", "context": "essay", "scores": False,
-                                     "dingbat": "memento", "flags": []}]
+            page = {"template": "essay.html", "context": "essay", "scores": False, "flags": []}
+            # A standalone page's own ornament is more specific than its
+            # section's; without one it takes the section's.
+            config["standalone"] = [
+                page | {"source": "content/memento/index.md", "route": "memento.html", "dingbat": "memento"},
+                page | {"source": "content/profile.md", "route": "essays/profile.html", "dingbat": "memento"},
+                page | {"source": "content/plain.md", "route": "essays/plain.html", "dingbat": None}]
             (root / "site.yaml").write_text(json.dumps(config))
             done = subprocess.run([str(self.binary), "build"], cwd=root, env=script_env(),
                                   capture_output=True, text=True, timeout=60)
             self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
-            ornaments = {name: (root / "_site" / name).read_text()
-                         for name in ("essays/ornament.html", "memento.html", "elsewhere.html")}
-            self.assertEqual(ornaments, {"essays/ornament.html": "fleuron",
-                                         "memento.html": "memento", "elsewhere.html": "asterism"})
+            expected = {"essays/ornament.html": "fleuron", "essays/profile.html": "memento",
+                        "essays/plain.html": "fleuron", "memento.html": "memento",
+                        "elsewhere.html": "asterism"}
+            ornaments = {name: (root / "_site" / name).read_text() for name in expected}
+            self.assertEqual(ornaments, expected)
             self.assertEqual((root / "_site/link-graph.txt").read_text(), "True")

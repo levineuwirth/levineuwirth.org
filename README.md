@@ -84,8 +84,10 @@ and the `context` it is compiled with: `essay` (the essay pipeline, whose
 citations reach `/bibliography/`), `page`, `now` (`data/now.yaml`), `vita` or
 `projects` (`yaml-source/data`). `scores: true` copies and tracks the score
 fragments in `content/<dir>/scores/`; `dingbat` is the page's default
-ornament; each of `flags` is a template boolean. Every standalone page is in
-the sitemap and the backlink graph. A source's directory is the page's own: a
+ornament, ahead of a section's when the route is inside one; each of `flags`
+is a template boolean. Every standalone page is in the sitemap and the
+backlink graph, and one routed to `<slug>/index.html` is linked there
+(`[[Studio]]` → `/studio/`). A source's directory is the page's own: a
 Markdown file there without an entry stops the build. Top-level pages that
 need no special handling (`content/<page>.md` → `/<page>.html`) need no entry.
 

@@ -165,7 +165,8 @@ class ConfigTests(unittest.TestCase):
         self.config["portals"] = [{"name": "Walks", "tag": "walks"}]
         self.config["standalone"] = [
             standalone("content/memento-mori/index.md", "memento-mori.html"),
-            standalone("content/people/team.md", "people/team/index.html")]
+            standalone("content/people/team.md", "people/team/index.html"),
+            standalone("content/studio.md", "studio/index.html")]
         self.write_config()
         done = self.run_site("shared-rules")
         self.assertEqual(done.returncode, 0, done.stderr)
@@ -178,6 +179,9 @@ class ConfigTests(unittest.TestCase):
         self.assertTrue({"essays", "memento-mori", "people"} <= reserved)
         self.assertIn("essays", owned & slugs)
         self.assertIn("people", owned - slugs)
+        # A standalone page routed to a directory index is linked there.
+        self.assertTrue({"studio", "people/team"} <= slugs - reserved)
+        self.assertIn("studio", owned)
         self.assertNotIn("memento-mori", owned | slugs)
         self.assertIn("walks", slugs - owned - reserved)
         self.assertFalse({"research", "cv", "me"} & (reserved | owned | slugs))
@@ -190,7 +194,8 @@ class ConfigTests(unittest.TestCase):
         (self.root / "data").mkdir()
         page = self.root / "content/essays/page.md"
         page.parent.mkdir(parents=True)
-        page.write_text("---\ntitle: Page\ndate: 2026-01-01\ntags: [walks]\n---\n[[Walks]], [[Essays]] and [[Memento Mori]]\n")
+        page.write_text("---\ntitle: Page\ndate: 2026-01-01\ntags: [walks]\n---\n"
+                        "[[Walks]], [[Essays]], [[Studio]] and [[Memento Mori]]\n")
         memento = self.root / "content/memento-mori/index.md"
         memento.parent.mkdir()
         memento.write_text("---\ntitle: Memento\n---\nBody\n")
@@ -200,14 +205,21 @@ class ConfigTests(unittest.TestCase):
         team = self.root / "content/people/team.md"
         team.parent.mkdir()
         team.write_text("---\ntitle: Team\n---\nBody\n")
+        (self.root / "content/studio.md").write_text("---\ntitle: Studio\n---\nBody\n")
         links = self.run_site("list-links", "content")
         self.assertEqual(links.returncode, 0, links.stderr)
-        self.assertEqual(links.stdout.split(), ["/essays/", "/memento-mori.html", "/walks/"])
+        self.assertEqual(links.stdout.split(), ["/essays/", "/memento-mori.html", "/studio/", "/walks/"])
+        # Transclusion resolves the same slugs.
+        fixture = self.root / "transclusions.md"
+        fixture.write_text("---\ntitle: Fixture\n---\n{{studio}}\n\n{{people/team}}\n")
+        rendered = self.run_site("render-fixture", str(fixture))
+        self.assertEqual(rendered.returncode, 0, rendered.stderr)
+        self.assertEqual(re.findall(r'data-src="([^"]*)"', rendered.stdout), ["/studio/", "/people/team/"])
         done = self.run_site("list-routes")
         self.assertEqual(done.returncode, 0, done.stderr)
         routes = {line.split("\t")[0] for line in done.stdout.splitlines()}
         self.assertIn("notes/a.html", routes)  # ordinary collections still compile
-        self.assertTrue({"memento-mori.html", "people/team/index.html"} <= routes)
+        self.assertTrue({"memento-mori.html", "people/team/index.html", "studio/index.html"} <= routes)
         for url in links.stdout.split():
             self.assertIn(url.lstrip("/") + ("index.html" if url.endswith("/") else ""), routes)
 

@@ -11,8 +11,8 @@
 -- Resolution order:
 --
 --   1. @dingbat:@ frontmatter key on the page (must be in 'knownDingbats').
---   2. Default for the item's route: its section's, or its standalone
---      page's ('routeDefault').
+--   2. Default for the item's route: its standalone page's, or its
+--      section's ('routeDefault').
 --   3. Fallback ('fallbackDingbat').
 --
 -- Best practice: set @dingbat:@ explicitly in frontmatter. The section
@@ -28,6 +28,7 @@ module Dingbat
     , knownDingbats
     ) where
 
+import Control.Applicative ((<|>))
 import Data.Maybe          (fromMaybe)
 import Hakyll
 import Data.List           (find)
@@ -38,15 +39,15 @@ import Sections            (Section (..), sectionOfRoute)
 fallbackDingbat :: String
 fallbackDingbat = "asterism"
 
--- | The default ornament for a route (site.yaml): its section's, or its
---   standalone page's (memento-mori's is @memento-mori.html@, beside its
---   directory; matching only @memento-mori/@ gave it the fallback until
---   2026-10-04). Anything else uses 'fallbackDingbat'.
+-- | The default ornament for a route (site.yaml): its standalone page's,
+--   which is the more specific (memento-mori's is @memento-mori.html@,
+--   beside its directory; matching only @memento-mori/@ gave it the
+--   fallback until 2026-10-04), else its section's. Anything else uses
+--   'fallbackDingbat'.
 routeDefault :: SiteConfig -> String -> String
 routeDefault cfg r = fromMaybe fallbackDingbat $
-    case sectionOfRoute cfg r of
-        Just s  -> sectionDingbat s
-        Nothing -> find ((== r) . standaloneRoute) (siteStandalone cfg) >>= standaloneDingbat
+    (find ((== r) . standaloneRoute) (siteStandalone cfg) >>= standaloneDingbat)
+    <|> (sectionOfRoute cfg r >>= sectionDingbat)
 
 -- | @$dingbat$@: name of the ornament to use on this page.
 dingbatField :: Context a
