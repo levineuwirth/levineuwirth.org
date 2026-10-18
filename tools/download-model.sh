@@ -22,9 +22,9 @@ set -euo pipefail
 source "$(dirname "$0")/site-paths.sh"
 MODEL_DIR="$(engine_path static)/models/all-MiniLM-L6-v2"
 BASE_URL="https://huggingface.co/Xenova/all-MiniLM-L6-v2/resolve/main"
-CHECKSUMS="$(dirname "$0")/model-checksums.sha256"
+CHECKSUMS="$(engine_path tools/model-checksums.sha256)"
 # shellcheck source=tools/pin-check.sh
-source "$(dirname "$0")/pin-check.sh"
+source "$(engine_path tools/pin-check.sh)"
 
 mkdir -p "$MODEL_DIR/onnx"
 

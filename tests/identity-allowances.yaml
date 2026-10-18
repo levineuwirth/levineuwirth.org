@@ -560,7 +560,7 @@ entries:
   string: Levi Neuwirth
 - id: I0115
   file: tests/test_config.py
-  line: 300
+  line: 334
   column: 27
   string: levineuwirth
 - id: I0116
@@ -725,7 +725,7 @@ entries:
   string: levineuwirth
 - id: I0148
   file: tools/code-refs.py
-  line: 173
+  line: 174
   column: 31
   string: levineuwirth.org
 - id: I0149

@@ -33,9 +33,9 @@ set -euo pipefail
 # shellcheck source=tools/site-paths.sh
 source "$(dirname "$0")/site-paths.sh"
 LEAFLET_DIR="$(engine_path static)/leaflet"
-CHECKSUMS="$(dirname "$0")/leaflet-checksums.sha256"
+CHECKSUMS="$(engine_path tools/leaflet-checksums.sha256)"
 # shellcheck source=tools/pin-check.sh
-source "$(dirname "$0")/pin-check.sh"
+source "$(engine_path tools/pin-check.sh)"
 
 LEAFLET_VERSION="${LEAFLET_VERSION:-1.9.4}"
 MARKERCLUSTER_VERSION="${MARKERCLUSTER_VERSION:-1.5.3}"

@@ -1,6 +1,8 @@
-import json, os, re, time
+import json, os, re, sys, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.dirname(HERE))
+import sitelib  # noqa: E402
 # The site: $SITE_ROOT (tests/_browser.py sets it, running these scripts in
 # their own directory), else the working directory.
 REPO = os.environ.get('SITE_ROOT') or os.getcwd()
@@ -8,6 +10,9 @@ REPO = os.environ.get('SITE_ROOT') or os.getcwd()
 # not beside the scripts.
 OUT = os.environ.get('BROWSER_OUT') or os.path.join(REPO, '.browser-runs')
 SHOTS = os.path.join(OUT, 'shots')
+# axe-core is vendored: beside the version it is checked against
+# (axe-version), wherever A6 has put them.
+AXE = str(sitelib.engine_path('tools/browser/axe-version').parent / 'axe.min.js')
 os.makedirs(SHOTS, exist_ok=True)
 
 PORT_ENFORCE = 48731

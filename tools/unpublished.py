@@ -36,5 +36,5 @@ def withheld(path: Path, boundary: dict[str, list[str]]) -> bool:
 if __name__ == "__main__":
     if sys.argv[1:] != ["hash"]:
         sys.exit("usage: unpublished.py hash")
-    encoded = json.dumps(load_boundary(Path("content")), sort_keys=True).encode()
+    encoded = json.dumps(load_boundary(sitelib.site_root() / "content"), sort_keys=True).encode()
     print(hashlib.sha256(encoded).hexdigest())

@@ -16,9 +16,13 @@ import sys
 import urllib.request
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-VERSION_FILE = HERE / "axe-version"
-TARGET = HERE / "axe.min.js"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import sitelib  # noqa: E402
+
+# Vendored: axe-core goes beside the record it is checked against, wherever
+# A6 has put that.
+VERSION_FILE = sitelib.engine_path("tools/browser/axe-version")
+TARGET = VERSION_FILE.parent / "axe.min.js"
 URL = "https://cdn.jsdelivr.net/npm/axe-core@{version}/axe.min.js"
 
 

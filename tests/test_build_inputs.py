@@ -117,7 +117,7 @@ class BuildInputsTests(unittest.TestCase):
     def test_a_separate_engine_is_recorded_by_commit(self) -> None:
         # Inside the site's tree, the engine's files are inputs like any other.
         self.write("engine/build/Site.hs", "main = pure ()")
-        self.run_tool("record", *INPUTS)
+        self.run_tool("record", *INPUTS, "engine")
         self.assertEqual(self.check(), (0, []))
         # A repository of its own (the engine's checkout behind a symlink)
         # is named by its commit.
@@ -128,8 +128,18 @@ class BuildInputsTests(unittest.TestCase):
         git("init", "-q")
         git("commit", "-q", "--allow-empty", "-m", "one")
         first = git("rev-parse", "HEAD")
-        self.run_tool("record", *INPUTS)
+        self.run_tool("record", *INPUTS, "engine")
         self.assertEqual(self.check(), (0, []))
+        # Its metadata and caches are not inputs: a fetched ref, a build
+        # tree, a linter's cache.
+        git("update-ref", "refs/remotes/origin/main", "HEAD")
+        for rel in ("engine/dist-newstyle/cache/plan.json", "engine/.ruff_cache/x",
+                    "engine/.venv/pyvenv.cfg"):
+            self.write(rel, "")
+        self.assertEqual(self.check(), (0, []))
+        self.write("engine/build/Site.hs", "main = print 1")
+        self.assertEqual(self.check(), (1, ["changed engine/build/Site.hs"]))
+        self.run_tool("record", *INPUTS, "engine")
         git("commit", "-q", "--allow-empty", "-m", "two")
         self.assertEqual(self.check(), (1, [f"engine {first} -> {git('rev-parse', 'HEAD')}"]))
 

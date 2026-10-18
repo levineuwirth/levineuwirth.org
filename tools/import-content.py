@@ -706,7 +706,7 @@ def validate_collection_routes(
     own = f"{own_dir}/{collection_slug}/"
     try:
         listing = subprocess.run(
-            [sitelib.site_binary(), "list-routes"],
+            [sitelib.site_binary(), "list-routes"], cwd=sitelib.site_root(),
             capture_output=True, text=True, check=True,
         ).stdout
     except (OSError, subprocess.CalledProcessError) as exc:
@@ -790,13 +790,14 @@ def write_docs(
         docs, args
     )
     written = 0
+    site = sitelib.site_root()
     for path, content, _label in sorted(entries, key=lambda entry: entry[0]):
-        if path.exists() and not args.overwrite:
-            print(f"  skip  {path.relative_to(Path())}")
+        if (site / path).exists() and not args.overwrite:
+            print(f"  skip  {path}")
             continue
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content, encoding="utf-8")
-        print(f"  write {path.relative_to(Path())}")
+        (site / path).parent.mkdir(parents=True, exist_ok=True)
+        (site / path).write_text(content, encoding="utf-8")
+        print(f"  write {path}")
         written += 1
     return written
 

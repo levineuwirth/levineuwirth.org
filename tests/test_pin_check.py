@@ -3,12 +3,40 @@ unpinned file used to be vendored with a warning; it is refused now, unless
 ALLOW_UNPINNED=1, which prints the line to pin."""
 
 import hashlib
+import shutil
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 
 from tests._helpers import engine_path, script_env
+
+
+class VendoringAcrossTheMove(unittest.TestCase):
+    def test_pins_are_found_where_a6_has_moved_them(self):
+        # A6d moves the vendored assets and their checksums under engine/
+        # before A6e moves the scripts: a downloader still in tools/ must
+        # verify the files it has against the moved pins, not refuse and
+        # delete them.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name in ("download-model.sh", "site-paths.sh", "pin-check.sh"):
+                (root / "tools").mkdir(exist_ok=True)
+                shutil.copy2(engine_path(f"tools/{name}"), root / "tools" / name)
+            model = root / "engine/static/models/all-MiniLM-L6-v2"
+            pins = []
+            for rel in ("config.json", "tokenizer.json", "tokenizer_config.json",
+                        "special_tokens_map.json", "onnx/model_quantized.onnx"):
+                (model / rel).parent.mkdir(parents=True, exist_ok=True)
+                (model / rel).write_text(rel)
+                pins.append(f"{hashlib.sha256(rel.encode()).hexdigest()}  {rel}\n")
+            (root / "engine/tools").mkdir()
+            (root / "engine/tools/model-checksums.sha256").write_text("".join(pins))
+            done = subprocess.run(["bash", "tools/download-model.sh"], cwd=root, env=script_env(),
+                                  capture_output=True, text=True, timeout=30)
+            self.assertEqual(done.returncode, 0, done.stderr)
+            self.assertEqual(done.stdout.count("sha256 verified"), 5)
+            self.assertTrue((model / "onnx/model_quantized.onnx").is_file())
 
 
 class PinVerify(unittest.TestCase):

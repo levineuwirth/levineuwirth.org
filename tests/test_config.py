@@ -5,6 +5,7 @@ import os
 import re
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 from xml.etree import ElementTree
@@ -223,6 +224,39 @@ class ConfigTests(unittest.TestCase):
         self.assertTrue({"memento-mori.html", "people/team/index.html", "studio/index.html"} <= routes)
         for url in links.stdout.split():
             self.assertIn(url.lstrip("/") + ("index.html" if url.endswith("/") else ""), routes)
+
+    def test_tools_ask_the_generator_about_the_site_they_work_on(self):
+        # Run from elsewhere with SITE_ROOT, a tool reads that site's
+        # configuration, not the working directory's: another site's, or
+        # none at all.
+        self.config["portals"] = [{"name": "Walks", "tag": "walks"}]
+        self.write_config()
+        page = self.root / "content/essays/a.md"
+        page.parent.mkdir(parents=True)
+        page.write_text("---\ntitle: A\n---\nSee [code](https://github.com/o/r/blob/main/a.py).\n")
+        (self.root / "data").mkdir()
+        other, empty = self.root / "other", self.root / "empty"
+        empty.mkdir()
+        other.mkdir()
+        write_site_config(other, portals=[{"name": "Notes", "tag": "notes"}])
+        tools = engine_path("tools/sitelib.py").parent
+        probe = (f"import json, sys, importlib.util; sys.path.insert(0, {str(tools)!r})\n"
+                 "import shared_rules\n"
+                 f"spec = importlib.util.spec_from_file_location('code_refs', {str(tools / 'code-refs.py')!r})\n"
+                 "code_refs = importlib.util.module_from_spec(spec); spec.loader.exec_module(code_refs)\n"
+                 "print(json.dumps([shared_rules.shared_rules()['directory-slugs'],\n"
+                 "                  sorted(code_refs.discover_links())]))\n")
+        for elsewhere in (other, empty):
+            with self.subTest(cwd=elsewhere.name):
+                done = subprocess.run([sys.executable, "-c", probe], cwd=elsewhere,
+                                      capture_output=True, text=True, timeout=60,
+                                      env=script_env(SITE_ROOT=str(self.root),
+                                                     SITE_BINARY=str(self.binary)))
+                self.assertEqual(done.returncode, 0, done.stderr)
+                slugs, links = json.loads(done.stdout)
+                self.assertIn("walks", slugs)
+                self.assertNotIn("notes", slugs)
+                self.assertEqual(links, ["https://github.com/o/r/blob/main/a.py"])
 
     def test_unclaimed_pages_in_a_standalone_directory_are_refused(self):
         self.config["standalone"] = [standalone("content/people/team.md", "people/team/index.html")]

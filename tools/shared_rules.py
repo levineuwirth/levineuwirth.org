@@ -22,4 +22,4 @@ import sitelib  # noqa: E402
 @lru_cache(maxsize=1)
 def shared_rules() -> dict:
     return json.loads(subprocess.check_output(
-        [sitelib.site_binary(), "shared-rules"], text=True))
+        [sitelib.site_binary(), "shared-rules"], cwd=sitelib.site_root(), text=True))

@@ -10,7 +10,6 @@ opts, routes = options(sys.argv[5:])
 only = set(routes)
 TEXT_SIZE = int(opts['text-size']) if 'text-size' in opts else None
 BASE = f'http://127.0.0.1:{PORT_NONE}'
-AXE = os.path.join(HERE, 'axe.min.js')   # the version axe-version records; gitignored, see README.md
 
 AXE_OPTS = {
     'runOnly': {'type': 'tag', 'values': ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice']},

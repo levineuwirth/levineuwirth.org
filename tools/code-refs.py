@@ -147,7 +147,8 @@ def discover_links(content_dir: Path | None = None) -> dict[str, dict]:
     snapshotted for a tag that would never use it."""
     content_dir = content_dir or CONTENT_DIR
     targets = subprocess.check_output(
-        [sitelib.site_binary(), "list-links", str(content_dir.resolve())], text=True)
+        [sitelib.site_binary(), "list-links", str(content_dir.resolve())],
+        cwd=SITE_ROOT, text=True)
     links: dict[str, dict] = {}
     for target in targets.splitlines():
         m = URL_RE.match(target)

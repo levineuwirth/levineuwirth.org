@@ -30,7 +30,7 @@ from pathlib import Path
 
 from tests._helpers import SITE_ROOT, engine_path, load_tool
 
-HARNESS = engine_path("tools/browser")
+HARNESS = engine_path("tools/browser/serve.py").parent
 SITE = SITE_ROOT / "_site"
 BROWSERS = ("chromium", "firefox")
 
@@ -329,10 +329,12 @@ def baseline(name: str, current):
 
 
 def require_axe() -> Path:
-    """tools/browser/axe.min.js, as tools/browser/axe-version records it."""
+    """tools/browser/axe.min.js, as tools/browser/axe-version records it;
+    vendored, so it is beside its record wherever A6 has put them."""
     import hashlib
-    axe = HARNESS / "axe.min.js"
-    lines = [l.split() for l in (HARNESS / "axe-version").read_text(encoding="utf-8").splitlines()
+    record = engine_path("tools/browser/axe-version")
+    axe = record.parent / "axe.min.js"
+    lines = [l.split() for l in record.read_text(encoding="utf-8").splitlines()
              if l.strip() and not l.lstrip().startswith("#")]
     want = lines[0][1]
     if not axe.is_file() or hashlib.sha256(axe.read_bytes()).hexdigest() != want:

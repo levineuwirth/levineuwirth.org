@@ -40,9 +40,9 @@ set -euo pipefail
 # shellcheck source=tools/site-paths.sh
 source "$(dirname "$0")/site-paths.sh"
 PDFJS_DIR="${PDFJS_DIR:-$(engine_path static)/pdfjs}"
-CHECKSUMS="${PDFJS_CHECKSUMS:-$(dirname "$0")/pdfjs-checksums.sha256}"
+CHECKSUMS="${PDFJS_CHECKSUMS:-$(engine_path tools/pdfjs-checksums.sha256)}"
 # shellcheck source=tools/pin-check.sh
-source "$(dirname "$0")/pin-check.sh"
+source "$(engine_path tools/pin-check.sh)"
 
 PDFJS_VERSION="${PDFJS_VERSION:-5.6.205}"
 ARCHIVE="pdfjs-${PDFJS_VERSION}-dist.zip"

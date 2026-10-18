@@ -49,8 +49,11 @@ EXCLUDE = (
     "yaml-source/output",
     "yaml-source/variants/private",
 )
-# Bytecode that Python writes beside a tool whenever something imports it.
-SKIP_DIRS = {"__pycache__"}
+# Not sources, wherever they appear: bytecode that Python writes beside a
+# tool whenever something imports it, a repository's metadata (engine/ is
+# one once it is the engine's own checkout; its commit is recorded instead)
+# and the caches its tools write.
+SKIP_DIRS = {"__pycache__", ".git", "dist-newstyle", ".venv", ".ruff_cache", ".pytest_cache"}
 
 
 def excluded(rel: str) -> bool:
@@ -78,7 +81,8 @@ def snapshot(paths: list[str]) -> dict[str, list[int]]:
             dirs[:] = [d for d in dirs if d not in SKIP_DIRS
                        and not excluded((here / d).relative_to(ROOT).as_posix())]
             for n in names:
-                if (here / n).is_file():
+                # .git is a file in a worktree or a submodule.
+                if n not in SKIP_DIRS and (here / n).is_file():
                     add(here / n)
     return files
 

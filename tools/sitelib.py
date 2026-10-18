@@ -18,12 +18,19 @@ from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
 
-# The site a tool works on: $SITE_ROOT, else the working directory, which is
-# where the Makefile runs every tool. The engine is wherever these tools are:
-# ENGINE holds tools/, the repository's root until A6 moves the engine into
-# engine/ in batches, and its other files (templates, static assets, build/)
-# are found through 'engine_path'.
-SITE_ROOT = Path(os.environ.get("SITE_ROOT") or os.getcwd()).resolve()
+def site_root() -> Path:
+    """The site a tool works on: $SITE_ROOT, else the working directory,
+    which is where the Makefile runs every tool. A tool's paths in the site
+    and its questions to the generator (which reads the site's site.yaml)
+    both start here."""
+    return Path(os.environ.get("SITE_ROOT") or os.getcwd()).resolve()
+
+
+# The site as the tool started, for tools that name their paths once. The
+# engine is wherever these tools are: ENGINE holds tools/, the repository's
+# root until A6 moves the engine into engine/ in batches, and its other
+# files (templates, static assets, build/) are found through 'engine_path'.
+SITE_ROOT = site_root()
 ENGINE = Path(__file__).resolve().parent.parent
 
 

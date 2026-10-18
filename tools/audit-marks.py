@@ -44,7 +44,8 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import shared_rules  # noqa: E402
 import front_matter  # noqa: E402
-CONTENT_ROOT = Path("content")
+import sitelib  # noqa: E402
+CONTENT_ROOT = sitelib.SITE_ROOT / "content"
 
 # Sections that ship marks by design — these get a coverage line in
 # the summary even when empty (so a regression is visible). Other
@@ -297,7 +298,7 @@ def render_summary(rows: list[AuditRow]) -> None:
 
 def main() -> int:
     if not CONTENT_ROOT.is_dir():
-        print(f"error: {CONTENT_ROOT}/ not found (run from repo root)",
+        print(f"error: {CONTENT_ROOT}/ not found (run from the site's root, or set SITE_ROOT)",
               file=sys.stderr)
         return 1
 

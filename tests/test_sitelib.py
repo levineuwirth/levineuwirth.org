@@ -14,7 +14,9 @@ from unittest import mock
 
 from tests._helpers import engine_path
 
-sys.path.insert(0, str(engine_path("tools")))
+# The directory sitelib.py is in, not tools/ wherever one exists: A6 can
+# leave engine/tools/ holding only what moved first.
+sys.path.insert(0, str(engine_path("tools/sitelib.py").parent))
 import sitelib  # noqa: E402
 
 
@@ -72,6 +74,20 @@ class AtomicPath(unittest.TestCase):
         self.assertEqual(target.stat().st_mtime, 1)
         self.assertTrue(sitelib.atomic_write_text(target, "{}"))
         self.assertNotEqual(target.stat().st_mtime, 1)
+
+    def test_engine_path_finds_a_file_wherever_a6_has_put_it(self):
+        repo, site = self.dir / "repo", self.dir / "site"
+        for rel in ("repo/engine/tools/pins.sha256", "repo/tools/sitelib.py", "site/build/Site.hs"):
+            (self.dir / rel).parent.mkdir(parents=True, exist_ok=True)
+            (self.dir / rel).write_text("")
+        with mock.patch.object(sitelib, "ENGINE", repo), mock.patch.object(sitelib, "SITE_ROOT", site):
+            # Moved, beside the code, beside the site, in that order.
+            self.assertEqual(sitelib.engine_path("tools/pins.sha256"), repo / "engine/tools/pins.sha256")
+            self.assertEqual(sitelib.engine_path("tools/sitelib.py"), repo / "tools/sitelib.py")
+            self.assertEqual(sitelib.engine_path("build/Site.hs"), site / "build/Site.hs")
+            # A directory is wherever anything of it has moved, so a file in
+            # it is found by its own path, not by the directory's.
+            self.assertEqual(sitelib.engine_path("tools"), repo / "engine/tools")
 
     def test_slugify(self):
         self.assertEqual(sitelib.slugify("Rilke's  Duino_Elegies — I"), "rilkes-duino-elegies-i")
