@@ -24,7 +24,7 @@ import front_matter  # noqa: E402
 import photo_naming  # noqa: E402
 import sitelib  # noqa: E402
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+SITE_ROOT = sitelib.SITE_ROOT
 
 
 def sidecar_path(image: Path, suffix: str) -> Path:
@@ -59,7 +59,7 @@ def candidates(tool: str, argv: list[str], roots: Iterable[Path]) -> list[Path]:
     for a in argv:
         p = Path(a)
         if not p.is_absolute():
-            p = REPO_ROOT / p
+            p = SITE_ROOT / p
         if p.exists():
             out.append(p)
         else:

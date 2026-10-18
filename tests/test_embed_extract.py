@@ -10,7 +10,6 @@ from pathlib import Path
 from unittest import mock
 from tests._helpers import load_tool
 
-ROOT = Path(__file__).resolve().parents[1]
 
 try:
     embed = load_tool("embed.py", "embed_tool")

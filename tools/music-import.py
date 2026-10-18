@@ -107,15 +107,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import front_matter  # noqa: E402
 import sitelib  # noqa: E402
 
-ROOT = Path(__file__).resolve().parent.parent
-MUSIC = ROOT / "content" / "music"
+SITE_ROOT = sitelib.SITE_ROOT
+MUSIC = SITE_ROOT / "content" / "music"
 SCORES_DIR = Path(os.environ.get("MUSIC_SCORES_DIR", "~/Documents/Scores")).expanduser()
 MANIFEST = "score-source.yaml"
 PAGES = "scores"
 # Imports are assembled here, on the same filesystem as content/ (a rename
 # across filesystems is a copy) and outside it (the build must never see a
 # half-assembled set). Gitignored; Hakyll skips dot-directories.
-STAGING = ROOT / ".music-import"
+STAGING = SITE_ROOT / ".music-import"
 AUDIO = "realization.mp3"
 TIMING = "timing.json"
 THUMB = "thumb.webp"
@@ -908,7 +908,7 @@ def cmd_thumbnail(a: argparse.Namespace) -> None:
             continue
         out = MUSIC / slug / PAGES / THUMB
         if thumbnail(pages[0], out):
-            print(f"{slug}: {out.relative_to(ROOT)} ({out.stat().st_size // 1024} KB)")
+            print(f"{slug}: {out.relative_to(SITE_ROOT)} ({out.stat().st_size // 1024} KB)")
 
 
 def cmd_check(_: argparse.Namespace) -> None:

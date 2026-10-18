@@ -1,11 +1,12 @@
 """Late content keeps its enhancements when the initial page needs none."""
 import json
-from pathlib import Path
 import shutil
 import subprocess
 import unittest
 
-ROOT = Path(__file__).resolve().parents[1]
+from tests._helpers import engine_path
+
+TRANSCLUDE = engine_path("static/js/transclude.js")
 
 
 @unittest.skipUnless(shutil.which("node"), "node is required")
@@ -32,13 +33,13 @@ function root(code = true, math = false) {
     querySelectorAll: sel => code && sel.includes('code') ? [node] : [],
     matches: () => false, dispatchEvent() {}, node};
 }
-vm.runInThisContext(fs.readFileSync('static/js/transclude.js', 'utf8'));
+vm.runInThisContext(fs.readFileSync(""" + json.dumps(str(TRANSCLUDE)) + r""", 'utf8'));
 const tick = () => new Promise(resolve => setImmediate(resolve));
 (async () => {
 """ + case + r"""
 })().catch(e => { console.error(e); process.exitCode = 1; });
 """
-        result = subprocess.run(["node"], input=harness, text=True, cwd=ROOT,
+        result = subprocess.run(["node"], input=harness, text=True,
                                 capture_output=True, timeout=10)
         self.assertEqual(result.returncode, 0, result.stderr)
         return json.loads(result.stdout)

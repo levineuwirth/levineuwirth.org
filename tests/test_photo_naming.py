@@ -10,8 +10,6 @@ import unittest
 from pathlib import Path
 from tests._helpers import load_tool, requires_cabal, site_binary
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-
 
 photo_naming = load_tool("photo_naming.py")
 

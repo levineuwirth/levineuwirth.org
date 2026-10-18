@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests._helpers import TOOLS, script_env
+from tests._helpers import engine_path, script_env
 
 
 class PinVerify(unittest.TestCase):
@@ -24,7 +24,7 @@ class PinVerify(unittest.TestCase):
     def verify(self, key="viewer-1.0.zip", **env):
         return subprocess.run(
             ["bash", "-c", 'source "$1"; pin_verify "$2" "$3" "$4" test',
-             "-", str(TOOLS / "pin-check.sh"), str(self.sums), key, str(self.file)],
+             "-", str(engine_path("tools/pin-check.sh")), str(self.sums), key, str(self.file)],
             env=script_env(**env), capture_output=True, text=True)
 
     def test_a_matching_pin_passes(self):

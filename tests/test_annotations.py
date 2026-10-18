@@ -2,19 +2,17 @@
 offset mapping, and which occurrence of a highlight's text it takes."""
 
 import json
-from pathlib import Path
 import shutil
 import subprocess
 import unittest
 
-
-ROOT = Path(__file__).resolve().parents[1]
+from tests._helpers import engine_path
 
 
 @unittest.skipUnless(shutil.which("node"), "node is needed to exercise annotation anchoring")
 class AnnotationAnchorTests(unittest.TestCase):
     def run_anchor(self, cases):
-        source = (ROOT / "static/js/annotations.js").read_text()
+        source = (engine_path("static/js/annotations.js")).read_text()
         start = source.index("    function collapse(")
         end = source.index("    /* ------------------------------------------------------------------\n"
                            "       Apply a single annotation")

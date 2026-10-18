@@ -14,9 +14,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests._helpers import script_env
+from tests._helpers import engine_path, script_env
 
-GUARD = Path(__file__).resolve().parent.parent / "tools" / "deploy-guard.sh"
+GUARD = engine_path("tools/deploy-guard.sh")
 
 
 def guard(*args: str, **env: str) -> subprocess.CompletedProcess:

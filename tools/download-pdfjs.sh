@@ -37,11 +37,12 @@
 
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-PDFJS_DIR="${PDFJS_DIR:-$REPO_ROOT/static/pdfjs}"
-CHECKSUMS="${PDFJS_CHECKSUMS:-$REPO_ROOT/tools/pdfjs-checksums.sha256}"
+# shellcheck source=tools/site-paths.sh
+source "$(dirname "$0")/site-paths.sh"
+PDFJS_DIR="${PDFJS_DIR:-$(engine_path static)/pdfjs}"
+CHECKSUMS="${PDFJS_CHECKSUMS:-$(dirname "$0")/pdfjs-checksums.sha256}"
 # shellcheck source=tools/pin-check.sh
-source "$REPO_ROOT/tools/pin-check.sh"
+source "$(dirname "$0")/pin-check.sh"
 
 PDFJS_VERSION="${PDFJS_VERSION:-5.6.205}"
 ARCHIVE="pdfjs-${PDFJS_VERSION}-dist.zip"

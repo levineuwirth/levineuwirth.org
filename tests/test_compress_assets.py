@@ -20,9 +20,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests._helpers import script_env, stub_bin
+from tests._helpers import engine_path, script_env, stub_bin
 
-SCRIPT = Path(__file__).resolve().parent.parent / "tools" / "compress-assets.sh"
+SCRIPT = engine_path("tools/compress-assets.sh")
 HAVE_BROTLI = shutil.which("brotli") is not None
 
 

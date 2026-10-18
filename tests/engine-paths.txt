@@ -354,6 +354,7 @@ tools/refreeze.sh
 tools/scaffold-photos.py
 tools/shared_rules.py
 tools/sign-site.sh
+tools/site-paths.sh
 tools/sitediff.py
 tools/sitelib.py
 tools/stamp-build-time.py

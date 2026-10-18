@@ -129,21 +129,27 @@ yaml-source/variants/private/
 yaml-source/variants/*.yml
 
 # Model files for client-side semantic search (~22 MB binary artifacts).
-# Download with: make download-model
+# Download with: make download-model. Each download, the generated WebP
+# companions and axe-core land in the engine's static/ or tools/, which A6
+# moves under engine/; each rule has an engine/ twin.
 static/models/
+engine/static/models/
 
 # Vendored PDF.js viewer (~18 MB uncompressed, pinned in tools/download-pdfjs.sh).
 # Download with: make download-pdfjs
 static/pdfjs/
+engine/static/pdfjs/
 
 # Vendored Leaflet + leaflet.markercluster (~150 KB total, pinned in
 # tools/download-leaflet.sh). Used by the /photography/map/ page only.
 # Download with: make download-leaflet (runs as part of `make build`).
 static/leaflet/
+engine/static/leaflet/
 
 # Generated WebP companions (produced by tools/convert-images.sh at build time).
 # To intentionally commit a WebP, use: git add -f path/to/file.webp
 static/**/*.webp
+engine/static/**/*.webp
 content/**/*.webp
 
 # Photography sidecars (produced by tools/extract-exif.py and
@@ -232,3 +238,4 @@ content/photography/**/*.psd
 # which is fetched rather than vendored (see tools/browser/README.md).
 /.browser-runs/
 tools/browser/axe.min.js
+engine/tools/browser/axe.min.js

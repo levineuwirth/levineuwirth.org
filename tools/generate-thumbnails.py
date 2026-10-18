@@ -83,8 +83,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import photo_naming  # noqa: E402
 import sitelib  # noqa: E402
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_ROOT = REPO_ROOT / "content" / "photography"
+SITE_ROOT = sitelib.SITE_ROOT
+DEFAULT_ROOT = SITE_ROOT / "content" / "photography"
 
 # The ladder and its file names (tools/photo_naming.py, shared with the
 # sidecar extractors and held to build/Contexts.hs by a test).
@@ -172,7 +172,7 @@ def _is_current(source: Path, variant: Path) -> bool:
 def _rel(path: Path) -> Path:
     """Repo-relative for readable output; absolute when outside the repo."""
     try:
-        return path.relative_to(REPO_ROOT)
+        return path.relative_to(SITE_ROOT)
     except ValueError:
         return path
 

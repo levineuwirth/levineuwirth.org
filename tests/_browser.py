@@ -28,11 +28,10 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
-from tests._helpers import load_tool
+from tests._helpers import SITE_ROOT, engine_path, load_tool
 
-ROOT = Path(__file__).resolve().parents[1]
-HARNESS = ROOT / "tools" / "browser"
-SITE = ROOT / "_site"
+HARNESS = engine_path("tools/browser")
+SITE = SITE_ROOT / "_site"
 BROWSERS = ("chromium", "firefox")
 
 requires_browser = unittest.skipUnless(
@@ -102,7 +101,7 @@ def require_playwright() -> None:
 def enforcing_csp() -> str:
     """The policy nginx/security-headers.conf enforces (before its
     promotion on 2026-10-09, a commented candidate; either is read)."""
-    text = (ROOT / "nginx" / "security-headers.conf").read_text(encoding="utf-8")
+    text = (SITE_ROOT / "nginx" / "security-headers.conf").read_text(encoding="utf-8")
     found = re.findall(r'^(?:#\s+)?add_header Content-Security-Policy "([^"]+)" always;$',
                        text, re.M)
     if len(found) != 1:
@@ -200,7 +199,7 @@ class FakeNetwork:
         route.abort()
 
 
-BASELINE = ROOT / "tests" / "browser-baseline"
+BASELINE = SITE_ROOT / "tests" / "browser-baseline"
 UPDATE_BASELINE = os.environ.get("UPDATE_BROWSER_BASELINE") == "1"
 
 
@@ -280,7 +279,9 @@ def run_harness(case, base: str, out: Path, jobs: list[list[str]], *,
     arguments) at once against `base`, writing to `out`, offline unless
     told otherwise; each is stopped at class cleanup if still running.
     Raises with the stderr of any that fail, or of all if time runs out."""
-    env = dict(os.environ, BROWSER_OUT=str(out), BROWSER_PORT=base.rsplit(":", 1)[1])
+    # The scripts run in their own directory, so they are told the site's.
+    env = dict(os.environ, BROWSER_OUT=str(out), BROWSER_PORT=base.rsplit(":", 1)[1],
+               SITE_ROOT=str(SITE_ROOT))
     if offline:
         env["BROWSER_OFFLINE"] = "1"
     running = []
@@ -323,7 +324,7 @@ def baseline(name: str, current):
         BASELINE.mkdir(exist_ok=True)
         path.write_text(json.dumps(current, indent=1, sort_keys=True) + "\n", encoding="utf-8")
     if not path.is_file():
-        raise AssertionError(f"no {path.relative_to(ROOT)}: record one with UPDATE_BROWSER_BASELINE=1")
+        raise AssertionError(f"no {path.relative_to(SITE_ROOT)}: record one with UPDATE_BROWSER_BASELINE=1")
     return json.loads(path.read_text(encoding="utf-8"))
 
 

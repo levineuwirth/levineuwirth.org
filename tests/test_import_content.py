@@ -9,8 +9,6 @@ from pathlib import Path
 from tests._helpers import load_tool, requires_cabal, write_site_config
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-MODULE_PATH = REPO_ROOT / "tools" / "import-content.py"
 import_content = load_tool("import-content.py", register=True)
 
 

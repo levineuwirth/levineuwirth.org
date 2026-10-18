@@ -18,8 +18,9 @@
 
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-NGINX_CONF="$REPO_ROOT/nginx/popup-proxy.conf"
+# shellcheck source=tools/site-paths.sh
+source "$(dirname "$0")/site-paths.sh"
+NGINX_CONF="$SITE_ROOT/nginx/popup-proxy.conf"
 ORIGIN="https://levineuwirth.org"
 
 # ── helpers ──────────────────────────────────────────────────────────

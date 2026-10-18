@@ -1,6 +1,6 @@
 ---
 title: "Golden fixture"
-bibliography: tests/golden/fixture.bib
+bibliography: fixture.bib
 further-reading:
   - alpha2001
   - gamma2020

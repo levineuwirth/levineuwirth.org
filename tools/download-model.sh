@@ -18,12 +18,13 @@
 
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-MODEL_DIR="$REPO_ROOT/static/models/all-MiniLM-L6-v2"
+# shellcheck source=tools/site-paths.sh
+source "$(dirname "$0")/site-paths.sh"
+MODEL_DIR="$(engine_path static)/models/all-MiniLM-L6-v2"
 BASE_URL="https://huggingface.co/Xenova/all-MiniLM-L6-v2/resolve/main"
-CHECKSUMS="$REPO_ROOT/tools/model-checksums.sha256"
+CHECKSUMS="$(dirname "$0")/model-checksums.sha256"
 # shellcheck source=tools/pin-check.sh
-source "$REPO_ROOT/tools/pin-check.sh"
+source "$(dirname "$0")/pin-check.sh"
 
 mkdir -p "$MODEL_DIR/onnx"
 

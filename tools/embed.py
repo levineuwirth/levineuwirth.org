@@ -56,20 +56,20 @@ import sitelib  # noqa: E402
 # Configuration
 # ---------------------------------------------------------------------------
 
-REPO_ROOT      = Path(__file__).parent.parent
-SITE_DIR       = REPO_ROOT / "_site"
-SIMILAR_OUT    = REPO_ROOT / "data" / "similar-links.json"
-SEMANTIC_BIN   = REPO_ROOT / "data" / "semantic-index.bin"
-SEMANTIC_META  = REPO_ROOT / "data" / "semantic-meta.json"
+SITE_ROOT      = sitelib.SITE_ROOT
+SITE_DIR       = SITE_ROOT / "_site"
+SIMILAR_OUT    = SITE_ROOT / "data" / "similar-links.json"
+SEMANTIC_BIN   = SITE_ROOT / "data" / "semantic-index.bin"
+SEMANTIC_META  = SITE_ROOT / "data" / "semantic-meta.json"
 # Content-addressed caches, one per pass. Keyed by sha256 of the (prefixed)
 # input text; invalidated wholesale on model name/revision/dim change.
 # Gitignored — build artifacts, not source. Survive `make clean`.
-PAGE_CACHE     = REPO_ROOT / "data" / "embed-cache-pages.npz"
-PARA_CACHE     = REPO_ROOT / "data" / "embed-cache-paragraphs.npz"
+PAGE_CACHE     = SITE_ROOT / "data" / "embed-cache-pages.npz"
+PARA_CACHE     = SITE_ROOT / "data" / "embed-cache-paragraphs.npz"
 # What extract_document returned for each page, keyed by the page's path
 # and the hash of its bytes with the footer build time masked, under a
 # fingerprint of this file and the parser (see extract_site).
-EXTRACT_CACHE  = REPO_ROOT / "data" / "embed-cache-extract.json"
+EXTRACT_CACHE  = SITE_ROOT / "data" / "embed-cache-extract.json"
 
 # Two models, deliberately split:
 #

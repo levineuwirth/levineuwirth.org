@@ -30,7 +30,9 @@ import sys
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+# The repository the suite runs in: $SITE_ROOT, else the working directory,
+# as for `make test` (tests/_helpers.py).
+SITE_ROOT = Path(os.environ.get("SITE_ROOT") or os.getcwd()).resolve()
 
 MODULES = [
     "test_annotations", "test_anubis_update", "test_archive_fetch", "test_archive_probe",
@@ -50,12 +52,12 @@ def run(suite: unittest.TestSuite) -> unittest.TestResult:
 
 
 def main() -> int:
-    sys.path.insert(0, str(ROOT))
-    os.chdir(ROOT)
+    sys.path.insert(0, str(SITE_ROOT))
+    os.chdir(SITE_ROOT)
     results = [run(unittest.defaultTestLoader.loadTestsFromNames(
         [f"tests.{m}" for m in MODULES]))]
     # As `make test` runs it: from yaml-source/, discovering tests/.
-    os.chdir(ROOT / "yaml-source")
+    os.chdir(SITE_ROOT / "yaml-source")
     results.append(run(unittest.defaultTestLoader.discover("tests")))
     skipped = [s for r in results for s in r.skipped]
     if skipped:

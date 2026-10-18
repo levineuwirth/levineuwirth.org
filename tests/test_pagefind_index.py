@@ -16,9 +16,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests._helpers import ROOT, script_env
+from tests._helpers import engine_path, script_env
 
-SCRIPT = ROOT / "tools" / "pagefind-index.sh"
+SCRIPT = engine_path("tools/pagefind-index.sh")
 OLD = 1_000_000_000  # 2001: any file the script rewrites is newer
 
 

@@ -7,7 +7,6 @@ from pathlib import Path
 from unittest.mock import patch
 from tests._helpers import load_tool
 
-ROOT = Path(__file__).resolve().parents[1]
 fonts = load_tool("subset-fonts.py")
 
 

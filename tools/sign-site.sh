@@ -27,7 +27,7 @@ GNUPGHOME="${GNUPGHOME:-$HOME/.gnupg-signing}"
 SITE_DIR="${1:-_site}"
 # The tests sign with a throwaway key; production uses the default.
 SIGNING_KEY="${SIGNING_KEY:-C9A42A6FAD444FBE566FD738531BDC1CC2707066}"
-SIGN_MANIFEST="${SIGN_MANIFEST:-$(dirname "$0")/../data/sign-manifest.txt}"
+SIGN_MANIFEST="${SIGN_MANIFEST:-${SITE_ROOT:-.}/data/sign-manifest.txt}"
 
 if [ ! -d "$SITE_DIR" ]; then
     echo "Error: site directory '$SITE_DIR' not found. Run 'make build' first." >&2

@@ -37,7 +37,10 @@ from fontTools.pens.transformPen import TransformPen
 from fontTools.pens.ttGlyphPen import TTGlyphPen
 from fontTools.ttLib import TTFont
 
-OUT = Path(__file__).resolve().parent.parent / "static" / "fonts" / "tempo-notes.woff2"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import sitelib  # noqa: E402
+
+OUT = sitelib.SITE_ROOT / "static" / "fonts" / "tempo-notes.woff2"
 
 # Our glyph name -> the Leland Text (SMuFL) glyph it is drawn from.
 DRAWN = {

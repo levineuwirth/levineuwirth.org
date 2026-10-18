@@ -13,9 +13,10 @@ import re
 import shutil
 import subprocess
 import unittest
-from pathlib import Path
 
-POPUPS_JS = Path(__file__).resolve().parents[1] / "static" / "js" / "popups.js"
+from tests._helpers import engine_path
+
+POPUPS_JS = engine_path("static/js/popups.js")
 PROVIDER_RE = re.compile(r"name: '([a-z]+)'.*?\n\s*host:\s+(/.+?/),\n\s*match: (/.+?/),\n", re.S)
 
 CASES = {

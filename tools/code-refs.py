@@ -75,11 +75,11 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import sitelib  # noqa: E402
-CONTENT_DIR = ROOT / "content"
-STORE_DIR = ROOT / "code-refs"
+SITE_ROOT = sitelib.SITE_ROOT
+CONTENT_DIR = SITE_ROOT / "content"
+STORE_DIR = SITE_ROOT / "code-refs"
 INDEX_PATH = STORE_DIR / "index.json"
 PUBLIC_PREFIX = "/code-refs/"
 

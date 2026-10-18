@@ -56,7 +56,11 @@ WARN
     exit 0
 fi
 
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=tools/site-paths.sh
+source "$(dirname "$0")/site-paths.sh"
+# The site's images and content, and the engine's images once they move.
+roots=("$SITE_ROOT/static" "$SITE_ROOT/content")
+[ "$(engine_path static)" = "$SITE_ROOT/static" ] || roots+=("$(engine_path static)")
 
 converted=0
 skipped=0
@@ -66,7 +70,7 @@ while IFS= read -r -d '' img; do
     if [ -f "$webp" ] && [ ! "$img" -nt "$webp" ]; then
         skipped=$((skipped + 1))
     else
-        echo "  webp  ${img#"$REPO_ROOT/"}"
+        echo "  webp  ${img#"$SITE_ROOT/"}"
         # Write to a temp name then move: an interrupted cwebp would
         # otherwise leave a truncated .webp that is newer than its
         # source, which the staleness gate above then skips forever.
@@ -74,7 +78,7 @@ while IFS= read -r -d '' img; do
         mv "$webp.part" "$webp"
         converted=$((converted + 1))
     fi
-done < <(find "$REPO_ROOT/static" "$REPO_ROOT/content" \
+done < <(find "${roots[@]}" \
               \( -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" \) \
               -print0 2>/dev/null)
 

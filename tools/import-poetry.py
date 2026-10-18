@@ -31,10 +31,9 @@ from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from front_matter import scalar, tags_field  # noqa: E402
-from sitelib import slugify  # noqa: E402
+from sitelib import SITE_ROOT, slugify  # noqa: E402
 
-REPO_ROOT   = Path(__file__).parent.parent
-POETRY_DIR  = REPO_ROOT / "content" / "poetry"
+POETRY_DIR  = SITE_ROOT / "content" / "poetry"
 
 # ---------------------------------------------------------------------------
 # Roman numeral conversion
@@ -371,7 +370,7 @@ def main() -> None:
 
     # Dry run
     if args.dry_run:
-        print(f"\nDry run — {len(files)} file(s) → {out_dir.relative_to(REPO_ROOT)}/")
+        print(f"\nDry run — {len(files)} file(s) → {out_dir.relative_to(SITE_ROOT)}/")
         for path in sorted(files):
             marker = " (exists)" if path.exists() else ""
             print(f"  {path.name}{marker}")
@@ -392,7 +391,7 @@ def main() -> None:
             print(f"  write {path.name}")
             written += 1
 
-    print(f"\n{written} written, {skipped} skipped → {out_dir.relative_to(REPO_ROOT)}/")
+    print(f"\n{written} written, {skipped} skipped → {out_dir.relative_to(SITE_ROOT)}/")
     if not args.dry_run:
         print("Next: make clean && make build")
 

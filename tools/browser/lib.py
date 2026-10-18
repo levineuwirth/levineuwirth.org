@@ -1,7 +1,9 @@
 import json, os, re, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-REPO = os.path.dirname(os.path.dirname(HERE))
+# The site: $SITE_ROOT (tests/_browser.py sets it, running these scripts in
+# their own directory), else the working directory.
+REPO = os.environ.get('SITE_ROOT') or os.getcwd()
 # Results and screenshots go to $BROWSER_OUT or .browser-runs/ (gitignored),
 # not beside the scripts.
 OUT = os.environ.get('BROWSER_OUT') or os.path.join(REPO, '.browser-runs')

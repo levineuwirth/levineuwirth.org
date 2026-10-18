@@ -16,10 +16,7 @@ import re
 import shutil
 import subprocess
 import unittest
-from pathlib import Path
-from tests._helpers import load_tool, requires_cabal, site_binary
-
-ROOT = Path(__file__).resolve().parent.parent
+from tests._helpers import SITE_ROOT, engine_path, load_tool, requires_cabal, site_binary
 SAMPLE_DIR = "content/essays/sample"
 
 
@@ -30,7 +27,7 @@ def _check_site():
 def never_publish() -> dict[str, list[str]]:
     """The suffixes, prefixes, infixes and exact names in build/Site.hs
     `neverPublish`."""
-    src = (ROOT / "build" / "Site.hs").read_text(encoding="utf-8")
+    src = engine_path("build/Site.hs").read_text(encoding="utf-8")
     lists = {}
     for name in ("suffixes", "prefixes", "infixes", "exactNames"):
         m = re.search(rf"^\s*{name}\s*=\s*(.*?)\]", src, re.MULTILINE | re.DOTALL)
@@ -76,7 +73,7 @@ class PrivateNamesAreIgnored(unittest.TestCase):
         # `git add` would, whether or not a file exists or is tracked.
         done = subprocess.run(
             ["git", "check-ignore", "--no-index", "--stdin"],
-            cwd=ROOT, input="\n".join(paths) + "\n", capture_output=True, text=True,
+            cwd=SITE_ROOT, input="\n".join(paths) + "\n", capture_output=True, text=True,
         )
         ignored = set(done.stdout.split())
         missing = [f"{rule} ({name})" for (rule, name), path in zip(names, paths)
@@ -103,7 +100,7 @@ class PrivateNamesAreIgnored(unittest.TestCase):
         names = [name for _, name in gate_samples()]
         paths = ([f"{SAMPLE_DIR}/{n}" for n in names]
                  + [f"{SAMPLE_DIR}/{n}/index.md" for n in names])
-        done = subprocess.run([str(site_binary()), "private-paths"], cwd=ROOT,
+        done = subprocess.run([str(site_binary()), "private-paths"], cwd=SITE_ROOT,
                               input="\n".join(paths) + "\n", capture_output=True,
                               text=True, check=True)
         self.assertEqual(sorted(set(paths) - set(done.stdout.splitlines())), [],
@@ -112,7 +109,7 @@ class PrivateNamesAreIgnored(unittest.TestCase):
     def test_ordinary_content_is_not_ignored(self):
         for name in ("index.md", "figure.svg", "data.csv", "notes.md"):
             done = subprocess.run(
-                ["git", "check-ignore", "--no-index", "-q", f"{SAMPLE_DIR}/{name}"], cwd=ROOT
+                ["git", "check-ignore", "--no-index", "-q", f"{SAMPLE_DIR}/{name}"], cwd=SITE_ROOT
             )
             self.assertEqual(done.returncode, 1, f"{name} would be ignored")
 

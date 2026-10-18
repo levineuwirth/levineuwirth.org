@@ -46,7 +46,7 @@ import front_matter  # noqa: E402
 import photo_sidecars  # noqa: E402
 import sitelib  # noqa: E402
 
-REPO_ROOT = Path(__file__).parent.parent
+SITE_ROOT = sitelib.SITE_ROOT
 TODAY = __import__("datetime").datetime.now(__import__("datetime").timezone.utc).date().isoformat()
 
 def build_tags(extra: str) -> list[str]:
@@ -68,8 +68,8 @@ def title_from_slug(slug: str) -> str:
 
 def site_listing(command: str, stdin: str = "") -> list[str]:
     """`site list-routes`, `site list-tags` or `site expand-tags`, for the
-    tree at REPO_ROOT."""
-    return subprocess.run([sitelib.site_binary(), command], cwd=REPO_ROOT, input=stdin,
+    tree at SITE_ROOT."""
+    return subprocess.run([sitelib.site_binary(), command], cwd=SITE_ROOT, input=stdin,
                           capture_output=True, text=True, check=True).stdout.splitlines()
 
 
@@ -203,7 +203,7 @@ def main() -> int:
 
     print(f"scaffold-photos: {written} written", file=sys.stderr)
     if series:
-        write_series_landing(REPO_ROOT / "content" / "photography" / series / "index.md", series)
+        write_series_landing(SITE_ROOT / "content" / "photography" / series / "index.md", series)
     return 0
 
 

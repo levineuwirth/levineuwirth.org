@@ -1,11 +1,12 @@
 """Vega views must not leak or render out of order during a theme change."""
 import json
-from pathlib import Path
 import shutil
 import subprocess
 import unittest
 
-ROOT = Path(__file__).resolve().parents[1]
+from tests._helpers import engine_path
+
+VIZ = engine_path("static/js/viz.js")
 
 
 @unittest.skipUnless(shutil.which('node'), 'node is required')
@@ -31,7 +32,7 @@ global.vegaEmbed = (el, spec) => {
   return new Promise((resolve, reject) => pending.push({reject,
     resolve: () => resolve({id, finalize() { released.push(id); }})}));
 };
-vm.runInThisContext(fs.readFileSync('static/js/viz.js', 'utf8'));
+vm.runInThisContext(fs.readFileSync(''' + json.dumps(str(VIZ)) + r''', 'utf8'));
 const tick = () => new Promise(r => setImmediate(r));
 const theme = value => { document.documentElement.dataset.theme = value;
   changed([{attributeName: 'data-theme'}]); };
@@ -40,7 +41,7 @@ const theme = value => { document.documentElement.dataset.theme = value;
 })().catch(e => { console.error(e); process.exitCode = 1; });
 '''
         result = subprocess.run(['node'], input=script, text=True, capture_output=True,
-                                cwd=ROOT, timeout=10)
+                                timeout=10)
         self.assertEqual(result.returncode, 0, result.stderr)
         return json.loads(result.stdout)
 

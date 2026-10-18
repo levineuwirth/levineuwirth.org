@@ -37,10 +37,9 @@ import re
 import subprocess
 import unittest
 from pathlib import Path
-from tests._helpers import requires_cabal, site_binary
+from tests._helpers import SITE_ROOT, engine_path, requires_cabal, site_binary
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-GOLDEN_DIR = REPO_ROOT / "tests" / "golden"
+GOLDEN_DIR = engine_path("tests/golden")
 UPDATE = os.environ.get("UPDATE_GOLDEN") == "1"
 
 ID_RE = re.compile(r"""(?<![\w-])id\s*=\s*["']([^"']+)["']""")
@@ -54,8 +53,8 @@ def fixtures() -> list[Path]:
 
 def render(binary: Path, fixture: Path) -> str:
     done = subprocess.run(
-        [str(binary), "render-fixture", str(fixture.relative_to(REPO_ROOT))],
-        cwd=REPO_ROOT, capture_output=True, text=True,
+        [str(binary), "render-fixture", os.path.relpath(fixture, SITE_ROOT)],
+        cwd=SITE_ROOT, capture_output=True, text=True,
     )
     if done.returncode:
         raise AssertionError(f"render-fixture {fixture.name} failed:\n{done.stderr}")
@@ -109,7 +108,7 @@ class GoldenTests(unittest.TestCase):
     def test_rendering_writes_nothing(self) -> None:
         # render-fixture must stay outside the build: no build stamp, no
         # cache, no _site.
-        stamp = REPO_ROOT / "data" / "build-stamp.txt"
+        stamp = SITE_ROOT / "data" / "build-stamp.txt"
         before = stamp.stat().st_mtime_ns if stamp.exists() else None
         render(self.binary, fixtures()[0])
         after = stamp.stat().st_mtime_ns if stamp.exists() else None

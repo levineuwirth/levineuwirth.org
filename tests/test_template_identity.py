@@ -5,12 +5,11 @@ import json
 import os
 import re
 from pathlib import Path
-import shutil
 import subprocess
 import tempfile
 import unittest
 
-from tests._helpers import ROOT, requires_cabal, script_env, write_site_config
+from tests._helpers import ENGINE, copy_engine_tree, engine_path, requires_cabal, script_env, write_site_config
 
 
 @requires_cabal
@@ -70,9 +69,9 @@ main = hakyll $ do
              <> constField "title" "First")
 ''')
         cls.binary = build / "probe"
-        done = subprocess.run(["cabal", "exec", "--", "ghc", "-v0", "-ibuild",
+        done = subprocess.run(["cabal", "exec", "--", "ghc", "-v0", f"-i{engine_path('build')}",
                                "-outputdir", str(build), str(build / "Probe.hs"),
-                               "-o", str(cls.binary)], cwd=ROOT, env=script_env(),
+                               "-o", str(cls.binary)], cwd=ENGINE, env=script_env(),
                               capture_output=True, text=True, timeout=180)
         if done.returncode:
             raise AssertionError(done.stderr)
@@ -80,7 +79,7 @@ main = hakyll $ do
     def test_identity_escaping_advertisements_manifest_and_incremental_changes(self):
         with tempfile.TemporaryDirectory(prefix="template-identity-") as tmp:
             root = Path(tmp)
-            shutil.copytree(ROOT / "templates", root / "templates")
+            copy_engine_tree("templates", root / "templates")
             title = 'A & B <Studio> "quoted"'
             manifest = {"name": title, "short-name": 'A "B"', "description": "Art & photos",
                         "theme-color": "#123456", "background-color": "#abcdef"}
@@ -135,7 +134,7 @@ main = hakyll $ do
     def test_taxonomy_labels_remain_text_in_cards_and_see_also(self):
         with tempfile.TemporaryDirectory(prefix="taxonomy-labels-") as tmp:
             root = Path(tmp)
-            shutil.copytree(ROOT / "templates", root / "templates")
+            copy_engine_tree("templates", root / "templates")
             config = write_site_config(root)
             kind = 'Study <Draft> & "notes"'
             portal = "Art & <Craft> 'work'"
@@ -161,7 +160,7 @@ main = hakyll $ do
     def test_standalone_pages_take_their_ornament_and_join_the_link_graph(self):
         with tempfile.TemporaryDirectory(prefix="ornaments-") as tmp:
             root = Path(tmp)
-            shutil.copytree(ROOT / "templates", root / "templates")
+            copy_engine_tree("templates", root / "templates")
             config = write_site_config(root)
             config["sections"][0]["dingbat"] = "fleuron"  # essays
             page = {"template": "essay.html", "context": "essay", "scores": False, "flags": []}

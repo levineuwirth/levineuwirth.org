@@ -8,9 +8,10 @@ that 404s on hover. Reads the built site."""
 
 import re
 import unittest
-from pathlib import Path
 
-SITE = Path(__file__).resolve().parents[1] / "_site"
+from tests._helpers import SITE_ROOT
+
+SITE = SITE_ROOT / "_site"
 SOURCE_PATH_RE = re.compile(r'data-source-path="([^"]+)"')
 
 

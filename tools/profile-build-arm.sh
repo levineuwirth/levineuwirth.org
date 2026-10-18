@@ -30,7 +30,9 @@
 
 set -euo pipefail
 
-REPO=$(cd "$(dirname "$0")/.." && pwd)
+# shellcheck source=tools/site-paths.sh
+source "$(dirname "$0")/site-paths.sh"
+REPO=$SITE_ROOT
 UNIT=levineuwirth-build-profile.service
 UNIT_PATH=/etc/systemd/system/$UNIT
 FLAG=$REPO/.build-profiles/ARMED
@@ -77,7 +79,7 @@ $(toolchain_env)
 Environment=LANG=${LANG:-C.UTF-8}
 Environment=PYTHONUNBUFFERED=1
 ExecStartPre=/usr/bin/rm -f $FLAG
-ExecStart=/usr/bin/python3 $REPO/tools/profile-build.py --timeout-min $SCENARIO_TIMEOUT_MIN
+ExecStart=/usr/bin/python3 $(engine_path tools/profile-build.py) --timeout-min $SCENARIO_TIMEOUT_MIN
 TimeoutStartSec=${TIMEOUT_MIN}min
 StandardOutput=journal+console
 StandardError=journal+console

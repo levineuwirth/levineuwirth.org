@@ -18,10 +18,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests._helpers import ROOT, script_env
+from tests._helpers import SITE_ROOT, engine_path, script_env
 
-STAMP = ROOT / "tools" / "stamp-build-time.py"
-SIGN = ROOT / "tools" / "sign-site.sh"
+STAMP = engine_path("tools/stamp-build-time.py")
+SIGN = engine_path("tools/sign-site.sh")
 FOOTER = '<footer><span class="footer-build-time" data-build-time></span></footer>'
 
 
@@ -43,7 +43,7 @@ class StampTests(unittest.TestCase):
                              r"\d{4} \d{2}:\d{2}:\d{2}\n$")
 
     def test_the_footer_ships_an_empty_span(self):
-        footer = (ROOT / "templates" / "partials" / "footer.html").read_text()
+        footer = (SITE_ROOT / "templates" / "partials" / "footer.html").read_text()
         self.assertIn('<span class="footer-build-time" data-build-time></span>', footer)
 
 

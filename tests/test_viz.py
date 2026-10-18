@@ -38,9 +38,10 @@ import unittest
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-SITE_DIR = REPO_ROOT / "_site"
-VENV_PYTHON = REPO_ROOT / ".venv" / "bin" / "python3"
+from tests._helpers import SITE_ROOT, engine_path
+
+SITE_DIR = SITE_ROOT / "_site"
+VENV_PYTHON = SITE_ROOT / ".venv" / "bin" / "python3"
 
 # Every colour declaration, in either syntax, with its value captured.
 COLOUR_DECL = re.compile(
@@ -63,7 +64,7 @@ def figure_scripts() -> list[Path]:
     """Every script referenced by a `.figure` div anywhere in content/."""
     pattern = re.compile(r'\{\.figure[^}]*script="([^"]+)"')
     found: list[Path] = []
-    for md in (REPO_ROOT / "content").rglob("*.md"):
+    for md in (SITE_ROOT / "content").rglob("*.md"):
         for rel in pattern.findall(md.read_text(encoding="utf-8")):
             script = (md.parent / rel).resolve()
             if script.is_file():
@@ -76,7 +77,7 @@ def render(script: Path) -> str:
     """Run a figure script the way Filters.Viz does: from the repo root."""
     result = subprocess.run(
         [str(VENV_PYTHON), str(script)],
-        cwd=REPO_ROOT,
+        cwd=SITE_ROOT,
         capture_output=True,
         text=True,
         timeout=120,
@@ -368,7 +369,7 @@ class FigureNumberingTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         opted = {
             md.parent.name
-            for md in (REPO_ROOT / "content").rglob("*.md")
+            for md in (SITE_ROOT / "content").rglob("*.md")
             if re.search(r"^figure-numbering:\s*true\s*$", md.read_text(encoding="utf-8"), re.M)
         }
         cls.pages = {}
@@ -455,7 +456,7 @@ class FigureNumberingTests(unittest.TestCase):
 
 SVG_NS = "{http://www.w3.org/2000/svg}"
 XLINK_HREF = "{http://www.w3.org/1999/xlink}href"
-CSS_DIR = REPO_ROOT / "static" / "css"
+CSS_DIR = engine_path("static/css")
 
 # Surface: the selector whose rule must carry an inherited fill.
 THEMED_SURFACES = {

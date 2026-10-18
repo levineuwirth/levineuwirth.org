@@ -14,9 +14,11 @@
 --   — and skips only what needs a running build: templates, contexts, and the
 --   dependency tracking.
 --
---   Relative paths (the bibliography, the CSL style, files beside the
---   fixture) resolve from the working directory, so run it from the
---   repository root, as the test does.
+--   The fixture's own files (its bibliography, the images beside it) are
+--   named from its directory, so a fixture keeps working wherever the
+--   engine's tests sit (A5). Other relative paths (the CSL style, the
+--   archive and code-ref indexes) resolve from the working directory, so run
+--   it from the site's root, as the test does.
 module Golden (renderFixture) where
 
 import qualified Data.Text             as T
@@ -25,7 +27,7 @@ import qualified Data.Yaml             as Yaml
 import           Data.Maybe            (fromMaybe)
 import           Hakyll                (lookupString, lookupStringList)
 import           System.Exit           (exitFailure)
-import           System.FilePath       (takeDirectory)
+import           System.FilePath       (takeDirectory, (</>))
 import           System.IO             (hPutStrLn, stderr)
 import           Text.Pandoc           (readMarkdown, runPure, writeHtml5String)
 
@@ -45,7 +47,8 @@ renderFixture path = do
     (meta, body) <- parsePage <$> readFile path
                     >>= either (die . Yaml.prettyPrintParseException) return
     let frKeys        = map T.pack (fromMaybe [] (lookupStringList "further-reading" meta))
-        bibPath       = T.pack (fromMaybe "data/bibliography.bib" (lookupString "bibliography" meta))
+        bibPath       = T.pack (maybe "data/bibliography.bib" (takeDirectory path </>)
+                                      (lookupString "bibliography" meta))
         numberFigures = fromMaybe False (lookupString "figure-numbering" meta >>= parseBool)
     parsed <- either (die . show) return $
         runPure (readMarkdown readerOpts (T.pack (preprocessSource cfg body)))

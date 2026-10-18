@@ -10,13 +10,11 @@ import json
 import re
 import subprocess
 import unittest
-from pathlib import Path
-from tests._helpers import requires_cabal, site_binary
+from tests._helpers import SITE_ROOT, engine_path, requires_cabal, site_binary
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-SEARCH_FILTERS_JS = REPO_ROOT / "static" / "js" / "search-filters.js"
-SEARCH_MD = REPO_ROOT / "content" / "search.md"
-SEARCH_META = REPO_ROOT / "_site" / "data" / "epistemic-meta.json"
+SEARCH_FILTERS_JS = engine_path("static/js/search-filters.js")
+SEARCH_MD = SITE_ROOT / "content" / "search.md"
+SEARCH_META = SITE_ROOT / "_site" / "data" / "epistemic-meta.json"
 
 
 

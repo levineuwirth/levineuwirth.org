@@ -60,14 +60,17 @@ from fontTools import subset
 from fontTools.ttLib import TTFont
 from fontTools.varLib import instancer
 
-ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "static" / "fonts"
-BASE_CSS = ROOT / "static" / "css" / "base.css"
-CONTENT = ROOT / "content"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import sitelib  # noqa: E402
+
+SITE_ROOT = sitelib.SITE_ROOT
+OUT = SITE_ROOT / "static" / "fonts"
+BASE_CSS = sitelib.engine_path("static/css/base.css")
+CONTENT = SITE_ROOT / "content"
 CACHE = Path.home() / ".cache" / "levineuwirth-fonts"
 GOOGLE = "https://raw.githubusercontent.com/google/fonts/9710da1eacb3be272583c3224dcb70f9da6eadbb/ofl"
 BBOX = "https://raw.githubusercontent.com/bBoxType/FiraSans/f54eeb3124c63fe9b5bcd36d09d1cd46788cd15e"
-SOURCE_HASHES = json.loads((ROOT / "tools" / "font-sources.json").read_text())
+SOURCE_HASHES = json.loads((SITE_ROOT / "tools" / "font-sources.json").read_text())
 FIRA_TTF = BBOX + "/Fira_Sans_4_3/Fonts/Fira_Sans_TTF_4301/Normal/Roman"
 
 # Latin-1, Latin Extended-A, the punctuation block, and the few symbols

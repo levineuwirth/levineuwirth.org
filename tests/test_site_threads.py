@@ -14,7 +14,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests._helpers import ROOT, requires_cabal, script_env, site_binary, write_site_config
+from tests._helpers import ENGINE, SITE_ROOT, engine_path, requires_cabal, script_env, site_binary, write_site_config
 
 
 @requires_cabal
@@ -30,8 +30,8 @@ class SiteThreadsTests(unittest.TestCase):
         source.write_text("import SiteThreads (siteThreads)\nmain = siteThreads >>= print\n")
         cls.probe = root / "probe"
         done = subprocess.run(
-            ["cabal", "exec", "--", "ghc", "-v0", "-ibuild", "-outputdir", str(root),
-             str(source), "-o", str(cls.probe)], cwd=ROOT,
+            ["cabal", "exec", "--", "ghc", "-v0", f"-i{engine_path('build')}", "-outputdir", str(root),
+             str(source), "-o", str(cls.probe)], cwd=ENGINE,
             capture_output=True, text=True, timeout=120,
         )
         if done.returncode:
@@ -102,7 +102,7 @@ class SiteThreadsTests(unittest.TestCase):
 
     def test_make_passes_it_to_the_generator(self):
         done = subprocess.run(["make", "-s", "--eval", "probe-threads: ; @echo $$SITE_THREADS",
-                               "probe-threads", "SITE_THREADS=8"], cwd=ROOT, env=script_env(),
+                               "probe-threads", "SITE_THREADS=8"], cwd=SITE_ROOT, env=script_env(),
                               capture_output=True, text=True, timeout=60)
         self.assertEqual(done.stdout.strip(), "8", done.stderr)
 

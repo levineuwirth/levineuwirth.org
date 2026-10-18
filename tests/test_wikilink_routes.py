@@ -7,12 +7,12 @@ which 404s. This keeps the derivation complete against every
 
 import re
 import unittest
-from pathlib import Path
 
 import yaml
 
-ROOT = Path(__file__).resolve().parents[1]
-BUILD = ROOT / "build"
+from tests._helpers import SITE_ROOT, engine_path
+
+BUILD = engine_path("build")
 
 
 def generated_indexes() -> set[str]:
@@ -22,7 +22,7 @@ def generated_indexes() -> set[str]:
 
 
 def section_landings() -> set[str]:
-    config = yaml.safe_load((ROOT / "site.yaml").read_text(encoding="utf-8"))
+    config = yaml.safe_load((SITE_ROOT / "site.yaml").read_text(encoding="utf-8"))
     return {s["dir"] for s in config["sections"]}
 
 

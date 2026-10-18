@@ -15,7 +15,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests._helpers import ROOT, requires_cabal, script_env, site_binary, write_site_config
+from tests._helpers import (SITE_ROOT, copy_engine_tree, requires_cabal, script_env, site_binary,
+                            write_site_config)
 
 try:
     import yaml
@@ -24,7 +25,7 @@ except ImportError:  # pragma: no cover — no .venv
     yaml = None
 
 READY = (yaml is not None and shutil.which("magick") and shutil.which("exiftool")
-         and (ROOT / ".venv" / "bin" / "python").exists())
+         and (SITE_ROOT / ".venv" / "bin" / "python").exists())
 
 
 @requires_cabal
@@ -35,9 +36,9 @@ class Importers(unittest.TestCase):
         self.addCleanup(tmp.cleanup)
         self.tmp = Path(tmp.name)
         self.repo = self.tmp / "repo"
-        shutil.copytree(ROOT / "tools", self.repo / "tools",
-                        ignore=shutil.ignore_patterns("__pycache__", "bin"))
-        (self.repo / ".venv").symlink_to(ROOT / ".venv")
+        copy_engine_tree("tools", self.repo / "tools",
+                         ignore=shutil.ignore_patterns("__pycache__", "bin"))
+        (self.repo / ".venv").symlink_to(SITE_ROOT / ".venv")
         self.photos = self.repo / "content" / "photography"
         self.photos.mkdir(parents=True)
         # The namespace guard asks the generator what the tree routes
@@ -51,14 +52,16 @@ class Importers(unittest.TestCase):
     def run_single(self, *args):
         return subprocess.run(["bash", str(self.repo / "tools" / "import-photo.sh"),
                                str(self.original), *args],
-                              env=self.env, capture_output=True, text=True, timeout=120)
+                              cwd=self.repo, env=self.env, capture_output=True, text=True,
+                              timeout=120)
 
     def run_bulk(self, manifest_lines, *args):
         manifest = self.tmp / "manifest.tsv"
         manifest.write_text("".join(line + "\n" for line in manifest_lines))
         return subprocess.run(["bash", str(self.repo / "tools" / "import-photos.sh"),
                                "--manifest", str(manifest), *args, "--execute"],
-                              env=self.env, capture_output=True, text=True, timeout=120)
+                              cwd=self.repo, env=self.env, capture_output=True, text=True,
+                              timeout=120)
 
     def front_matter(self, path):
         return yaml.safe_load(path.read_text().split("---")[1])

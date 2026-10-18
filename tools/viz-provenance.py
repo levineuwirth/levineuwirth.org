@@ -47,7 +47,10 @@ import os
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import sitelib  # noqa: E402
+
+SITE_ROOT = sitelib.SITE_ROOT
 MANIFEST = "PROVENANCE.json"
 SOURCE_TODO = "TODO: the command or run that produced this"
 
@@ -57,7 +60,7 @@ def data_dirs(paths: list[str]) -> list[Path]:
     if paths:
         return [Path(p).resolve() for p in paths]
     return sorted(
-        d for d in (REPO_ROOT / "content").rglob("figures/data") if d.is_dir()
+        d for d in (SITE_ROOT / "content").rglob("figures/data") if d.is_dir()
     )
 
 
@@ -117,7 +120,7 @@ def cmd_write(dirs: list[Path]) -> int:
             + "\n"
         )
         todo = sum(1 for e in files.values() if e["source"] == SOURCE_TODO)
-        rel = os.path.relpath(manifest, REPO_ROOT)
+        rel = os.path.relpath(manifest, SITE_ROOT)
         note = f"  ({todo} still needing a source note)" if todo else ""
         print(f"wrote {rel}: {len(files)} file(s){note}")
     return 0
@@ -127,7 +130,7 @@ def cmd_check(dirs: list[Path]) -> int:
     problems = 0
     for d in dirs:
         manifest = d / MANIFEST
-        rel = os.path.relpath(d, REPO_ROOT)
+        rel = os.path.relpath(d, SITE_ROOT)
         if not manifest.is_file():
             print(f"{rel}: no {MANIFEST} — run `make viz-provenance`")
             problems += 1

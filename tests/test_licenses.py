@@ -1,13 +1,13 @@
 """The compact footer links site licenses; detailed work notices stay published."""
 
 import unittest
-from pathlib import Path
+
+from tests._helpers import SITE_ROOT, engine_path
 from urllib.parse import urljoin, urlsplit
 
 from bs4 import BeautifulSoup
 
-ROOT = Path(__file__).resolve().parents[1]
-SITE = ROOT / "_site"
+SITE = SITE_ROOT / "_site"
 CC = "https://creativecommons.org/licenses/by-nc-sa/4.0/"
 PD = "https://creativecommons.org/publicdomain/mark/1.0/"
 
@@ -58,12 +58,14 @@ class PublishedLicenseTests(unittest.TestCase):
                 self.assertTrue(target.is_file())
 
     def test_distributed_notices_match_the_repository(self):
-        pairs = [(ROOT / "LICENSE", SITE / "licenses/MIT.txt"),
-                 (ROOT / "LICENSE-CONTENT", SITE / "licenses/CC-BY-NC-SA-4.0.txt")]
-        pairs += [(p, SITE / p.relative_to(ROOT / "static"))
-                  for p in (ROOT / "static" / "licenses").glob("*.txt")]
+        pairs = [(SITE_ROOT / "LICENSE", SITE / "licenses/MIT.txt"),
+                 (SITE_ROOT / "LICENSE-CONTENT", SITE / "licenses/CC-BY-NC-SA-4.0.txt")]
+        # The engine's notices and the site's; one directory until A6d.
+        for static in dict.fromkeys((engine_path("static"), SITE_ROOT / "static")):
+            pairs += [(p, SITE / p.relative_to(static))
+                      for p in (static / "licenses").glob("*.txt")]
         pairs += [(p, SITE / "fonts" / p.name)
-                  for p in (ROOT / "static" / "fonts").glob("OFL-*.txt")]
+                  for p in (SITE_ROOT / "static" / "fonts").glob("OFL-*.txt")]
         for source, published in pairs:
             with self.subTest(source=source.name):
                 self.assertEqual(source.read_bytes(), published.read_bytes())

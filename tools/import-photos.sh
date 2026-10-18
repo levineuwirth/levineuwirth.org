@@ -38,7 +38,8 @@
 # because a batch flag is exactly how a home address ends up on a public map.
 set -uo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=tools/site-paths.sh
+source "$(dirname "$0")/site-paths.sh"
 MANIFEST=""; SERIES=""; TAGS=""; LOCATION=""; JOBS=4; EXECUTE=false
 
 while [ "$#" -gt 0 ]; do
@@ -62,7 +63,7 @@ fi
 for tool in magick exiftool; do
     command -v "$tool" >/dev/null 2>&1 || { echo "import-photos: $tool is required" >&2; exit 1; }
 done
-[ -x "$REPO_ROOT/.venv/bin/python" ] || { echo "import-photos: .venv missing — run uv sync" >&2; exit 1; }
+[ -x "$SITE_ROOT/.venv/bin/python" ] || { echo "import-photos: .venv missing — run uv sync" >&2; exit 1; }
 
 # ---------------------------------------------------------------------------
 # Namespace guard.
@@ -107,10 +108,10 @@ while IFS=$'\t' read -r src slug title || [ -n "${src:-}" ]; do
     seen="$seen $slug"
 
     if [ -n "$SERIES" ]; then
-        dir="$REPO_ROOT/content/photography/$SERIES"
+        dir="$SITE_ROOT/content/photography/$SERIES"
         target="$dir/$slug.jpg"; md="$dir/$slug.md"
     else
-        dir="$REPO_ROOT/content/photography/$slug"
+        dir="$SITE_ROOT/content/photography/$slug"
         target="$dir/photo.jpg"; md="$dir/index.md"
     fi
     if [ -e "$md" ] || [ -e "$target" ]; then
@@ -128,13 +129,13 @@ if [ "$errors" -gt 0 ]; then
 fi
 [ "$n" -gt 0 ] || { echo "import-photos: manifest is empty" >&2; exit 1; }
 SERIES="$SERIES" TAGS="$TAGS" SLUGS="${SLUGS[*]}" \
-    "$REPO_ROOT/.venv/bin/python" "$REPO_ROOT/tools/scaffold-photos.py" --check || exit 2
+    "$SITE_ROOT/.venv/bin/python" "$(engine_path tools/scaffold-photos.py)" --check || exit 2
 
 echo "import-photos: $n photograph(s)${SERIES:+ into series '$SERIES'}"
 if ! $EXECUTE; then
     echo "### DRY RUN — nothing written. Pass --execute to import. ###"
     for ((i = 0; i < n && i < 5; i++)); do
-        printf '  %s  ->  %s\n' "$(basename "${SRCS[$i]}")" "${MDS[$i]#$REPO_ROOT/}"
+        printf '  %s  ->  %s\n' "$(basename "${SRCS[$i]}")" "${MDS[$i]#$SITE_ROOT/}"
     done
     [ "$n" -gt 5 ] && echo "  … and $((n - 5)) more"
     exit 0
@@ -195,7 +196,7 @@ fi
 # 2. EXIF, one call. Reads the resized copies, which still carry their tags.
 # ---------------------------------------------------------------------------
 echo "  extracting EXIF (1 call)…"
-( cd "$REPO_ROOT" && .venv/bin/python tools/extract-exif.py "${TARGETS[@]}" ) >/dev/null || true
+( cd "$SITE_ROOT" && .venv/bin/python "$(engine_path tools/extract-exif.py)" "${TARGETS[@]}" ) >/dev/null || true
 
 # ---------------------------------------------------------------------------
 # 3. Strip, one call. exiftool rewrites the container without re-encoding, so
@@ -230,7 +231,7 @@ for ((j = 0; j < JOBS; j++)); do
     chunk=()
     for ((k = j; k < n; k += JOBS)); do chunk+=("${TARGETS[$k]}"); done
     [ ${#chunk[@]} -eq 0 ] && continue
-    ( cd "$REPO_ROOT" && .venv/bin/python tools/extract-palette.py "${chunk[@]}" ) >/dev/null 2>&1 &
+    ( cd "$SITE_ROOT" && .venv/bin/python "$(engine_path tools/extract-palette.py)" "${chunk[@]}" ) >/dev/null 2>&1 &
     pal_pids+=("$!")
 done
 for pid in "${pal_pids[@]}"; do wait "$pid" || true; done
@@ -246,7 +247,7 @@ for ((i = 0; i < n; i++)); do
 done > "$plan"
 
 SERIES="$SERIES" TAGS="$TAGS" LOCATION="$LOCATION" \
-    "$REPO_ROOT/.venv/bin/python" "$REPO_ROOT/tools/scaffold-photos.py" "$plan" || exit 1
+    "$SITE_ROOT/.venv/bin/python" "$(engine_path tools/scaffold-photos.py)" "$plan" || exit 1
 
 echo "import-photos: $n imported."
 echo "Next: titles and captions are placeholders — edit, then 'make dev'."

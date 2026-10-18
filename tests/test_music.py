@@ -44,7 +44,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from unittest import mock
 from urllib.parse import urljoin, urlsplit
-from tests._helpers import load_tool
+from tests._helpers import SITE_ROOT, load_tool
 
 try:
     import yaml
@@ -53,9 +53,8 @@ try:
 except ImportError:  # pragma: no cover — exercised only on a bare machine
     HAVE_YAML = False
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-SITE_DIR = REPO_ROOT / "_site"
-MUSIC_DIR = REPO_ROOT / "content" / "music"
+SITE_DIR = SITE_ROOT / "_site"
+MUSIC_DIR = SITE_ROOT / "content" / "music"
 
 if HAVE_YAML:
     music_import = load_tool("music-import.py", register=True)

@@ -29,16 +29,15 @@ import subprocess
 import unittest
 from functools import lru_cache
 from pathlib import Path
-from tests._helpers import load_tool, requires_cabal, site_binary
+from tests._helpers import SITE_ROOT, engine_path, load_tool, requires_cabal, site_binary
 
 try:
     import yaml
 except ImportError:  # pragma: no cover - `make validate` requires .venv
     yaml = None
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-CONTENT = REPO_ROOT / "content"
-MARKS_HS = REPO_ROOT / "build" / "Marks.hs"
+CONTENT = SITE_ROOT / "content"
+MARKS_HS = engine_path("build/Marks.hs")
 COLOPHON = CONTENT / "colophon.md"
 
 
@@ -102,7 +101,7 @@ def published_front_matter() -> tuple[list[tuple[str, dict]], list[str]]:
     pages: list[tuple[str, dict]] = []
     unparsable: list[str] = []
     for path in sorted(CONTENT.rglob("*.md")):
-        rel = path.relative_to(REPO_ROOT).as_posix()
+        rel = path.relative_to(SITE_ROOT).as_posix()
         if "drafts" in path.relative_to(CONTENT).parts:
             continue
         try:

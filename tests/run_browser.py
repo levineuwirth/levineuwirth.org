@@ -43,8 +43,12 @@ import tempfile
 import time
 from pathlib import Path
 
-ROOT = Path(os.environ.get("BROWSER_TESTS_ROOT") or Path(__file__).resolve().parents[1])
-DURATIONS = ROOT / ".browser-runs" / "durations.json"
+# The site the modules run against ($SITE_ROOT, else the working directory,
+# as tests/_helpers.py has it), and the directory holding the tests package
+# they are imported from ($BROWSER_TESTS_ROOT for this runner's own tests).
+SITE_ROOT = Path(os.environ.get("SITE_ROOT") or os.getcwd()).resolve()
+TESTS_ROOT = Path(os.environ.get("BROWSER_TESTS_ROOT") or Path(__file__).resolve().parents[1])
+DURATIONS = SITE_ROOT / ".browser-runs" / "durations.json"
 
 
 class Stopped(Exception):
@@ -60,7 +64,7 @@ def _stop(signum, frame):
 def modules(names: list[str]) -> list[str]:
     """The modules to run: all, or those named, each once (with or without
     the "test_browser_" prefix, a name is one module)."""
-    found = sorted(p.stem for p in (ROOT / "tests").glob("test_browser_*.py"))
+    found = sorted(p.stem for p in (TESTS_ROOT / "tests").glob("test_browser_*.py"))
     if not names:
         return found
     wanted = []
@@ -141,7 +145,8 @@ def main() -> int:
     took = recorded()
     # Longest first, so the long ones do not start last; unknown ones first of all.
     todo.sort(key=lambda m: -took.get(m, float("inf")))
-    env = dict(os.environ, RUN_BROWSER_TESTS="1", BROWSER_HARNESS_GRACE=f"{grace / 3:g}")
+    env = dict(os.environ, RUN_BROWSER_TESTS="1", BROWSER_HARNESS_GRACE=f"{grace / 3:g}",
+               SITE_ROOT=str(SITE_ROOT))
     durations = ["--durations=10"] if os.environ.get("BROWSER_TIMINGS") == "1" else []
     running: dict[str, tuple[subprocess.Popen, float, object]] = {}
     results: dict[str, tuple[int, float]] = {}
@@ -171,7 +176,7 @@ def main() -> int:
                 m = todo.pop(0)
                 log = tempfile.TemporaryFile(mode="w+")
                 proc = subprocess.Popen([sys.executable, "-m", "unittest", "-v", *durations, f"tests.{m}"],
-                                        cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT,
+                                        cwd=TESTS_ROOT, env=env, stdout=log, stderr=subprocess.STDOUT,
                                         text=True, start_new_session=True)
                 running[m] = (proc, time.monotonic(), log)
             time.sleep(0.5)

@@ -2,11 +2,11 @@
 
 import re
 import unittest
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-BASE_CSS = (ROOT / "static" / "css" / "base.css").read_text(encoding="utf-8")
-HEAD = (ROOT / "templates" / "partials" / "head.html").read_text(encoding="utf-8")
+from tests._helpers import SITE_ROOT, engine_path
+
+BASE_CSS = engine_path("static/css/base.css").read_text(encoding="utf-8")
+HEAD = engine_path("templates/partials/head.html").read_text(encoding="utf-8")
 
 
 def stack(token):
@@ -62,7 +62,7 @@ class FontTests(unittest.TestCase):
         declared = {"/fonts/" + p for p in re.findall(r'url\("\.\./fonts/([^"]+)"\)', BASE_CSS)}
         for href in preloads:
             self.assertIn(href, declared, f"{href} is preloaded but no @font-face uses it")
-            self.assertTrue((ROOT / "static" / href.lstrip("/")).is_file(), href)
+            self.assertTrue((SITE_ROOT / "static" / href.lstrip("/")).is_file(), href)
 
 
 if __name__ == "__main__":

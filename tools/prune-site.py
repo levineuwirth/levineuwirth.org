@@ -23,11 +23,14 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import sitelib  # noqa: E402
+
+SITE_ROOT = sitelib.SITE_ROOT
 
 # (published tree under _site, its source tree, the subdirectory of each
 # work whose files are copied one to one from gitignored sources)
-TREES = [("music", ROOT / "content" / "music", "scores")]
+TREES = [("music", SITE_ROOT / "content" / "music", "scores")]
 SIDECARS = (".br", ".gz", ".sig")
 
 

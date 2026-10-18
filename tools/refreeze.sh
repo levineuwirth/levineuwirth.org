@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # refreeze.sh — Regenerate cabal.project.freeze after a pacman -Syu updates
-# Haskell libraries. Run from anywhere inside the repo.
+# Haskell libraries. Run from the site's root, whose cabal.project it is.
 set -euo pipefail
 
-REPO_ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
-FREEZE="$REPO_ROOT/cabal.project.freeze"
+# shellcheck source=tools/site-paths.sh
+source "$(dirname "$0")/site-paths.sh"
+FREEZE="$SITE_ROOT/cabal.project.freeze"
 
-cd "$REPO_ROOT"
+cd "$SITE_ROOT"
 
 # Back up the current freeze and restore it if resolution fails, so an
 # unsolvable index never leaves the repo with no freeze file at all

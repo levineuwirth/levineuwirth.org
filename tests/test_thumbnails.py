@@ -21,8 +21,6 @@ from pathlib import Path
 from tests._helpers import load_tool
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-MODULE_PATH = REPO_ROOT / "tools" / "generate-thumbnails.py"
 generate_thumbnails = load_tool("generate-thumbnails.py", register=True)
 
 try:

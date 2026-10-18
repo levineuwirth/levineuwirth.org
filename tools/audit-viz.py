@@ -48,7 +48,10 @@ import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import sitelib  # noqa: E402
+
+SITE_ROOT = sitelib.SITE_ROOT
 SVG_NS = "{http://www.w3.org/2000/svg}"
 XLINK_HREF = "{http://www.w3.org/1999/xlink}href"
 
@@ -73,7 +76,7 @@ def find_scripts(paths: list[str]) -> list[Path]:
         return [Path(p).resolve() for p in paths]
     pattern = re.compile(r'\{\.figure[^}]*script="([^"]+)"')
     found: list[Path] = []
-    for md in (REPO_ROOT / "content").rglob("*.md"):
+    for md in (SITE_ROOT / "content").rglob("*.md"):
         for rel in pattern.findall(md.read_text(encoding="utf-8")):
             script = (md.parent / rel).resolve()
             if script.is_file():
@@ -82,10 +85,10 @@ def find_scripts(paths: list[str]) -> list[Path]:
 
 
 def render(script: Path) -> str | None:
-    venv = REPO_ROOT / ".venv" / "bin" / "python3"
+    venv = SITE_ROOT / ".venv" / "bin" / "python3"
     exe = str(venv) if venv.is_file() else sys.executable
     result = subprocess.run(
-        [exe, str(script)], cwd=REPO_ROOT, capture_output=True, text=True, timeout=180
+        [exe, str(script)], cwd=SITE_ROOT, capture_output=True, text=True, timeout=180
     )
     if result.returncode != 0:
         return None
@@ -266,7 +269,7 @@ def main() -> int:
     total = 0
     for script in scripts:
         svg = render(script)
-        rel = os.path.relpath(script, REPO_ROOT)
+        rel = os.path.relpath(script, SITE_ROOT)
         if svg is None:
             print(f"{rel}\n  ERROR: script exited non-zero")
             total += 1

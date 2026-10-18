@@ -45,8 +45,11 @@ import time
 from collections import Counter
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[1]
-OUT_ROOT = REPO / ".build-profiles"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import sitelib  # noqa: E402
+
+SITE_ROOT = sitelib.SITE_ROOT
+OUT_ROOT = SITE_ROOT / ".build-profiles"
 SAMPLE_SECONDS = 1.0
 STAGE_RE = re.compile(r"^# ---- (Stage \d+: .*?)\s*-*\s*$")
 CLK_TCK = os.sysconf("SC_CLK_TCK")
@@ -102,7 +105,7 @@ def read(path: str, default: str = "") -> str:
 
 def run_text(args: list[str]) -> str:
     try:
-        return subprocess.run(args, cwd=REPO, capture_output=True, text=True,
+        return subprocess.run(args, cwd=SITE_ROOT, capture_output=True, text=True,
                               timeout=60).stdout.strip()
     except (OSError, subprocess.SubprocessError):
         return ""
@@ -120,8 +123,8 @@ def dir_bytes(path: Path, pattern: str = "*") -> tuple[int, int]:
 def system_facts() -> dict:
     power = {p.name: read(str(p / "online"))
              for p in Path("/sys/class/power_supply").glob("*") if (p / "online").exists()}
-    svg_bytes, svg_count = dir_bytes(REPO / "content" / "music", "*.svg")
-    site_bytes, site_files = dir_bytes(REPO / "_site") if (REPO / "_site").exists() else (0, 0)
+    svg_bytes, svg_count = dir_bytes(SITE_ROOT / "content" / "music", "*.svg")
+    site_bytes, site_files = dir_bytes(SITE_ROOT / "_site") if (SITE_ROOT / "_site").exists() else (0, 0)
     return {
         "when": dt.datetime.now().astimezone().isoformat(timespec="seconds"),
         "host": socket.gethostname(),
@@ -259,7 +262,7 @@ def run_scenario(name: str, cmd: list[str], out: Path, timeout_s: int) -> dict:
     sampler.start()
     status = None
     with open(out / f"{name}.log", "w", encoding="utf-8") as log:
-        proc = subprocess.Popen(full_cmd, cwd=REPO, env=env, stdout=subprocess.PIPE,
+        proc = subprocess.Popen(full_cmd, cwd=SITE_ROOT, env=env, stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT, text=True, errors="replace",
                                 bufsize=1)
         killer = threading.Timer(timeout_s, proc.kill)
@@ -363,9 +366,9 @@ def parse_time_v(path: Path) -> dict:
 
 
 def brotli_sweep(out: Path) -> dict:
-    pages = sorted((REPO / "content" / "music").glob("*/scores/*.svg"),
+    pages = sorted((SITE_ROOT / "content" / "music").glob("*/scores/*.svg"),
                    key=lambda p: -p.stat().st_size)[:8]
-    total_svg, _ = dir_bytes(REPO / "content" / "music", "*.svg")
+    total_svg, _ = dir_bytes(SITE_ROOT / "content" / "music", "*.svg")
     sample_bytes = sum(p.stat().st_size for p in pages)
     rows = []
     for label, args in [("brotli -q 11", ["brotli", "-c", "-q", "11"]),
@@ -386,7 +389,7 @@ def brotli_sweep(out: Path) -> dict:
             "ratio_pct": round(100 * size / sample_bytes, 2) if sample_bytes else 0,
             "est_single_core_s_all_scores": round(total_svg / (sample_bytes / secs), 0) if secs else 0,
         })
-    result = {"name": "brotli-sweep", "sample_files": [str(p.relative_to(REPO)) for p in pages],
+    result = {"name": "brotli-sweep", "sample_files": [str(p.relative_to(SITE_ROOT)) for p in pages],
               "sample_mb": round(sample_bytes / 1e6, 1), "all_scores_mb": round(total_svg / 1e6, 1),
               "rows": rows}
     (out / "brotli-sweep.json").write_text(json.dumps(result, indent=2))

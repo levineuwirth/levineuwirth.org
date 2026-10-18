@@ -14,8 +14,6 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import sitelib  # noqa: E402
 
-ROOT = Path(__file__).resolve().parent.parent
-
 
 def load_boundary(content: Path) -> dict[str, list[str]]:
     summary = subprocess.check_output(

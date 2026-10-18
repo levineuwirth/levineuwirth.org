@@ -37,17 +37,19 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import photo_sidecars  # noqa: E402
+import sitelib  # noqa: E402
 
-REPO_ROOT = Path(__file__).parent.parent
+SITE_ROOT = sitelib.SITE_ROOT
 
 # Roots to walk. content/photography/ also gets visited (its photos
 # become double-sidecared with both .exif.yaml and .dims.yaml) — that's
 # harmless and keeps the contract uniform: "every raster file has a
 # .dims.yaml". The few extra bytes of YAML are immaterial.
-WALK_ROOTS = [
-    REPO_ROOT / "static" / "images",
-    REPO_ROOT / "content",
-]
+WALK_ROOTS = list(dict.fromkeys([
+    sitelib.engine_path("static/images"),  # the engine's (link icons)
+    SITE_ROOT / "static" / "images",       # the site's; the same directory until A6d
+    SITE_ROOT / "content",
+]))
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif"}
 

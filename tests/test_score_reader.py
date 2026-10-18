@@ -6,20 +6,20 @@ The visible result is also checked in Chromium and Firefox during review.
 """
 
 import json
-from pathlib import Path
 import re
 import shutil
 import subprocess
 import unittest
 
+from tests._helpers import engine_path
 
-ROOT = Path(__file__).resolve().parents[1]
+
 
 
 @unittest.skipUnless(shutil.which("node"), "node is needed to exercise the reader")
 class GutterTests(unittest.TestCase):
     def test_brackets_survive_phone_scale_and_subsequent_zoom(self):
-        source = (ROOT / "static/js/score-reader.js").read_text()
+        source = (engine_path("static/js/score-reader.js")).read_text()
         function = re.search(
             r"    function gutterCopy\(.*?(?=\n    function )", source, re.S)
         self.assertIsNotNone(function)

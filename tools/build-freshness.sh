@@ -65,7 +65,9 @@
 # STATE_DIR / CACHE_DIR / CLEAN_CMD are overridable for tests only.
 
 set -euo pipefail
-cd "$(dirname "$0")/.."
+# shellcheck source=tools/site-paths.sh
+source "$(dirname "$0")/site-paths.sh"
+cd "$SITE_ROOT"
 
 STATE_DIR="${STATE_DIR:-data}"
 CACHE_DIR="${CACHE_DIR:-_cache}"
@@ -81,12 +83,19 @@ DRAFT_HASH_FILE="$STATE_DIR/unpublished-hash.txt"
 # Everything that changes the compiled site generator: the Haskell rules
 # and the cabal metadata (dependency-bound moves change behaviour too),
 # plus site.yaml: identity and feed settings can change route shape.
-# Templates are deliberately absent — Hakyll tracks those itself.
+# Templates are deliberately absent — Hakyll tracks those itself. The
+# engine's files are digested by their path in the engine, so moving them
+# under engine/ (A6) changes nothing here.
 rules_hash() {
+    local build cabal
+    build=$(engine_path build)
+    cabal=$(engine_path levineuwirth.cabal)
     {
-        find build -name '*.hs' -print0
-        printf '%s\0' levineuwirth.cabal cabal.project cabal.project.freeze site.yaml
-    } | sort -z | xargs -0 sha256sum | sha256sum | cut -d' ' -f1
+        (cd "$build/.." && find build -name '*.hs' -print0 | sort -z | xargs -0 sha256sum)
+        sha256sum cabal.project cabal.project.freeze
+        (cd "$(dirname "$cabal")" && sha256sum "$(basename "$cabal")")
+        sha256sum site.yaml
+    } | sha256sum | cut -d' ' -f1
 }
 
 # Paths whose deletion/rename removes a published route. archive/ is here
@@ -215,7 +224,7 @@ check() {
 
     # Compare the actual last-built boundary, including untracked flags
     # and photo stems. A git revision cannot represent a SKIP_SNAPSHOT build.
-    draft_hash=$(python3 tools/unpublished.py hash)
+    draft_hash=$(python3 "$(engine_path tools/unpublished.py)" hash)
     if [ ! -f "$DRAFT_HASH_FILE" ] || [ "$draft_hash" != "$(cat "$DRAFT_HASH_FILE")" ]; then
         reasons+=("draft flag changed (withheld pages or assets differ from last build)")
     fi
@@ -249,7 +258,7 @@ check() {
 
 stamp() {
     mkdir -p "$STATE_DIR"
-    python3 tools/unpublished.py hash > "$DRAFT_HASH_FILE.tmp"
+    python3 "$(engine_path tools/unpublished.py)" hash > "$DRAFT_HASH_FILE.tmp"
     mv "$DRAFT_HASH_FILE.tmp" "$DRAFT_HASH_FILE"
     rules_hash > "$RULES_HASH_FILE"
     git rev-parse HEAD > "$LAST_BUILD_COMMIT_FILE"

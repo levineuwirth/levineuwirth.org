@@ -69,12 +69,12 @@ import sitelib  # noqa: E402
 # Configuration
 # ---------------------------------------------------------------------------
 
-REPO_ROOT     = Path(__file__).resolve().parent.parent
-ARCHIVE_DIR   = REPO_ROOT / "archive"
+SITE_ROOT     = sitelib.SITE_ROOT
+ARCHIVE_DIR   = SITE_ROOT / "archive"
 MANIFEST      = ARCHIVE_DIR / "manifest.yaml"
 REMOVED       = ARCHIVE_DIR / "removed.yaml"
-INDEX_OUT     = REPO_ROOT / "data" / "archive-index.json"
-STATE_OUT     = REPO_ROOT / "data" / "archive-state.json"
+INDEX_OUT     = SITE_ROOT / "data" / "archive-index.json"
+STATE_OUT     = SITE_ROOT / "data" / "archive-state.json"
 
 ROT_FAILS     = 3       # consecutive failed scans before `rotted` is considered
 ROT_DAYS      = 14      # ... and the streak must also span at least this many days
@@ -343,13 +343,13 @@ def find_monolith() -> str | None:
     env = os.environ.get("MONOLITH_BIN")
     if env and Path(env).is_file():
         return env
-    vendored = REPO_ROOT / "tools" / "bin" / "monolith"
+    vendored = sitelib.engine_path("tools/bin/monolith")
     if vendored.is_file():
         return str(vendored)
     return shutil.which("monolith")
 
 
-MONOLITH_VERSION_FILE = REPO_ROOT / "tools" / "monolith-version.txt"
+MONOLITH_VERSION_FILE = sitelib.engine_path("tools/monolith-version.txt")
 
 # Binaries already verified this run — the pin check hashes the binary
 # once, not once per snapshot.
@@ -691,14 +691,14 @@ def _is_tracked_and_clean(*paths: Path) -> bool:
         for p in str_paths:
             rc = subprocess.run(
                 ["git", "ls-files", "--error-unmatch", "--", p],
-                cwd=str(REPO_ROOT),
+                cwd=str(SITE_ROOT),
                 capture_output=True,
             ).returncode
             if rc != 0:
                 return False
         rc = subprocess.run(
             ["git", "diff", "--quiet", "HEAD", "--", *str_paths],
-            cwd=str(REPO_ROOT),
+            cwd=str(SITE_ROOT),
             capture_output=True,
         ).returncode
         return rc == 0
@@ -990,7 +990,7 @@ def cmd_fetch(wayback_fallback: bool = True) -> int:
 
     # archive-index.json is always rewritten to mirror the manifest exactly.
     atomic_write_json(INDEX_OUT, index)
-    log(f"wrote {INDEX_OUT.relative_to(REPO_ROOT)} ({len(index)} entries)")
+    log(f"wrote {INDEX_OUT.relative_to(SITE_ROOT)} ({len(index)} entries)")
 
     if skipped:
         err(f"{skipped} entr{'y' if skipped == 1 else 'ies'} skipped "
@@ -1361,7 +1361,7 @@ def cmd_check() -> int:
     atomic_write_json(STATE_OUT, state)
     log(f"check: {tally['live']} live, {tally['moved']} moved, "
         f"{tally['error']} error, {tally['rotted']} rotted "
-        f"-> {STATE_OUT.relative_to(REPO_ROOT)}")
+        f"-> {STATE_OUT.relative_to(SITE_ROOT)}")
     return 0
 
 
@@ -1450,7 +1450,7 @@ def cmd_suggest() -> int:
     for e in manifest:
         covered.update(normalize_url(a) for a in entry_aliases(e))
 
-    bib_files = sorted((REPO_ROOT / "data").glob("*.bib"))
+    bib_files = sorted((SITE_ROOT / "data").glob("*.bib"))
     if not bib_files:
         log("suggest: no data/*.bib files to scan")
         return 0

@@ -110,10 +110,11 @@ if ! command -v magick >/dev/null 2>&1; then
     exit 1
 fi
 
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=tools/site-paths.sh
+source "$(dirname "$0")/site-paths.sh"
 
-if [ ! -d "$REPO_ROOT/.venv" ]; then
-    echo "import-photo: .venv not found at $REPO_ROOT/.venv" >&2
+if [ ! -d "$SITE_ROOT/.venv" ]; then
+    echo "import-photo: .venv not found at $SITE_ROOT/.venv" >&2
     echo "  Run: uv sync" >&2
     exit 1
 fi
@@ -133,11 +134,11 @@ fi
 # becomes a series automatically once it holds sibling .md files next to
 # index.md; nothing has to be declared.
 if [ -n "$SERIES" ]; then
-    ENTRY_DIR="$REPO_ROOT/content/photography/$SERIES"
+    ENTRY_DIR="$SITE_ROOT/content/photography/$SERIES"
     TARGET="$ENTRY_DIR/$SLUG.jpg"
     INDEX_MD="$ENTRY_DIR/$SLUG.md"
 else
-    ENTRY_DIR="$REPO_ROOT/content/photography/$SLUG"
+    ENTRY_DIR="$SITE_ROOT/content/photography/$SLUG"
     TARGET="$ENTRY_DIR/photo.jpg"
     INDEX_MD="$ENTRY_DIR/index.md"
 fi
@@ -160,7 +161,7 @@ fi
 # The namespace guard (scaffold-photos.py --check), on the tags as they will
 # be written, before anything is copied.
 SERIES="$SERIES" TAGS="$EXTRA_TAGS" SLUGS="$SLUG" \
-    "$REPO_ROOT/.venv/bin/python" "$REPO_ROOT/tools/scaffold-photos.py" --check || exit 2
+    "$SITE_ROOT/.venv/bin/python" "$(engine_path tools/scaffold-photos.py)" --check || exit 2
 
 mkdir -p "$ENTRY_DIR"
 
@@ -190,7 +191,7 @@ chmod 644 "$TARGET"
 # ---------------------------------------------------------------------------
 
 echo "import-photo: extracting EXIF sidecar..."
-( cd "$REPO_ROOT" && .venv/bin/python tools/extract-exif.py "$TARGET" ) || true
+( cd "$SITE_ROOT" && .venv/bin/python "$(engine_path tools/extract-exif.py)" "$TARGET" ) || true
 
 if [ ! -f "$EXIF_SIDECAR" ]; then
     # Empty sidecar so the consuming Hakyll field has something to read
@@ -229,7 +230,7 @@ touch "$EXIF_SIDECAR"
 # ---------------------------------------------------------------------------
 
 echo "import-photo: extracting palette sidecar..."
-( cd "$REPO_ROOT" && .venv/bin/python tools/extract-palette.py "$TARGET" ) || true
+( cd "$SITE_ROOT" && .venv/bin/python "$(engine_path tools/extract-palette.py)" "$TARGET" ) || true
 
 # ---------------------------------------------------------------------------
 # Step 4b: responsive delivery variants (P01)
@@ -245,7 +246,7 @@ echo "import-photo: extracting palette sidecar..."
 # ---------------------------------------------------------------------------
 
 echo "import-photo: generating responsive variants..."
-( cd "$REPO_ROOT" && .venv/bin/python tools/generate-thumbnails.py "$TARGET" ) \
+( cd "$SITE_ROOT" && .venv/bin/python "$(engine_path tools/generate-thumbnails.py)" "$TARGET" ) \
     || echo "import-photo: variant generation failed (make build will retry)" >&2
 
 # ---------------------------------------------------------------------------
@@ -271,7 +272,7 @@ echo "import-photo: generating responsive variants..."
 # The entry goes as arguments, not a plan row: a title may hold a tab or a
 # newline, which a tab-separated row would cut short or split.
 SERIES="$SERIES" TAGS="$EXTRA_TAGS" LOCATION="" \
-    "$REPO_ROOT/.venv/bin/python" "$REPO_ROOT/tools/scaffold-photos.py" \
+    "$SITE_ROOT/.venv/bin/python" "$(engine_path tools/scaffold-photos.py)" \
         --entry "$INDEX_MD" "$TARGET" "$SLUG" "$TITLE" \
     || { echo "import-photo: could not write $INDEX_MD" >&2; exit 1; }
 

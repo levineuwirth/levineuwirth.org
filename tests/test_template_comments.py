@@ -13,7 +13,7 @@ import subprocess
 import unittest
 from pathlib import Path
 
-from tests._helpers import ROOT, requires_cabal, script_env, site_binary
+from tests._helpers import SITE_ROOT, engine_path, requires_cabal, script_env, site_binary
 
 
 @requires_cabal
@@ -39,9 +39,11 @@ class TemplateCommentTests(unittest.TestCase):
 
     def test_no_template_keeps_a_comment(self) -> None:
         # Every comment a template has today is closed and is removed.
-        for path in sorted((ROOT / "templates").rglob("*.html")):
-            with self.subTest(template=path.relative_to(ROOT).as_posix()):
-                self.assertNotIn("<!--", self.strip(path.read_text(encoding="utf-8")))
+        # The engine's templates and the site's; one directory until A6c.
+        for root in dict.fromkeys((engine_path("templates"), SITE_ROOT / "templates")):
+            for path in sorted(root.rglob("*.html")):
+                with self.subTest(template=path.relative_to(root.parent).as_posix()):
+                    self.assertNotIn("<!--", self.strip(path.read_text(encoding="utf-8")))
 
 
 if __name__ == "__main__":

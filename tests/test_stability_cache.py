@@ -7,9 +7,7 @@ import subprocess
 import tempfile
 import unittest
 
-from tests._helpers import requires_cabal, script_env
-
-ROOT = Path(__file__).resolve().parents[1]
+from tests._helpers import ENGINE, engine_path, requires_cabal, script_env
 
 
 @requires_cabal
@@ -39,7 +37,8 @@ else:
                      "import System.Directory", f"setCurrentDirectory {json.dumps(directory)}"]
             done = subprocess.run(
                 ["cabal", "exec", "--", "ghc", "--interactive", "-ignore-dot-ghci", "-v0",
-                 "-ibuild", "build/Stability.hs"], cwd=ROOT, env=env,
+                 f"-i{engine_path('build')}", str(engine_path("build/Stability.hs"))],
+                cwd=ENGINE, env=env,
                 input="\n".join(setup + commands + [":quit"]) + "\n",
                 capture_output=True, text=True, timeout=60,
             )

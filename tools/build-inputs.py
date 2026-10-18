@@ -10,7 +10,9 @@ tests (tests/_browser.py) refuse to run against a _site whose inputs have
 moved on.
 
 Size and mtime, not a hash: content/ is a gigabyte of photographs, and a
-file rewritten with the same bytes costs only a rebuild.
+file rewritten with the same bytes costs only a rebuild. When engine/ is a
+repository of its own, its commit is recorded too, so a _site built from
+another engine revision is noticed by name.
 
     python3 tools/build-inputs.py record build templates static ...
     python3 tools/build-inputs.py check     # exit 1, with a list, if stale
@@ -20,10 +22,13 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+# The site: $SITE_ROOT, else the working directory (tools/sitelib.py; this
+# tool stands alone, so a test can run a copy of it in a scratch tree).
+ROOT = Path(os.environ.get("SITE_ROOT") or os.getcwd()).resolve()
 MANIFEST = ROOT / "data" / "build-inputs.json"
 
 # Under the inputs, but not what _site is built from.
@@ -34,7 +39,8 @@ EXCLUDE = (
     "data/.site-build.lock",       # truncated by tools/with-lock.sh on every locked target
     "data/sign-manifest.txt",      # written by `make sign`, after the build
     "nginx",                       # served configuration; the browser tests read it as it is
-    "tools/browser",               # the browser harness
+    "tools/browser",               # the browser harness,
+    "engine/tools/browser",        # wherever it is
     # The résumé's artifacts and private variants (gitignored; see the
     # Makefile's pdfs target). The site reads yaml-source/data/ and the
     # PDFs copied into static/; editing a private variant made the browser
@@ -77,10 +83,30 @@ def snapshot(paths: list[str]) -> dict[str, list[int]]:
     return files
 
 
+def engine_commit() -> str | None:
+    """The commit engine/ is checked out at, when it is a repository of its
+    own (a symlink to the engine's checkout); None while the engine is part
+    of the site's tree, whose files the snapshot already covers."""
+    engine = ROOT / "engine"
+    if not engine.is_dir():
+        return None
+
+    def git(where: Path, *args: str) -> str | None:
+        done = subprocess.run(["git", "-C", str(where), *args],
+                              capture_output=True, text=True)
+        return done.stdout.strip() if done.returncode == 0 else None
+
+    top, site = (git(where, "rev-parse", "--show-toplevel") for where in (engine, ROOT))
+    if top is None or (site is not None and Path(top).resolve() == Path(site).resolve()):
+        return None
+    return git(engine, "rev-parse", "HEAD")
+
+
 def record(paths: list[str]) -> None:
     MANIFEST.parent.mkdir(exist_ok=True)
     tmp = MANIFEST.with_suffix(".json.tmp")
-    tmp.write_text(json.dumps({"paths": paths, "files": snapshot(paths)}), encoding="utf-8")
+    tmp.write_text(json.dumps({"paths": paths, "files": snapshot(paths),
+                               "engine": engine_commit()}), encoding="utf-8")
     tmp.replace(MANIFEST)
 
 
@@ -92,7 +118,11 @@ def stale() -> list[str]:
     built = json.loads(MANIFEST.read_text(encoding="utf-8"))
     now = snapshot(built["paths"])
     then = built["files"]
-    return ([f"changed {p}" for p in sorted(now.keys() & then.keys()) if now[p] != then[p]]
+    was, now_engine = built.get("engine"), engine_commit()
+    engine = [] if was == now_engine else [
+        f"engine {was or 'in the tree'} -> {now_engine or 'in the tree'}"]
+    return (engine
+            + [f"changed {p}" for p in sorted(now.keys() & then.keys()) if now[p] != then[p]]
             + [f"added {p}" for p in sorted(now.keys() - then.keys())]
             + [f"removed {p}" for p in sorted(then.keys() - now.keys())])
 

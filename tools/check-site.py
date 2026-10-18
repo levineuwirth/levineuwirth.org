@@ -660,9 +660,10 @@ DATA_PAGES_RE = re.compile(r'''data-pages="([^"]*)"''')
 def check_cv_pdfs(site_dir: str, report: Report) -> None:
     """C02 — /cv.pdf and /resume.pdf are built by hand from the CV YAML the
     Vita page reads at every build; warn when they are older than it. Only
-    for this repository's own output: the record is the checkout's."""
+    for the output of the site being checked ($SITE_ROOT, else the working
+    directory): the record is that checkout's."""
     report.check("cv-pdfs")
-    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    root = os.path.realpath(os.environ.get("SITE_ROOT") or os.getcwd())
     if os.path.realpath(site_dir) not in (os.path.join(root, "_site"), os.path.join(root, "_site-dev")):
         return
     spec = importlib.util.spec_from_file_location("cv_pdfs", os.path.join(root, "tools", "cv-pdfs.py"))

@@ -7,7 +7,7 @@ import unittest
 import json
 
 import yaml
-from tests._helpers import ROOT, load_tool, requires_cabal, site_binary
+from tests._helpers import SITE_ROOT, load_tool, requires_cabal, site_binary
 
 checker = load_tool("check-identity.py")
 
@@ -30,6 +30,14 @@ class IdentityTests(unittest.TestCase):
             self.assertIn("unallowed", checker.check_occurrences(found, allowances)[0])
             allowances["entries"][0]["line"] += 1
             self.assertIn("stale", checker.check_occurrences(found, allowances)[0])
+
+    def test_a_moved_engine_file_is_scanned_under_its_engine_name(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "engine/tools").mkdir(parents=True)
+            (root / "engine/tools/a.py").write_text("x = 1\nExample Author\n")
+            found = checker.occurrences(root, ["tools/a.py"], ["Example Author"])
+            self.assertEqual([(e["file"], e["line"]) for e in found], [("tools/a.py", 2)])
 
     def test_longest_match_and_case_variations_are_checked(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -149,11 +157,28 @@ class IdentityTests(unittest.TestCase):
                 broken = dict(policy, **{"site-files": policy["site-files"] + [extra]})
                 with self.assertRaisesRegex(ValueError, message):
                     checker.inventory(root, broken)
+            # An engine file moved under engine/ keeps its owner and its name,
+            # as vendored files do; nothing else belongs there, and an engine
+            # file left in both places is a conflict.
+            (root / "engine/data").mkdir(parents=True)
+            (root / "data/style.csl").rename(root / "engine/data/style.csl")
+            (root / "engine/static/vendor").mkdir(parents=True)
+            (root / "engine/static/vendor/lib.js").write_text("")
+            self.assertEqual(checker.inventory(root, policy), ["Makefile", "data/style.csl"])
+            for name, message in (("engine/README.md", r"unclassified=\['engine/README.md'\]"),
+                                  ("data/style.csl", r"conflicting=\['data/style.csl'\]")):
+                (root / name).write_text("")
+                with self.assertRaisesRegex(ValueError, message):
+                    checker.inventory(root, policy)
+                (root / name).unlink()
+            (root / "engine/data/style.csl").unlink()
+            with self.assertRaisesRegex(ValueError, r"missing=\['data/style.csl'\]"):
+                checker.inventory(root, policy)
             (root / checker.POLICY).write_text(yaml.safe_dump(dict(policy, extra=[])))
             with self.assertRaisesRegex(ValueError, "exactly"):
                 checker.load_policy(root)
 
     @requires_cabal
     def test_engine_identity_allowances(self):
-        config = json.loads(subprocess.check_output([str(site_binary()), "config"], cwd=ROOT, text=True))
-        checker.check(ROOT, config)
+        config = json.loads(subprocess.check_output([str(site_binary()), "config"], cwd=SITE_ROOT, text=True))
+        checker.check(SITE_ROOT, config)

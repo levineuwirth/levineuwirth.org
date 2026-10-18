@@ -5,12 +5,12 @@ initial-count: 159
 entries:
 - id: I0001
   file: Makefile
-  line: 414
-  column: 77
+  line: 421
+  column: 96
   string: levineuwirth
 - id: I0002
   file: Makefile
-  line: 576
+  line: 583
   column: 19
   string: levineuwirth.org
 - id: I0003
@@ -545,12 +545,12 @@ entries:
   string: https://git.levineuwirth.org/neuwirth/levineuwirth.org
 - id: I0112
   file: tests/test_build_freshness.py
-  line: 33
+  line: 32
   column: 9
   string: Levi Neuwirth
 - id: I0113
   file: tests/test_build_freshness.py
-  line: 84
+  line: 83
   column: 21
   string: levineuwirth
 - id: I0114
@@ -560,7 +560,7 @@ entries:
   string: Levi Neuwirth
 - id: I0115
   file: tests/test_config.py
-  line: 299
+  line: 300
   column: 27
   string: levineuwirth
 - id: I0116
@@ -585,37 +585,37 @@ entries:
   string: levineuwirth.org
 - id: I0120
   file: tests/test_dynamic_assets.py
-  line: 22
+  line: 23
   column: 21
   string: levineuwirth.org
 - id: I0121
   file: tests/test_dynamic_assets.py
-  line: 49
+  line: 50
   column: 15
   string: lnHighlightCode
 - id: I0122
   file: tests/test_dynamic_assets.py
-  line: 49
+  line: 50
   column: 44
   string: lnHighlightCode
 - id: I0123
   file: tests/test_dynamic_assets.py
-  line: 60
+  line: 61
   column: 1
   string: lnEnhance
 - id: I0124
   file: tests/test_dynamic_assets.py
-  line: 63
+  line: 64
   column: 1
   string: lnEnhance
 - id: I0125
   file: tests/test_dynamic_assets.py
-  line: 71
+  line: 72
   column: 1
   string: lnEnhance
 - id: I0126
   file: tests/test_embed_extract.py
-  line: 24
+  line: 23
   column: 31
   string: Levi Neuwirth
 - id: I0127
@@ -635,27 +635,27 @@ entries:
   string: lnUtils
 - id: I0130
   file: tests/test_popup_providers.py
-  line: 77
+  line: 78
   column: 31
   string: levineuwirth.org
 - id: I0131
   file: tests/test_popup_providers.py
-  line: 77
+  line: 78
   column: 77
   string: levineuwirth.org
 - id: I0132
   file: tools/add-popup-source.sh
-  line: 23
+  line: 24
   column: 17
   string: levineuwirth.org
 - id: I0133
   file: tools/add-popup-source.sh
-  line: 166
+  line: 167
   column: 34
   string: levineuwirth.org
 - id: I0134
   file: tools/add-popup-source.sh
-  line: 166
+  line: 167
   column: 64
   string: ln@levineuwirth.org
 - id: I0135
@@ -705,12 +705,12 @@ entries:
   string: data-ln-idx
 - id: I0144
   file: tools/build-freshness.sh
-  line: 88
-  column: 23
+  line: 92
+  column: 25
   string: levineuwirth
 - id: I0145
   file: tools/build-notes-font.py
-  line: 152
+  line: 155
   column: 25
   string: levineuwirth.org
 - id: I0146
@@ -740,12 +740,12 @@ entries:
   string: levineuwirth
 - id: I0151
   file: tools/profile-build-arm.sh
-  line: 34
+  line: 36
   column: 6
   string: levineuwirth
 - id: I0152
   file: tools/profile-build-arm.sh
-  line: 62
+  line: 64
   column: 25
   string: levineuwirth.org
 - id: I0153
@@ -765,12 +765,12 @@ entries:
   string: LN Sans
 - id: I0156
   file: tools/subset-fonts.py
-  line: 67
+  line: 70
   column: 35
   string: levineuwirth
 - id: I0157
   file: tools/subset-fonts.py
-  line: 107
+  line: 110
   column: 38
   string: LN Sans
 - id: I0158

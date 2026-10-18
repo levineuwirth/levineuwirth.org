@@ -27,7 +27,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests._browser import (BROWSERS, ROOT, check_site, enforcing_csp, harness_routes,
+from tests._browser import (BROWSERS, SITE_ROOT, check_site, enforcing_csp, harness_routes,
                             require_playwright, requires_browser, run_harness, site_server)
 
 ROUTES = harness_routes()
@@ -39,7 +39,7 @@ ROUTES = harness_routes()
 # each cost last time (recorded below; evenly the first time): the fixed
 # thirds left one Chromium shard 222 s against others' 82-160 s.
 SHARDS = {"chromium": 4, "firefox": 2}
-COSTS = ROOT / ".browser-runs" / "csp-route-secs.json"
+COSTS = SITE_ROOT / ".browser-runs" / "csp-route-secs.json"
 
 
 def shards(browser: str, names: list[str]) -> list[list[str]]:

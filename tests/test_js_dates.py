@@ -15,9 +15,9 @@ import shutil
 import subprocess
 import unittest
 
-from tests._helpers import ROOT, script_env
+from tests._helpers import engine_path, script_env
 
-UTILS = ROOT / "static" / "js" / "utils.js"
+UTILS = engine_path("static/js/utils.js")
 
 RUN = """
 const vm = require('vm'), fs = require('fs');

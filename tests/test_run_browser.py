@@ -27,8 +27,11 @@ import time
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-RUNNER = ROOT / "tests" / "run_browser.py"
+from tests._helpers import engine_path
+
+RUNNER = engine_path("tests/run_browser.py")
+# The directory holding the tests package, for scripts that import it.
+PACKAGE_ROOT = RUNNER.parent.parent
 
 # A process in its parent's group that ignores SIGTERM, records its pid in
 # argv[1] and waits.
@@ -124,7 +127,7 @@ class RunBrowser(unittest.TestCase):
 
     def runner(self, *args: str, **env: str) -> subprocess.Popen:
         proc = subprocess.Popen([sys.executable, str(RUNNER), *args],
-                                env={**os.environ, "BROWSER_TESTS_ROOT": str(self.tmp),
+                                env={**os.environ, "BROWSER_TESTS_ROOT": str(self.tmp), "SITE_ROOT": str(self.tmp),
                                      "FAKE_MARK": str(self.mark), "BROWSER_MIN_FREE_GB": "0",
                                      "STUBBORN_CHILD": STUBBORN_CHILD, **env},
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
@@ -177,7 +180,7 @@ class RunBrowser(unittest.TestCase):
         sleeper = self.tmp / "sleeper.py"
         sleeper.write_text(SLEEPER)
         driver = self.tmp / "driver.py"
-        driver.write_text(DRIVER.format(root=str(ROOT), out=str(self.tmp / "out"), sleeper=str(sleeper)))
+        driver.write_text(DRIVER.format(root=str(PACKAGE_ROOT), out=str(self.tmp / "out"), sleeper=str(sleeper)))
         for sig in (signal.SIGTERM, signal.SIGINT):
             for stubborn_child in (False, True):
                 with self.subTest(signal=sig.name, child_ignores_sigterm=stubborn_child):
@@ -203,7 +206,7 @@ class RunBrowser(unittest.TestCase):
         sleeper = self.tmp / "sleeper.py"
         sleeper.write_text(SLEEPER)
         (self.tmp / "tests" / "test_browser_chain.py").write_text(
-            HARNESS_MODULE.format(root=str(ROOT), out=str(self.tmp / "out"), sleeper=str(sleeper)))
+            HARNESS_MODULE.format(root=str(PACKAGE_ROOT), out=str(self.tmp / "out"), sleeper=str(sleeper)))
         for sig in (signal.SIGTERM, signal.SIGINT):
             with self.subTest(signal=sig.name):
                 mark = self.tmp / f"sleeper-{sig.name}.pid"

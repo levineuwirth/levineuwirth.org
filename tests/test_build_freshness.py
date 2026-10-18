@@ -21,10 +21,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests._helpers import script_env, site_binary
+from tests._helpers import engine_path, script_env, site_binary
 
-REPO = Path(__file__).resolve().parent.parent
-SCRIPT = REPO / "tools" / "build-freshness.sh"
+SCRIPT = engine_path("tools/build-freshness.sh")
 
 PAGE = """---
 title: An Essay
@@ -94,8 +93,9 @@ class BuildFreshnessTestCase(unittest.TestCase):
         tools = self.root / "tools"
         tools.mkdir(exist_ok=True)
         shutil.copy2(SCRIPT, tools / SCRIPT.name)
-        shutil.copy2(REPO / "tools/unpublished.py", tools / "unpublished.py")
-        shutil.copy2(REPO / "tools/sitelib.py", tools / "sitelib.py")
+        shutil.copy2(engine_path("tools/site-paths.sh"), tools / "site-paths.sh")
+        shutil.copy2(engine_path("tools/unpublished.py"), tools / "unpublished.py")
+        shutil.copy2(engine_path("tools/sitelib.py"), tools / "sitelib.py")
 
         self.git("add", "-A")
         self.git("commit", "-q", "-m", "initial")
@@ -108,11 +108,11 @@ class BuildFreshnessTestCase(unittest.TestCase):
         )
         (self.root / "_cache").mkdir(exist_ok=True)
 
-    def run_script(self, arg: str) -> subprocess.CompletedProcess:
+    def run_script(self, arg: str, tools: str = "tools") -> subprocess.CompletedProcess:
         env = script_env(CLEAN_CMD=f"touch {self.root}/CLEANED", STATE_DIR="data",
                          CACHE_DIR="_cache", SITE_BINARY=str(self.binary))
         return subprocess.run(
-            ["bash", str(self.root / "tools" / SCRIPT.name), arg],
+            ["bash", str(self.root / tools / SCRIPT.name), arg],
             cwd=self.root,
             capture_output=True,
             text=True,
@@ -122,8 +122,8 @@ class BuildFreshnessTestCase(unittest.TestCase):
     def cleaned(self) -> bool:
         return (self.root / "CLEANED").exists()
 
-    def check(self) -> str:
-        result = self.run_script("check")
+    def check(self, tools: str = "tools") -> str:
+        result = self.run_script("check", tools)
         self.assertEqual(result.returncode, 0, result.stderr)
         return result.stderr
 
@@ -297,6 +297,21 @@ class BuildFreshnessTestCase(unittest.TestCase):
     def test_rules_change_forces_a_clean(self):
         self.write("build/Site.hs", "main = print 1\n")
         self.assertIn("build rules changed", self.check())
+        self.assertTrue(self.cleaned())
+
+    def test_rules_moved_under_engine_are_the_same_rules(self):
+        # A6 moves the generator and the tools under engine/: the rules are
+        # the same until one changes there, and the script works on the site
+        # it is run from, wherever it sits.
+        (self.root / "engine").mkdir()
+        cabal = next(self.root.glob("*.cabal")).name
+        for name in ("build", cabal, "tools"):
+            self.git("mv", name, f"engine/{name}")
+        self.git("commit", "-q", "-m", "move the engine")
+        self.assertIn("incremental build OK", self.check("engine/tools"))
+        self.assertFalse(self.cleaned())
+        self.write("engine/build/Site.hs", "main = print 1\n")
+        self.assertIn("build rules changed", self.check("engine/tools"))
         self.assertTrue(self.cleaned())
 
     def test_content_deletion_forces_a_clean(self):

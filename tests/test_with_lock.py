@@ -7,10 +7,9 @@ import time
 import unittest
 from pathlib import Path
 
-from tests._helpers import script_env
+from tests._helpers import engine_path, script_env
 
-ROOT = Path(__file__).resolve().parents[1]
-WITH_LOCK = str(ROOT / "tools" / "with-lock.sh")
+WITH_LOCK = str(engine_path("tools/with-lock.sh"))
 
 
 @unittest.skipUnless(shutil.which("flock"), "flock(1) not installed")

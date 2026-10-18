@@ -9,7 +9,8 @@ import tempfile
 import unittest
 from xml.etree import ElementTree
 
-from tests._helpers import ROOT, requires_cabal, script_env, site_binary, write_site_config
+from tests._helpers import (ENGINE, engine_path, requires_cabal, script_env, site_binary,
+                            write_site_config)
 
 
 def standalone(source, route, **settings):
@@ -304,10 +305,11 @@ class FeedRenderingTests(unittest.TestCase):
         # An empty feed is valid, and configured text is escaped, only
         # through Config.renderSiteFeed; a rule calling Hakyll's renderers
         # directly would write <updated>Unknown or unescaped settings.
-        for path in sorted((ROOT / "build").rglob("*.hs")):
+        build = engine_path("build")
+        for path in sorted(build.rglob("*.hs")):
             if path.name == "Config.hs":
                 continue
-            with self.subTest(path=path.relative_to(ROOT)):
+            with self.subTest(path=path.relative_to(build.parent)):
                 text = path.read_text(encoding="utf-8")
                 self.assertNotRegex(text, r"\brender(Atom|Rss)\b")
 
@@ -350,8 +352,8 @@ class FeedProbeTests(unittest.TestCase):
         (build / "Probe.hs").write_text(PROBE)
         cls.binary = build / "probe"
         compiled = subprocess.run(
-            ["cabal", "exec", "--", "ghc", "-v0", "-ibuild", "-outputdir", str(build),
-             str(build / "Probe.hs"), "-o", str(cls.binary)], cwd=ROOT, env=script_env(),
+            ["cabal", "exec", "--", "ghc", "-v0", f"-i{engine_path('build')}", "-outputdir", str(build),
+             str(build / "Probe.hs"), "-o", str(cls.binary)], cwd=ENGINE, env=script_env(),
             capture_output=True, text=True, timeout=180)
         if compiled.returncode:
             raise AssertionError(compiled.stderr)
@@ -414,8 +416,8 @@ main = hakyll $ do
 ''')
             binary = root / "probe"
             compiled = subprocess.run(
-                ["cabal", "exec", "--", "ghc", "-v0", "-ibuild", "-outputdir", str(root),
-                 str(driver), "-o", str(binary)], cwd=ROOT, env=script_env(),
+                ["cabal", "exec", "--", "ghc", "-v0", f"-i{engine_path('build')}", "-outputdir", str(root),
+                 str(driver), "-o", str(binary)], cwd=ENGINE, env=script_env(),
                 capture_output=True, text=True, timeout=120)
             self.assertEqual(compiled.returncode, 0, compiled.stderr)
             for title in ("Example Site", "Changed Site"):

@@ -4,7 +4,10 @@
 Configuration comes from `site config`. The site-owned migration policy lists
 legacy names, the ln namespace patterns, and the files and directories staying
 in the site; it is not part of the engine. Every file Git sees has an owner.
-Allowances cover individual occurrences. Stable IDs survive reviewed location
+An engine path names a file by its path in the engine, found under engine/
+once A6 moves it there and at the root until then; scans and allowances use
+that name, so a move is not a relocation. Allowances cover individual
+occurrences. Stable IDs survive reviewed location
 changes; every recorded revision must be a subset of the previous revision.
 There is deliberately no command to refresh or regenerate allowances.
 """
@@ -19,8 +22,9 @@ import sys
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from sitelib import ROOT, site_binary
+from sitelib import SITE_ROOT, site_binary
 
+ENGINE = "engine/"
 ALLOWANCES = "tests/identity-allowances.yaml"
 POLICY = "tests/identity-policy.yaml"
 PATHS = "tests/engine-paths.txt"
@@ -57,6 +61,13 @@ def scanners(terms: list[str], patterns: list[str]) -> list[re.Pattern]:
     return result
 
 
+def located(root: Path, path: str) -> Path:
+    """An engine path where its file is: under engine/ once moved, else at
+    the root."""
+    moved = root / ENGINE / path
+    return moved if moved.exists() else root / path
+
+
 def occurrences(root: Path, paths: list[str], terms: list[str],
                 patterns: list[str] = ()) -> list[dict]:
     # Prefer the longest at a position: an email/domain/stem is one occurrence,
@@ -64,7 +75,7 @@ def occurrences(root: Path, paths: list[str], terms: list[str],
     compiled = scanners(terms, list(patterns))
     found = []
     for name in paths:
-        for line, text in enumerate((root / name).read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+        for line, text in enumerate(located(root, name).read_text(encoding="utf-8", errors="replace").splitlines(), 1):
             matches = sorted((m.start(), -m.end(), m.group())
                              for scanner in compiled for m in scanner.finditer(text) if m.end() > m.start())
             end = 0
@@ -176,19 +187,31 @@ def inventory(root: Path, policy: dict) -> list[str]:
         raise ValueError("engine paths name files, not directories")
     # Every file in the repository needs an owner: an engine path, a site or
     # vendored file, or a site or vendored directory (an entry ending in /).
-    # An engine path inside a site directory is the engine's. Engine and site
-    # entries must exist; vendored files are downloaded and need not.
+    # An engine path inside a site directory is the engine's. Under engine/,
+    # only engine paths and vendored files belong, by their path there, and
+    # each engine path is in one place. Engine and site entries must exist;
+    # vendored files are downloaded and need not.
     owned = policy["site-files"] + policy["vendored-files"]
     files = [e for e in owned if not e.endswith("/")]
     directories = [e for e in owned if e.endswith("/")]
     listed = paths + files + directories
-    conflicting = sorted({e for e in listed if listed.count(e) > 1})
     candidates = visible_files(root)
+    conflicting = sorted({e for e in listed if listed.count(e) > 1}
+                         | {p for p in paths if p in candidates and ENGINE + p in candidates})
     exact = set(paths) | set(files)
-    unclassified = sorted(p for p in candidates
-                          if p not in exact and not any(p.startswith(d) for d in directories))
+    vendored = policy["vendored-files"]
+
+    def owner(path: str) -> bool:
+        if path.startswith(ENGINE):
+            rel = path.removeprefix(ENGINE)
+            return rel in paths or any(rel == v or (v.endswith("/") and rel.startswith(v))
+                                       for v in vendored)
+        return path in exact or any(path.startswith(d) for d in directories)
+
+    unclassified = sorted(p for p in candidates if not owner(p))
     site = policy["site-files"]
-    missing = sorted(({*paths, *(e for e in site if not e.endswith("/"))} - candidates)
+    missing = sorted({p for p in paths if p not in candidates and ENGINE + p not in candidates}
+                     | ({e for e in site if not e.endswith("/")} - candidates)
                      | {d for d in site if d.endswith("/") and not any(p.startswith(d) for p in candidates)})
     if unclassified or missing or conflicting:
         raise ValueError(f"engine inventory: unclassified={unclassified}, missing={missing}, conflicting={conflicting}")
@@ -210,8 +233,8 @@ def check(root: Path, config: dict) -> tuple[int, int]:
 
 def main() -> int:
     try:
-        config = json.loads(subprocess.check_output([site_binary(), "config"], cwd=ROOT, text=True))
-        paths, count = check(ROOT, config)
+        config = json.loads(subprocess.check_output([site_binary(), "config"], cwd=SITE_ROOT, text=True))
+        paths, count = check(SITE_ROOT, config)
         print(f"identity: {paths} engine files; {count} frozen allowances remain")
         return 0
     except (OSError, ValueError, subprocess.CalledProcessError) as error:

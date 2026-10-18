@@ -21,8 +21,33 @@ from functools import lru_cache
 from pathlib import Path
 from types import ModuleType
 
-ROOT = Path(__file__).resolve().parents[1]
-TOOLS = ROOT / "tools"
+# The site under test: $SITE_ROOT, else the working directory, from which
+# `make test` runs (the repository root throughout Phase A). The engine is
+# the one these tests belong to: ENGINE holds tests/, and the engine's other
+# files (tools, templates, static assets, build/, golden fixtures) come from
+# 'engine_path', as tools/sitelib.py resolves them.
+SITE_ROOT = Path(os.environ.get("SITE_ROOT") or os.getcwd()).resolve()
+ENGINE = Path(__file__).resolve().parents[1]
+
+
+def engine_path(rel: str | Path) -> Path:
+    """An engine file or directory by its path in the engine: under engine/
+    once A6 has moved it there, beside these tests, or, while A6 has moved
+    these tests and not it, beside the site."""
+    for found in (ENGINE / "engine" / rel, ENGINE / rel, SITE_ROOT / rel):
+        if found.exists():
+            return found
+    return ENGINE / rel
+
+
+def copy_engine_tree(rel: str, dest: Path, **copytree) -> Path:
+    """Copy the directory `rel` (templates, tools) as a build sees it to
+    `dest`: the engine's, then the site's over it, as the build's aliases
+    let a site file win. Until A6 they are one directory."""
+    for source in dict.fromkeys((engine_path(rel), SITE_ROOT / rel)):
+        if source.is_dir():
+            shutil.copytree(source, dest, dirs_exist_ok=True, **copytree)
+    return dest
 
 
 def load_tool(filename: str, name: str | None = None, *, register: bool = False) -> ModuleType:
@@ -30,7 +55,7 @@ def load_tool(filename: str, name: str | None = None, *, register: bool = False)
     cannot be imported by name. `register` puts the module in sys.modules
     before running it, which a dataclass defined in the tool needs."""
     name = name or Path(filename).stem.replace("-", "_")
-    spec = importlib.util.spec_from_file_location(name, TOOLS / filename)
+    spec = importlib.util.spec_from_file_location(name, engine_path(f"tools/{filename}"))
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     if register:
@@ -46,11 +71,11 @@ requires_cabal = unittest.skipUnless(shutil.which("cabal"), "cabal not on PATH")
 def site_binary() -> Path:
     """The generator, rebuilt first if any source changed; once per run,
     not once per test class."""
-    done = subprocess.run(["cabal", "build", "-v0", "exe:site"], cwd=ROOT,
+    done = subprocess.run(["cabal", "build", "-v0", "exe:site"], cwd=ENGINE,
                           capture_output=True, text=True)
     if done.returncode:
         raise AssertionError(f"`cabal build -v0 exe:site` failed:\n{done.stderr[-2000:]}")
-    found = subprocess.run(["cabal", "list-bin", "-v0", "exe:site"], cwd=ROOT,
+    found = subprocess.run(["cabal", "list-bin", "-v0", "exe:site"], cwd=ENGINE,
                            capture_output=True, text=True, check=True)
     return Path(found.stdout.strip())
 
@@ -61,7 +86,7 @@ def site_binary() -> Path:
 # inside the very deploy they were meant to allow (40190c8).
 _LEAKY_PREFIXES = ("DEPLOY_", "BORG_")
 _LEAKY_NAMES = ("SITE_LOCK_HELD", "LOCK_TIMEOUT", "REQUIRE_WEBP", "SITE_ENV",
-                "SITE_BINARY")
+                "SITE_BINARY", "SITE_ROOT")
 
 
 def script_env(path: Path | str | None = None, **overrides: str) -> dict[str, str]:

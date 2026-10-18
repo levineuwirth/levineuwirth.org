@@ -15,9 +15,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests._helpers import ROOT, script_env
+from tests._helpers import engine_path, script_env
 
-TOOL = ROOT / "tools" / "build-inputs.py"
+TOOL = engine_path("tools/build-inputs.py")
 INPUTS = ["static", "data", "tools", "nginx", "Makefile", "yaml-source"]
 
 
@@ -113,6 +113,25 @@ class BuildInputsTests(unittest.TestCase):
         self.assertEqual(self.check(), (0, []))
         self.write("data/build-inputs.json.tmp", "debris")
         self.assertEqual(self.check(), (0, []))
+
+    def test_a_separate_engine_is_recorded_by_commit(self) -> None:
+        # Inside the site's tree, the engine's files are inputs like any other.
+        self.write("engine/build/Site.hs", "main = pure ()")
+        self.run_tool("record", *INPUTS)
+        self.assertEqual(self.check(), (0, []))
+        # A repository of its own (the engine's checkout behind a symlink)
+        # is named by its commit.
+        def git(*args: str) -> str:
+            return subprocess.run(["git", "-C", str(self.root / "engine"), "-c", "user.name=T",
+                                   "-c", "user.email=t@example.org", *args], env=script_env(),
+                                  capture_output=True, text=True, check=True).stdout.strip()
+        git("init", "-q")
+        git("commit", "-q", "--allow-empty", "-m", "one")
+        first = git("rev-parse", "HEAD")
+        self.run_tool("record", *INPUTS)
+        self.assertEqual(self.check(), (0, []))
+        git("commit", "-q", "--allow-empty", "-m", "two")
+        self.assertEqual(self.check(), (1, [f"engine {first} -> {git('rev-parse', 'HEAD')}"]))
 
     def test_usage(self) -> None:
         self.assertEqual(self.run_tool().returncode, 2)

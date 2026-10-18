@@ -18,7 +18,23 @@ from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+# The site a tool works on: $SITE_ROOT, else the working directory, which is
+# where the Makefile runs every tool. The engine is wherever these tools are:
+# ENGINE holds tools/, the repository's root until A6 moves the engine into
+# engine/ in batches, and its other files (templates, static assets, build/)
+# are found through 'engine_path'.
+SITE_ROOT = Path(os.environ.get("SITE_ROOT") or os.getcwd()).resolve()
+ENGINE = Path(__file__).resolve().parent.parent
+
+
+def engine_path(rel: str | Path) -> Path:
+    """An engine file or directory by its path in the engine: under engine/
+    once A6 has moved it there, beside these tools, or, while A6 has moved
+    these tools and not it, beside the site."""
+    for found in (ENGINE / "engine" / rel, ENGINE / rel, SITE_ROOT / rel):
+        if found.exists():
+            return found
+    return ENGINE / rel
 
 
 @contextmanager
@@ -101,7 +117,9 @@ def site_binary() -> str:
     have no Haskell project to build."""
     if binary := os.environ.get("SITE_BINARY"):
         return binary
-    subprocess.run(["cabal", "build", "-v0", "exe:site"], cwd=ROOT, check=True)
+    # From the engine, wherever it is: cabal finds the cabal.project above
+    # it, which names the engine's package (from A6b, `packages: engine`).
+    subprocess.run(["cabal", "build", "-v0", "exe:site"], cwd=ENGINE, check=True)
     return subprocess.check_output(
-        ["cabal", "list-bin", "-v0", "exe:site"], cwd=ROOT, text=True,
+        ["cabal", "list-bin", "-v0", "exe:site"], cwd=ENGINE, text=True,
     ).strip()

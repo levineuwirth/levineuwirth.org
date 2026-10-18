@@ -30,11 +30,12 @@
 
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-LEAFLET_DIR="$REPO_ROOT/static/leaflet"
-CHECKSUMS="$REPO_ROOT/tools/leaflet-checksums.sha256"
+# shellcheck source=tools/site-paths.sh
+source "$(dirname "$0")/site-paths.sh"
+LEAFLET_DIR="$(engine_path static)/leaflet"
+CHECKSUMS="$(dirname "$0")/leaflet-checksums.sha256"
 # shellcheck source=tools/pin-check.sh
-source "$REPO_ROOT/tools/pin-check.sh"
+source "$(dirname "$0")/pin-check.sh"
 
 LEAFLET_VERSION="${LEAFLET_VERSION:-1.9.4}"
 MARKERCLUSTER_VERSION="${MARKERCLUSTER_VERSION:-1.5.3}"

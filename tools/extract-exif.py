@@ -47,9 +47,10 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import photo_sidecars  # noqa: E402
+import sitelib  # noqa: E402
 
-REPO_ROOT = Path(__file__).parent.parent
-CONTENT_DIR = REPO_ROOT / "content" / "photography"
+SITE_ROOT = sitelib.SITE_ROOT
+CONTENT_DIR = SITE_ROOT / "content" / "photography"
 TOOL = "extract-exif"
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png"}

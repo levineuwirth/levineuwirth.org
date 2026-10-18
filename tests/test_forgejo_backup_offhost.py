@@ -9,9 +9,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests._helpers import TOOLS, script_env, stub_bin
+from tests._helpers import SITE_ROOT, script_env, stub_bin
 
-SOURCE = (TOOLS / "forgejo-backup.sh").read_text()
+SOURCE = (SITE_ROOT / "tools" / "forgejo-backup.sh").read_text()
 FUNCTION = re.search(r"^offhost_copy\(\) \{\n.*?^\}\n", SOURCE, re.M | re.S).group(0)
 
 

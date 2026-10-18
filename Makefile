@@ -49,7 +49,12 @@ PY      := $(if $(wildcard $(VENV_PY)),$(VENV_PY),python3)
 #
 # LOCK_TIMEOUT=<seconds> waits for a busy lock instead of failing at once.
 LOCK_FILE := data/.site-build.lock
-WITH_LOCK  = ./tools/with-lock.sh $(LOCK_FILE)
+WITH_LOCK  = $(call tool,with-lock.sh) $(LOCK_FILE)
+
+# An engine tool by name: under engine/tools/ once A6 moves the engine
+# there, in tools/ beside the site until then (tools/sitelib.py's
+# engine_path). The site's own tools (cv-pdfs.py) are named directly.
+tool = $(firstword $(wildcard engine/tools/$(1)) tools/$(1))
 
 # Flags handed to the post-build artifact gate (tools/check-site.py).
 #
@@ -122,20 +127,20 @@ build-locked:
 	# frontmatter changed, stale full-rebuild stamp); otherwise the build
 	# is incremental. This is what lets `make deploy` skip its old
 	# unconditional `clean`.
-	@./tools/build-freshness.sh check
+	@$(call tool,build-freshness.sh) check
 	# Responsive photo variants (P01). Must come BEFORE convert-images so
 	# each .w480/.w960/.w1440 file gets a .webp companion of its own, and
 	# before the dimension sidecars below (which skip variants outright).
 	@$(MAKE) -s thumbnails
-	@./tools/convert-images.sh
+	@$(call tool,convert-images.sh)
 	@$(MAKE) -s pdf-thumbs
-	@./tools/download-pdfjs.sh
-	@./tools/download-leaflet.sh
+	@$(call tool,download-pdfjs.sh)
+	@$(call tool,download-leaflet.sh)
 	# The semantic-search model (static/models/, gitignored), like the two
 	# above: without it the deploy's rsync --delete would remove the
 	# published model (audit D07). Skips present files after re-checking
 	# their pinned SHA-256.
-	@./tools/download-model.sh >/dev/null
+	@$(call tool,download-model.sh) >/dev/null
 	# Photography pipeline (Phase 3): generate per-photo EXIF + palette
 	# sidecars under content/photography/**/*.{exif,palette}.yaml so the
 	# Hakyll context can merge them with frontmatter at compile time.
@@ -144,9 +149,9 @@ build-locked:
 	# attrs to body images for CLS prevention.
 	# Gated on .venv presence, same as embed.py — failures are non-fatal.
 	@if [ -x $(VENV_PY) ]; then \
-	  $(VENV_PY) tools/extract-exif.py       || echo "Warning: EXIF extraction failed (build continues with frontmatter only)"; \
-	  $(VENV_PY) tools/extract-palette.py    || echo "Warning: palette extraction failed (build continues with frontmatter only)"; \
-	  $(VENV_PY) tools/extract-dimensions.py || echo "Warning: dimension extraction failed (build continues without width/height attrs)"; \
+	  $(VENV_PY) $(call tool,extract-exif.py)       || echo "Warning: EXIF extraction failed (build continues with frontmatter only)"; \
+	  $(VENV_PY) $(call tool,extract-palette.py)    || echo "Warning: palette extraction failed (build continues with frontmatter only)"; \
+	  $(VENV_PY) $(call tool,extract-dimensions.py) || echo "Warning: dimension extraction failed (build continues without width/height attrs)"; \
 	else \
 	  echo "Photography sidecars skipped: run 'uv sync' to enable EXIF + palette + dimension extraction (build continues with frontmatter only)"; \
 	fi
@@ -156,7 +161,7 @@ build-locked:
 	# slug-URL integrity error exits non-zero and halts the build; a
 	# transient network failure is non-fatal (the entry retries next build).
 	@if [ -x $(VENV_PY) ]; then \
-	  $(VENV_PY) tools/archive.py fetch; \
+	  $(VENV_PY) $(call tool,archive.py) fetch; \
 	else \
 	  echo "Archive fetch skipped: run 'uv sync' to enable link archiving (build continues)"; \
 	fi
@@ -165,7 +170,7 @@ build-locked:
 	# Python stdlib plus the site draft scanner; not gated on .venv.
 	# Network failures are warnings;
 	# the link keeps its previous snapshot or gets no code popup.
-	@python3 tools/code-refs.py fetch
+	@python3 $(call tool,code-refs.py) fetch
 	# ---- Stage 1: compile (produces the HTML that embed.py reads) --------
 	cabal run site -- build
 	# Purge dev/watch leftovers BEFORE embedding or indexing: drafts under
@@ -194,7 +199,7 @@ build-locked:
 	# after the one that created it. (B01)
 	@touch data/.embed-start
 	@if [ -x $(VENV_PY) ]; then \
-	  HF_HUB_DISABLE_IMPLICIT_TOKEN=1 $(VENV_PY) tools/embed.py || echo "Warning: embedding failed — data/similar-links.json not updated (build continues)"; \
+	  HF_HUB_DISABLE_IMPLICIT_TOKEN=1 $(VENV_PY) $(call tool,embed.py) || echo "Warning: embedding failed — data/similar-links.json not updated (build continues)"; \
 	else \
 	  echo "Embedding skipped: run 'uv sync' to enable similar-links (build continues)"; \
 	fi
@@ -216,7 +221,7 @@ build-locked:
 	else \
 	  echo "build: stage 2 changed nothing — the second compile pass is skipped"; \
 	fi
-	@./tools/build-freshness.sh stamp
+	@$(call tool,build-freshness.sh) stamp
 	# Defense in depth: stage 3 runs with SITE_ENV=production and cannot
 	# create drafts, but an aborted earlier run could have left some.
 	@if [ -d _site/drafts ]; then \
@@ -226,13 +231,13 @@ build-locked:
 	# Hakyll never deletes an output whose source is gone, and the score
 	# pages are gitignored, so build-freshness never sees them go: remove
 	# published score files that no longer have a source (audit M02).
-	@python3 tools/prune-site.py _site
+	@python3 $(call tool,prune-site.py) _site
 	# ---- Stage 4: index --------------------------------------------------
 	# Runs after stage 3 so the keyword index covers the Related sections.
 	# Indexed into a scratch directory and copied over by content, so
 	# unchanged index files keep their mtimes (deploys and readers' caches
 	# skip them) while stale fragments are still removed; see the script.
-	./tools/pagefind-index.sh _site
+	$(call tool,pagefind-index.sh) _site
 	# ---- Stage 5: stamp --------------------------------------------------
 	# The site-wide build time every footer shows, written once to
 	# _site/build/time.txt; static/js/nav.js puts it in each page's empty
@@ -240,15 +245,15 @@ build-locked:
 	# page (P05), so every build rewrote ~500 unchanged pages and every
 	# deploy re-signed and re-sent them; pages now stay byte-identical
 	# until their content changes. See tools/stamp-build-time.py.
-	@python3 tools/stamp-build-time.py _site
-	@./tools/compress-assets.sh _site
+	@python3 $(call tool,stamp-build-time.py) _site
+	@$(call tool,compress-assets.sh) _site
 	# ---- Stage 6: gate ---------------------------------------------------
 	# Reject the finished artifact before anything can sign or ship it:
 	# published private/ignored files (S01), figure-render error blocks and
 	# unresolved "Figure ?" references that Hakyll happily exits 0 on
 	# (B03), draft links (B08), missing images, broken feeds. See
 	# tools/check-site.py. `make validate` runs the same gate by hand.
-	@python3 tools/check-site.py _site $(CHECK_SITE_FLAGS)
+	@python3 $(call tool,check-site.py) _site $(CHECK_SITE_FLAGS)
 	# IGNORE.txt pins pages against stability changes for one build
 	# (build/Stability.hs). Clear it only once the build has passed the
 	# gate: a rejected build has not used the pins.
@@ -260,34 +265,34 @@ build-locked:
 	# What this build was built from, for tests that need _site to match
 	# the tree (tests/_browser.py). Last, so nothing the build writes
 	# afterwards reads as a change.
-	@python3 tools/build-inputs.py record $(DIRTY_PATHS) content
+	@python3 $(call tool,build-inputs.py) record $(DIRTY_PATHS) content
 
 sign:
-	@$(WITH_LOCK) ./tools/sign-site.sh
+	@$(WITH_LOCK) $(call tool,sign-site.sh)
 
 # Download the quantized ONNX model for client-side semantic search.
 # Run once; files are gitignored. Safe to re-run (skips existing files).
 download-model:
-	@./tools/download-model.sh
+	@$(call tool,download-model.sh)
 
 # Vendor Mozilla's prebuilt PDF.js viewer into static/pdfjs/.
 # Runs automatically as part of `build` (skips when already present).
 # Files are gitignored; sha256-verified against tools/pdfjs-checksums.sha256.
 download-pdfjs:
-	@./tools/download-pdfjs.sh
+	@$(call tool,download-pdfjs.sh)
 
 # Vendor Leaflet + leaflet.markercluster into static/leaflet/.
 # Used only by /photography/map/. Runs automatically as part of `build`
 # (skips when already present). Files are gitignored; sha256-verified
 # against tools/leaflet-checksums.sha256.
 download-leaflet:
-	@./tools/download-leaflet.sh
+	@$(call tool,download-leaflet.sh)
 
 # Generate .gz and .br sidecars for compressible text assets in _site/.
 # Runs automatically as part of `build`. Pairs with `gzip_static` /
 # `brotli_static` in the nginx vhost (see nginx/static-assets.conf).
 compress-assets:
-	@$(WITH_LOCK) ./tools/compress-assets.sh _site
+	@$(WITH_LOCK) $(call tool,compress-assets.sh) _site
 
 # Convert JPEG/PNG images to WebP companions (also runs automatically in build).
 #
@@ -302,7 +307,7 @@ compress-assets:
 # it now says so loudly. `make validate REQUIRE_WEBP=1` makes it fatal, and
 # `make deploy` sets that itself.
 convert-images:
-	@$(WITH_LOCK) ./tools/convert-images.sh
+	@$(WITH_LOCK) $(call tool,convert-images.sh)
 
 # Generate responsive delivery variants for photography (also runs in build).
 #
@@ -336,7 +341,7 @@ thumbnails:
 	@$(WITH_LOCK) $(MAKE) --no-print-directory thumbnails-locked
 
 thumbnails-locked:
-	@$(PY) tools/generate-thumbnails.py $(THUMBNAIL_FLAGS)
+	@$(PY) $(call tool,generate-thumbnails.py) $(THUMBNAIL_FLAGS)
 
 # Generate first-page thumbnails for the PDFs under static/ (also runs in
 # build). Requires pdftoppm: pacman -S poppler  /  apt install poppler-utils
@@ -410,8 +415,10 @@ pdfs:
 # deploy-preflight runs those fetchers first: a new snapshot then shows up
 # here as an untracked input, in seconds, instead of shipping uncommitted
 # (it did on 2026-10-01, audit X1). The root files are those published
-# verbatim under /source/ or compiled into the generator.
-DIRTY_PATHS := build templates static data yaml-source tools nginx Makefile levineuwirth.cabal site.yaml \
+# verbatim under /source/ or compiled into the generator. engine/ holds the
+# engine's own once A6 moves them there; a path that has moved away is no
+# longer there to be dirty.
+DIRTY_PATHS := $(wildcard engine) build templates static data yaml-source tools nginx Makefile levineuwirth.cabal site.yaml \
 	code-refs archive cabal.project cabal.project.freeze pyproject.toml uv.lock \
 	LICENSE LICENSE-CONTENT THIRD-PARTY.md README.md WRITING.md PHOTOGRAPHY.md
 
@@ -440,8 +447,8 @@ deploy-preflight:
 	 fi
 	# Fetch what the build would fetch before judging the tree, so that a
 	# snapshot for a newly linked page or code file is caught below.
-	@python3 tools/code-refs.py fetch
-	@if [ -x $(VENV_PY) ]; then $(VENV_PY) tools/archive.py fetch; fi
+	@python3 $(call tool,code-refs.py) fetch
+	@if [ -x $(VENV_PY) ]; then $(VENV_PY) $(call tool,archive.py) fetch; fi
 	# Tracked modifications anywhere in DIRTY_PATHS, plus untracked files in
 	# all of them except data/. data/ is excluded from the untracked check
 	# on purpose: it is where every build artifact and state file lands
@@ -474,7 +481,7 @@ deploy-preflight:
 	 fi
 	# Score pages are ignored by git: a fresh checkout builds without them,
 	# but deploying it would remove the published scores.
-	@$(PY) tools/music-import.py check
+	@$(PY) $(call tool,music-import.py) check
 
 deploy-recheck:
 	@dirty=$$($(call dirty_inputs,$(RECHECK_PATHS))); \
@@ -503,7 +510,7 @@ VPS_DOCROOT = $(patsubst %/,%,$(strip $(VPS_PATH)))
 deploy-guard:
 	@test -n "$(strip $(VPS_USER))" || { echo "deploy: VPS_USER not set in .env" >&2; exit 1; }
 	@test -n "$(strip $(VPS_HOST))" || { echo "deploy: VPS_HOST not set in .env" >&2; exit 1; }
-	@tools/deploy-guard.sh docroot "$(VPS_PATH)" >/dev/null
+	@$(call tool,deploy-guard.sh) docroot "$(VPS_PATH)" >/dev/null
 	# Refuse to deploy a manifestly broken build. _site/index.html must
 	# exist and be non-empty before we run rsync --delete on the VPS.
 	@test -s _site/index.html || { echo "deploy: _site/index.html is missing or empty — refusing to rsync" >&2; exit 1; }
@@ -558,7 +565,7 @@ deploy-locked: deploy-preflight build-locked validate sign
 # index.html there) or a transfer that would delete more than
 # DEPLOY_MAX_DELETE files — see tools/deploy-guard.sh for the overrides.
 deploy-rsync-inplace: deploy-guard
-	@tools/deploy-guard.sh target _site "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$(VPS_DOCROOT)/"
+	@$(call tool,deploy-guard.sh) target _site "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$(VPS_DOCROOT)/"
 	rsync -avz --delete _site/ "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$(VPS_DOCROOT)/"
 
 # ---------------------------------------------------------------------------
@@ -672,7 +679,7 @@ test:
 # supplies, such as an untracked fixture or an exported variable. Slower
 # than `make test`: the generator compiles from scratch. KEEP=1 keeps the clone.
 test-clean:
-	@./tools/test-clean.sh
+	@$(call tool,test-clean.sh)
 
 # The browser tests (tests/test_browser_*.py): Chromium and Firefox through
 # Playwright over the built site, served as the production vhost serves it
@@ -692,7 +699,7 @@ test-browser:
 test-browser-locked:
 	@test -x $(VENV_PY) || { echo "test-browser: .venv/ is absent — run 'uv sync'." >&2; exit 1; }
 	@.venv/bin/playwright install chromium firefox
-	@$(VENV_PY) tools/browser/fetch_axe.py
+	@$(VENV_PY) $(call tool,browser/fetch_axe.py)
 	@$(VENV_PY) tests/run_browser.py
 
 # The deployment contract, checked in one command: both test suites plus
@@ -709,7 +716,7 @@ validate:
 validate-locked: REQUIRE_VENV = 1
 validate-locked: test
 	@test -d _site || { echo "validate: _site/ does not exist — run 'make build' first" >&2; exit 1; }
-	@python3 tools/check-site.py _site $(CHECK_SITE_FLAGS) $(if $(REQUIRE_WEBP),--require-webp,)
+	@python3 $(call tool,check-site.py) _site $(CHECK_SITE_FLAGS) $(if $(REQUIRE_WEBP),--require-webp,)
 	@$(MAKE) --no-print-directory viz-provenance-check
 
 # Checksum the CSVs behind each figure into figures/data/PROVENANCE.json, so
@@ -718,10 +725,10 @@ validate-locked: test
 # author writes there; `check` (viz-provenance-check) verifies the recorded
 # checksums still match and exits non-zero if not.
 viz-provenance:
-	@$(PY) tools/viz-provenance.py write
+	@$(PY) $(call tool,viz-provenance.py) write
 
 viz-provenance-check:
-	@$(PY) tools/viz-provenance.py check
+	@$(PY) $(call tool,viz-provenance.py) check
 
 # Render every figure and report what a reader would notice: a mark with no
 # variation in it, text that cannot be read against what sits behind it,
@@ -734,7 +741,7 @@ viz-provenance-check:
 # heatmap drawn from constant data, white labels repainted near-black, 4px
 # tick text, a y-axis reading "(imes)".
 audit-viz:
-	@$(PY) tools/audit-viz.py $(if $(STRICT),--strict,)
+	@$(PY) $(call tool,audit-viz.py) $(if $(STRICT),--strict,)
 
 # Report which content pieces are missing a monogram (mark.svg) and / or
 # the epistemic figure (status: frontmatter). Exits 0 unconditionally;
@@ -742,34 +749,34 @@ audit-viz:
 # hook tools/hooks/pre-commit-marks.sh (not installed by default; MARKS.md
 # § 9.3) makes its own, narrower check of newly added essays.
 audit-marks:
-	@$(PY) tools/audit-marks.py
+	@$(PY) $(call tool,audit-marks.py)
 
 # Evict archived works: delete archive/<slug>/ directories whose slug is
 # recorded in archive/removed.yaml. Opt-in — NEVER run by `make build`.
 # Orphan directories (not in manifest.yaml, not in removed.yaml) are
 # reported, never deleted. See ARCHIVE.md - Eviction & removal.
 archive-gc:
-	@$(PY) tools/archive.py gc
+	@$(PY) $(call tool,archive.py) gc
 
 # Submit archived URLs to the Wayback Machine and backfill the capture URL
 # into each PROVENANCE.json. A slow network job — opt-in, never run by
 # `make build`. Always exits 0; an entry without a capture retries next run.
 archive-wayback:
-	@$(PY) tools/archive.py wayback
+	@$(PY) $(call tool,archive.py) wayback
 
 # Print works cited in data/*.bib but not yet archived, as manifest-ready
 # lines the author copies by hand. Read-only — it never edits the manifest
 # (bibliography auto-seeding is rejected by design; see ARCHIVE.md).
 # Offline: scans local files only, no network.
 archive-suggest:
-	@$(PY) tools/archive.py suggest
+	@$(PY) $(call tool,archive.py) suggest
 
 # Probe every archived URL for link rot, updating data/archive-state.json.
 # A slow network job — opt-in, never run by `make build`. Asymmetric
 # hysteresis: `rotted` needs 3 consecutive failures over >=14 days; a
 # single success recovers immediately. The next build consumes the state.
 archive-check:
-	@$(PY) tools/archive.py check
+	@$(PY) $(call tool,archive.py) check
 
 # Dev build includes any in-progress drafts under content/drafts/essays/.
 # SITE_ENV=dev is read by build/Site.hs; `make build` now forces
