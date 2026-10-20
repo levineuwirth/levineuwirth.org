@@ -24,7 +24,9 @@
 #   root/.ssh/config, known_hosts
 #                              not the keys: the storage-box key that reaches
 #                              this archive cannot be restored from it
-#   usr/local/bin/, usr/local/lib/, var/lib/*-update/
+#   usr/local/bin/, usr/local/lib/, var/lib/*-update/, var/lib/forgejo-reconcile/
+#                              sync agreements must survive cache/host loss;
+#                              repository caches under /var/cache are disposable
 #   inventory/                 written at backup time: installed packages,
 #                              Docker networks, containers and images, enabled
 #                              units, timers, addresses
@@ -117,7 +119,8 @@ inv uname.txt uname -a
 # Paths that exist on this host; tar fails on one that does not.
 paths=()
 for p in etc root/forgejo-server root/couchdb-server root/anubis-server root/.ssh/config root/.ssh/known_hosts \
-         usr/local/bin usr/local/lib var/lib/forgejo-update var/lib/couchdb-update var/lib/anubis-update; do
+         usr/local/bin usr/local/lib var/lib/forgejo-update var/lib/couchdb-update var/lib/anubis-update \
+         var/lib/forgejo-reconcile; do
     [ -e "$ROOT/$p" ] && paths+=("$p")
 done
 [ -d "$ROOT/etc" ] || die "$ROOT/etc does not exist"

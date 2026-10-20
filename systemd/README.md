@@ -21,6 +21,7 @@ All times UTC. `+n` is the timer's `RandomizedDelaySec`.
 | `couchdb-update` | daily 05:30 +15m | pulls `couchdb:3`; backs up, copies `couchdb-data` cold, recreates, checks; puts data and image back on failure (state in `/var/lib/couchdb-update/`) |
 | `anubis-update` | daily 06:00 +15m | resolves the latest stable 1.x image to a digest; backs up, saves cold challenge state, replaces, checks stability and rolls back on failure (`anubis/README.md`); waits for `forgejo-update`, whose lock it shares |
 | `anubis-observe` | every 5 min | private counters/configuration/events; hourly access-log preservation and rolling 72-hour reports in `/root/anubis-observations/live/`; no service restart |
+| `forgejo-reconcile` | 15 min after each completed run +30s | explicitly mapped GitHub/Forgejo branches; private config/keys in `/etc/forgejo-reconcile`, agreement state in `/var/lib/forgejo-reconcile`, disposable bare caches in `/var/cache/forgejo-reconcile`; see [reconciliation](../forgejo/RECONCILE.md) |
 | `vps-offsite-verify` | 1st 05:00 +1h | `borg check`, then restores the newest archive of every set from the storage box |
 
 Containers: `forgejo` (127.0.0.1:3000, and :2222 for git over ssh) and
@@ -54,6 +55,13 @@ but excludes the temporary `state/` database. Recreate `state/` as UID/GID
 1000, mode 0700, and start Anubis before enabling the forge's nginx vhost;
 see `anubis/README.md`. Restoring without its temporary challenge database
 can make visitors solve the challenge again.
+
+For branch reconciliation, restore `/etc/forgejo-reconcile` and
+`/var/lib/forgejo-reconcile` together, recreate the `forge-sync` system user,
+and restore their ownership before starting the timer. The agreement state
+protects against undoing intentional history rewrites; do not discard it to
+make a held job pass. Bare caches can be fetched again. These paths are in
+the encrypted `config-*` backup; deploy keys are deliberately repository scoped.
 
 ## Installing the configuration backup (audit Y13)
 

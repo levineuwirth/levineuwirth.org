@@ -86,6 +86,7 @@ site-files:
 - tests/test_couchdb_update.py
 - tests/test_cv_pdfs.py
 - tests/test_forgejo_backup_offhost.py
+- tests/test_forgejo_reconcile.py
 - tests/test_forgejo_update.py
 - tests/test_frontmatter.py
 - tests/test_licenses.py
@@ -107,6 +108,7 @@ site-files:
 - tools/cv-pdfs.py
 - tools/font-sources.json
 - tools/forgejo-backup.sh
+- tools/forgejo-reconcile.py
 - tools/forgejo-sync.sh
 - tools/forgejo-update.sh
 - tools/vps-config-backup.sh

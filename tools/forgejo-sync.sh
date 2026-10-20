@@ -3,10 +3,11 @@
 # forgejo-sync.sh — bring git.levineuwirth.org up to date with the local
 # repositories, over HTTPS.
 #
-# Context: Forgejo is advertised as the canonical home (it is cited by URL
-# in the CV PDF) but is three to four months behind on eight of nine repos,
-# because the only configured Forgejo remote used ssh://…:2222, which is
-# filtered on most public networks. HTTPS works everywhere.
+# This is a manual, local -> Forgejo catch-up tool, not a two-way host sync.
+# Both GitHub and Forgejo accept development pushes. A local checkout may
+# be behind either host, so its branches are not an authoritative inventory.
+# The original SSH :2222 remotes are filtered on some public networks;
+# HTTPS avoids that problem but does not itself automate replication.
 #
 # SAFETY PROPERTIES, all deliberate:
 #
@@ -23,7 +24,9 @@
 #     publish them. Flip individual repos to public in the UI afterwards.
 #   * No mirrors are configured. A Forgejo push-mirror force-pushes to its
 #     target, so enabling one while Forgejo is behind would overwrite
-#     GitHub with stale history. Mirrors come after this has run clean.
+#     GitHub with stale history. Such a mirror also conflicts with the
+#     current requirement to accept development pushes on either host,
+#     even if the repositories happen to match when it is configured.
 #
 # Usage:
 #   export FORGEJO_TOKEN=…          # Settings → Applications, scope write:repository
@@ -227,8 +230,10 @@ printf 'created/creatable: %d   pushed/pushable: %d   skipped: %d   blocked: %d\
     "$created" "$pushed" "$skipped" "$blocked"
 $EXECUTE || echo "(dry run — nothing above actually happened)"
 echo
-echo "Next, only once this runs clean:"
+echo "After this local catch-up:"
 echo "  1. Check the new repos' visibility; all were created private."
-echo "  2. Configure push mirrors Forgejo → GitHub, per repo, in"
-echo "     Settings → Repository → Mirror Settings. A mirror force-pushes,"
-echo "     so it is only safe now that Forgejo is not behind."
+echo "  2. Compare GitHub and Forgejo branch/tag refs directly. This script"
+echo "     does not detect every difference between the two hosts."
+echo "  3. For ongoing two-way sync, use explicit repository/branch mappings"
+echo "     and ordinary fast-forward pushes. Hold diverged branches and"
+echo "     conflicting tags for review; do not enable force-push mirrors."

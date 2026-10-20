@@ -1,0 +1,29 @@
+[Unit]
+Description=Reconcile explicitly mapped GitHub and Forgejo branches
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=forge-sync
+Group=forge-sync
+UMask=0077
+StateDirectory=forgejo-reconcile
+StateDirectoryMode=0700
+CacheDirectory=forgejo-reconcile
+CacheDirectoryMode=0700
+ExecStart=/usr/local/bin/forgejo-reconcile.py --execute
+TimeoutStartSec=15min
+Nice=10
+IOSchedulingClass=idle
+CPUQuota=25%
+MemoryMax=512M
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+LockPersonality=yes
+
