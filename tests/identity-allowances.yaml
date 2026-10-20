@@ -113,21 +113,6 @@ entries:
   line: 27
   column: 43
   string: lnUtils
-- id: I0023
-  file: static/js/collapse.js
-  line: 167
-  column: 17
-  string: lnExpand
-- id: I0024
-  file: static/js/collapse.js
-  line: 206
-  column: 44
-  string: lnExpand
-- id: I0025
-  file: static/js/collapse.js
-  line: 206
-  column: 56
-  string: lnExpand
 - id: I0026
   file: static/js/copy.js
   line: 23
@@ -410,27 +395,27 @@ entries:
   string: lnEnhance
 - id: I0082
   file: static/js/transclude.js
-  line: 274
+  line: 307
   column: 26
   string: ln:content-added
 - id: I0083
   file: static/js/transclude.js
-  line: 279
+  line: 312
   column: 31
   string: lnEnhanced
 - id: I0084
   file: static/js/transclude.js
-  line: 280
+  line: 313
   column: 27
   string: lnEnhanced
 - id: I0085
   file: static/js/transclude.js
-  line: 360
+  line: 393
   column: 12
   string: lnHighlightCode
 - id: I0086
   file: static/js/transclude.js
-  line: 376
+  line: 409
   column: 12
   string: lnEnhance
 - id: I0087
@@ -510,7 +495,7 @@ entries:
   string: lnUtils
 - id: I0102
   file: tests/golden/essay.html
-  line: 22
+  line: 21
   column: 34
   string: https://git.levineuwirth.org/neuwirth/levineuwirth.org
 - id: I0103

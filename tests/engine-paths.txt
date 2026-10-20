@@ -238,6 +238,7 @@ tests/test_browser_score.py
 tests/test_browser_sections.py
 tests/test_browser_semantic.py
 tests/test_browser_settings.py
+tests/test_browser_sidenotes.py
 tests/test_browser_slideshow.py
 tests/test_browser_toc.py
 tests/test_browser_transclude.py
@@ -275,6 +276,7 @@ tests/test_prune_site.py
 tests/test_route_check.py
 tests/test_run_browser.py
 tests/test_score_reader.py
+tests/test_sidenotes.py
 tests/test_site_threads.py
 tests/test_sitediff.py
 tests/test_sitelib.py

@@ -168,7 +168,7 @@
            the target is `hidden` and the browser has nothing to scroll to.
            Exposed on the wrapper so the document-level hash handler below
            can reach any section without keeping its own registry. */
-        wrapper.lnExpand = function () {
+        wrapper.expandSection = function () {
             if (!wrapper.classList.contains('is-collapsed')) return;
             reveal();
             setCollapsed(false, false);
@@ -207,7 +207,7 @@
         }
         if (!chain.length && !initial) return;
 
-        chain.forEach(function (w) { if (w.lnExpand) w.lnExpand(); });
+        chain.forEach(function (w) { if (w.expandSection) w.expandSection(); });
 
         // The anchor was hidden, or the page around it moved, when the
         // browser first tried to scroll to it.

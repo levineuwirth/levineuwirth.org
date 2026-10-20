@@ -486,7 +486,7 @@
 
         let section = pair.ref.closest('.section-body');
         while (section) {
-            if (section.lnExpand) section.lnExpand();
+            if (section.expandSection) section.expandSection();
             section = section.parentElement && section.parentElement.closest('.section-body');
         }
 
