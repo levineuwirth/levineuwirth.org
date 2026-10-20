@@ -4,6 +4,7 @@
 
      code  (known lang) → Copy · [MDN / Hoogle / Docs…]
      code  (unknown)    → Copy
+     inline code email → Copy · Email
      math               → Copy · nLab · OEIS · Wolfram
      prose (multi-word) → Annotate · BibTeX · Copy · DuckDuckGo · Here · Wikipedia
      prose (one word)   → Annotate · BibTeX · Copy · Define · DuckDuckGo · Here · Wikipedia
@@ -184,6 +185,24 @@
         return m ? m[1].toLowerCase() : null;
     }
 
+    /* Recognize one complete, unquoted ASCII address selected in inline
+       code. Encode the mailbox so ?, &, # and % remain address characters
+       rather than mailto headers or fragments (RFC 6068). */
+    function getInlineEmailHref(sel, text) {
+        var node = sel.getRangeAt(0).commonAncestorContainer;
+        var el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+        var code = el && el.closest('code');
+        if (!code || code.closest('pre') || code.textContent.trim() !== text || text.length > 254) return null;
+        var parts = text.split('@');
+        if (parts.length !== 2 || parts[0].length > 64) return null;
+        if (!/^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*$/i.test(parts[0])) return null;
+        var labels = parts[1].split('.');
+        if (labels.length < 2 || labels.some(function (label) {
+            return !/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(label);
+        })) return null;
+        return 'mailto:' + encodeURIComponent(parts[0]) + '@' + parts[1];
+    }
+
     /* ------------------------------------------------------------------
        Core logic
     ------------------------------------------------------------------ */
@@ -200,6 +219,7 @@
         var context  = getContext(sel);
         var oneWord  = isSingleWord(text);
         var codeLang = (context === 'code') ? getCodeLanguage(sel) : null;
+        var emailHref = (context === 'code') ? getInlineEmailHref(sel, text) : null;
         var selLang  = (context === 'prose') ? getSelectionLang(sel) : null;
         /* Highlights belong to the page's text: a selection in a popup,
            the contents or the footer is not offered one (it used to
@@ -207,7 +227,7 @@
         var body = document.getElementById('markdownBody');
         var annotatable = !!body && body.contains(range.commonAncestorContainer);
 
-        popup.innerHTML = buildHTML(context, oneWord, codeLang, selLang, annotatable);
+        popup.innerHTML = buildHTML(context, oneWord, codeLang, selLang, annotatable, emailHref);
         popup.style.visibility = 'hidden';
         popup.classList.add('is-visible');
 
@@ -269,11 +289,11 @@
        HTML builder — context-aware button sets
     ------------------------------------------------------------------ */
 
-    function buildHTML(context, oneWord, codeLang, selLang, annotatable) {
+    function buildHTML(context, oneWord, codeLang, selLang, annotatable, emailHref) {
         if (context === 'code') {
             var provider = codeLang ? DOC_PROVIDERS[codeLang] : null;
             return btn('copy', 'Copy')
-                 + (provider ? docsBtn(provider) : '');
+                 + (emailHref ? emailBtn(emailHref) : (provider ? docsBtn(provider) : ''));
         }
 
         if (context === 'math') {
@@ -300,6 +320,15 @@
              + label + '</button>';
     }
 
+    /* The builders' one reference to the shared namespace (renamed in A9). */
+    function escapeHtml(s) {
+        return window.lnUtils.escapeHtml(s);
+    }
+
+    function emailBtn(href) {
+        return '<a class="selection-popup-btn" data-action="email" href="'
+             + escapeHtml(href) + '">Email</a>';
+    }
 
     /* Docs button embeds the base URL so dispatch can read it without a lookup. */
     function docsBtn(provider) {
@@ -312,7 +341,7 @@
        it to DeepL (or fall through to auto-detect). */
     function translateBtn(lang) {
         return '<button class="selection-popup-btn" data-action="translate"'
-             + ' data-lang="' + window.lnUtils.escapeHtml(lang) + '">Translate</button>';
+             + ' data-lang="' + escapeHtml(lang) + '">Translate</button>';
     }
 
 
@@ -324,7 +353,9 @@
         popup.querySelectorAll('[data-action]').forEach(function (el) {
             if (el.getAttribute('aria-disabled') === 'true') return;
             el.addEventListener('click', function () {
-                dispatch(el.getAttribute('data-action'), text, el, rect, range);
+                /* Email is a native link: let the browser hand it to the
+                   configured mail app, without opening an empty tab. */
+                if (el.tagName !== 'A') dispatch(el.getAttribute('data-action'), text, el, rect, range);
                 hide();
             });
         });

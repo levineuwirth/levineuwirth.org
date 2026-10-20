@@ -222,6 +222,7 @@ tests/test_browser_annotations.py
 tests/test_browser_copy.py
 tests/test_browser_csp.py
 tests/test_browser_dates.py
+tests/test_browser_email.py
 tests/test_browser_footer.py
 tests/test_browser_gallery.py
 tests/test_browser_hardening.py

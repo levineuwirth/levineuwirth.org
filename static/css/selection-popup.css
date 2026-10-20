@@ -81,6 +81,7 @@
     border-radius: 3px;
     white-space: nowrap;
     line-height: 1;
+    text-decoration: none;
     transition: background 0.1s ease;
 }
 

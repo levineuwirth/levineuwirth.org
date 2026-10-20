@@ -230,22 +230,22 @@ entries:
   string: lnSemanticSearch
 - id: I0049
   file: static/js/selection-popup.js
-  line: 315
-  column: 40
+  line: 325
+  column: 23
   string: lnUtils
 - id: I0050
   file: static/js/selection-popup.js
-  line: 346
+  line: 377
   column: 9
   string: Levi Neuwirth
 - id: I0051
   file: static/js/selection-popup.js
-  line: 346
+  line: 377
   column: 27
   string: Neuwirth, Levi
 - id: I0052
   file: static/js/selection-popup.js
-  line: 366
+  line: 397
   column: 16
   string: Neuwirth, Levi
 - id: I0053

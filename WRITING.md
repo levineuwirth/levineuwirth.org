@@ -1338,10 +1338,14 @@ Selecting any text (≥ 2 characters) shows a context-aware toolbar after 450 ms
 | Math | Copy · nLab · OEIS · Wolfram |
 | Code (known language) | Copy · \<MDN / Hoogle / Docs…\> |
 | Code (unknown) | Copy |
+| Inline code (complete email address) | Copy · Email |
 
 **BibTeX** generates a `@online{...}` BibLaTeX entry with the selected text in
 `note={\enquote{...}}` and copies it to the clipboard. **Define** opens English
 Wiktionary. **Here** opens the Pagefind search page pre-filled with the selection.
+**Email** opens the reader's mail app through a `mailto:` link when a complete,
+unquoted ASCII address is selected inside inline code, such as
+`abuse@egihosting.com`. It does not appear for partial selections or code blocks.
 **Translate** appears only for selections inside a non-English `[lang]` subtree
 (see below) and opens DeepL with the source lang pre-set and the target as English.
 
