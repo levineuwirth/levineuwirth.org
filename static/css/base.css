@@ -345,10 +345,11 @@
     --font-ui:     var(--font-sans);
     --bg-subtle:   var(--bg-offset);
 
-    /* Common media-query breakpoints: 540px, 680px, 900px and 1500px.
+    /* Common media-query breakpoints: 540px, 680px and 900px.
        They live in the consuming stylesheets; @media cannot use custom
        properties. The navigation instead uses its own width in rem
-       through container queries in components.css. */
+       through container queries in components.css, and the margin
+       notes the room beside the text, measured in rem by sidenotes.js. */
 }
 
 /* Initial narrow-screen estimate. nav.js measures the rendered header

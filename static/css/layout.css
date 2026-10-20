@@ -78,8 +78,8 @@ body > header:not(.essay-frontmatter) {
    CENTER COLUMN — MAIN BODY
    Pinned to column 2 explicitly so it stays centered even when
    the TOC is hidden (below 900px breakpoint).
-   #markdownBody must be position: relative — sidenotes.js
-   appends absolutely-positioned sidenote columns inside it.
+   #markdownBody must be position: relative — on wide screens
+   sidenotes.css positions the notes absolutely inside it.
    ============================================================ */
 
 #markdownBody {
@@ -200,9 +200,10 @@ body > header:not(.essay-frontmatter) {
    RESPONSIVE BREAKPOINTS
    ============================================================ */
 
-/*  Below ~1100px: not enough horizontal space for sidenotes.
-    The .sidenote asides are hidden by sidenotes.css; the Pandoc-generated
-    section.footnotes is shown instead (also handled by sidenotes.css). */
+/*  Margin notes have no breakpoint here: sidenotes.js uses the margin
+    only when the room right of the body holds a readable measure at the
+    reader's text size, and otherwise the notes stay in the list the
+    Sidenotes filter appends to the body (sidenotes.css). */
 
 /* ============================================================
    FOCUS MODE

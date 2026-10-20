@@ -36,10 +36,14 @@
         var content = [];
         var node    = heading.nextElementSibling;
 
-        // Collect sibling elements until the next same-or-higher heading.
+        // Collect sibling elements until the next same-or-higher heading,
+        // or the notes list at the end of the body: it holds every
+        // section's notes, and closing the last section must not take
+        // them all (sidenotes.js sets them in the margin from there).
         while (node) {
             if (/^H[1-6]$/.test(node.tagName) &&
                 parseInt(node.tagName[1], 10) <= level) break;
+            if (node.matches('section.footnotes')) break;
             content.push(node);
             node = node.nextElementSibling;
         }

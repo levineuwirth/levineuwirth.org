@@ -430,10 +430,15 @@ This sentence has a note.[^1]
 [^1]: The note content, which may contain **bold**, *italic*, links, etc.
 ```
 
-On wide viewports the note floats into the right margin. On narrow viewports
-it falls back to a standard footnote. Sidenotes are numbered automatically.
+Each note is written once, as an endnote at the end of the page. Where the
+screen leaves room beside the text (at the reader's text size), it is set in
+the right margin beside its reference; otherwise it stays an endnote, and
+tapping the reference opens it in a sheet. Printed pages carry the endnotes.
+Sidenotes are lettered automatically.
 
-Avoid block-level elements (headings, lists) inside footnotes.
+A note may hold several paragraphs, lists, quotations and code blocks
+(indent continuation blocks by four spaces). Avoid headings inside notes:
+the contents and the collapsible sections would treat them as the page's own.
 
 ---
 

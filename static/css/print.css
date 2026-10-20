@@ -2,8 +2,7 @@
    Loaded LAST in head.html via <link media="print"> so its rules win
    the cascade at print page widths (~595–820 CSS px on A4/Letter),
    which otherwise trip every screen breakpoint below 900px (mobile
-   TOC bar, body bottom padding) and below 1499px (sidenote → footnote
-   fallback).
+   TOC bar, body bottom padding).
 
    Hides chrome, expands body full-width, renders in black on white. */
 
@@ -70,7 +69,7 @@
     .link-popup,
     .ann-tooltip,
     .ann-picker,
-    .sidenote-popup-overlay,
+    .sidenote-popup,
     .toc-toggle,
     .section-toggle,
     .nav-portals,
@@ -194,47 +193,12 @@
     }
 
     /* ----------------------------------------------------------------
-       Sidenotes — render inline as parenthetical asides.
-
-       The build's Sidenotes filter replaces Pandoc's
-       `section.footnotes` entirely with `<span class="sidenote">`
-       siblings of the ref, so there is no end-of-document footnote
-       section to fall back to. Sidenotes.css hides .sidenote at
-       narrow widths (which print triggers); print.css promotes them
-       back inline as small italic parentheticals so the surrounding
-       sentence flow stays intact — block-style footnotes mid-sentence
-       leave dangling clauses on the next line.
+       Notes — the list at the end of the body, as on narrow screens.
+       Each note is printed once, as an endnote, with its reference
+       and back-link kept as links in the PDF. The margin layout is
+       screen-only (sidenotes.css), and an open sheet is closed before
+       printing (sidenotes.js, beforeprint).
     ---------------------------------------------------------------- */
-    .sidenote {
-        display: inline !important;
-        position: static !important;
-        width: auto !important;
-        max-width: none !important;
-        margin: 0;
-        padding: 0;
-        border: none;
-        font-size: 0.85em;
-        font-style: italic;
-        color: var(--text-muted);
-    }
-
-    .sidenote::before { content: " ["; font-style: normal; }
-    .sidenote::after  { content: "]"; font-style: normal; }
-
-    .sidenote-para {
-        display: inline !important;
-        margin: 0 !important;
-    }
-    .sidenote-para + .sidenote-para::before {
-        content: " / ";
-        font-style: normal;
-        color: var(--text-faint);
-    }
-
-    .sidenote-num {
-        display: none !important;
-    }
-
     .sidenote-ref a {
         color: var(--text);
         text-decoration: none;

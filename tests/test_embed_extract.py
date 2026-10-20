@@ -61,12 +61,25 @@ class ExtractTests(unittest.TestCase):
 
     def test_chrome_and_duplicated_text_are_stripped(self):
         body = (f"<p>{PROSE}</p><nav id=\"toc\">Contents list</nav>"
-                "<section class=\"footnotes\"><p>" + "Footnote duplicate text. " * 10 + "</p></section>"
                 "<div class=\"page-meta-footer\">Related: other pages</div>")
         doc, paras = embed.extract_document(self.write("c.html", page(body)))
-        for gone in ("Contents list", "Footnote duplicate", "Related: other"):
+        for gone in ("Contents list", "Related: other"):
             self.assertNotIn(gone, doc["text"])
         self.assertEqual(len(paras), 1)
+
+    def test_notes_are_passages_once(self):
+        # The notes list is each note's only copy: its paragraphs are
+        # indexed, once each, under "Notes" rather than the last section.
+        note = "A note's own paragraph, long enough to count as a passage. " * 3
+        body = (f"<h2>Last section</h2><p>{PROSE}</p>"
+                "<section class=\"footnotes\"><ol class=\"footnotes-list\">"
+                "<li id=\"fn-a\" class=\"footnote-item\"><span class=\"footnote-label\">a</span>"
+                f"<p>{note}</p><ul><li>{note}</li></ul></li></ol></section>")
+        doc, paras = embed.extract_document(self.write("n.html", page(body)))
+        self.assertIn("A note's own paragraph", doc["text"])
+        notes = [x for x in paras if x["text"].startswith("A note's")]
+        self.assertEqual(len(notes), 2)
+        self.assertEqual({x["heading"] for x in notes}, {"Notes"})
 
     def test_long_paragraphs_are_truncated_and_excerpted(self):
         long = "word " * 400

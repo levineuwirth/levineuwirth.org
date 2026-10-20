@@ -227,10 +227,6 @@ def save_vec_cache(path: Path, model: str, revision: str, dim: int,
 STRIP_SELECTORS = [
     "nav", "footer", "#toc", ".link-popup", "script", "style",
     ".page-meta-footer", ".metadata", "[data-pagefind-ignore]",
-    # The no-JS footnotes fallback duplicates each sidenote's text
-    # verbatim at the document end — indexing it would double every
-    # footnote in search results and skew page similarity.
-    "section.footnotes",
     # An archive page's Referenced by and Related: what every other page
     # keeps inside the stripped .page-meta-footer. Other pages' sentences
     # and titles are not this page's content; embedding them fed each
@@ -319,13 +315,19 @@ def _extract(url: str, raw: str) -> tuple[dict | None, list[dict]]:
         if el.name in ("h1", "h2", "h3", "h4"):
             heading = el.get_text(" ", strip=True)
             continue
+        # The notes list at the end of the body is each note's only copy
+        # (build/Filters/Sidenotes.hs). A note's paragraphs and lists are
+        # passages of their own; the item around them would repeat them.
+        if "footnote-item" in (el.get("class") or []):
+            continue
         ptext = re.sub(r"\s+", " ", el.get_text(" ", strip=True)).strip()
         if len(ptext) < MIN_PARA_CHARS:
             continue
         paras.append({
             "url":     url,
             "title":   title,
-            "heading": heading,
+            # After the last section, but not of it.
+            "heading": "Notes" if el.find_parent("section", class_="footnotes") else heading,
             "excerpt": ptext[:200] + ("…" if len(ptext) > 200 else ""),
             "text":    ptext[:MAX_PARA_CHARS],
         })

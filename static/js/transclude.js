@@ -78,7 +78,7 @@
 
     /* Extract a named section: the heading element with id=sectionId plus
      * all following siblings until the next heading at the same or higher
-     * level (lower number), or end of parent. */
+     * level (lower number), the page's notes list, or end of parent. */
     function extractSection(doc, sectionId) {
         var anchor = doc.getElementById(sectionId);
         if (!anchor) return null;
@@ -92,11 +92,44 @@
         while (el) {
             if (/^H[1-6]$/.test(el.tagName) &&
                 parseInt(el.tagName[1], 10) <= level) break;
+            if (el.matches('section.footnotes')) break;
             nodes.push(el.cloneNode(true));
             el = el.nextElementSibling;
         }
 
+        var notes = sectionNotes(doc, nodes);
+        if (notes) nodes.push(notes);
+
         return nodes.length ? nodes : null;
+    }
+
+    /* A section's notes are not beside it: they are items in the list at
+     * the end of the source page. Bring the ones its references name, in
+     * a list of their own, before ids are scoped — the references and the
+     * notes' back-links are then renamed together, and sidenotes.js pairs
+     * them as on the source page. */
+    function sectionNotes(doc, nodes) {
+        var list = null;
+        nodes.forEach(function (node) {
+            node.querySelectorAll('.sidenote-ref a[href^="#"]').forEach(function (a) {
+                var id;
+                try { id = decodeURIComponent(a.getAttribute('href').slice(1)); }
+                catch (e) { return; }
+                var note = doc.getElementById(id);
+                if (!note || !note.classList.contains('footnote-item')) return;
+                if (!list) {
+                    list = doc.createElement('ol');
+                    list.className = 'footnotes-list';
+                }
+                list.appendChild(note.cloneNode(true));
+            });
+        });
+        if (!list) return null;
+        var section = doc.createElement('section');
+        section.className = 'footnotes';
+        section.setAttribute('role', 'doc-endnotes');
+        section.appendChild(list);
+        return section;
     }
 
     /* Extract the full contents of #markdownBody. */
@@ -279,8 +312,8 @@
         if (container.dataset.lnEnhanced === '1' && !opts.force) return;
         container.dataset.lnEnhanced = '1';
 
-        /* sidenotes.js — wire newly injected sidenote refs/spans and
-           reposition the column. A page that transcludes always loads it
+        /* sidenotes.js — pair newly injected note references with their
+           notes and reposition the margin. A page that transcludes always loads it
            (has-sidenotes counts transclusion markers). */
         if (typeof window.reinitSidenotes === 'function') {
             window.reinitSidenotes(container);

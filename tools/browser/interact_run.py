@@ -142,7 +142,7 @@ def run():
 
         # 9. sidenote / footnote keyboard at 1440 (sidenotes visible in margin)
         page.goto(BASE + '/essays/verified-inference/'); settle(page, 500)
-        res['sidenotes'] = page.evaluate("({n: document.querySelectorAll('.sidenote').length, refs: document.querySelectorAll('.sidenote-ref, a.footnote-ref, sup a').length})")
+        res['sidenotes'] = page.evaluate("({n: document.querySelectorAll('.footnote-item').length, refs: document.querySelectorAll('.sidenote-ref, a.footnote-ref, sup a').length})")
 
         res['pageerrors'] = errs
         res['csp'] = page.evaluate('window.__cspv || []')

@@ -1,23 +1,16 @@
-"""Collapsible sections, printing them, and sidenotes, in Chromium and
-Firefox.
+"""Collapsible sections, and printing them, in Chromium and Firefox.
 
 collapse.js turns each h2/h3 of an essay into a section a reader can
-close, remembered per page; sidenotes.js sets each sidenote beside its
-reference, keeps the notes from overlapping, links the two on hover and
-click, and on narrow screens opens a note as a sheet. A fixture page,
-styled as an essay, has sections and a sidenote below them; the
-font-loading test uses a built essay with many notes.
+close, remembered per page. A fixture page, styled as an essay, has
+sections. (Sidenotes, which follow sections as they close, are
+tests/test_browser_sidenotes.py.)
 
 Checked: closing a section takes its content out of view, the tab order
 and the accessibility tree, and reopening restores it; the state survives
 a reload; a link into a closed section opens it, at load, on hashchange,
 and when it names the fragment already in the address bar (no hashchange:
 it did nothing); a closed section prints in full (audit J07: it was left off
-the paper); sidenotes follow the text when a section above them closes,
-and when web fonts arrive after the first layout (J03: notes stayed where
-the fallback font had put them); hover, click, Space and Escape on a
-reference; the narrow-screen sheet, which gives focus back to its
-reference when it closes.
+the paper).
 
     RUN_BROWSER_TESTS=1 python -m unittest tests.test_browser_sections -v
 """
@@ -36,7 +29,6 @@ PAGE = """<!doctype html>
 {styles}
 <script src="/js/utils.js"></script>
 <script src="/js/collapse.js" defer></script>
-<script src="/js/sidenotes.js" defer></script>
 </head><body><div class="page-shell"><main id="markdownBody">
 <h1 class="page-title">Sections Fixture</h1>
 <p>An introduction that stays open, with <a id="to-deep" href="#deep">a link to the subsection</a>.</p>
@@ -46,7 +38,7 @@ PAGE = """<!doctype html>
 <h3 id="sub">A subsection</h3>
 <p id="deep">Text deep inside the first section.</p>
 <h2 id="second">Second section</h2>
-<p id="p2">The second section's text, with a note<sup class="sidenote-ref" id="snref-1"><a href="#sn-1">1</a></sup><span class="sidenote" id="sn-1">The note itself, beside its reference.</span> and more after it.</p>
+<p id="p2">The second section's text.</p>
 <p>A closing paragraph.</p>
 </main></div></body></html>
 """
@@ -54,24 +46,6 @@ FILLER = "\n".join(f"<p>Filler paragraph {i}, long enough to take a line or two 
                    f"so that closing this section moves what follows it.</p>" for i in range(12))
 
 KEY = "section-collapsed:/__fixture/sections.html:"
-
-# Each note where sidenotes.js should have put it, given the layout now:
-# level with its reference, or GAP below the note before it.
-LAYOUT = """() => {
-    const notes = [...document.querySelectorAll('#markdownBody .sidenote')];
-    let prevBottom = 0, worst = 0;
-    const out = [];
-    for (const sn of notes) {
-        const ref = document.getElementById('snref-' + sn.id.slice(3));
-        const want = Math.max(ref.offsetTop, prevBottom + 12);
-        const got = parseFloat(sn.style.top);
-        worst = Math.max(worst, Math.abs(got - want));
-        out.push([sn.id, got, want]);
-        prevBottom = got + sn.offsetHeight;
-    }
-    return {worst, notes: out};
-}"""
-
 
 @requires_browser
 class Sections(unittest.TestCase):
@@ -117,10 +91,6 @@ class Sections(unittest.TestCase):
     def close_section(self, page, heading: str) -> None:
         self.toggle(page, heading).click()
         self.expect(self.body(page, heading)).to_have_attribute("hidden", "")
-
-    def settled(self, page) -> None:
-        """Two frames: sidenotes.js repositions at most once per frame."""
-        page.evaluate("new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
 
     # -- sections ----------------------------------------------------------
 
@@ -198,94 +168,6 @@ class Sections(unittest.TestCase):
                 # Printing changed nothing the reader chose.
                 self.expect(page.locator("#p1")).to_be_hidden()
                 self.assertEqual(page.evaluate(f"localStorage.getItem('{KEY}first')"), "1")
-
-    # -- sidenotes ---------------------------------------------------------
-
-    def test_sidenotes_follow_a_section_closing(self) -> None:
-        for browser in BROWSERS:
-            with self.subTest(browser=browser):
-                page = self.open(browser)
-                note = page.locator("#sn-1")
-                self.expect(note).to_be_visible()
-                self.settled(page)
-                before = page.evaluate(LAYOUT)
-                self.assertLessEqual(before["worst"], 1, before)
-                self.close_section(page, "first")
-                self.settled(page)
-                after = page.evaluate(LAYOUT)
-                self.assertLessEqual(after["worst"], 1, after)
-                self.assertGreater(before["notes"][0][1] - after["notes"][0][1], 100,
-                                   "closing the section moved the note up")
-
-    def test_sidenotes_follow_late_fonts(self) -> None:
-        # J03: the notes were set once, at DOMContentLoaded, often before the
-        # web fonts; when they arrived the text moved and the notes did not.
-        for browser in BROWSERS:
-            with self.subTest(browser=browser):
-                held = []
-                page = self.open(browser, path="/essays/notes-from-underground.html", wait="domcontentloaded",
-                                 context_setup=lambda c: c.route("**/*.woff2", lambda route: held.append(route)))
-                self.expect(page.locator("#markdownBody .sidenote").first).to_be_visible()
-                self.settled(page)
-                refs = page.evaluate("[...document.querySelectorAll('.sidenote-ref')].map(r => r.offsetTop)")
-                self.assertGreater(len(held), 0, "no web font was requested")
-                self.assertGreaterEqual(len(refs), 3)
-                for route in held:
-                    route.continue_()
-                page.evaluate("document.fonts.ready.then(() => 1)")
-                page.wait_for_load_state("load")
-                self.settled(page)
-                moved = page.evaluate("[...document.querySelectorAll('.sidenote-ref')].map(r => r.offsetTop)")
-                self.assertGreater(max(abs(a - b) for a, b in zip(refs, moved)), 10,
-                                   "the fonts moved no reference: nothing was tested")
-                layout = page.evaluate(LAYOUT)
-                self.assertLessEqual(layout["worst"], 1, layout)
-
-    def test_sidenote_linking(self) -> None:
-        for browser in BROWSERS:
-            with self.subTest(browser=browser):
-                page = self.open(browser)
-                ref, note = page.locator("#snref-1"), page.locator("#sn-1")
-                page.hover("#snref-1")
-                self.expect(ref).to_have_class("sidenote-ref is-active")
-                self.expect(note).to_have_class("sidenote is-active")
-                page.mouse.move(5, 5)
-                self.expect(note).to_have_class("sidenote")
-                # A click pins it; a click elsewhere lets go.
-                page.click("#snref-1 a")
-                page.mouse.move(5, 5)
-                self.expect(note).to_have_class("sidenote is-active")
-                page.mouse.click(5, 5)
-                self.expect(note).to_have_class("sidenote")
-                # The keyboard: Space pins, Escape lets go.
-                page.focus("#snref-1 a")
-                page.keyboard.press("Space")
-                self.expect(note).to_have_class("sidenote is-active")
-                page.keyboard.press("Escape")
-                self.expect(note).to_have_class("sidenote")
-
-    def test_narrow_screens_open_a_sheet(self) -> None:
-        sheet = ".sidenote-popup-overlay.is-open"
-        for browser in BROWSERS:
-            page = self.open(browser, width=700)
-            self.expect(page.locator("#sn-1")).to_be_hidden()
-            link = page.locator("#snref-1 a")
-            for close in ("Escape", "button", "outside"):
-                with self.subTest(browser=browser, close=close):
-                    link.focus()
-                    page.keyboard.press("Enter")
-                    self.expect(page.locator(sheet)).to_be_visible()
-                    self.expect(page.locator(f"{sheet} .sidenote-popup-body")).to_have_text(
-                        "The note itself, beside its reference.")
-                    self.expect(page.locator(".sidenote-popup")).to_be_focused()
-                    if close == "Escape":
-                        page.keyboard.press("Escape")
-                    elif close == "button":
-                        page.click(".sidenote-popup-close")
-                    else:
-                        page.mouse.click(5, 5)
-                    self.expect(page.locator(sheet)).to_have_count(0)
-                    self.expect(link).to_be_focused()
 
 
 if __name__ == "__main__":
