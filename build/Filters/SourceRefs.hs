@@ -14,6 +14,8 @@
 --   @\<a class="source-ref" data-source-path="…" href="…">@. The href
 --   points to the Forgejo source viewer so a click without JS — or a
 --   popup that fails to fetch — still resolves to a useful target.
+--   An explicit link can use the same class and attribute to preview an
+--   allowlisted file while retaining its local full-file destination.
 --   The popup provider in @static\/js\/popups.js@ fetches
 --   @\/source\/\<path\>@ (a same-origin copy emitted by the Hakyll
 --   source-preview rule in 'Site.rules') and renders a
@@ -154,10 +156,9 @@ isSourcePath t = and
 --   @/source/<path>@, as Hakyll globs. The rule builds its pattern from
 --   this list and 'isSourcePath' wraps only what it matches, so every
 --   link the filter emits has a target for the popup to fetch; the two
---   used to keep separate copies. Directories not listed (@content/@, for
---   one) are deliberately absent: anything unmatched 404s on hover, which
---   is the right failure if the heuristic ever wraps a path we did not
---   mean to expose.
+--   used to keep separate copies. Content is not copied wholesale: only
+--   the explicitly listed public Crawler Chronicles analysis code is
+--   included. Anything unmatched stays unwrapped.
 --
 --   The JSON under @data\/@ is named file by file rather than globbed:
 --   @data\/@ also holds build state and generated indexes that nothing
@@ -176,6 +177,9 @@ sourcePreviewGlobs =
     , "templates/**"
     , "tools/**.sh"
     , "tools/**.py"
+    , "content/essays/crawler_chronicles/data/*.py"
+    , "content/essays/crawler_chronicles/data/commit-response/source/*.py"
+    , "content/essays/crawler_chronicles/data/commit-response/source/*.sh"
     , "nginx/**.conf"
     , "data/*.yaml"
     , "data/*.md"

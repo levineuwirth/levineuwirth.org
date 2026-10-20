@@ -286,7 +286,7 @@ verified person or organization.
 Source: [`data/publication-snapshot.json`](data/commit-response/data/publication-snapshot.json), a fresh read-only collection at
 2026-10-19 22:23:19Z. It holds all 345 commit objects in the store, reflogs, refs,
 Forgejo action and branch rows, and no messages, names or emails.
-Reconstruction: [`source/reconstruct_publication.py`](data/commit-response/source/reconstruct_publication.py) →
+Reconstruction: [`source/reconstruct_publication.py`](data/commit-response/source/reconstruct_publication.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/reconstruct_publication.py"} →
 [`data/publication-episodes.csv`](data/commit-response/data/publication-episodes.csv), [`data/commit-publication.csv`](data/commit-response/data/commit-publication.csv) and
 [`data/publication-audit.json`](data/commit-response/data/publication-audit.json).
 
@@ -335,13 +335,13 @@ A subsequent cross-check of the frozen GitHub events and commit-publication
 table finds eleven, including October 7 at 10:08:33 and 10:48:21 UTC.
 The affected Forgejo episodes, maximum lead time and timing-test results are
 unchanged. The [cross-check summary](data/publication-timeline-summary.json)
-lists all eleven times, and the [plotting script](data/plot-publication-timeline.py)
+lists all eleven times, and the [plotting script](data/plot-publication-timeline.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/plot-publication-timeline.py"}
 shows the calculation. The archived report and its manifest retain their
 original contents.
 
 ### A3. Measurement, coverage and verification {#crawl-appendix-a3}
 
-**Aggregation.** [`source/aggregate_requests.py`](data/commit-response/source/aggregate_requests.py) ran read-only on the VPS over the
+**Aggregation.** [`source/aggregate_requests.py`](data/commit-response/source/aggregate_requests.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/aggregate_requests.py"} ran read-only on the VPS over the
 private archive, 2026-09-27 00:00 to 2026-10-19 22:00. That covers 16 archives:
 2,135,701 legacy lines and 1,384,453 forge JSON lines.
 
@@ -351,7 +351,7 @@ private archive, 2026-09-27 00:00 to 2026-10-19 22:00. That covers 16 archives:
 - **Legacy overlap rule:** legacy records at or after the first JSON second
   (2026-10-03 22:42:55) were dropped. One record was affected.
 
-[`source/build_tables.py`](data/commit-response/source/build_tables.py) produced the following:
+[`source/build_tables.py`](data/commit-response/source/build_tables.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/build_tables.py"} produced the following:
 
 - **[`data/minute-series.csv.gz`](data/commit-response/data/minute-series.csv.gz).** A dense table with one row per minute (33,000
   rows). It carries coverage flags, policy phase and log regime, and these columns:
@@ -552,7 +552,7 @@ in the table. It disappears without Oct 13.
 
 ### A6. What was fetched {#crawl-appendix-a6}
 
-[`source/hash_analysis.py`](data/commit-response/source/hash_analysis.py) covers GETs naming a commit in a semantic path position
+[`source/hash_analysis.py`](data/commit-response/source/hash_analysis.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/hash_analysis.py"} covers GETs naming a commit in a semantic path position
 (`src/commit/<sha>`, `commit/<sha>[.diff|.patch]`, `commits|raw|media|blame|rss/commit/<sha>`,
 `archive/<sha>.*`, `compare/<a>...<b>` and the repository API).
 
@@ -619,8 +619,8 @@ name commits would leave no trace in this analysis.
 
 ### A7. Sources of the fast fetches {#crawl-appendix-a7}
 
-Source: [`source/private_sources.py`](data/commit-response/source/private_sources.py), run by [`source/run_private_sources.sh`](data/commit-response/source/run_private_sources.sh). Output
-reduced by [`source/summarize_private_sources.py`](data/commit-response/source/summarize_private_sources.py) to [`results/young-fetch-sources.json`](data/commit-response/results/young-fetch-sources.json).
+Source: [`source/private_sources.py`](data/commit-response/source/private_sources.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/private_sources.py"}, run by [`source/run_private_sources.sh`](data/commit-response/source/run_private_sources.sh){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/run_private_sources.sh"}. Output
+reduced by [`source/summarize_private_sources.py`](data/commit-response/source/summarize_private_sources.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/summarize_private_sources.py"} to [`results/young-fetch-sources.json`](data/commit-response/results/young-fetch-sources.json).
 "Sources" are addresses; rotating addresses need not be distinct operators.
 
 **Within 60 minutes of publication.** 107 GETs from 10 addresses, in 4 episodes; none
@@ -695,7 +695,7 @@ had an owner signal.
 
 ### A9. Detection, robustness and what the null can say {#crawl-appendix-a9}
 
-[`source/power.py`](data/commit-response/source/power.py): placebo push trains are drawn from the rotation null, a response is
+[`source/power.py`](data/commit-response/source/power.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/power.py"}: placebo push trains are drawn from the rotation null, a response is
 planted into the real cohort series in minutes +1…+10, and the planned test is
 re-run 300 times per size.
 
@@ -732,7 +732,7 @@ re-run 300 times per size.
 - **Where the strongest constraint comes from.** The age distribution and the
   never-fetched commits. The timing test adds less.
 
-**Synthetic checks** ([`source/test_commitstats.py`](data/commit-response/source/test_commitstats.py) → [`results/synthetic-checks.json`](data/commit-response/results/synthetic-checks.json)):
+**Synthetic checks** ([`source/test_commitstats.py`](data/commit-response/source/test_commitstats.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/test_commitstats.py"} → [`results/synthetic-checks.json`](data/commit-response/results/synthetic-checks.json)):
 
 - **Exactness.** Under a constructed null with requests held fixed, the rejection
   rate was 3.3% at α = 0.05.
@@ -876,6 +876,27 @@ SciPy 1.17.1 and matplotlib 3.10.8. The VPS used Python 3.14.8 with the
 standard library and Git 2.56.0. The analysis seed was 20261020. The power
 code draws separate seeds from its generator for individual simulations.
 
+**Code files.**
+
+| File | Purpose |
+|---|---|
+| [`source/collect_publication.py`](data/commit-response/source/collect_publication.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/collect_publication.py"} | Read-only collection of repository history. |
+| [`source/reconstruct_publication.py`](data/commit-response/source/reconstruct_publication.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/reconstruct_publication.py"} | Reconstruct publication episodes and first availability. |
+| [`source/aggregate_requests.py`](data/commit-response/source/aggregate_requests.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/aggregate_requests.py"} | Reduce private logs to request counts. |
+| [`source/build_tables.py`](data/commit-response/source/build_tables.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/build_tables.py"} | Build the frozen request and coverage tables. |
+| [`source/commitstats.py`](data/commit-response/source/commitstats.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/commitstats.py"} | Shared window counts, rotations and statistical calculations. |
+| [`source/analysis.py`](data/commit-response/source/analysis.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/analysis.py"} | Primary timing test and sensitivity comparisons. |
+| [`source/hash_analysis.py`](data/commit-response/source/hash_analysis.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/hash_analysis.py"} | Commit ages, requested hashes and time to first fetch. |
+| [`source/power.py`](data/commit-response/source/power.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/power.py"} | Response injections and conditional detection simulations. |
+| [`source/exploratory_bursts.py`](data/commit-response/source/exploratory_bursts.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/exploratory_bursts.py"} | Exploratory scan of declared-crawler bursts. |
+| [`source/plots.py`](data/commit-response/source/plots.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/plots.py"} | Render the study figures from frozen outputs. |
+| [`source/test_commitstats.py`](data/commit-response/source/test_commitstats.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/test_commitstats.py"} | Synthetic checks of the statistical calculations. |
+| [`source/private_sources.py`](data/commit-response/source/private_sources.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/private_sources.py"} | Private inspection of early-fetch sources. |
+| [`source/run_private_sources.sh`](data/commit-response/source/run_private_sources.sh){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/run_private_sources.sh"} | Run the private source inspection on the VPS. |
+| [`source/summarize_private_sources.py`](data/commit-response/source/summarize_private_sources.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/summarize_private_sources.py"} | Reduce private inspection to public aggregates. |
+| [`plot-publication-timeline.py`](data/plot-publication-timeline.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/plot-publication-timeline.py"} | Article publication timeline and GitHub push-count cross-check. |
+| [`plot-repository-targets.py`](data/plot-repository-targets.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/plot-repository-targets.py"} | Article figures showing changes in repository targets. |
+
 **Reproduce locally.** Extract the ZIP and run these commands from its root
 using Python with NumPy, SciPy and matplotlib installed:
 
@@ -901,10 +922,10 @@ in that extracted directory and use:
 PYTHONPATH=source python3 example.py
 ```
 
-**Collection pipeline.** The included [`source/collect_publication.py`](data/commit-response/source/collect_publication.py) and
-[`source/aggregate_requests.py`](data/commit-response/source/aggregate_requests.py) document the read-only VPS collection.
-[`source/reconstruct_publication.py`](data/commit-response/source/reconstruct_publication.py) reconstructs publication, and
-[`source/build_tables.py`](data/commit-response/source/build_tables.py) reduces private aggregation output to the reviewed
+**Collection pipeline.** The included [`source/collect_publication.py`](data/commit-response/source/collect_publication.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/collect_publication.py"} and
+[`source/aggregate_requests.py`](data/commit-response/source/aggregate_requests.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/aggregate_requests.py"} document the read-only VPS collection.
+[`source/reconstruct_publication.py`](data/commit-response/source/reconstruct_publication.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/reconstruct_publication.py"} reconstructs publication, and
+[`source/build_tables.py`](data/commit-response/source/build_tables.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/build_tables.py"} reduces private aggregation output to the reviewed
 tables. The initial collection used commands of this form:
 
 ```bash
@@ -919,7 +940,7 @@ python3 source/build_tables.py PRIVATE/aggregate.json
 
 The GitHub events were collected separately with `gh api` and reduced to
 event type, time, reference and before/head hashes. Private source attribution
-used [`source/run_private_sources.sh`](data/commit-response/source/run_private_sources.sh) and [`source/summarize_private_sources.py`](data/commit-response/source/summarize_private_sources.py);
+used [`source/run_private_sources.sh`](data/commit-response/source/run_private_sources.sh){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/run_private_sources.sh"} and [`source/summarize_private_sources.py`](data/commit-response/source/summarize_private_sources.py){.source-ref data-source-path="content/essays/crawler_chronicles/data/commit-response/source/summarize_private_sources.py"};
 only [`results/young-fetch-sources.json`](data/commit-response/results/young-fetch-sources.json) is public. The unreviewed intermediate
 `PRIVATE/aggregate.json` was not published, even though it contains counts
 and hash rows rather than addresses. Recollecting would measure a later
