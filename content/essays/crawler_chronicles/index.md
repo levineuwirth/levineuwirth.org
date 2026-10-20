@@ -46,12 +46,12 @@ The combination of the change and the context provided by the code old and new c
 These queued jobs never made past an unending backlog and were removed before the October upgrade to Forgejo `15.0.9`; downloads of source-archives were also permanently disabled. Unfortunately, any declaration of victory at this point would have been highly preemptive, as my intuition suggested while finishing the upgrade. This was merely the appetizer.
 
 ## Enter October
-From October 1-3, my Forgejo repositories received **367,972** HTTP 200 responses. [pmacs](https://git.levineuwirth.org/neuwirth/pmacs), my emacs-inspired IDE written in Rust, received 84% of this total. This number of responses encapsulates many actions that one might take on a Forgejo instance, including source views, raw files, history, etc. From our previous example, it can be inferred that many of these requests piled up from requests for files over many commits. We may speculate as to how efficient the crawlers are too; I, for one, believe that they are highly inefficient. I am not alone in this belief, as [recent](https://arxiv.org/pdf/2502.13347) [literature](https://yazhuozhang.com/assets/publication/socc25-rethinking-web-cache.pdf) treats this problem quite seriously. 
+From October 1-3, my Forgejo repositories received **367,972** HTTP 200 responses. [pmacs](https://git.levineuwirth.org/neuwirth/pmacs), my emacs-inspired IDE written in Rust, received 84% of this total. This number of responses encapsulates many actions that one might take on a Forgejo instance, including source views, raw files, history, etc. From our previous example, it can be inferred that many of these requests piled up from requests for files over many commits. We may speculate as to how efficient the crawlers are too; I, for one, believe that they are highly inefficient. I am not alone in this belief, as [recent](https://arxiv.org/pdf/2502.13347) [literature](https://yazhuozhang.com/assets/publication/socc25-rethinking-web-cache.pdf) treats this problem quite seriously.[@yu2025craw4llm; @zhang2025webcache]
 
 ### Meta
 Clients declaring themselves to be Meta crawlers were responsible for **137,249** of these requests (a little over 37%). The routing lookup for the sampled address I choose explicitly identified [AS32934](https://ipinfo.io/AS32934). Why was Meta so intent on this sort of work? 
 
-I postulate that Meta, most likely, are doing some variation of the exact process that I described above. If we look at the lineage of Meta model releases in 2026, one can see a trend of rapidly increasing performance on benchmarks, particularly technical benchmarks related to typical ["Software Engineering"](/essays/swe_vc.html) and lighter technical workflows.^[I address this with skepticism because many informal observations seem to suggest Meta is simply "benchmaxing" — aggressively optimizing training for higher quantitative benchmark scores above all else — and that when faced with deeper work, the benchmark scores do not indicate as much progress as recent models from, say, Anthropic or OpenAI have been making. [Benchrisk](https://arxiv.org/pdf/2510.21460) gives a more rigorous treatment of issues of safety, comparison, etc. with typical benchmarks.] A simple methodology which an aspiring AI lab might do is simply to scan for any subdomains that incorporate "git" or similar terms and aggressively index them for eventual RL purposes.^[Tough to speculate exactly how much human involvement is here. The "H" in RLHF seems to be substantially decreasing as automation begins to prevail.]
+I postulate that Meta, most likely, are doing some variation of the exact process that I described above. If we look at the lineage of Meta model releases in 2026, one can see a trend of rapidly increasing performance on benchmarks, particularly technical benchmarks related to typical ["Software Engineering"](/essays/swe_vc.html) and lighter technical workflows.^[I address this with skepticism because many informal observations seem to suggest Meta is simply "benchmaxing" — aggressively optimizing training for higher quantitative benchmark scores above all else — and that when faced with deeper work, the benchmark scores do not indicate as much progress as recent models from, say, Anthropic or OpenAI have been making. [Benchrisk](https://arxiv.org/pdf/2510.21460) gives a more rigorous treatment of issues of safety, comparison, etc. with typical benchmarks.[@mcgregor2025benchrisk]] A simple methodology which an aspiring AI lab might do is simply to scan for any subdomains that incorporate "git" or similar terms and aggressively index them for eventual RL purposes.^[Tough to speculate exactly how much human involvement is here. The "H" in RLHF seems to be substantially decreasing as automation begins to prevail.]
 
 By the evening of October 3 I had decided that enough was enough with these hooligans. What would I do in response?
 
@@ -531,12 +531,12 @@ heuristic (X11 Linux x86_64 with Chrome 150 or 155), not a verified identity.
 - **p-value:** (1 + #{T* ≥ T}) / 10,001.
 
 **Validity under the stated null.** Block rotations form a group, so this
-p-value is valid under H0 (Hemerik & Goeman 2018; Phipson & Smyth 2010).
+p-value is valid under H0.[@hemerik2018permutations; @phipson2010permutations]
 The real push schedule was observational, not randomized; the exchangeability
 assumption is a condition of the interpretation, not a finding of the test.
 
-- **Hours with one episode.** This is exactly interval jitter with 60-minute windows
-  (Amarasingham et al. 2012).
+- **Hours with one episode.** This is exactly interval jitter with 60-minute
+  windows.[@amarasingham2012jitter]
 - **Hours with several episodes.** The common rotation preserves their spacing
   modulo 60. Validity still requires the stated block-rotation null; preserving
   spacing does not establish exchangeability of the actual push schedule.
@@ -1078,18 +1078,14 @@ timeline cross-check are presentation additions outside that frozen bundle.
 
 ### Methods sources {#crawl-appendix-methods}
 
-- Amarasingham A, Harrison MT, Hatsopoulos NG, Geman S. Conditional modeling and the
-  jitter method of spike resampling. *J Neurophysiol* 107(2):517–531 (2012).
-  [doi:10.1152/jn.00633.2011](https://doi.org/10.1152/jn.00633.2011); [supplement](https://arxiv.org/abs/1111.4296).
-- Hemerik J, Goeman J. Exact testing with random permutations. *TEST* 27:811–825
-  (2018).
-- Phipson B, Smyth GK. Permutation p-values should never be zero. *Stat Appl Genet
-  Mol Biol* 9(1), Art. 39 (2010). [doi:10.2202/1544-6115.1585](https://doi.org/10.2202/1544-6115.1585).
-- Mittleman MA, Mostofsky E. Exchangeability in the case-crossover design.
-  *Int J Epidemiol* 43(5):1645–1655 (2014). [doi:10.1093/ije/dyu081](https://doi.org/10.1093/ije/dyu081). This source
-  supports the time-of-day referent design and its caution against treating several
-  outcomes of one exposure as independent.
-- Harris KD. A shift test for independence in generic time series. [arXiv:2012.06862](https://arxiv.org/abs/2012.06862)
-  (2020). Read for the failure modes of circular shifts.
+- Amarasingham and colleagues, *Conditional modeling and the jitter method of
+  spike resampling*, and its separately titled supplement.[@amarasingham2012jitter; @amarasingham2011jitterSupplement]
+- Hemerik and Goeman, *Exact testing with random permutations*.[@hemerik2018permutations]
+- Phipson and Smyth, *Permutation P-values Should Never Be Zero*.[@phipson2010permutations]
+- Mittleman and Mostofsky, *Exchangeability in the case-crossover design*.[@mittleman2014exchangeability]
+  This source supports the time-of-day referent design and its caution against
+  treating several outcomes of one exposure as independent.
+- Harris, *A shift test for independence in generic time series*.[@harris2020shift]
+  Read for the failure modes of circular shifts.
 
 :::
