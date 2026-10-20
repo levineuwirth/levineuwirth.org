@@ -8,7 +8,7 @@ abstract: >
   BLAKE3 hashing throughout, and releases as signed artifacts rather than mutable name pointers. v0.1.0 ships the
   protocol substrate; the workflow surface — review, issues, web UI — is the next layer up.
 tags: [systems, projects, releases]
-status: "Working model"
+status: "Superseded"
 confidence: 85
 importance: 3
 evidence: 5
