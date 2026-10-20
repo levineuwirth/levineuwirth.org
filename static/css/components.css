@@ -903,20 +903,10 @@ nav.site-nav {
 .essay-summary {
     margin: 1.5rem 0 0;
     padding: 1.25rem 1.5rem;
-    border-left: 3px solid var(--border-muted);
+    border: 1px solid var(--border-muted);
     background: var(--bg-offset, var(--bg));
     font-size: 0.92rem;
     line-height: 1.6;
-}
-
-.essay-summary-label {
-    font-family: var(--font-sans);
-    font-size: 0.72rem;
-    font-weight: 600;
-    font-variant-caps: all-small-caps;
-    letter-spacing: 0.07em;
-    color: var(--text-faint);
-    margin-bottom: 0.5rem;
 }
 
 .essay-summary p {
