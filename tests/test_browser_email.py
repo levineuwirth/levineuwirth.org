@@ -7,13 +7,12 @@ from __future__ import annotations
 
 import mimetypes
 import unittest
-from pathlib import Path
 from urllib.parse import quote, urlsplit
 
 from tests._browser import BROWSERS, require_playwright, requires_browser
+from tests._helpers import engine_path
 from tests.test_browser_annotations import SELECT, STUBS
 
-STATIC = Path(__file__).resolve().parents[1] / "static"
 ORIGIN = "http://email.test"
 PAGE = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <link rel="stylesheet" href="/css/base.css">
@@ -52,7 +51,7 @@ class EmailSelection(unittest.TestCase):
             elif url.path == "/":
                 route.fulfill(content_type="text/html", body=PAGE)
             else:
-                path = STATIC / url.path.lstrip("/")
+                path = engine_path("static/" + url.path.lstrip("/"))
                 if path.is_file():
                     route.fulfill(content_type=mimetypes.guess_type(path.name)[0]
                                   or "application/octet-stream", body=path.read_bytes())

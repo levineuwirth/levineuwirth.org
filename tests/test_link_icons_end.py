@@ -7,7 +7,7 @@ import unittest
 
 from bs4 import BeautifulSoup
 
-from tests._helpers import ROOT, requires_cabal, site_binary
+from tests._helpers import SITE_ROOT, requires_cabal, site_binary
 
 
 @requires_cabal
@@ -22,7 +22,7 @@ class LinkIconsEndTests(unittest.TestCase):
             source.write_text(markdown, encoding="utf-8")
             done = subprocess.run(
                 [str(self.binary), "render-fixture", str(source)],
-                cwd=ROOT, capture_output=True, text=True, timeout=120,
+                cwd=SITE_ROOT, capture_output=True, text=True, timeout=120,
             )
         self.assertEqual(done.returncode, 0, done.stderr)
         return BeautifulSoup(done.stdout, "html.parser")

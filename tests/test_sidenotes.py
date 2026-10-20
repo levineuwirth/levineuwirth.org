@@ -19,7 +19,7 @@ import unittest
 
 from bs4 import BeautifulSoup
 
-from tests._helpers import ROOT, requires_cabal, site_binary
+from tests._helpers import SITE_ROOT, requires_cabal, site_binary
 
 # Elements whose start tag closes an open <p> (HTML's parsing rules).
 CLOSES_P = {"address", "article", "aside", "blockquote", "details", "div", "dl", "fieldset",
@@ -59,7 +59,7 @@ class SidenotesTests(unittest.TestCase):
             source.write_text(markdown, encoding="utf-8")
             done = subprocess.run(
                 [str(self.binary), "render-fixture", str(source)],
-                cwd=ROOT, capture_output=True, text=True, timeout=120,
+                cwd=SITE_ROOT, capture_output=True, text=True, timeout=120,
             )
         self.assertEqual(done.returncode, 0, done.stderr)
         return done.stdout.split("<!-- render-fixture: toc -->")[0]
