@@ -1,7 +1,14 @@
 import json, os, re, sys, time
+from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.dirname(HERE))
+# A6e moves sitelib before A6f moves this harness. Resolve the helper
+# from the code checkout, independently of SITE_ROOT and the working directory.
+_root = Path(__file__).resolve().parents[2]
+for _tools in (_root / "engine/tools", _root / "tools"):
+    if (_tools / "sitelib.py").is_file():
+        sys.path.insert(0, str(_tools))
+        break
 import sitelib  # noqa: E402
 # The site: $SITE_ROOT (tests/_browser.py sets it, running these scripts in
 # their own directory), else the working directory.
