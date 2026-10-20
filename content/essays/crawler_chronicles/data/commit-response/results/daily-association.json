@@ -1,0 +1,113 @@
+{
+ "note": "Descriptive only; confounded by the Anubis discontinuity, crawler campaigns and weekday; Oct 4 omitted.",
+ "days": [
+  "2026-10-01",
+  "2026-10-02",
+  "2026-10-03",
+  "2026-10-05",
+  "2026-10-06",
+  "2026-10-07",
+  "2026-10-08",
+  "2026-10-09",
+  "2026-10-10",
+  "2026-10-11",
+  "2026-10-12",
+  "2026-10-13"
+ ],
+ "by_day": {
+  "2026-10-01": {
+   "novel_commits": 36,
+   "episodes": 6,
+   "primary_200": 40,
+   "all_200": 21236
+  },
+  "2026-10-02": {
+   "novel_commits": 55,
+   "episodes": 9,
+   "primary_200": 6,
+   "all_200": 4965
+  },
+  "2026-10-03": {
+   "novel_commits": 46,
+   "episodes": 8,
+   "primary_200": 0,
+   "all_200": 3324
+  },
+  "2026-10-05": {
+   "novel_commits": 40,
+   "episodes": 5,
+   "primary_200": 3,
+   "all_200": 23
+  },
+  "2026-10-06": {
+   "novel_commits": 17,
+   "episodes": 3,
+   "primary_200": 802,
+   "all_200": 806
+  },
+  "2026-10-07": {
+   "novel_commits": 17,
+   "episodes": 3,
+   "primary_200": 207,
+   "all_200": 208
+  },
+  "2026-10-08": {
+   "novel_commits": 9,
+   "episodes": 3,
+   "primary_200": 91,
+   "all_200": 93
+  },
+  "2026-10-09": {
+   "novel_commits": 17,
+   "episodes": 3,
+   "primary_200": 3566,
+   "all_200": 3566
+  },
+  "2026-10-10": {
+   "novel_commits": 4,
+   "episodes": 1,
+   "primary_200": 6663,
+   "all_200": 6666
+  },
+  "2026-10-11": {
+   "novel_commits": 0,
+   "episodes": 0,
+   "primary_200": 7651,
+   "all_200": 7654
+  },
+  "2026-10-12": {
+   "novel_commits": 0,
+   "episodes": 0,
+   "primary_200": 2826,
+   "all_200": 2827
+  },
+  "2026-10-13": {
+   "novel_commits": 2,
+   "episodes": 2,
+   "primary_200": 10412,
+   "all_200": 10423
+  }
+ },
+ "spearman": {
+  "novel_commits_vs_w_get200_primary": {
+   "spearman_rho": -0.85,
+   "p_nominal": 0.0,
+   "days": 12
+  },
+  "episodes_vs_w_get200_primary": {
+   "spearman_rho": -0.856,
+   "p_nominal": 0.0,
+   "days": 12
+  },
+  "novel_commits_vs_w_get200_all": {
+   "spearman_rho": -0.194,
+   "p_nominal": 0.546,
+   "days": 12
+  },
+  "episodes_vs_w_get200_all": {
+   "spearman_rho": -0.132,
+   "p_nominal": 0.683,
+   "days": 12
+  }
+ }
+}

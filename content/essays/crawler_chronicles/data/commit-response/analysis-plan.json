@@ -1,0 +1,21 @@
+{
+  "recorded_before_request_alignment": true,
+  "question": "Does automated-looking traffic to the website repository rise promptly after new commits are made visible on Forgejo?",
+  "study_start_inclusive_utc": "2026-10-01T00:00:00Z",
+  "study_end_exclusive_utc": "2026-10-20T00:00:00Z",
+  "publication_time_priority": ["Forgejo recorded push-event time", "commit committer time as explicitly labeled proxy only"],
+  "unit": "Push batch, not individual commit or individual request; simultaneous commits share publication exposure.",
+  "primary_cohort": "Existing linux-chrome-150-155 rule: X11; Linux x86_64 with Chrome/150 or Chrome/155. This is a user-agent heuristic, not verified bot identity.",
+  "primary_outcome": "Successful GET repository web responses, excluding known maintenance/check agents and Git smart-protocol transfers.",
+  "primary_window_minutes": 30,
+  "window_rule": "Compare the 30 whole minutes before the push minute with the 30 whole minutes after it; omit the push minute to avoid rounding and completion-time ambiguity.",
+  "primary_statistic": "Mean post-minus-pre request count per push batch.",
+  "null_reference": "10000 random common circular minute shifts of the push train within each occupied UTC date/hour block, leaving the request series fixed; preserve batch sizes and within-hour event spacings up to wraparound.",
+  "null_assumption": "Conditional exchangeability of push minutes within date/hour blocks under no prompt response. This is an observational timing test, not randomized treatment assignment.",
+  "random_seed": 20261020,
+  "alternative": "One-sided increase after publication; alpha 0.05.",
+  "coverage": "Require observed log coverage, available surrounding windows, and a stable Anubis phase; omit October 4 and windows crossing recorded difficulty/cookie transitions. Log spans alone do not certify continuous uptime.",
+  "sensitivity_checks": ["Isolated batches with no other push within 60 minutes", "Successful requests of all user agents", "All response statuses in the primary cohort", "Other repositories as a negative-control outcome", "Separate policy phases", "5, 60, and 180 minute windows with Holm correction across these secondary window tests"],
+  "additional_evidence": ["First requests for explicitly named commit hashes relative to recorded pushes", "Daily and hourly commit/request associations, labeled descriptive and confounded", "Distribution of requested commit age and historical-versus-new targets"],
+  "interpretation_guardrails": ["Commit creation time is not push/publication time.", "Several commits arriving in one push cannot establish one independent trigger per commit.", "Correlated requests and overlapping windows do not create independent replication.", "Time-of-day coincidence, policy changes, and activity accompanying publication can confound interpretation.", "Absence of a detected effect does not prove absence of monitoring.", "If publication history or coverage is inadequate, report the limitation rather than substitute an unqualified significance claim."]
+}

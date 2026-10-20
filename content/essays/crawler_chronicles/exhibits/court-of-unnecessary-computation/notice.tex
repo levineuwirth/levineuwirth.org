@@ -1,0 +1,224 @@
+%!TEX program = lualatex
+% Satirical exhibit for Crawler Chronicles. Not a legal instrument.
+% Styling: latex-atlas/sty/atlas-grand.sty and atlas.sty (CC-BY-SA-4.0).
+\documentclass[11pt,twoside]{article}
+\usepackage{tabularx,booktabs,array,enumitem}
+\usepackage[unicode,pdfencoding=auto,hidelinks]{hyperref}
+\usepackage{atlas-grand}
+\usepackage{graphicx}
+\hypersetup{pdftitle={A Petition Concerning Excessive Interest in Previous Versions of My Code},
+ pdfauthor={Levi Neuwirth},pdfsubject={Satirical correspondence; exhibit for Crawler Chronicles}}
+\setlength{\parskip}{.38em}
+\setlength{\parindent}{1em}
+\setlength{\marginparpush}{12pt}
+\setlist[enumerate]{leftmargin=1.8em,label=\textcolor{rubric}{\Roman*.},itemsep=.5em,topsep=.6em}
+\newcommand{\note}[1]{\marginpar{\raggedright\footnotesize\itshape\color{glossink}#1}}
+\newcommand{\caps}[1]{\textcolor{rubric}{\textls[90]{\textsc{#1}}}}
+\newcommand{\leaf}[2]{\clearpage\section*{#1}\label{#2}}
+\newcommand{\docket}{U.C.\,/\,2026\,/\,0001}
+% The separately built seal has outlined lettering, avoiding rotated-font renderer bugs.
+\newcommand{\CourtSeal}{\includegraphics[width=34mm]{court-seal.pdf}}
+\renewcommand{\AtlasImprint}{%
+ \begin{center}\CourtSeal\par\vspace{.55em}
+  {\footnotesize\caps{Printed for the Petitioner,}\par
+  \caps{and to be had at levineuwirth.org.}\par
+  \vspace{.35em}\caps{mmxxvi.}}\end{center}}
+\makeatletter
+\renewcommand{\atlas@titleblock}{%
+ \begin{center}
+  {\footnotesize\caps{In the Court of Unnecessary Computation}}\par
+  \vspace{.6em}{\small\itshape Sitting in its capacity as a website.}\par
+  \vspace{1.35em}
+  {\LARGE\textls[100]{A PETITION}}\par\vspace{.4em}
+  {\large\textls[90]{CONCERNING EXCESSIVE INTEREST}}\par\vspace{.4em}
+  {\large\textls[90]{IN PREVIOUS VERSIONS}}\par\vspace{.35em}
+  {\large\textls[90]{OF MY CODE}}\par
+  \vspace{1em}{\normalsize\itshape Together with a Schedule of Facts,}\par
+  {\normalsize\itshape Certain Feelings, and a Prayer for Symbolic Relief.}\par
+  \vspace{1.15em}{\small Presented by \textsc{Levi Neuwirth}}\par
+  {\footnotesize Keeper of the Premises; counsel to no one.}\par
+  \vspace{.65em}{\footnotesize Docket \docket\enspace\textbullet\enspace19 October 2026}\par
+  \vspace{.6em}{\setlength{\parskip}{0pt}\textcolor{rubric}{\rule{.68\linewidth}{.8pt}}\par\nointerlineskip
+  \vspace{1.6pt}\textcolor{rubric}{\rule{.68\linewidth}{.25pt}}\par}
+  \vspace{.7em}{\footnotesize\caps{Satire \textbullet\ No legal force}}\par
+ \end{center}}
+\makeatother
+\renewcommand{\shorttitle}{The Petition of a Small Server}
+\fancyhead[C]{\small\caps{The Chancery of the Small Server}}
+\fancyfoot[L]{\scriptsize\caps{Satirical petition}}
+\fancyfoot[C]{\small\thepage}
+\fancyfoot[R]{\scriptsize\docket}
+\renewcommand{\headrulewidth}{.35pt}
+\title{A Petition Concerning Excessive Interest in Previous Versions of My Code}
+\author{Levi Neuwirth}
+\date{19 October 2026}
+\begin{document}
+\begin{abstract}
+A small server, having been much visited in its historical particulars,
+petitions for a little proportion. The quantities in the Schedule are real;
+the Court, its jurisdiction, its fees, and its magnificent opinion of
+itself are wholly invented. The only practical request is the courteous
+forwarding of a message to the relevant customer, where feasible.
+\end{abstract}
+\maketitle
+
+\section*{The Petition}
+Petitioner comes now, entirely without counsel and somewhat without sleep,
+to set forth a grievance of such limited terrestrial importance that it
+has become necessary to furnish it with an elaborate title.
+\note{The Court is self-appointed. Its appointment has not improved its prospects.}
+
+\begin{enumerate}
+\item \textsc{The Premises.} Petitioner maintains one (1) modest virtual
+server, including a public Forgejo instance at
+\url{https://git.levineuwirth.org}. Capitalizing ``Premises'' shall not
+be construed as making the server larger.
+\item \textsc{The Visitors.} Certain persons or processes unknown have
+demonstrated an interest in the repository's earlier editions exceeding
+that ordinarily exhibited by their author. Some mistakes had already
+been corrected. Their continued popularity is therefore personal.
+\item \textsc{The Addressee.} This courtesy petition is addressed to
+EGIHosting's network operations or abuse desk because one observed source
+allocation was registered to EGIHosting. The registry entry identifies
+infrastructure; it does not identify the crawler's customer or establish
+that EGIHosting directed the requests.
+\item \textsc{The Custody of Old Mistakes.} A separate, server-wide
+maintenance rehearsal disclosed 2,464 queued source-archive jobs.
+No finding allocates that queue to this addressee. Petitioner merely
+observes that his past errors had acquired a distribution department.
+\item \textsc{The Proceedings Below.} The server installed Anubis,
+raised its computational admission charge twice, and continued keeping
+records. This is the ordinary administration of a website, now dressed
+as a constitutional crisis.
+\end{enumerate}
+
+\note{No customer identity is sought. No finding concerning training use is made.}
+The Court's jurisdiction extends to the author's choice of page margins,
+his robots policy, and the expression of mild astonishment. It extends
+no further. Venue is proper wherever this PDF has been unnecessarily opened.
+
+\leaf{Schedule A: The Facts Actually Observed}{schedule}
+Here follows the record, kept distinct from the Court's understandable
+inclination to exaggerate. All dates and times are UTC. An HTTP 200 is a
+successful response, not a finding about the visitor's profession.
+\note{A network address is a lead. It is not a confession.}
+
+\subsection*{Part I. The lead concerning this addressee}
+\noindent\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{.43\linewidth}X@{}}
+\toprule
+Observation day & 13 October 2026\\
+Source allocation & \texttt{23.230.0.0/16}\\
+Recorded registrant & EGIHosting; ARIN handle \texttt{EGNL-1}\\
+Successful repository responses & 1,385\\
+Distinct source addresses & 803\\
+Observed user-agent cohort & Linux / Chrome 150 or 155\\
+Registry lookup recorded & 14 October 2026\\
+\bottomrule
+\end{tabularx}
+
+The response count is the recorded cohort within that allocation. It is
+not all traffic from EGIHosting, and the browser description is a claim
+in the request, not a verified identity. The customer and its purpose
+remain unknown. Registration evidence is retained with the essay's
+observation record.\footnote{ARIN source:
+\url{https://rdap.arin.net/registry/ip/23.230.0.0}. The historical lookup,
+counts, and cohort definition are preserved in the companion evidence file.}
+
+\subsection*{Part II. The wider condition of the Premises}
+These totals cover all observed repository sources. They are background
+to the petition, not quantities assigned to the addressee.
+\note{The reduction is observed across different days. The Court has not invented a randomized trial.}
+
+\noindent\begin{tabularx}{\linewidth}{@{}Xrr@{}}
+\toprule
+24-hour window & HTTP 200 & MB served\\
+\midrule
+Before difficulty 5 & 3,055 & 640.9\\
+First day at difficulty 5 & 126 & 21.0\\
+Second day & 116 & 22.5\\
+Latest, ending 19 Oct at 19:00 & 112 & 12.5\\
+\bottomrule
+\end{tabularx}
+
+The latest window contains 96.3\% fewer successful responses and 98.0\%
+fewer response bytes than the preceding difficulty-4 window. Bytes include
+headers. The exact windows are supplied in the companion record.
+
+\begin{center}\vspace{.3em}\pgfornament[width=23mm,color=rubric]{71}\par
+\small\itshape The figures are exact; the indignation is approximate.\end{center}
+
+\leaf{The Prayer for Symbolic Relief}{prayer}
+Wherefore Petitioner respectfully asks, without attempting to manufacture
+an obligation by the accumulation of capital letters, that the following
+modest relief be contemplated.
+\note{No injunction is requested. A voluntary moment of reflection would suffice.}
+
+\begin{enumerate}
+\item \textsc{Courtesy forwarding.} If feasible, convey the accompanying
+message to the customer responsible for the relevant automated traffic.
+No disclosure of its name, billing records, or other identifying details
+is requested.
+\item \textsc{An inventory of enthusiasm.} Invite that customer to ask
+whether it has already obtained the material it presently proposes to
+obtain again, and whether the answer could be checked before another
+archaeological expedition is dispatched.
+\item \textsc{A reconsideration of scale.} Invite a little restraint in
+requesting historical pages from a small public forge. The author is
+pleased to be read; he had not understood this to require a logistics sector.
+\item \textsc{Compensation in the proper currency.} Award the Petitioner
+three imaginary gold pieces and one entirely hypothetical biscuit,
+payable solely in metaphor. Monetary amount due: zero. No account shall
+be opened, no invoice raised, and no biscuit pursued through collections.
+\item \textsc{Disposition.} Accept a brief acknowledgment, an amused
+forwarding, or silence as the recipient's convenience permits. Silence
+creates no admission, default judgment, or sequel fee. It may, however,
+fail to discourage the author from writing a sequel.
+\end{enumerate}
+
+\subsection*{Stipulation concerning the assistance of humans}
+Petitioner recognizes that the person reading an abuse mailbox is
+probably not the person who commissioned the crawl. No grievance is
+advanced against that person's afternoon. The attachments have therefore
+been limited to a completely unnecessary petition and the facts needed
+to understand why it exists.
+\note{Clerks are to be treated kindly. They have already received the PDF.}
+
+\vspace{1em}\noindent Respectfully, and with an excess of formalities,\par
+\vspace{.6em}\noindent\textit{Levi Neuwirth}\par
+\noindent\small Keeper of the Premises\par
+\noindent\small Acting \textit{pro se}, \textit{pro server}, and probably \textit{pro crastination}.
+
+\leaf{Certificate of Imaginary Service}{certificate}
+Let the record show that this instrument is presented for the courteous
+attention of the addressee named below. Dispatch and delivery shall be
+entered according to the actual correspondence record. Whether it has
+been enjoyed lies beyond the Court's powers of discovery.
+\note{A blank is a blank. It is not an alternative form of evidence.}
+
+\noindent\begin{tabularx}{\linewidth}{@{}p{.37\linewidth}X@{}}
+\toprule
+Prepared & 19 October 2026\\
+Addressee & EGIHosting network operations / abuse desk\\
+Route & \texttt{abuse@egihosting.com}\\
+Dispatch date & \hrulefill\\[.7em]
+Delivery evidence & \hrulefill\\[.7em]
+Customer identity & Neither requested nor recorded\\
+Legal authority & None whatsoever\\
+\bottomrule
+\end{tabularx}
+
+The address is published on the provider's contact page.\footnote{
+\url{https://egihosting.com/contacts/}, consulted 19 October 2026.}
+
+\subsection*{Declaration of a non-expert witness}
+I, the server, being neither sworn nor capable of swearing, declare that
+I have responded to the requests recorded in my logs and have formed no
+opinion concerning their ultimate commercial application. My testimony
+is limited by rotation, retention, and the fact that I am a computer.
+
+\begin{center}\vspace{1em}\CourtSeal\par\vspace{.4em}
+\footnotesize\caps{Received into the Court's own imagination.}\end{center}
+
+\begin{center}\vspace{.8em}\pgfornament[width=24mm,color=rubric]{88}\par
+\vspace{.4em}\small\caps{End of instrument. Beginning of no proceedings.}\end{center}
+\end{document}

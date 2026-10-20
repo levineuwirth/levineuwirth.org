@@ -1,0 +1,56 @@
+{
+ "reps": 300,
+ "draws_per_test": 999,
+ "window": 30,
+ "episodes": 40,
+ "planted_minutes": "+1..+10 after each placebo push, Poisson; per-commit sizes are expected counts",
+ "power_added_requests_per_episode": {
+  "2": 0.23666666666666666,
+  "5": 0.6366666666666667,
+  "10": 1.0,
+  "20": 1.0,
+  "40": 1.0
+ },
+ "power_added_requests_per_novel_commit": {
+  "0.5": 0.3566666666666667,
+  "1": 0.7066666666666667,
+  "2": 0.9933333333333333,
+  "5": 1.0
+ },
+ "false_positive_rate_no_injection": 0.06666666666666667,
+ "difficulty2_only": {
+  "5": 0.36666666666666664,
+  "10": 0.6766666666666666,
+  "20": 0.9966666666666667
+ },
+ "cohort_active_oct6_13_only": {
+  "episodes": 15,
+  "dates": 6,
+  "5": 0.22666666666666666,
+  "10": 0.5166666666666667,
+  "20": 0.9566666666666667,
+  "40": 1.0
+ },
+ "illustrative_binomial_model": {
+  "assumption": "independent opportunities with one common probability; not established for clustered pushes, crawler campaigns, or dates when the cohort was absent. Illustration only, not an inferential bound.",
+  "study_episodes_including_anubis_day": {
+   "episodes": 48,
+   "with_primary_fetch_within_1h": 0,
+   "zero_event_upper95": 0.0605
+  },
+  "study_episodes_excluding_anubis_day": {
+   "episodes": 43,
+   "with_primary_fetch_within_1h": 0,
+   "zero_event_upper95": 0.0673
+  },
+  "cohort_active_oct6_13": {
+   "episodes": 15,
+   "with_primary_fetch_within_1h": 0,
+   "zero_event_upper95": 0.181
+  },
+  "study_commits_batched_not_independent": {
+   "commits": 271,
+   "zero_event_upper95": 0.011
+  }
+ }
+}

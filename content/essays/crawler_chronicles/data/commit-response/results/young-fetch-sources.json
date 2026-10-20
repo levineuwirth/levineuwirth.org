@@ -1,0 +1,445 @@
+{
+ "generated_at_private_run": "2026-10-19T22:55:05.227627+00:00",
+ "young_window_hours": 24.0,
+ "definition": "GET or HEAD naming a current commit within the window after its first Forgejo publication; declared tokens and browser families are user-agent claims; sources are addresses, not operators",
+ "by_lag": {
+  "under_60_min": {
+   "get_requests": 107,
+   "sources": 10,
+   "episodes": [
+    "E035",
+    "E053",
+    "E058",
+    "E063"
+   ],
+   "owner_signal_sources": 0,
+   "rows": [
+    {
+     "episode": "E035",
+     "cohort": "other-declared-crawler",
+     "user_agent_claim": "declared:shapbot",
+     "referer": "none",
+     "source_history": "new-to-repository",
+     "owner": "no-owner-signal",
+     "requests": 51,
+     "tip_requests": 2,
+     "sources": 5
+    },
+    {
+     "episode": "E035",
+     "cohort": "other-declared-crawler",
+     "user_agent_claim": "declared:shapbot",
+     "referer": "none",
+     "source_history": "seen-before-publication",
+     "owner": "no-owner-signal",
+     "requests": 39,
+     "tip_requests": 1,
+     "sources": 2
+    },
+    {
+     "episode": "E053",
+     "cohort": "other",
+     "user_agent_claim": "browser-like:chrome/android",
+     "referer": "forge",
+     "source_history": "seen-before-publication",
+     "owner": "no-owner-signal",
+     "requests": 4,
+     "tip_requests": 1,
+     "sources": 1
+    },
+    {
+     "episode": "E053",
+     "cohort": "other",
+     "user_agent_claim": "browser-like:chrome/android",
+     "referer": "none",
+     "source_history": "seen-before-publication",
+     "owner": "no-owner-signal",
+     "requests": 8,
+     "tip_requests": 2,
+     "sources": 1
+    },
+    {
+     "episode": "E058",
+     "cohort": "other",
+     "user_agent_claim": "browser-like:safari/mac",
+     "referer": "forge",
+     "source_history": "new-to-repository",
+     "owner": "no-owner-signal",
+     "requests": 4,
+     "tip_requests": 4,
+     "sources": 1
+    },
+    {
+     "episode": "E063",
+     "cohort": "other",
+     "user_agent_claim": "browser-like:firefox/linux",
+     "referer": "forge",
+     "source_history": "new-to-repository",
+     "owner": "no-owner-signal",
+     "requests": 1,
+     "tip_requests": 1,
+     "sources": 1
+    }
+   ],
+   "by_cohort": {
+    "other": {
+     "requests": 17,
+     "sources": 3
+    },
+    "other-declared-crawler": {
+     "requests": 90,
+     "sources": 7
+    }
+   }
+  },
+  "under_6_h": {
+   "get_requests": 223,
+   "sources": 42,
+   "episodes": [
+    "E033",
+    "E034",
+    "E035",
+    "E044",
+    "E052",
+    "E053",
+    "E057",
+    "E058",
+    "E063",
+    "E077",
+    "E078"
+   ],
+   "owner_signal_sources": 1,
+   "rows": [
+    {
+     "episode": "E033",
+     "cohort": "other",
+     "user_agent_claim": "browser-like:chrome/android",
+     "referer": "none",
+     "source_history": "seen-before-publication",
+     "owner": "no-owner-signal",
+     "requests": 9,
+     "tip_requests": 2,
+     "sources": 4
+    },
+    {
+     "episode": "E033",
+     "cohort": "other-declared-crawler",
+     "user_agent_claim": "declared:googlebot",
+     "referer": "none",
+     "source_history": "seen-before-publication",
+     "owner": "no-owner-signal",
+     "requests": 1,
+     "tip_requests": 0,
+     "sources": 1
+    },
+    {
+     "episode": "E034",
+     "cohort": "other",
+     "user_agent_claim": "browser-like:chrome/android",
+     "referer": "none",
+     "source_history": "new-to-repository",
+     "owner": "no-owner-signal",
+     "requests": 7,
+     "tip_requests": 7,
+     "sources": 4
+    },
+    {
+     "episode": "E034",
+     "cohort": "other",
+     "user_agent_claim": "browser-like:chrome/android",
+     "referer": "none",
+     "source_history": "seen-before-publication",
+     "owner": "no-owner-signal",
+     "requests": 39,
+     "tip_requests": 39,
+     "sources": 5
+    },
+    {
+     "episode": "E034",
+     "cohort": "other-declared-crawler",
+     "user_agent_claim": "declared:googlebot",
+     "referer": "none",
+     "source_history": "seen-before-publication",
+     "owner": "no-owner-signal",
+     "requests": 1,
+     "tip_requests": 1,
+     "sources": 1
+    },
+    {
+     "episode": "E035",
+     "cohort": "other-declared-crawler",
+     "user_agent_claim": "declared:shapbot",
+     "referer": "none",
+     "source_history": "new-to-repository",
+     "owner": "no-owner-signal",
+     "requests": 56,
+     "tip_requests": 2,
+     "sources": 6
+    },
+    {
+     "episode": "E035",
+     "cohort": "other-declared-crawler",
+     "user_agent_claim": "declared:shapbot",
+     "referer": "none",
+     "source_history": "seen-before-publication",
+     "owner": "no-owner-signal",
+     "requests": 43,
+     "tip_requests": 1,
+     "sources": 2
+    },
+    {
+     "episode": "E044",
+     "cohort": "other",
+     "user_agent_claim": "browser-like:firefox/linux",
+     "referer": "forge",
+     "source_history": "seen-before-publication",
+     "owner": "owner-signal",
+     "requests": 1,
+     "tip_requests": 1,
+     "sources": 1
+    },
+    {
+     "episode": "E052",
+     "cohort": "other",
+     "user_agent_claim": "browser-like:chrome/android",
+     "referer": "forge",
+     "source_history": "seen-before-publication",
+     "owner": "no-owner-signal",
+     "requests": 3,
+     "tip_requests": 1,
+     "sources": 1
+    },
+    {
+     "episode": "E052",
+     "cohort": "other",
+     "user_agent_claim": "browser-like:chrome/android",
+     "referer": "none",
+     "source_history": "seen-before-publication",
+     "owner": "no-owner-signal",
+     "requests": 6,
+     "tip_requests": 2,
+     "sources": 1
+    },
+    {
+     "episode": "E053",
+     "cohort": "other",
+     "user_agent_claim": "browser-like:chrome/android",
+     "referer": "forge",
+     "source_history": "seen-before-publication",
+     "owner": "no-owner-signal",
+     "requests": 4,
+     "tip_requests": 1,
+     "sources": 1
+    },
+    {
+     "episode": "E053",
+     "cohort": "other",
+     "user_agent_claim": "browser-like:chrome/android",
+     "referer": "none",
+     "source_history": "seen-before-publication",
+     "owner": "no-owner-signal",
+     "requests": 8,
+     "tip_requests": 2,
+     "sources": 1
+    },
+    {
+     "episode": "E053",
+     "cohort": "other",
+     "user_agent_claim": "browser-like:safari/mac",
+     "referer": "none",
+     "source_history": "new-to-repository",
+     "owner": "no-owner-signal",
+     "requests": 1,
+     "tip_requests": 0,
+     "sources": 1
+    },
+    {
+     "episode": "E057",
+     "cohort": "other",
+     "user_agent_claim": "browser-like:safari/mac",
+     "referer": "none",
+     "source_history": "new-to-repository",
+     "owner": "no-owner-signal",
+     "requests": 3,
+     "tip_requests": 3,
+     "sources": 3
+    },
+    {
+     "episode": "E058",
+     "cohort": "other",
+     "user_agent_claim": "browser-like:safari/mac",
+     "referer": "forge",
+     "source_history": "new-to-repository",
+     "owner": "no-owner-signal",
+     "requests": 4,
+     "tip_requests": 4,
+     "sources": 1
+    },
+    {
+     "episode": "E063",
+     "cohort": "other",
+     "user_agent_claim": "browser-like:firefox/linux",
+     "referer": "forge",
+     "source_history": "new-to-repository",
+     "owner": "no-owner-signal",
+     "requests": 1,
+     "tip_requests": 1,
+     "sources": 1
+    },
+    {
+     "episode": "E077",
+     "cohort": "linux-chrome-150-155",
+     "user_agent_claim": "browser-like:chrome/linux",
+     "referer": "forge",
+     "source_history": "new-to-repository",
+     "owner": "no-owner-signal",
+     "requests": 14,
+     "tip_requests": 14,
+     "sources": 12
+    },
+    {
+     "episode": "E077",
+     "cohort": "linux-chrome-150-155",
+     "user_agent_claim": "browser-like:chrome/linux",
+     "referer": "forge",
+     "source_history": "seen-before-publication",
+     "owner": "no-owner-signal",
+     "requests": 1,
+     "tip_requests": 1,
+     "sources": 1
+    },
+    {
+     "episode": "E077",
+     "cohort": "linux-chrome-150-155",
+     "user_agent_claim": "browser-like:chrome/linux",
+     "referer": "none",
+     "source_history": "new-to-repository",
+     "owner": "no-owner-signal",
+     "requests": 12,
+     "tip_requests": 12,
+     "sources": 12
+    },
+    {
+     "episode": "E077",
+     "cohort": "linux-chrome-150-155",
+     "user_agent_claim": "browser-like:chrome/linux",
+     "referer": "none",
+     "source_history": "seen-before-publication",
+     "owner": "no-owner-signal",
+     "requests": 1,
+     "tip_requests": 1,
+     "sources": 1
+    },
+    {
+     "episode": "E078",
+     "cohort": "linux-chrome-150-155",
+     "user_agent_claim": "browser-like:chrome/linux",
+     "referer": "forge",
+     "source_history": "new-to-repository",
+     "owner": "no-owner-signal",
+     "requests": 3,
+     "tip_requests": 3,
+     "sources": 3
+    },
+    {
+     "episode": "E078",
+     "cohort": "linux-chrome-150-155",
+     "user_agent_claim": "browser-like:chrome/linux",
+     "referer": "none",
+     "source_history": "new-to-repository",
+     "owner": "no-owner-signal",
+     "requests": 5,
+     "tip_requests": 5,
+     "sources": 3
+    }
+   ],
+   "by_cohort": {
+    "linux-chrome-150-155": {
+     "requests": 36,
+     "sources": 16
+    },
+    "other": {
+     "requests": 86,
+     "sources": 18
+    },
+    "other-declared-crawler": {
+     "requests": 101,
+     "sources": 10
+    }
+   }
+  },
+  "under_24_h": {
+   "get_requests": 4093,
+   "sources": 498,
+   "episodes": [
+    "E033",
+    "E034",
+    "E035",
+    "E037",
+    "E043",
+    "E044",
+    "E045",
+    "E046",
+    "E047",
+    "E048",
+    "E049",
+    "E050",
+    "E051",
+    "E052",
+    "E053",
+    "E054",
+    "E056",
+    "E057",
+    "E058",
+    "E063",
+    "E076",
+    "E077",
+    "E078",
+    "E079"
+   ],
+   "owner_signal_sources": 1,
+   "rows": "omitted (see by_cohort)",
+   "by_cohort": {
+    "linux-chrome-150-155": {
+     "requests": 604,
+     "sources": 265
+    },
+    "other": {
+     "requests": 2932,
+     "sources": 222
+    },
+    "other-declared-crawler": {
+     "requests": 557,
+     "sources": 28
+    }
+   }
+  }
+ },
+ "primary_cohort_young_fetches": {
+  "episodes": [
+   "E076",
+   "E077",
+   "E078",
+   "E079"
+  ],
+  "tip_only": true,
+  "requests": 604,
+  "sources": 265,
+  "sources_new_to_repository_at_first_young_fetch": 248,
+  "median_total_repository_requests_per_source": 4,
+  "max_total_repository_requests_per_source": 15,
+  "status_counts": {
+   "200": 304,
+   "403": 283,
+   "3xx": 17
+  },
+  "referer_of_200s": {
+   "forge": 296,
+   "none": 8
+  },
+  "referer_of_403s": {
+   "none": 283
+  },
+  "earliest_lag_minutes_bin": 80
+ }
+}

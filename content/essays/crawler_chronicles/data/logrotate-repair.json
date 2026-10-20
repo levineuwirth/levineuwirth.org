@@ -1,0 +1,118 @@
+{
+  "time_utc": "2026-10-16T09:21:11.844969+00:00",
+  "reason": "Replace one-off evidence hard links with independent verified copies so logrotate can compress retained logs.",
+  "files": [
+    {
+      "name": "access.log.1",
+      "bytes": 741647680,
+      "sha256": "1fb2f47aff05034c62ee8b8e995361be7b8e80922a25648d7e0db071de05d55b"
+    },
+    {
+      "name": "csp-report.log.1",
+      "bytes": 22804,
+      "sha256": "9ebda0702b863e17edc57ebab7a70b10521dd52b5562d4675232a0c2b5d13d07"
+    },
+    {
+      "name": "csp-report.log.10.gz",
+      "bytes": 1728,
+      "sha256": "4d1f93c6efd7daa1950b2bd25dc6516b6ac1f862394427f944e33736dce5d0f3"
+    },
+    {
+      "name": "csp-report.log.11.gz",
+      "bytes": 5436,
+      "sha256": "7fb609d0dc882f8c56ef9888adba4bbac00a5da917ebf4fc2edb6dd7153b8b52"
+    },
+    {
+      "name": "csp-report.log.2.gz",
+      "bytes": 819,
+      "sha256": "1470e4e624001c7676a8fd9c252b44229771cd0d9f9a8c40106242cf33772753"
+    },
+    {
+      "name": "csp-report.log.3.gz",
+      "bytes": 812,
+      "sha256": "679bb916a4e009923f58ec68d6330774e47a1a53cebdf2220d9a15b3435d6202"
+    },
+    {
+      "name": "csp-report.log.4.gz",
+      "bytes": 1240,
+      "sha256": "90266ff87a7a19452b95adb9411dbbc73ab1b06e301e5bb790cc68d79e113082"
+    },
+    {
+      "name": "csp-report.log.5.gz",
+      "bytes": 2938,
+      "sha256": "22c66cb0e0ec0c9b333045f0c579538214d8afaf8c71ae23b5468395bec08799"
+    },
+    {
+      "name": "csp-report.log.6.gz",
+      "bytes": 1981,
+      "sha256": "19b3b47ad33f492aef57212bb814edff1d6ce976deddbdef72d45c15c876a649"
+    },
+    {
+      "name": "csp-report.log.7.gz",
+      "bytes": 1605,
+      "sha256": "bef619dbe0c777ead851437ee0e733d9a8ad807cc72f607914b4aac2e5b4ebc7"
+    },
+    {
+      "name": "csp-report.log.8.gz",
+      "bytes": 2700,
+      "sha256": "0ffcd8a7941e456e97d632bc1c0149bf672810484d3e22f47221adedc015862e"
+    },
+    {
+      "name": "csp-report.log.9.gz",
+      "bytes": 3504,
+      "sha256": "c47bc9b3e4b173033720873e8a2244941cf682add7427f37331be52d4199d6c2"
+    },
+    {
+      "name": "forgejo.access.json.log.1",
+      "bytes": 118620638,
+      "sha256": "cd486fde68d3fb3cbbd3fdb44aff86ba59ece56df0a62575a4b75d399a9eba32"
+    },
+    {
+      "name": "forgejo.access.json.log.10.gz",
+      "bytes": 19685726,
+      "sha256": "2ce287117d70415b2d547c025aecaf57f397018fae6f7ec3092745afc1593b42"
+    },
+    {
+      "name": "forgejo.access.json.log.2.gz",
+      "bytes": 2552083,
+      "sha256": "1ab16a1d3962d062b47bd234ce89365406f2f237e823ef65b220aa82741148be"
+    },
+    {
+      "name": "forgejo.access.json.log.3.gz",
+      "bytes": 5117706,
+      "sha256": "ca7ba01129d3f5c3ae8a7c61b8499addf1bf58908e04f49110cc5a168569c138"
+    },
+    {
+      "name": "forgejo.access.json.log.4.gz",
+      "bytes": 4754551,
+      "sha256": "582a7c647e78a784bc0aed8eae5f023c1ffa032a1d0248f4463f1bf2dfe240fa"
+    },
+    {
+      "name": "forgejo.access.json.log.5.gz",
+      "bytes": 3039385,
+      "sha256": "76d7f67d673f5a4c624ed2e8fe50898986f66f28d3b5ed1b28d67cf7d03c06af"
+    },
+    {
+      "name": "forgejo.access.json.log.6.gz",
+      "bytes": 1309666,
+      "sha256": "badf467ca55a5fabe072c205fcde77bb82e1381cc3fa682270653bc753b1729f"
+    },
+    {
+      "name": "forgejo.access.json.log.7.gz",
+      "bytes": 903194,
+      "sha256": "47efafd92a100aaf5c05040446259cd8ec876a1c21fc775b8da4480a6cb31408"
+    },
+    {
+      "name": "forgejo.access.json.log.8.gz",
+      "bytes": 1514959,
+      "sha256": "e88177c9ba80b15453c7589dba28e34ed9a84f19402fbb892f6a96aed5962609"
+    },
+    {
+      "name": "forgejo.access.json.log.9.gz",
+      "bytes": 14930797,
+      "sha256": "da8c3743230fff8e1757bdc6b9c3b613b6b9a85d9e95f5941ba77dee62cf6bbc"
+    }
+  ],
+  "live_log_content_modified": false,
+  "logrotate_result": "success"
+}

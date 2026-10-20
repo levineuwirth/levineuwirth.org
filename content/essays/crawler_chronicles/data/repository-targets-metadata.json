@@ -1,0 +1,57 @@
+{
+  "since_inclusive_utc": "2026-10-01T00:00:00Z",
+  "until_exclusive_utc": "2026-10-19T19:00:00Z",
+  "unit": "Repository-path HTTP responses, all methods and user agents; known maintenance probes excluded.",
+  "grouping": "Four named repositories; LeVCS/levcs aliases combined. Other includes smaller repositories, unresolved paths, feed routes retained under .rss names, and the small unallocated residual in retained daily summaries.",
+  "daily_summary_residuals_added_to_other": {
+    "2026-10-15": {
+      "requests": 1,
+      "http200": 1,
+      "http403": 0
+    },
+    "2026-10-16": {
+      "requests": 2,
+      "http200": 1,
+      "http403": 1
+    },
+    "2026-10-18": {
+      "requests": 2,
+      "http200": 0,
+      "http403": 2
+    }
+  },
+  "days": 19,
+  "last_day_hours": 19,
+  "coverage": "A represented 24-hour UTC date is not certified continuous service uptime. Counts reflect retained records; no extrapolation.",
+  "cross_checks": {
+    "oct1_3_pmacs_http200": 309325,
+    "oct1_3_website_http200": 32501,
+    "oct1_3_total_http200": 367971,
+    "oct1_3_pmacs_share_percent": 84.06233099891024,
+    "oct1_3_website_share_percent": 8.832489516836924,
+    "oct13_total_http200": 15539,
+    "oct13_website_share_percent": 67.10213012420361,
+    "oct13_pmacs_share_percent": 30.19499324280842
+  },
+  "historical_discrepancy": {
+    "differences": [
+      {
+        "date_utc": "2026-10-03",
+        "hourly_cube_http200": 89691,
+        "older_daily_snapshot_http200": 89692
+      }
+    ],
+    "handling": "Use the internally consistent hourly cube for Oct 1\u201313 shares and totals. No synthetic extra response is assigned to a repository. The one-response difference does not change displayed rounded shares."
+  },
+  "sources_sha256": {
+    "2026-10-14/hourly.csv.gz": "6f2a6f2509745feb4482d98646ddb7c43852bba0246e3c606c1018c879338e50",
+    "2026-10-16/hourly.csv.gz": "38b5df04dffe24a81ff10697446508fd08e6d1beaca2a51107237ef4d6e12479",
+    "2026-10-19/findings.json": "83447349fafcf41496062b9e054449bc503dba74e1142087df9f14610ee282d1",
+    "2026-10-14/daily.csv": "8666e59b42533aebdc71a8f42b417dd3cec3ec76dcd079ba5091ed4015cc12ae"
+  },
+  "notes": [
+    "HTTP 200 includes legitimate visitors and is not proof of a bot.",
+    "HTTP 403 combines challenges and denials; the attempts variant includes all statuses.",
+    "Shares are descriptive; deployment days mix configurations."
+  ]
+}

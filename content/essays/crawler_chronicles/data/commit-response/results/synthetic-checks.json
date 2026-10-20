@@ -1,0 +1,15 @@
+{
+ "exactness_constructed_null_rate_at_05_and_10": [
+  0.0325,
+  0.0675
+ ],
+ "null_bursty_cron_trend_rejection_rate": 0.045,
+ "planted_response_power": {
+  "0.5": 0.12,
+  "1": 0.13,
+  "2": 0.27,
+  "4": 0.48
+ },
+ "failure_mode_pushes_at_58_with_00_cron_rejection_rate": 0.39,
+ "control_pushes_at_58_without_cron_rejection_rate": 0.18
+}

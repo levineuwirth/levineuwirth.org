@@ -1,0 +1,169 @@
+{
+ "definition": "GET naming a commit in a semantic path position, any status; HEAD excluded (paired HEAD/GET by one declared crawler)",
+ "methods_in_hash_positions": {
+  "GET": 216481,
+  "HEAD": 3067
+ },
+ "resolution_get_requests": {
+  "current": 206993,
+  "rewritten-history-listed": 6615,
+  "unresolved": 2873
+ },
+ "resolution_by_cohort_status": {
+  "current|amazon-declared|200": 12545,
+  "current|amazon-declared|404": 2668,
+  "current|amazon-declared|499": 142,
+  "current|amazon-declared|5xx": 38,
+  "current|linux-chrome-150-155|200": 43068,
+  "current|linux-chrome-150-155|2xx": 14,
+  "current|linux-chrome-150-155|3xx": 1398,
+  "current|linux-chrome-150-155|403": 45258,
+  "current|linux-chrome-150-155|404": 113,
+  "current|linux-chrome-150-155|499": 269,
+  "current|linux-chrome-150-155|5xx": 2,
+  "current|other|200": 15052,
+  "current|other|3xx": 16,
+  "current|other|403": 40718,
+  "current|other|404": 1130,
+  "current|other|499": 719,
+  "current|other|5xx": 113,
+  "current|other-declared-crawler|200": 38782,
+  "current|other-declared-crawler|2xx": 63,
+  "current|other-declared-crawler|3xx": 21,
+  "current|other-declared-crawler|403": 48,
+  "current|other-declared-crawler|404": 4621,
+  "current|other-declared-crawler|499": 88,
+  "current|other-declared-crawler|5xx": 107,
+  "rewritten-history-listed|other|200": 17,
+  "rewritten-history-listed|other|403": 1458,
+  "rewritten-history-listed|other|404": 2577,
+  "rewritten-history-listed|other|499": 5,
+  "rewritten-history-listed|other|5xx": 8,
+  "rewritten-history-listed|other-declared-crawler|200": 1,
+  "rewritten-history-listed|other-declared-crawler|403": 161,
+  "rewritten-history-listed|other-declared-crawler|404": 2383,
+  "rewritten-history-listed|other-declared-crawler|499": 2,
+  "rewritten-history-listed|other-declared-crawler|5xx": 3,
+  "unresolved|other|200": 11,
+  "unresolved|other|3xx": 4,
+  "unresolved|other|403": 653,
+  "unresolved|other|404": 1419,
+  "unresolved|other|499": 6,
+  "unresolved|other|5xx": 2,
+  "unresolved|other-declared-crawler|403": 65,
+  "unresolved|other-declared-crawler|404": 713
+ },
+ "requests_before_publication": {},
+ "study_novel_commits": 271,
+ "time_to_first_fetch_km": {
+  "any": {
+   "fetched_by_1h": 0.0517,
+   "fetched_by_6h": 0.0775,
+   "fetched_by_24h": 0.2288,
+   "fetched_by_72h": 0.4871,
+   "fetched_by_168h": 0.5131,
+   "fetched_by_end": 140
+  },
+  "primary": {
+   "fetched_by_1h": 0.0,
+   "fetched_by_6h": 0.0074,
+   "fetched_by_24h": 0.0148,
+   "fetched_by_72h": 0.0148,
+   "fetched_by_168h": 0.1369,
+   "fetched_by_end": 120
+  },
+  "declared-other": {
+   "fetched_by_1h": 0.0295,
+   "fetched_by_6h": 0.0295,
+   "fetched_by_24h": 0.0295,
+   "fetched_by_72h": 0.0295,
+   "fetched_by_168h": 0.0295,
+   "fetched_by_end": 11
+  },
+  "other": {
+   "fetched_by_1h": 0.0221,
+   "fetched_by_6h": 0.0406,
+   "fetched_by_24h": 0.1956,
+   "fetched_by_72h": 0.4797,
+   "fetched_by_168h": 0.4872,
+   "fetched_by_end": 135
+  }
+ },
+ "primary_cohort_requests_to_current_commits": 90122,
+ "non_current_hash_requests": {
+  "rewritten-history-listed": {
+   "get_requests": 6615,
+   "by_status": {
+    "404": 4960,
+    "5xx": 11,
+    "499": 7,
+    "200": 18,
+    "403": 1619
+   }
+  },
+  "unresolved": {
+   "get_requests": 2873,
+   "by_status": {
+    "404": 2132,
+    "5xx": 2,
+    "499": 6,
+    "200": 11,
+    "403": 718,
+    "3xx": 4
+   }
+  },
+  "note": "rewritten-history-listed: hashes named in pre-rewrite push notifications (objects removed). unresolved: no match in the current graph or that list; not shown to be removed history."
+ },
+ "age_binning": "Ages use the request-minute midpoint (completion time, minute resolution).",
+ "primary_cohort_youngest_target_age_hours_at_minute_start": 1.3461,
+ "primary_cohort_requests_older_than_7d_at_minute_start": 87265,
+ "primary_cohort_requests_by_target_age": {
+  "<1h": 0,
+  "1-6h": 36,
+  "6-24h": 568,
+  "1-3d": 57,
+  "3-7d": 2191,
+  ">7d": 87270
+ },
+ "primary_cohort_rate_by_age_active_hours": {
+  "<1h": {
+   "commit_hours": 85.1,
+   "requests": 0,
+   "requests_per_commit_hour": 0.0
+  },
+  "1-6h": {
+   "commit_hours": 522.3,
+   "requests": 36,
+   "requests_per_commit_hour": 0.0689
+  },
+  "6-24h": {
+   "commit_hours": 2062.3,
+   "requests": 568,
+   "requests_per_commit_hour": 0.2754
+  },
+  "1-3d": {
+   "commit_hours": 6213.3,
+   "requests": 57,
+   "requests_per_commit_hour": 0.0092
+  },
+  "3-7d": {
+   "commit_hours": 18902.0,
+   "requests": 2191,
+   "requests_per_commit_hour": 0.1159
+  },
+  ">7d": {
+   "commit_hours": 43733.7,
+   "requests": 87270,
+   "requests_per_commit_hour": 1.9955
+  }
+ },
+ "primary_cohort_active_hours": 252,
+ "primary_cohort_latest_target_episode": "E079",
+ "episodes_with_primary_fetch_within_1h": 0,
+ "episodes_with_any_fetch_within_1h": [
+  "E035",
+  "E053",
+  "E058",
+  "E063"
+ ]
+}

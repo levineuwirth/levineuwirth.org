@@ -1,0 +1,44 @@
+{
+  "sources": [
+    {
+      "file": "1dd09280d964f11a0357fc6814adf49e0f560e7d4d95cb02fd3aeddb9f8dbd57.log.gz",
+      "first_time": "2026-10-17T00:45:41+00:00",
+      "last_time": "2026-10-18T00:51:03+00:00",
+      "raw_sha256": "aed43a02a76cb14e487541aab87e6335cc74dea1ec4438cde556db73d7a6963d"
+    },
+    {
+      "file": "7868098795945fd29c7a7cfcba9a9eba839df6d1904839c763fe6abfcb28053e.log.gz",
+      "first_time": "2026-10-19T00:33:19+00:00",
+      "last_time": "2026-10-19T19:00:01+00:00",
+      "raw_sha256": "479e8c9f7b4dd99e34d75e4fe0ea4b112af3477b55a1960b5d22c0f9d368824e"
+    },
+    {
+      "file": "81ee616bbba8cb8c5c37a013721f00622ffdfae41cb14350cea58d8ce5809b6b.log.gz",
+      "first_time": "2026-10-16T09:21:17+00:00",
+      "last_time": "2026-10-17T00:44:25+00:00",
+      "raw_sha256": "c156d28e26a53e0099b44bc8038579af190f62f9067f4825bb09c70e8c1001e3"
+    },
+    {
+      "file": "b71038739e75d869a4bd848df2b71347734eee29784ae63cec3af9b53ed1c51d.log.gz",
+      "first_time": "2026-10-18T00:52:10+00:00",
+      "last_time": "2026-10-19T00:30:47+00:00",
+      "raw_sha256": "6846886e4709799f47d49c29371c6ce47eba47a83be3944fb1574806ab53ea8d"
+    },
+    {
+      "file": "d0f38fe0247b6601f1b81108f0073643276dffa160d3b234e41b5727e8cf05ef.log.gz",
+      "first_time": "2026-10-14T00:39:55+00:00",
+      "last_time": "2026-10-16T09:21:12+00:00",
+      "raw_sha256": "47ee9f61e13906a3584ed5fb86e5f63e83d04c8429b03dba700c2e690155c760"
+    }
+  ],
+  "analysis_sha256": "aa73fab5f5bd27c18cd0a7845f387e0bfcb9d33d023acce91d8860f9d704e4b3",
+  "observed_at": "2026-10-19T19:16:10.829849+00:00",
+  "raw_data_location": "Private retained archive on VPS; addresses are not exported.",
+  "sampling_notes": [
+    "HTTP 403 combines challenge and denial; HTTP 200 is not a bot identity.",
+    "User-agent cohorts are claims, not verified operators.",
+    "Bytes include response headers.",
+    "Equal-length windows differ in weekday; observed changes are not a controlled causal estimate.",
+    "IPs never leave the VPS in this report."
+  ]
+}

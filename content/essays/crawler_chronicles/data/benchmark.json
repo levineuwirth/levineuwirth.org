@@ -1,0 +1,617 @@
+{
+  "algorithm": "fast",
+  "source_release": "v1.28.1",
+  "date": "2026-10-14",
+  "notes": [
+    "Exact deployed worker; fresh random 64-byte challenges; every solution verified.",
+    "Localhost fetch and worker startup included; production network latency excluded.",
+    "Four-worker desktop comparison plus a one-worker Chromium comparison.",
+    "No real mobile hardware tested."
+  ],
+  "results": [
+    {
+      "kind": "environment",
+      "browser": "chromium",
+      "version": "153.0.8010.12",
+      "workers": 4,
+      "hardwareConcurrency": 16,
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36"
+    },
+    {
+      "kind": "benchmark",
+      "browser": "chromium",
+      "workers": 4,
+      "difficulty": 2,
+      "n": 6,
+      "successes": 6,
+      "median_ms": 8.0,
+      "mean_ms": 10.4,
+      "max_ms": 23.4,
+      "samples": [
+        {
+          "hash": "00aa6086dc4042345d107d2fc8954f925df19149f77a5975c3120b9feefacc79",
+          "nonce": 1437,
+          "ms": 23.400000005960464
+        },
+        {
+          "hash": "00395986159589579360639cacc9ac9a8c06b2e5e5d75d39e33e4aaf3a607976",
+          "nonce": 981,
+          "ms": 8.199999988079071
+        },
+        {
+          "hash": "00f69a64a6db247aaa15a4d4bc52fe87c2d10be60316ee2b1855f47b09d89525",
+          "nonce": 404,
+          "ms": 7.799999997019768
+        },
+        {
+          "hash": "008309814c4288b6f8ee8084df70695356c82f90412122d9dae9609d64ed7e4a",
+          "nonce": 134,
+          "ms": 8.200000002980232
+        },
+        {
+          "hash": "0081f0e3eacf0aca01d43b27b5f80b06f30bc8f190cb7e1c2a5c0ea915a37a31",
+          "nonce": 127,
+          "ms": 7.399999991059303
+        },
+        {
+          "hash": "0078c79cd7097d9aa281f92547bf5e7d49c0ecddfbaa4853c5ea7dd1a659036c",
+          "nonce": 342,
+          "ms": 7.399999991059303
+        }
+      ]
+    },
+    {
+      "kind": "benchmark",
+      "browser": "chromium",
+      "workers": 4,
+      "difficulty": 3,
+      "n": 6,
+      "successes": 6,
+      "median_ms": 12.2,
+      "mean_ms": 14.75,
+      "max_ms": 23.8,
+      "samples": [
+        {
+          "hash": "000719fa7d45279699ce2adb85ef9a7b237d73b265f41461f4ea3ec460a138ec",
+          "nonce": 10465,
+          "ms": 23.799999997019768
+        },
+        {
+          "hash": "00098204bc38a4636b99cb346b21adbbf1b2d2febc5752dc612c1103953e980a",
+          "nonce": 1199,
+          "ms": 11.700000002980232
+        },
+        {
+          "hash": "00097e64bf182fd705b24a52e8124906a17fdfc4314ee5f2d17c6d7ccc39957d",
+          "nonce": 20,
+          "ms": 10
+        },
+        {
+          "hash": "000de07dd00c188cf698ff7842a5c3b1b5b99fd73fe599363c1c8fabdead25c2",
+          "nonce": 4647,
+          "ms": 20
+        },
+        {
+          "hash": "000539befca60789d97638ddb94dd6bb5a6be09a2f10ca2eeec7f437a3d29a56",
+          "nonce": 162,
+          "ms": 10.299999997019768
+        },
+        {
+          "hash": "000f71bca9cc8eefb42c22bf2b03c26ff0d29eb972ca63363484fea0c85e39c9",
+          "nonce": 363,
+          "ms": 12.700000002980232
+        }
+      ]
+    },
+    {
+      "kind": "benchmark",
+      "browser": "chromium",
+      "workers": 4,
+      "difficulty": 4,
+      "n": 10,
+      "successes": 10,
+      "median_ms": 113.95,
+      "mean_ms": 199.12,
+      "max_ms": 696.8,
+      "samples": [
+        {
+          "hash": "0000feafa6b2c2862ca014a126adfa9180e3fb563603d98963db3b3a40ee482b",
+          "nonce": 75551,
+          "ms": 123.5
+        },
+        {
+          "hash": "00000bac133a4c2c280b3dbf73efdde2a202024fdd905ea51a19bdfc5fc77a22",
+          "nonce": 21970,
+          "ms": 43.79999999701977
+        },
+        {
+          "hash": "0000d164cb7335f5960663ed01c18cf6b46511f9be72138b53ae41c3e62a34ab",
+          "nonce": 282,
+          "ms": 11.599999994039536
+        },
+        {
+          "hash": "0000edf10636fd6663d1c0cae51ff3bcbe7e82e24ae788c6b80d6dc4235b6af4",
+          "nonce": 33044,
+          "ms": 94.59999999403954
+        },
+        {
+          "hash": "0000f35a4a6e9487286145923c229bc015200ac185a4733911976c16a6e3cf03",
+          "nonce": 62186,
+          "ms": 201.40000000596046
+        },
+        {
+          "hash": "0000bea80f360213e49254b519d825c3b8863c4021c28c15684b53daa3cf5c63",
+          "nonce": 25890,
+          "ms": 104.40000000596046
+        },
+        {
+          "hash": "0000516d989bf1b4e0ed62378e5816534a8f65d08a536c1a7d799d1a834f789b",
+          "nonce": 4213,
+          "ms": 41.099999994039536
+        },
+        {
+          "hash": "00007f754acd00f7035ab186a2e70a0d3becdb116e0456894ff9aa064f57280e",
+          "nonce": 77565,
+          "ms": 433.1000000089407
+        },
+        {
+          "hash": "000028199b45641988ea42b520329cf6c3d6371bd0ae16ef6d49cbef49175e07",
+          "nonce": 202365,
+          "ms": 696.8000000119209
+        },
+        {
+          "hash": "0000570bce28be45d3a5507cf1809bf9ca88178ab38fd9d735fe162076096a0a",
+          "nonce": 76297,
+          "ms": 240.90000000596046
+        }
+      ]
+    },
+    {
+      "kind": "benchmark",
+      "browser": "chromium",
+      "workers": 4,
+      "difficulty": 5,
+      "n": 6,
+      "successes": 6,
+      "median_ms": 1231.8,
+      "mean_ms": 1837.17,
+      "max_ms": 5202.5,
+      "samples": [
+        {
+          "hash": "000007f2cbcee446d2cc1c5d44a4bfe9d96bada871ee83902892b119adf8e906",
+          "nonce": 80989,
+          "ms": 266.5
+        },
+        {
+          "hash": "00000aa4fbfe962619beb6aad6016d985b080848531fbbccce22f92c2e3efb7e",
+          "nonce": 950796,
+          "ms": 2138.2000000029802
+        },
+        {
+          "hash": "0000058525a9d6028378e7f9a6dfeb25657cc192c57d6aead4cdcfd0afd413c3",
+          "nonce": 79393,
+          "ms": 159.19999998807907
+        },
+        {
+          "hash": "00000cf36ce6a3f08033a8aa629b769a7e7b1bbe5824e923ac9518352d19b674",
+          "nonce": 1463147,
+          "ms": 2931.2000000029802
+        },
+        {
+          "hash": "00000df793799b2722bc1755c862b431a6042c14eda460603b91941fd584a6e4",
+          "nonce": 3216113,
+          "ms": 5202.5
+        },
+        {
+          "hash": "00000eb823cef7be2ff50f310cd23da4bf2a43833f50717aef231eac8f1ac699",
+          "nonce": 176306,
+          "ms": 325.40000000596046
+        }
+      ]
+    },
+    {
+      "kind": "environment",
+      "browser": "firefox",
+      "version": "155.0",
+      "workers": 4,
+      "hardwareConcurrency": 16,
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:155.0) Gecko/20100101 Firefox/155.0"
+    },
+    {
+      "kind": "benchmark",
+      "browser": "firefox",
+      "workers": 4,
+      "difficulty": 2,
+      "n": 6,
+      "successes": 6,
+      "median_ms": 16.0,
+      "mean_ms": 17.83,
+      "max_ms": 30,
+      "samples": [
+        {
+          "hash": "00cb98bb8c80890490d2fca5aa6969bf40f39fd00a6423940138eb92f88de411",
+          "nonce": 134,
+          "ms": 23
+        },
+        {
+          "hash": "00c1373cf0b206a731acedf2d10ba00a849e8c3b4ad81a86e76ed97323444106",
+          "nonce": 87,
+          "ms": 15
+        },
+        {
+          "hash": "00e551ad5637192c18a3dc3635f687cb15eb7452514e6ee552693bb42e9d17f1",
+          "nonce": 519,
+          "ms": 17
+        },
+        {
+          "hash": "0065dd369002c10f55e44d390aa53403ef9362767311a73ebffa643e4a65c9e8",
+          "nonce": 1,
+          "ms": 10
+        },
+        {
+          "hash": "008b6ee99e30ef02b56234f363530167bde6e7a546fc69892ef166b44f6bc0c5",
+          "nonce": 294,
+          "ms": 30
+        },
+        {
+          "hash": "0069c77a2eeff79b24eb30174e838bfc5e3b5b4836ba5f91687d3964e413eb80",
+          "nonce": 264,
+          "ms": 12
+        }
+      ]
+    },
+    {
+      "kind": "benchmark",
+      "browser": "firefox",
+      "workers": 4,
+      "difficulty": 3,
+      "n": 6,
+      "successes": 6,
+      "median_ms": 18.5,
+      "mean_ms": 19.17,
+      "max_ms": 33,
+      "samples": [
+        {
+          "hash": "000b01349c6871ab145c30ca54969a77946a0d79caf82e415d2ffa88fb1e4809",
+          "nonce": 2019,
+          "ms": 22
+        },
+        {
+          "hash": "000cad96fc4f53013b3bd294e28eb4f1d381acd69ab75b2e78098b9a5f141a97",
+          "nonce": 1224,
+          "ms": 16
+        },
+        {
+          "hash": "0009f5f13b7d66dcb29bdda7eec9b4cce87f51c45ba5b3bdd67572f8790a8f57",
+          "nonce": 2153,
+          "ms": 21
+        },
+        {
+          "hash": "000729b2264e8e5330871fe08b9964cdce3998def32e6c0fe694efadc0a2f765",
+          "nonce": 298,
+          "ms": 12
+        },
+        {
+          "hash": "00023cc9939b47fa44e66345ca05ed3fb8e528872c25a8ea7f93fbfd56522afc",
+          "nonce": 231,
+          "ms": 11
+        },
+        {
+          "hash": "000caa7c3bb085a1b88ae847eab8af62e27a37d4a8c8de62d764931329a50f5b",
+          "nonce": 6195,
+          "ms": 33
+        }
+      ]
+    },
+    {
+      "kind": "benchmark",
+      "browser": "firefox",
+      "workers": 4,
+      "difficulty": 4,
+      "n": 10,
+      "successes": 10,
+      "median_ms": 137.0,
+      "mean_ms": 152.9,
+      "max_ms": 408,
+      "samples": [
+        {
+          "hash": "000012a36fd043dbd2975d4bb31777b1aa397ee6a4e84baab69ae6ce9e9cf237",
+          "nonce": 6877,
+          "ms": 38
+        },
+        {
+          "hash": "0000a186184e02374ebc2a00d86c6fba4122a1dd60974e48100ce33c5eff6371",
+          "nonce": 31364,
+          "ms": 112
+        },
+        {
+          "hash": "00001ff2af574e0c9c7bc3047cbdcfc92b1b02152d88774b2268960992b82700",
+          "nonce": 66646,
+          "ms": 223
+        },
+        {
+          "hash": "0000437509c35bf8acd170de9087d4107a640570446bc28b92d4aedb4038f23f",
+          "nonce": 34681,
+          "ms": 125
+        },
+        {
+          "hash": "0000cca6c9707a563eb1d9cad655cc9f24e1108eef110f893248580fd6526b15",
+          "nonce": 41857,
+          "ms": 149
+        },
+        {
+          "hash": "0000421a5f57138390934e0e286eddbe19bb74ddf980dbbc359619bb6af43f02",
+          "nonce": 58698,
+          "ms": 203
+        },
+        {
+          "hash": "0000712c038335d0d4b906175b7d0de591c9e5e91bf73a96d0fd9560bdfdde30",
+          "nonce": 46618,
+          "ms": 165
+        },
+        {
+          "hash": "00006f224614ca17b90851d786edec3168ce912db8a581606e506008d147316c",
+          "nonce": 5043,
+          "ms": 32
+        },
+        {
+          "hash": "00001281f075f0f0e4290900bc5082448dcde1db6614cc58406a814c85cd59db",
+          "nonce": 18850,
+          "ms": 74
+        },
+        {
+          "hash": "00004ba307a35c312e9305102dba77100837647b0e34ba20bc318d775fdef444",
+          "nonce": 121017,
+          "ms": 408
+        }
+      ]
+    },
+    {
+      "kind": "benchmark",
+      "browser": "firefox",
+      "workers": 4,
+      "difficulty": 5,
+      "n": 6,
+      "successes": 6,
+      "median_ms": 3195.0,
+      "mean_ms": 4071.17,
+      "max_ms": 12655,
+      "samples": [
+        {
+          "hash": "0000005965327e9ec66ef9f23c617ba49252677690fc0a132bdd40def2ff8e7f",
+          "nonce": 467883,
+          "ms": 1521
+        },
+        {
+          "hash": "0000075ce9cec2406416dd8fb6200e9bed6f6cc4cea64592f116e554b310547e",
+          "nonce": 3941690,
+          "ms": 12655
+        },
+        {
+          "hash": "00000f9233b3fa6beef50267f434107f28675eac49063822999b21480d0cd456",
+          "nonce": 1123569,
+          "ms": 3718
+        },
+        {
+          "hash": "000002d1aa168d6e656dfb3a41a97bba802d9a437b7e2768dbb3916cba1665db",
+          "nonce": 1138908,
+          "ms": 3714
+        },
+        {
+          "hash": "00000c2303d1e93e39d66c057f11c4f1041fb01e00845b301f03066ac152c823",
+          "nonce": 817046,
+          "ms": 2676
+        },
+        {
+          "hash": "000002348adaa3fd4f0ba2266bdee662b69f6e877b6b2ee8452a156d839207b1",
+          "nonce": 32013,
+          "ms": 143
+        }
+      ]
+    },
+    {
+      "kind": "environment",
+      "browser": "chromium",
+      "version": "153.0.8010.12",
+      "workers": 1,
+      "hardwareConcurrency": 16,
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36"
+    },
+    {
+      "kind": "benchmark",
+      "browser": "chromium",
+      "workers": 1,
+      "difficulty": 2,
+      "n": 6,
+      "successes": 6,
+      "median_ms": 7.7,
+      "mean_ms": 7.88,
+      "max_ms": 9.5,
+      "samples": [
+        {
+          "hash": "00cc0d245e9012fbd110a23313eca96c1d941290adfc458d545ac92c05c30786",
+          "nonce": 397,
+          "ms": 9.5
+        },
+        {
+          "hash": "007a86d26e060b607e29c4673c03597c13dc20efc747378b15d2f9dff67786cf",
+          "nonce": 424,
+          "ms": 7.899999991059303
+        },
+        {
+          "hash": "00496d414f384ad0f6e98e681b36c54a3fc8e3e6fde9b773717e764834998297",
+          "nonce": 132,
+          "ms": 8
+        },
+        {
+          "hash": "0077fffa1182736881d0c4921ab1b14f8062f47432dc1a4bbeaa9f0de5c693f7",
+          "nonce": 228,
+          "ms": 7.0999999940395355
+        },
+        {
+          "hash": "009af86093046aa280db0eb617ed0b4f56181ac61e6d7d3f382783dded2de827",
+          "nonce": 57,
+          "ms": 7.300000011920929
+        },
+        {
+          "hash": "00f706ca323766048986c7a4aed75843ccab46a0fc7ccf5c2e70752669c02738",
+          "nonce": 169,
+          "ms": 7.5
+        }
+      ]
+    },
+    {
+      "kind": "benchmark",
+      "browser": "chromium",
+      "workers": 1,
+      "difficulty": 3,
+      "n": 6,
+      "successes": 6,
+      "median_ms": 28.8,
+      "mean_ms": 28.08,
+      "max_ms": 58,
+      "samples": [
+        {
+          "hash": "00066aaa4c79697d6caf8ce79eb513e1c2529f3fc82dfa2f12ab06964a0dd145",
+          "nonce": 804,
+          "ms": 10.200000002980232
+        },
+        {
+          "hash": "0001788f9267ef2076862a6123623d75b3e175f6ec32c2cd59d7d7386230f697",
+          "nonce": 5646,
+          "ms": 32.29999999701977
+        },
+        {
+          "hash": "0003f00cc4cce127a808ad7afa554d2092a1dfd818dd56b66ed26797c529ef24",
+          "nonce": 7547,
+          "ms": 33
+        },
+        {
+          "hash": "00055807d7acaf6f15ce9325e9eb23a684a0eda2ef92221e6d81fe91e34336df",
+          "nonce": 515,
+          "ms": 9.699999988079071
+        },
+        {
+          "hash": "0006db4ee4955f799da28371d034f8bafc3b9b641089ad462488cc610cb00dff",
+          "nonce": 5501,
+          "ms": 25.30000001192093
+        },
+        {
+          "hash": "00093c10aab6dcb131e2e894c335feb6ff3dc8e19e4488c403dec97e6ba9c244",
+          "nonce": 13319,
+          "ms": 58
+        }
+      ]
+    },
+    {
+      "kind": "benchmark",
+      "browser": "chromium",
+      "workers": 1,
+      "difficulty": 4,
+      "n": 10,
+      "successes": 10,
+      "median_ms": 162.65,
+      "mean_ms": 261.64,
+      "max_ms": 617.3,
+      "samples": [
+        {
+          "hash": "000080c3812b01ddeb5568cf1dd95f1b71a1078482b3cf6e7f4b4d21768515fe",
+          "nonce": 108086,
+          "ms": 417.5
+        },
+        {
+          "hash": "0000afa3f8d24b4690133b1e105ecc17c76e0092b05ad23f104c327ebc953f4b",
+          "nonce": 150232,
+          "ms": 565.0999999940395
+        },
+        {
+          "hash": "00007bf7120d84682d0681ac355103700a0fb78e0bd1d7c4296f4967f6763b99",
+          "nonce": 38442,
+          "ms": 151.79999999701977
+        },
+        {
+          "hash": "00006abba771591e2507ad9a9012bbb48fad32b525eb2d92746cf66134a417ed",
+          "nonce": 45800,
+          "ms": 173.5
+        },
+        {
+          "hash": "00005d54d5a0fead0b2c0f03b84e7e98038ccd10012e6ffe539c405f0b25b671",
+          "nonce": 162690,
+          "ms": 617.2999999970198
+        },
+        {
+          "hash": "000028f25cbea1e8f07a14d1f8f24520f6496d03025d0ca42776f63be7454551",
+          "nonce": 1066,
+          "ms": 11.199999988079071
+        },
+        {
+          "hash": "00004845ccce1213deaffe06f63065d40ffbdeb99348954f44469d49212db545",
+          "nonce": 14445,
+          "ms": 62.1000000089407
+        },
+        {
+          "hash": "00003578b78f3d00a5c17da053c6a2c9bf216c28e01780072a9220a6bea46bb8",
+          "nonce": 10787,
+          "ms": 46.29999999701977
+        },
+        {
+          "hash": "00000e20371cfc395482e72091343d581c21e88bfcdc959afe2c282840e0f015",
+          "nonce": 119135,
+          "ms": 458.5
+        },
+        {
+          "hash": "0000fe840b48ba4dc9f6b864e9bbf2b93bbdb0de3a1ff0633cc15404c6d49b0f",
+          "nonce": 26742,
+          "ms": 113.1000000089407
+        }
+      ]
+    },
+    {
+      "kind": "benchmark",
+      "browser": "chromium",
+      "workers": 1,
+      "difficulty": 5,
+      "n": 6,
+      "successes": 6,
+      "median_ms": 2963.7,
+      "mean_ms": 3340.67,
+      "max_ms": 6279.5,
+      "samples": [
+        {
+          "hash": "00000b7599ee5d6916e1908529c3a49e7b1e77b56dfddcddd33b35811c142b16",
+          "nonce": 1247637,
+          "ms": 4617.0999999940395
+        },
+        {
+          "hash": "000004c1d8fdce81067946af6ddd3d76ea7ea3c36d3d77d4e6e896f9c56c921f",
+          "nonce": 326980,
+          "ms": 1310.2999999970198
+        },
+        {
+          "hash": "000005af448fe9bbb8c29215bd4a1b2937de78bec3ae2fac4af38b2d2a639d0f",
+          "nonce": 97170,
+          "ms": 379.29999999701977
+        },
+        {
+          "hash": "00000b5fea1008f311d8596237918c34e2163c5289c387ff78b1b995c9f7a948",
+          "nonce": 1383838,
+          "ms": 6279.5
+        },
+        {
+          "hash": "000007cfbeb5a8e69858ca7aacf61e08bc685027be0b76e3a061bc650a499847",
+          "nonce": 1418730,
+          "ms": 6268.20000000298
+        },
+        {
+          "hash": "0000077b38d2d987e3f1af7dced662cd515993f0dcbe7e8b00902cd68a4d995d",
+          "nonce": 271260,
+          "ms": 1189.6000000089407
+        }
+      ]
+    },
+    {
+      "kind": "complete",
+      "wall_seconds": 65.38
+    }
+  ]
+}

@@ -1,0 +1,353 @@
+{
+  "status": "verified",
+  "backup_directory": "/root/anubis-observations/difficulty-5-20261016T094922Z",
+  "time_utc": "2026-10-16T09:49:23.093767+00:00",
+  "planned_comparison_hours": 48,
+  "automatic_revert_scheduled": false,
+  "new_rule": "challenge-web-d5",
+  "new_cookie_prefix": "levineuwirth-d5-anubis",
+  "before": {
+    "id": "a7ddcc2fed02fb3ead18c8018004a9e672c7cc63f9925dc31b73d4ae8604634d",
+    "image_id": "sha256:1744c03a918160a28b0d2e8c1656de6585f4071b30b4c3b0d51d02282c9b7c25",
+    "image_reference": "ghcr.io/techarohq/anubis:v1.28.1@sha256:1744c03a918160a28b0d2e8c1656de6585f4071b30b4c3b0d51d02282c9b7c25",
+    "started_at": "2026-10-15T16:12:41.675460157Z",
+    "status": "running",
+    "health": "healthy",
+    "restarts": 0
+  },
+  "before_sha256": {
+    "policy": "c7b878ea1361b49edc8c495aae63fde6eb8ca85ba4162c9dbffe0e806df540ff",
+    "compose": "b3252c370fb3d140c8d0d859ca1a9f7ed89d389f77e5507b7012e6d936a951bd"
+  },
+  "transition_started_at": "2026-10-16T09:49:23.860856+00:00",
+  "installed_at": "2026-10-16T09:49:24.936841+00:00",
+  "after_sha256": {
+    "policy": "9e1bf35e32f1ca4d22d772c8017f38b66053354b0b8198459170935a2e4a5f87",
+    "compose": "dc5c4925b315daf429774e92af86397eda02cbe0508fc20964890648bb9da0c5"
+  },
+  "challenge_rules": {
+    "algorithm": "fast",
+    "difficulty": 5
+  },
+  "after": {
+    "id": "d88fe59ae3376337bbf041510dc581ab35632ba9969433f749e6ede62bb3ce6e",
+    "image_id": "sha256:1744c03a918160a28b0d2e8c1656de6585f4071b30b4c3b0d51d02282c9b7c25",
+    "image_reference": "ghcr.io/techarohq/anubis:v1.28.1@sha256:1744c03a918160a28b0d2e8c1656de6585f4071b30b4c3b0d51d02282c9b7c25",
+    "started_at": "2026-10-16T09:49:25.521649267Z",
+    "status": "running",
+    "health": "healthy",
+    "restarts": 0
+  },
+  "verified_at": "2026-10-16T09:51:32.333392+00:00",
+  "comparison_48h_ends_utc": "2026-10-18T09:49:25.521649+00:00",
+  "browser_checks": [
+    {
+      "engine": "chromium",
+      "kind": "d4-cookie-migration",
+      "phase": "after",
+      "elapsed_seconds": 4.422,
+      "worker_elapsed_ms": [
+        2463.0
+      ],
+      "challenge_rules": [
+        {
+          "algorithm": "fast",
+          "difficulty": 5
+        }
+      ],
+      "navigation_statuses": [
+        403,
+        302,
+        200,
+        200
+      ],
+      "cookie_reuse_status": 200,
+      "login_form": true
+    },
+    {
+      "engine": "chromium",
+      "kind": "fresh-d5-1",
+      "phase": "after",
+      "elapsed_seconds": 3.312,
+      "worker_elapsed_ms": [
+        1997.0
+      ],
+      "challenge_rules": [
+        {
+          "algorithm": "fast",
+          "difficulty": 5
+        }
+      ],
+      "navigation_statuses": [
+        403,
+        302,
+        200,
+        200
+      ],
+      "cookie_reuse_status": 200,
+      "login_form": true
+    },
+    {
+      "engine": "chromium",
+      "kind": "fresh-d5-2",
+      "phase": "after",
+      "elapsed_seconds": 7.072,
+      "worker_elapsed_ms": [
+        5723.0
+      ],
+      "challenge_rules": [
+        {
+          "algorithm": "fast",
+          "difficulty": 5
+        }
+      ],
+      "navigation_statuses": [
+        403,
+        302,
+        200,
+        200
+      ],
+      "cookie_reuse_status": 200,
+      "login_form": true
+    },
+    {
+      "engine": "chromium",
+      "kind": "fresh-d5-3",
+      "phase": "after",
+      "elapsed_seconds": 3.663,
+      "worker_elapsed_ms": [
+        1237.0
+      ],
+      "challenge_rules": [
+        {
+          "algorithm": "fast",
+          "difficulty": 5
+        }
+      ],
+      "navigation_statuses": [
+        403,
+        302,
+        200,
+        200
+      ],
+      "cookie_reuse_status": 200,
+      "login_form": true
+    },
+    {
+      "engine": "chromium",
+      "kind": "fresh-d5-4",
+      "phase": "after",
+      "elapsed_seconds": 1.939,
+      "worker_elapsed_ms": [
+        241.0
+      ],
+      "challenge_rules": [
+        {
+          "algorithm": "fast",
+          "difficulty": 5
+        }
+      ],
+      "navigation_statuses": [
+        403,
+        302,
+        200,
+        200
+      ],
+      "cookie_reuse_status": 200,
+      "login_form": true
+    },
+    {
+      "engine": "chromium",
+      "kind": "fresh-d5-5",
+      "phase": "after",
+      "elapsed_seconds": 2.95,
+      "worker_elapsed_ms": [
+        649.0
+      ],
+      "challenge_rules": [
+        {
+          "algorithm": "fast",
+          "difficulty": 5
+        }
+      ],
+      "navigation_statuses": [
+        403,
+        302,
+        200,
+        200
+      ],
+      "cookie_reuse_status": 200,
+      "login_form": true
+    },
+    {
+      "engine": "firefox",
+      "kind": "d4-cookie-migration",
+      "phase": "after",
+      "elapsed_seconds": 1.32,
+      "worker_elapsed_ms": [
+        64.0
+      ],
+      "challenge_rules": [
+        {
+          "algorithm": "fast",
+          "difficulty": 5
+        }
+      ],
+      "navigation_statuses": [
+        403,
+        302,
+        200,
+        200
+      ],
+      "cookie_reuse_status": 200,
+      "login_form": true
+    },
+    {
+      "engine": "firefox",
+      "kind": "fresh-d5-1",
+      "phase": "after",
+      "elapsed_seconds": 4.883,
+      "worker_elapsed_ms": [
+        3596.0
+      ],
+      "challenge_rules": [
+        {
+          "algorithm": "fast",
+          "difficulty": 5
+        }
+      ],
+      "navigation_statuses": [
+        403,
+        302,
+        200,
+        200
+      ],
+      "cookie_reuse_status": 200,
+      "login_form": true
+    },
+    {
+      "engine": "firefox",
+      "kind": "fresh-d5-2",
+      "phase": "after",
+      "elapsed_seconds": 4.521,
+      "worker_elapsed_ms": [
+        3288.0
+      ],
+      "challenge_rules": [
+        {
+          "algorithm": "fast",
+          "difficulty": 5
+        }
+      ],
+      "navigation_statuses": [
+        403,
+        302,
+        200,
+        200
+      ],
+      "cookie_reuse_status": 200,
+      "login_form": true
+    },
+    {
+      "engine": "firefox",
+      "kind": "fresh-d5-3",
+      "phase": "after",
+      "elapsed_seconds": 3.497,
+      "worker_elapsed_ms": [
+        2238.0
+      ],
+      "challenge_rules": [
+        {
+          "algorithm": "fast",
+          "difficulty": 5
+        }
+      ],
+      "navigation_statuses": [
+        403,
+        302,
+        200,
+        200
+      ],
+      "cookie_reuse_status": 200,
+      "login_form": true
+    },
+    {
+      "engine": "firefox",
+      "kind": "fresh-d5-4",
+      "phase": "after",
+      "elapsed_seconds": 1.924,
+      "worker_elapsed_ms": [
+        759.0
+      ],
+      "challenge_rules": [
+        {
+          "algorithm": "fast",
+          "difficulty": 5
+        }
+      ],
+      "navigation_statuses": [
+        403,
+        302,
+        200,
+        200
+      ],
+      "cookie_reuse_status": 200,
+      "login_form": true
+    },
+    {
+      "engine": "firefox",
+      "kind": "fresh-d5-5",
+      "phase": "after",
+      "elapsed_seconds": 1.688,
+      "worker_elapsed_ms": [
+        776.0
+      ],
+      "challenge_rules": [
+        {
+          "algorithm": "fast",
+          "difficulty": 5
+        }
+      ],
+      "navigation_statuses": [
+        403,
+        302,
+        200,
+        200
+      ],
+      "cookie_reuse_status": 200,
+      "login_form": true
+    }
+  ],
+  "https_git": {
+    "result": "passed",
+    "head": "890bf1bd133031c9452476c9918e807b71f36e8c",
+    "method": "git ls-remote over real HTTPS",
+    "logged_requests": [
+      {
+        "method": "GET",
+        "path": "/neuwirth/levineuwirth.org.git/info/refs",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/neuwirth/levineuwirth.org.git/git-upload-pack",
+        "status": 200
+      }
+    ]
+  },
+  "analyzer_sha256": "67377317a4e56670f2a2f0eb72e3a30e75c68fbc0accb1344ff41884f93dfcff",
+  "browser_verified_at_utc": "2026-10-16T09:57:43.021274+00:00",
+  "partial_report_check": {
+    "phases": [
+      "after-d4-cookie-fix",
+      "d5-deployment-transition",
+      "difficulty-5"
+    ],
+    "metadata": {
+      "included_requests": 4146,
+      "excluded_check_requests": 304
+    }
+  },
+  "final_anubis_health": "healthy",
+  "collector_sample_utc": "2026-10-16T09:57:43.164964+00:00"
+}

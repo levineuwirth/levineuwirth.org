@@ -1,0 +1,85 @@
+{
+ "head_reflog_mirrors_main": true,
+ "reflog_start": "2026-08-29T17:40:11Z",
+ "pre_reflog_notifications": 91,
+ "pre_reflog_notifications_absent_from_graph": 90,
+ "unmatched_notifications_after_reflog_start": [
+  {
+   "id": 388,
+   "ref": "refs/heads/upgrade-check",
+   "time": "2026-10-01T19:49:36Z",
+   "reported_len": 10,
+   "old": "167fd3d4c170dcbf9261c8035d5984b4fcc8530b",
+   "new": "8c86f3f5eafa9175c60ce07adc3d3703f5efcbef"
+  }
+ ],
+ "reflog_updates_without_notification": [],
+ "notification_lag_seconds": {
+  "n": 82,
+  "min": 0,
+  "median": 2,
+  "max": 20
+ },
+ "branch_creation_notifications": [
+  {
+   "id": 2,
+   "ref": "refs/heads/main",
+   "time": "2026-03-27T15:03:46Z"
+  },
+  {
+   "id": 378,
+   "ref": "refs/heads/essay-simd-correction",
+   "time": "2026-10-01T12:27:20Z"
+  },
+  {
+   "id": 380,
+   "ref": "refs/heads/explorer-experiment",
+   "time": "2026-10-01T12:27:21Z"
+  },
+  {
+   "id": 387,
+   "ref": "refs/heads/upgrade-check",
+   "time": "2026-10-01T19:49:36Z"
+  }
+ ],
+ "branch_deletions": [
+  {
+   "id": 389,
+   "ref": "refs/heads/upgrade-check",
+   "time": "2026-10-01T19:49:36Z"
+  }
+ ],
+ "tags_or_releases": 0,
+ "commits_in_store": 345,
+ "commits_unreachable_from_refs_or_reflogs": 0,
+ "root_commits": [
+  "22f02a9d32f4613a2464c10e091ce4e2346aaf52"
+ ],
+ "commits_without_publication": [],
+ "episodes": 82,
+ "len_vs_graph": [
+  {
+   "episode": "E037",
+   "refs": "essay-simd-correction explorer-experiment main",
+   "reported_len_sum": 14,
+   "graph_old_to_new_sum": "",
+   "novel_commits": 14
+  },
+  {
+   "episode": "E039",
+   "refs": "upgrade-check",
+   "reported_len_sum": 10,
+   "graph_old_to_new_sum": 10,
+   "novel_commits": 2
+  },
+  {
+   "episode": "E040",
+   "refs": "main",
+   "reported_len_sum": 7,
+   "graph_old_to_new_sum": 7,
+   "novel_commits": 5
+  }
+ ],
+ "github_window_start": "2026-09-22T19:41:24Z",
+ "github_events_heads_absent_from_graph": 0
+}

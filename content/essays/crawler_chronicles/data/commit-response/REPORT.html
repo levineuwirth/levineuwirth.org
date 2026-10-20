@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc 3.11" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Do crawlers react to new website commits?</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Do crawlers react to new website commits?</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#do-crawlers-react-to-new-website-commits"
+id="toc-do-crawlers-react-to-new-website-commits">Do crawlers react to
+new website commits?</a>
+<ul>
+<li><a href="#short-answer" id="toc-short-answer">Short answer</a></li>
+<li><a href="#question-and-design-status"
+id="toc-question-and-design-status">1. Question and design
+status</a></li>
+<li><a href="#publication-what-became-visible-and-when"
+id="toc-publication-what-became-visible-and-when">2. Publication: what
+became visible, and when</a></li>
+<li><a href="#measurement-coverage-and-verification"
+id="toc-measurement-coverage-and-verification">3. Measurement, coverage
+and verification</a></li>
+<li><a href="#planned-primary-test" id="toc-planned-primary-test">4.
+Planned primary test</a></li>
+<li><a href="#planned-sensitivities-and-amended-analyses"
+id="toc-planned-sensitivities-and-amended-analyses">5. Planned
+sensitivities and amended analyses</a></li>
+<li><a href="#what-was-fetched" id="toc-what-was-fetched">6. What was
+fetched</a></li>
+<li><a
+href="#sources-of-the-fast-fetches-private-analysis-aggregates-only"
+id="toc-sources-of-the-fast-fetches-private-analysis-aggregates-only">7.
+Sources of the fast fetches (private analysis, aggregates only)</a></li>
+<li><a href="#alternative-explanations-checked"
+id="toc-alternative-explanations-checked">8. Alternative explanations
+checked</a></li>
+<li><a href="#power-robustness-and-what-the-null-can-say"
+id="toc-power-robustness-and-what-the-null-can-say">9. Power, robustness
+and what the null can say</a></li>
+<li><a href="#limitations" id="toc-limitations">10. Limitations</a></li>
+<li><a href="#conclusion-on-the-evidence-ladder"
+id="toc-conclusion-on-the-evidence-ladder">11. Conclusion on the
+evidence ladder</a></li>
+<li><a href="#a-prospective-design-if-wanted"
+id="toc-a-prospective-design-if-wanted">12. A prospective design, if
+wanted</a></li>
+<li><a href="#revisions-after-review-2026-10-20"
+id="toc-revisions-after-review-2026-10-20">13. Revisions after review
+(2026-10-20)</a></li>
+<li><a href="#reproduction" id="toc-reproduction">14.
+Reproduction</a></li>
+<li><a href="#methods-sources" id="toc-methods-sources">Methods
+sources</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="do-crawlers-react-to-new-website-commits">Do crawlers react to
+new website commits?</h1>
+<p>Commit-response study of the public Forgejo repository
+<code>neuwirth/levineuwirth.org</code>, October 1 to October 19, 2026
+(UTC). Prepared 2026-10-20. All times are UTC.</p>
+<h2 id="short-answer">Short answer</h2>
+<p><strong>We found no convincing evidence of repeated, prompt fetching
+after pushes.</strong> The dominant user-agent cohort mostly revisited
+older commits and made no commit-specific GET within an hour of
+publication. That argues against a crawler that promptly fetched every
+new commit. It leaves intermittent or otherwise unobserved monitoring
+unresolved.</p>
+<p>The planned timing test is null. The more direct evidence is what was
+fetched, and when.</p>
+<ul>
+<li><strong>Planned test: no detected prompt increase.</strong> It
+compared successful GETs in the 30 minutes after each push with the 30
+minutes before, over 40 episodes.
+<ul>
+<li>The raw mean difference was +4.25 requests per episode (829 after,
+659 before).</li>
+<li>Shuffling push times within their hours already produces +1.89 on
+average, so the rotation-adjusted excess is <strong>+2.36</strong> (p =
+0.151).</li>
+<li>Resampling overlapping-window clusters gives a 95% interval for the
+adjusted excess of −1.47 to +7.75. Resampling whole dates gives −1.97 to
++10.47. Neither dependence model is established, and only 10 dates
+exist.</li>
+<li>Oct 13 alone produces the excess. Without it, raw +0.55 and adjusted
+−0.49 (p = 0.71). Its extra requests went to commits more than a week
+old, not to the new ones.</li>
+</ul></li>
+<li><strong>Detection is conditional on the injection model.</strong>
+<ul>
+<li>Planting 10 extra requests in the 10 minutes after <em>every</em>
+push was detected in 300 of 300 simulations. That model includes days
+when the cohort was almost absent.</li>
+<li>Restricted to the 20 difficulty-2 episodes, the same response is
+detected 68% of the time. On the 15 episodes when the cohort was active
+(Oct 6–13), it is detected 52% of the time, and +20 requests 96%.</li>
+<li>These simulations measure added request volume, not hash-specific
+behavior or every way a monitor could work.</li>
+</ul></li>
+<li><strong>The dominant cohort made no commit-specific GET within an
+hour of publication.</strong> This is the
+<code>linux-chrome-150-155</code> user-agent cohort.
+<ul>
+<li>It made 90,122 GETs naming a current commit. The youngest target was
+1.35 hours old at the start of its request minute.</li>
+<li>36 targeted commits 1 to 6 hours old. 87,270 targeted commits more
+than 7 days old by the minute midpoint; 87,265 are older even at the
+start of their minute.</li>
+<li>Per available commit-hour, it requested commits over 7 days old
+about 7 times as often as commits 6 to 24 hours old.</li>
+<li>Apart from four later branch tips, its crawl covered commits
+published by Oct 3 ~19:00, which it reached 3 to 10 days late.</li>
+<li>It never requested anything published Oct 3 20:05 to Oct 8 19:36, or
+anything after Oct 9 20:53, through Oct 19.</li>
+<li>Its only young fetches were the branch tips of four Oct 8–9 pushes,
+1.3 to ~24 hours later. They came on the one day it crawled branch
+views, which display the current tip. That timing is consistent with
+link traversal; the logs cannot identify the mechanism.</li>
+</ul></li>
+<li><strong>Fast fetches were rare and did not repeat.</strong> Requests
+naming a commit within 60 minutes of its publication came in 4 of 48
+study episodes (3 of 43 excluding the Anubis deployment day, which holds
+E058).
+<ul>
+<li>Oct 1: a declared crawler was already crawling the repository at
+about 9 GETs a minute. Twenty minutes after the 11:19 push it burst to
+about 60 a minute for 40 minutes, fetching that push’s commits among old
+ones.
+<ul>
+<li>It ignored the commits of a push made during the burst (11:56), and
+of every later push before Anubis.</li>
+<li>It had burst like this seven other times between Sep 27 and Oct 3,
+four of them about five days after any push.</li>
+</ul></li>
+<li>Three other episodes: single browser-like visitors who arrived
+through links inside the forge.</li>
+</ul></li>
+<li><strong>What the evidence supports.</strong> On the ladder in § 11,
+it reaches one temporal coincidence: one crawler burst, once.
+<ul>
+<li>It does not show a prompt response to publication, preferential
+fetching of new commits, or repeated monitoring.</li>
+<li>For the dominant cohort, “fired on each commit” did not happen in
+these logs. That does not exclude polling that never fetched commits,
+long or infrequent reactions, other user agents, or activity on another
+host.</li>
+<li>None of this identifies who operates any crawler or why it
+crawls.</li>
+</ul></li>
+<li><strong>Revised after review.</strong> § 13 lists the
+corrections.</li>
+</ul>
+<p>Figures: <a href="results/figures/timeline.png">timeline</a>, <a
+href="results/figures/episode-contributions.png">episodes and null</a>,
+<a href="results/figures/event-aligned.png">leads and lags</a>, <a
+href="results/figures/request-vs-publication.png">what was fetched</a>,
+<a href="results/figures/first-fetch.png">time to first fetch</a>. Each
+also exists as SVG.</p>
+<h2 id="question-and-design-status">1. Question and design status</h2>
+<p>The author asked whether a scraper was “monitoring for new commits
+and specifically firing on each of them”.</p>
+<ul>
+<li><strong>Planned.</strong> <code>analysis-plan.json</code> was
+recorded before any request series was aligned with pushes. It is
+unchanged.</li>
+<li><strong>Amended.</strong> <code>amendments.json</code> (A1–A11) was
+written in this thread at 22:35 and 22:58 UTC on Oct 19, before
+alignment. It fixes undefined or unexecutable parts of the plan (§ 2–4)
+and adds robustness designs.</li>
+<li><strong>Exploratory.</strong> The hash-level analysis was added as
+A10(c) before alignment. The source-level checks, endpoint splits, the
+declared-crawler burst scan, the GitHub-preceded subset beyond its A5
+definition, and the daily association were all chosen after seeing
+results.</li>
+</ul>
+<p>Labels below follow this division. Raw logs, addresses, user agents,
+queries and request sequences stayed on the VPS. Only aggregates are
+here.</p>
+<h2 id="publication-what-became-visible-and-when">2. Publication: what
+became visible, and when</h2>
+<p>Source: <code>data/publication-snapshot.json</code>, a fresh
+read-only collection at 2026-10-19 22:23:19Z. It holds all 345 commit
+objects in the store, reflogs, refs, Forgejo action and branch rows, and
+no messages, names or emails. Reconstruction:
+<code>source/reconstruct_publication.py</code> →
+<code>data/publication-episodes.csv</code>,
+<code>data/commit-publication.csv</code> and
+<code>data/publication-audit.json</code>.</p>
+<p><strong>History rewrite, and no left censoring.</strong> The current
+graph has a single root commit, committed 2026-08-29 15:25:51Z.</p>
+<ul>
+<li><strong>The rewrite.</strong> At 16:40:34Z that day a force-push
+replaced the old history (notification 199: three commits ending at
+<code>49d6d24</code>).</li>
+<li><strong>No censoring.</strong> That notification dates the old tip
+of the first retained reflog (17:40:11Z). Every current commit therefore
+has a reconstructible first Forgejo publication, and the provisional
+snapshot’s left-censoring problem disappears.</li>
+<li><strong>Old hashes.</strong> 90 of 92 earlier push notifications
+name objects that no longer exist.
+<ul>
+<li><strong>Known removed hashes.</strong> 6,615 GETs named hashes
+listed in those notifications; 4,960 returned 404 and 1,619 returned
+403.</li>
+<li><strong>Unresolved.</strong> 2,873 GETs named hashes that match
+neither the current graph nor that list; 2,132 returned 404 and 718
+returned 403. They have not been shown to belong to the removed
+history.</li>
+<li><strong>Combined:</strong> 9,488 GETs, of which 7,092 returned 404
+and 2,337 returned 403.</li>
+</ul></li>
+</ul>
+<p><strong>Units.</strong> A publication episode is the set of ref
+transactions in the same second.</p>
+<ul>
+<li><strong>Inventory, Oct 1–13.</strong> There were 48 episodes (5 of
+them on Oct 4) and 271 previously unpublished (“novel”) commits.</li>
+<li><strong>Every episode exposed something new.</strong> Each one
+exposed at least one novel commit, so “ref updated” and “novel exposure”
+coincide in this window. They are kept as separate fields.</li>
+</ul>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Item</th>
+<th>Finding</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reflog vs notifications</td>
+<td>Every retained branch update (82 since Aug 29; 49 in October)
+matches a notification within 30 s; lag 0–20 s (median 2 s); no reflog
+update lacks one</td>
+</tr>
+<tr>
+<td>Oct 1 12:27:01</td>
+<td>One episode: <code>main</code> plus two newly created branches, 14
+novel commits</td>
+</tr>
+<tr>
+<td><code>upgrade-check</code></td>
+<td>Created, pushed and deleted within one notification second,
+2026-10-01 19:49:36; transaction in [19:49:16, 19:49:36], minute
+certain</td>
+</tr>
+<tr>
+<td><code>upgrade-check</code> content</td>
+<td>Notification <code>Len</code> 10 is a recent-commit cap. It exposed
+2 novel commits, which <code>main</code> later carried at 21:11:07 (that
+push’s <code>Len</code> 7 includes them; novel count 5)</td>
+</tr>
+<tr>
+<td><code>upgrade-check</code> context</td>
+<td>Post-upgrade verification push after the Forgejo 1.21 → 15.0.9 chain
+(19:24–19:45)</td>
+</tr>
+<tr>
+<td>Tags, releases, mirrors</td>
+<td>None for this repository</td>
+</tr>
+<tr>
+<td>Commits never published</td>
+<td>None</td>
+</tr>
+<tr>
+<td>GitHub precedence</td>
+<td><code>origin</code> pushes to Forgejo then GitHub; GitHub events
+trail Forgejo by 2–4 s for every Forgejo push</td>
+</tr>
+<tr>
+<td>GitHub-only pushes</td>
+<td>Nine GitHub-only pushes (Oct 6 17:19 to Oct 10 10:24) put the novel
+commits of 7 Forgejo episodes (E071–E076, E080) on GitHub 4.5 min to
+17.6 h before Forgejo</td>
+</tr>
+<tr>
+<td>Requests before publication</td>
+<td>No request named a current commit before its first Forgejo
+publication. No reconstruction error, no earlier visibility</td>
+</tr>
+</tbody>
+</table>
+<p>Commit-creation times were never used as publication times.</p>
+<h2 id="measurement-coverage-and-verification">3. Measurement, coverage
+and verification</h2>
+<p><strong>Aggregation.</strong>
+<code>source/aggregate_requests.py</code> ran read-only on the VPS over
+the private archive, 2026-09-27 00:00 to 2026-10-19 22:00. That covers
+16 archives: 2,135,701 legacy lines and 1,384,453 forge JSON lines.</p>
+<ul>
+<li><strong>Malformed lines:</strong> 13.</li>
+<li><strong>Duplicate request IDs:</strong> none.</li>
+<li><strong>Maintenance-probe requests excluded:</strong> 1,357.</li>
+<li><strong>Legacy overlap rule:</strong> legacy records at or after the
+first JSON second (2026-10-03 22:42:55) were dropped. One record was
+affected.</li>
+</ul>
+<p><code>source/build_tables.py</code> produced the following:</p>
+<ul>
+<li><strong><code>data/minute-series.csv.gz</code>.</strong> A dense
+table with one row per minute (33,000 rows). It carries coverage flags,
+policy phase and log regime, and these columns:
+<ul>
+<li>cohort × status counts, endpoint splits, owner and internal-address
+subsets;</li>
+<li>start-time (completion − <code>request_time</code>) variants;</li>
+<li>Git smart-protocol series, other-repository controls, and
+non-repository forge routes (JSON era only).</li>
+</ul></li>
+<li><strong><code>data/hash-requests.csv.gz</code>.</strong> Counts by
+hash, path position, cohort, status, method, minute and flag.</li>
+</ul>
+<p><strong>Verification.</strong> Hourly requests, HTTP 200s and HTTP
+403s were rebuilt with the existing parser’s definitions (scope =
+repository, all methods, checks excluded). For all 312 hours of Oct 1–13
+they match <code>2026-10-14/hourly-summary.csv</code> exactly, for all
+agents, the Linux/Chrome cohort and the Meta cohort. A re-run of the
+aggregator, after refactoring the owner pass, reproduced every series
+and hash row exactly.</p>
+<p><strong>Coverage</strong> (<code>data/coverage.json</code>):</p>
+<ul>
+<li><strong>Quiet runs.</strong> Ten-minute or longer runs with no
+logged line appeared on Sep 27, Sep 28 02:12–02:38 and Oct 14
+19:21–19:33.</li>
+<li><strong>Rotation gaps.</strong> There were three gaps of 60 seconds
+or more, all after Oct 16.</li>
+<li><strong>Forgejo upgrade.</strong> Oct 1 19:20–19:50.</li>
+<li><strong>Archive-route switch.</strong> Web source-archive routes
+moved from 200 to 404 at Oct 1 20:21. This was located from archive
+statuses alone and padded ±10 min.</li>
+<li><strong>Other events.</strong> The Oct 3 22:42 log-regime minute and
+the Oct 15 reboot.</li>
+</ul>
+<p>None of these touches a push window except the upgrade and the
+archive switch, which exclude E039 and E040. E057 crosses the log
+cutover.</p>
+<p><strong>Owner and internal traffic.</strong> Six owner addresses were
+identified privately, from successful pushes and authenticated
+pages.</p>
+<ul>
+<li><strong>Pushes went over HTTPS on most days.</strong> No HTTPS push
+was seen Oct 3–5.</li>
+<li><strong>Owner traffic is outside the cohort.</strong> No request
+from those addresses falls in the Linux/Chrome cohort. Owner-flagged
+successful GETs on the repository were few (38, mostly Oct 1–2, other
+cohorts).</li>
+</ul>
+<p><strong>What the cohort looked like.</strong> The
+<code>linux-chrome-150-155</code> cohort is a user-agent heuristic (X11
+Linux x86_64 with Chrome 150 or 155), not a verified identity.</p>
+<ul>
+<li><strong>Oct 1–5:</strong> it was almost absent from this repository,
+with 0–40 successful GETs a day.</li>
+<li><strong>From Oct 6:</strong> it rose to 3,500–10,400 a day on Oct
+9–14, and nearly all of it was commit-pinned file views
+(<code>src/commit</code>, <code>commits/commit</code>,
+<code>blame</code>, <code>raw/commit</code>).</li>
+<li><strong>Git fetches:</strong> smart-protocol fetches of this
+repository by crawlers were essentially zero.</li>
+</ul>
+<h2 id="planned-primary-test">4. Planned primary test</h2>
+<p><strong>Hypotheses.</strong></p>
+<ul>
+<li><strong>H0:</strong> given the request series, the placement of each
+occupied UTC hour’s publication episodes is uniform over its 60
+rotations, independently across hours (no prompt response).</li>
+<li><strong>H1:</strong> more successful GETs after publication.</li>
+</ul>
+<p><strong>Statistic and null.</strong></p>
+<ul>
+<li><strong>Statistic:</strong> T = mean over episodes of (count in
+minutes +1…+30) − (count in −30…−1). The episode minute is omitted.</li>
+<li><strong>Outcome:</strong> successful (200) GETs of
+website-repository web pages by the <code>linux-chrome-150-155</code>
+cohort, excluding the Git protocol and probes.</li>
+<li><strong>Null:</strong> 10,000 random common circular shifts per
+occupied date-hour block, seed 20261020.</li>
+<li><strong>p-value:</strong> (1 + #{T* ≥ T}) / 10,001.</li>
+</ul>
+<p><strong>Why the p-value is valid.</strong> Block rotations form a
+group, so this p-value is valid under H0 (Hemerik &amp; Goeman 2018;
+Phipson &amp; Smyth 2010).</p>
+<ul>
+<li><strong>Hours with one episode.</strong> This is exactly interval
+jitter with 60-minute windows (Amarasingham et al. 2012).</li>
+<li><strong>Hours with several episodes.</strong> The rotation preserves
+their spacing modulo 60, which is a larger, more conservative null.</li>
+</ul>
+<p><strong>What the test does not establish.</strong></p>
+<ul>
+<li><strong>Not causation.</strong> It is not a randomized design, and
+rejection would not identify a mechanism.</li>
+<li><strong>Clock-hour pushes.</strong> If pushes systematically fell at
+particular minutes, the synthetic checks show false positives of 18–39%.
+The observed episode minutes are spread over the hour (8, 12, 16 and 12
+per quarter).</li>
+</ul>
+<p><strong>Eligibility (A6).</strong></p>
+<ul>
+<li><strong>Rule.</strong> An hour block is usable only if [H − W, H +
+60 + W) is fully covered, lies in one stable policy phase and one log
+regime, and contains no recorded disruption.</li>
+<li><strong>Applied per block.</strong> Eligibility is a block property,
+so it holds for every shifted placement.</li>
+<li><strong>Excluded episodes.</strong> The rule excludes Oct 4 (5
+episodes), E039 (upgrade), E040 (archive switch) and E057 (log
+cutover).</li>
+</ul>
+<p><strong>Result.</strong></p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Quantity</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Episodes / hour blocks / overlap clusters</td>
+<td>40 / 37 / 32</td>
+</tr>
+<tr>
+<td>Raw T (mean post − pre)</td>
+<td>4.25 requests per episode (829 after vs 659 before)</td>
+</tr>
+<tr>
+<td>Null mean (exact expected raw difference over rotations)</td>
+<td>1.89</td>
+</tr>
+<tr>
+<td>Rotation-adjusted excess (T − null mean)</td>
+<td><strong>+2.36</strong></td>
+</tr>
+<tr>
+<td>95% interval for the adjusted excess, overlapping-window clusters
+(32)</td>
+<td>−1.47 to +7.75</td>
+</tr>
+<tr>
+<td>95% interval for the adjusted excess, whole UTC dates (10)</td>
+<td>−1.97 to +10.47 (few clusters; not a validated guarantee)</td>
+</tr>
+<tr>
+<td>One-sided p</td>
+<td><strong>0.151</strong></td>
+</tr>
+<tr>
+<td>Episodes with zero in both windows</td>
+<td>28 of 40 (the cohort was absent before Oct 6)</td>
+</tr>
+<tr>
+<td>Plan-literal, each ref update a batch</td>
+<td>T = 4.10, p = 0.146 (42 batches)</td>
+</tr>
+<tr>
+<td>Leave one date out</td>
+<td>p from 0.072 (without Oct 10) to <strong>0.712 (without Oct 13: raw
++0.55, adjusted −0.49)</strong></td>
+</tr>
+<tr>
+<td>Cohort-active dates only (Oct 6–13; post-review)</td>
+<td>15 episodes, 6 dates: raw +11.2, adjusted +6.27, p = 0.153</td>
+</tr>
+</tbody>
+</table>
+<p>Oct 13 is the only influential day (<a
+href="results/figures/episode-contributions.png">figure</a>). Its two
+episodes (E081, E082, one commit each) sit inside the Oct 13 daily
+ramp.</p>
+<ul>
+<li><strong>No new targets.</strong> Hash-level data show none of the
+cohort’s requests in those windows targeted the new commits (§ 6).</li>
+<li><strong>The rise is shared.</strong> In the <a
+href="results/figures/event-aligned.png">lead/lag figure</a>, the
+cohort’s rising level around pushes tracks the rotation-null mean. The
+same cohort shows the same shape on the <em>other</em>
+repositories.</li>
+</ul>
+<h2 id="planned-sensitivities-and-amended-analyses">5. Planned
+sensitivities and amended analyses</h2>
+<p>Planned sensitivity rows are as recorded. Amended rows are A5–A11.
+All tests are one-sided against an increase. Only the window family is
+multiplicity-adjusted. Values are raw T, with the rotation-adjusted
+excess in parentheses.</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Analysis</th>
+<th>Episodes</th>
+<th>Raw T (adjusted excess)</th>
+<th>p</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Planned:</strong> isolated (no other episode within 60
+min)</td>
+<td>26</td>
+<td>6.31 (3.49)</td>
+<td>0.158</td>
+</tr>
+<tr>
+<td><strong>Planned:</strong> all user agents, 200</td>
+<td>40</td>
+<td>−16.25 (−23.06)</td>
+<td>0.769</td>
+</tr>
+<tr>
+<td><strong>Planned:</strong> cohort, all statuses (GET)</td>
+<td>40</td>
+<td>9.50 (5.29)</td>
+<td>0.115</td>
+</tr>
+<tr>
+<td><strong>Planned:</strong> other repositories, cohort 200 (negative
+control)</td>
+<td>40</td>
+<td>−2.85 (0.24)</td>
+<td>0.448</td>
+</tr>
+<tr>
+<td><strong>Planned:</strong> phase before Anubis, cohort</td>
+<td>20</td>
+<td>0.10 (2 vs 4 requests in total)</td>
+<td>0.485 (no data)</td>
+</tr>
+<tr>
+<td><strong>Planned:</strong> phase before Anubis, all agents</td>
+<td>20</td>
+<td>−41.2 (−51.1)</td>
+<td>0.796</td>
+</tr>
+<tr>
+<td><strong>Planned:</strong> phase difficulty 2, cohort</td>
+<td>20</td>
+<td>8.40 (4.71)</td>
+<td>0.151</td>
+</tr>
+<tr>
+<td><strong>Planned:</strong> window 5 min</td>
+<td>41</td>
+<td>0.32 (0.27)</td>
+<td>0.238 (Holm 0.476)</td>
+</tr>
+<tr>
+<td><strong>Planned:</strong> window 60 min</td>
+<td>39</td>
+<td>10.97 (4.88)</td>
+<td>0.110 (Holm 0.329)</td>
+</tr>
+<tr>
+<td><strong>Planned:</strong> window 180 min</td>
+<td>37</td>
+<td>35.27 (1.91)</td>
+<td>0.337 (Holm 0.476)</td>
+</tr>
+<tr>
+<td><strong>Amended:</strong> owner and internal addresses removed</td>
+<td>40</td>
+<td>identical to primary</td>
+<td>0.151</td>
+</tr>
+<tr>
+<td><strong>Amended:</strong> GitHub-preceded episodes removed</td>
+<td>33</td>
+<td>4.85 (3.97)</td>
+<td>0.048 nominal; without Oct 13, 0.36 (0.58), p 0.37</td>
+</tr>
+<tr>
+<td><strong>Amended:</strong> start time instead of completion (JSON
+era)</td>
+<td>20</td>
+<td>8.45 (4.76)</td>
+<td>0.148</td>
+</tr>
+<tr>
+<td><strong>Amended:</strong> blocks offset to :30</td>
+<td>39</td>
+<td>4.36 (0.91)</td>
+<td>0.287</td>
+</tr>
+<tr>
+<td><strong>Amended:</strong> relaxed log-regime rule</td>
+<td>40</td>
+<td>unchanged (E057’s cutover minute is uncovered)</td>
+<td>0.151</td>
+</tr>
+<tr>
+<td><strong>Amended:</strong> share of episodes with post &gt; pre</td>
+<td>40</td>
+<td>0.55 (+0.02)</td>
+<td>0.389</td>
+</tr>
+<tr>
+<td><strong>Amended:</strong> mean log(1 + post) − log(1 + pre)</td>
+<td>40</td>
+<td>0.021 (−0.010)</td>
+<td>0.582</td>
+</tr>
+<tr>
+<td><strong>Amended:</strong> batch-size-weighted episode mean, Σ nᵢDᵢ /
+Σ nᵢ (previously mislabeled “per novel commit”)</td>
+<td>40</td>
+<td>0.77 (−0.05)</td>
+<td>0.545</td>
+</tr>
+<tr>
+<td><strong>Amended (post-review):</strong> requests per novel commit, Σ
+Dᵢ / Σ nᵢ over 235 commits</td>
+<td>40</td>
+<td>0.72 (0.40)</td>
+<td>0.151 (a rescaling of the primary statistic, not an independent
+result)</td>
+</tr>
+<tr>
+<td><strong>Amended:</strong> time-of-day referents (same clock minutes
+on other eligible days of the phase)</td>
+<td>40</td>
+<td>4.25 (3.21)</td>
+<td>0.141</td>
+</tr>
+<tr>
+<td><strong>Amended:</strong> time-of-day referents, all agents</td>
+<td>40</td>
+<td>−16.25 (−13.33)</td>
+<td>0.887</td>
+</tr>
+</tbody>
+</table>
+<p>The single nominal p below 0.05 (GitHub-preceded removed) is one of
+about 20 tests in the table. It disappears without Oct 13.</p>
+<p><strong>Exploratory endpoint and route splits</strong>
+(<code>results/timing-results.json</code>, <code>exploratory</code>;
+same design, unadjusted, not confirmatory):</p>
+<ul>
+<li><strong>Cohort endpoints.</strong> Commit views, branch views, root,
+feeds, raw, blame and history showed nothing (all p ≥ 0.10). Branch
+views and the repository root carried 0 to 5 requests in total.</li>
+<li><strong>Other routes.</strong> The Git protocol,
+<code>/explore</code>, the user profile and feed, and the repository API
+were near zero, and the forge root was flat.</li>
+</ul>
+<h2 id="what-was-fetched">6. What was fetched</h2>
+<p><code>source/hash_analysis.py</code> covers GETs naming a commit in a
+semantic path position (<code>src/commit/&lt;sha&gt;</code>,
+<code>commit/&lt;sha&gt;[.diff|.patch]</code>,
+<code>commits|raw|media|blame|rss/commit/&lt;sha&gt;</code>,
+<code>archive/&lt;sha&gt;.*</code>,
+<code>compare/&lt;a&gt;...&lt;b&gt;</code> and the repository API).</p>
+<ul>
+<li><strong>Hash resolution.</strong> Abbreviated hashes were resolved
+uniquely against the graph and the deleted-history list. No ambiguous
+prefixes occurred.</li>
+<li><strong>HEAD requests.</strong> A declared crawler paired every GET
+with a HEAD. The 3,067 HEAD requests are excluded.</li>
+</ul>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th></th>
+<th>Cohort <code>linux-chrome-150-155</code></th>
+<th>All agents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GETs naming a current commit</td>
+<td>90,122</td>
+<td>206,993</td>
+</tr>
+<tr>
+<td>…target under 1 h old</td>
+<td><strong>0</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>…1–6 h / 6–24 h / 1–3 d / 3–7 d / over 7 d</td>
+<td>36 / 568 / 57 / 2,191 / 87,270</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Requests per available commit-hour, under 1 h → over 7 d</td>
+<td>0 · 0.07 · 0.28 · 0.01 · 0.12 · <strong>2.00</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Share of 271 study commits fetched by 1 h (Kaplan–Meier)</td>
+<td><strong>0%</strong></td>
+<td>5.2%</td>
+</tr>
+<tr>
+<td>…by 6 h / 24 h / 7 d</td>
+<td>0.7% / 1.5% / 13.7%</td>
+<td>7.8% / 22.9% / 51.3%</td>
+</tr>
+<tr>
+<td>Commits ever fetched by Oct 19 22:00</td>
+<td>120</td>
+<td>140</td>
+</tr>
+<tr>
+<td>Study episodes with any fetch within 1 h</td>
+<td>0 of 48</td>
+<td>4 of 48 (E035, E053, E058, E063); 3 of 43 without the Oct 4
+deployment day</td>
+</tr>
+<tr>
+<td>Youngest target, age at the start of the request minute</td>
+<td>1.35 h</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>Ages use the request-minute midpoint (completion times, minute
+resolution). At the start of the request minute, 87,265 of the cohort’s
+requests are definitely older than 7 days (87,270 by midpoint).</p>
+<p>The <a href="results/figures/request-vs-publication.png">scatter of
+request time against publication time</a> is the clearest view.</p>
+<ul>
+<li><strong>A monitor would sit on the diagonal.</strong> It would place
+points just above the “just published” line.</li>
+<li><strong>The cohort forms horizontal bands instead.</strong> They sit
+at commits published Aug 29 to Oct 3, requested from Oct 6 onward. That
+is consistent with a list of URLs gathered by about Oct 3 and worked
+through slowly. The logs cannot show how the list was built.</li>
+<li><strong>Declared crawlers.</strong> They crawled steadily until Oct
+4, when Anubis denied or challenged them, then stopped.</li>
+<li><strong>Other user agents</strong> (no crawler token in the user
+agent). Most of their young-commit requests are an Oct 5 wave that
+re-traversed commits 1 to 7 days old.</li>
+</ul>
+<p><strong>Per-episode first-fetch lags</strong> are in
+<code>results/first-fetch-by-episode.csv</code>.</p>
+<ul>
+<li><strong>Commits up to E053 (Oct 3 18:58).</strong> The cohort
+fetched all of them, but first after 78 to 253 hours.</li>
+<li><strong>Commits from E054 to E075 and from E080 to E082.</strong>
+The cohort never fetched them.</li>
+<li><strong>E076–E079.</strong> It fetched only the tip commit of each,
+1.3 to 7.3 hours after publication (<code>*_tip_first_lag_h</code>),
+then expanded each tip’s files over the next day. E079’s tip (Oct 9
+20:53) is the newest commit it ever requested.</li>
+</ul>
+<p><strong>How the tips were found.</strong> The cohort requested branch
+views (<code>src/branch</code>, <code>commits/branch</code> and
+<code>raw/branch</code> for <code>main</code>, which display the current
+tip) 218 times on Oct 9. On every other day it made 0 to 6 such
+requests.</p>
+<ul>
+<li><strong>Timing.</strong> The tip fetches began while that
+branch-view crawl was under way.</li>
+<li><strong>Afterwards.</strong> Branch-view requests then stopped, and
+later tips were never fetched, even though the cohort’s traffic peaked
+Oct 10–14.</li>
+</ul>
+<p>This timing is consistent with link traversal that happened to pass
+through the branch page. It is hard to reconcile with a monitor that
+fetches each push’s commits promptly. The logs cannot identify the
+mechanism uniquely, and polling that did not name commits would leave no
+trace in this analysis.</p>
+<h2 id="sources-of-the-fast-fetches-private-analysis-aggregates-only">7.
+Sources of the fast fetches (private analysis, aggregates only)</h2>
+<p>Source: <code>source/private_sources.py</code>, run by
+<code>source/run_private_sources.sh</code>. Output reduced by
+<code>source/summarize_private_sources.py</code> to
+<code>results/young-fetch-sources.json</code>. “Sources” are addresses;
+rotating addresses need not be distinct operators.</p>
+<p><strong>Within 60 minutes of publication.</strong> 107 GETs from 10
+addresses, in 4 episodes; none had an owner signal.</p>
+<ul>
+<li><strong>E035 (Oct 1).</strong> 90 requests from 7 addresses whose
+user agent declares a crawler token (“shapbot”, a claim).
+<ul>
+<li><strong>A burst on top of an ongoing crawl.</strong> Declared
+crawlers had been fetching about 9 to 10 pages a minute from this
+repository all morning. From 11:40 to 12:20 they burst to 19 to 64 a
+minute, then fell back.</li>
+<li><strong>New addresses.</strong> Most of the addresses doing it were
+new to the repository after the push. In the same minutes they fetched
+the push’s 8 commits alongside many old commits.</li>
+<li><strong>They ignored the next push.</strong> E036 (11:56) was pushed
+during the burst, and none of its 6 commits was ever fetched by a
+declared crawler. The same holds for the pushes after it before Anubis,
+except 2 of E037’s 14 commits, 13 days later.</li>
+<li><strong>Other bursts had no push nearby.</strong> Over Sep 27 to Oct
+3 declared-crawler rates exceeded three times their typical level 8
+times (<code>results/declared-crawler-bursts.json</code>, exploratory).
+This one was the largest and the only one starting within an hour of a
+push. Four started about five days after any push.</li>
+<li><strong>One coincidence, not repetition.</strong> This is the single
+most response-like event in the data. A crawl refresh that grabbed a
+commit list containing the newest push fits it as well as a trigger
+does.</li>
+</ul></li>
+<li><strong>E033 and E034 (Sep 29, Sep 30; before the study
+window).</strong> Fetches 1.3 to 5 hours later came mainly from
+browser-like Chrome/Android user agents already crawling the repository,
+plus single Googlebot-declared requests.</li>
+<li><strong>E053, E058, E063.</strong> One browser-like address each
+(Chrome/Android, Safari/macOS, Firefox/Linux), arriving through links
+within the forge.
+<ul>
+<li>They made 1 to 12 requests, 6 to 11 minutes after a push, mostly to
+the tip commit.</li>
+<li>This looks like a person following links. The owner checking their
+own push is plausible but not established, because these addresses carry
+no owner signal.</li>
+</ul></li>
+</ul>
+<p><strong>The cohort’s young fetches (E076–E079).</strong> 604 requests
+from 265 addresses.</p>
+<ul>
+<li><strong>Mostly new addresses.</strong> 248 addresses were new to the
+repository at that moment.</li>
+<li><strong>A few requests each.</strong> The median was 4 repository
+requests per address in the whole study, with a maximum of 15.</li>
+<li><strong>The Anubis pattern.</strong> Each typically got a 403
+challenge, with no referrer, then a 200 whose referrer was the forge
+(the post-challenge redirect).</li>
+<li><strong>Only tip commits.</strong> No request reached an older
+commit of those pushes.</li>
+</ul>
+<h2 id="alternative-explanations-checked">8. Alternative explanations
+checked</h2>
+<ul>
+<li><strong>Author browsing after a push.</strong>
+<ul>
+<li>Owner-flagged traffic is outside the cohort, and removing it changes
+nothing.</li>
+<li>Unflagged browser-like visits within minutes of three pushes are
+possibly the author. They are excluded from nothing, and they are too
+small to matter.</li>
+</ul></li>
+<li><strong>Deploy and sync jobs.</strong>
+<ul>
+<li><code>make deploy</code> pushes over HTTPS and rsyncs the site over
+SSH. Neither shows in the web outcome.</li>
+<li>The 15-minute reconciliation job (from Oct 16) uses SSH on the
+loopback interface and postdates every push.</li>
+<li>Maintenance probes are excluded by user agent: 1,357 requests.</li>
+</ul></li>
+<li><strong>The time-of-day and daily ramp.</strong>
+<ul>
+<li>Rotation and time-of-day referent nulls both absorb it.</li>
+<li>The same shape appears on the cohort’s other repositories.</li>
+</ul></li>
+<li><strong>Website publication rather than repository
+monitoring.</strong> Each <code>main</code> push is also a website
+deploy. A crawler watching the website could follow its footer link to
+the repository root, but the cohort’s successful repository-root
+requests were zero over the whole study.</li>
+<li><strong>Feeds, <code>/explore</code>, the user page and the
+API.</strong> All were near zero in push windows.</li>
+<li><strong>Discovery through GitHub.</strong> No request named a commit
+before Forgejo had it, even when GitHub had the commit up to 17.6 hours
+earlier.</li>
+<li><strong>Policy and logging breaks.</strong> Episodes are excluded by
+rules fixed in advance, and the results hold with and without the
+relaxed variants.</li>
+<li><strong>Correlation across days.</strong> The daily Spearman
+correlation between pushes and the cohort’s traffic is −0.85
+(<code>results/daily-association.json</code>). This is descriptive and
+confounded: pushes clustered Oct 1–5, before the cohort arrived.</li>
+</ul>
+<h2 id="power-robustness-and-what-the-null-can-say">9. Power, robustness
+and what the null can say</h2>
+<p><code>source/power.py</code>: placebo push trains are drawn from the
+rotation null, a response is planted into the real cohort series in
+minutes +1…+10, and the planned test is re-run 300 times per size.</p>
+<p><strong>What the simulation measures.</strong> It is conditional on
+its injection model.</p>
+<ul>
+<li><strong>Volume, not behavior.</strong> It measures added request
+volume. It says nothing about hash-specific behavior, and it covers only
+this one way a monitor could act.</li>
+<li><strong>Every push gets a response.</strong> The headline rows add a
+response after every eligible push, including days when the cohort was
+nearly absent. Those zero-background episodes make detection easy.</li>
+<li><strong>Per-commit sizes are expected counts.</strong> “Per novel
+commit” means an expected number of requests per commit (Poisson), not
+exactly that many for each new hash.</li>
+</ul>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Injection model (300 simulations each)</th>
+<th>Detections at α = 0.05</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>none (placebo false-positive rate)</td>
+<td>0.067</td>
+</tr>
+<tr>
+<td>all 40 eligible pushes: +2 / +5 / +10 / +20 requests</td>
+<td>0.24 / 0.64 / 1.00 (300/300) / 1.00</td>
+</tr>
+<tr>
+<td>all 40, expected +0.5 / +1 / +2 per novel commit</td>
+<td>0.36 / 0.71 / 0.99</td>
+</tr>
+<tr>
+<td>difficulty-2 pushes only (20): +5 / +10 / +20</td>
+<td>0.37 / 0.68 / 1.00</td>
+</tr>
+<tr>
+<td>cohort-active dates only (Oct 6–13; 15 pushes, 6 dates): +5 / +10 /
++20 / +40</td>
+<td>0.23 / 0.52 / 0.96 / 1.00</td>
+</tr>
+</tbody>
+</table>
+<p><strong>What the counts can and cannot bound.</strong></p>
+<ul>
+<li><strong>No inferential bound from the zero counts.</strong> The
+cohort fetched nothing within an hour in all 48 study episodes, 43 of
+them outside the Anubis deployment day.
+<ul>
+<li><code>results/power.json</code> keeps zero-event binomial figures:
+6.7% for 43 episodes and 18% for the 15 cohort-active ones.</li>
+<li>Those figures assume independent opportunities with one common
+probability. Clustered pushes, crawler campaigns, and dates when the
+cohort was absent do not meet that assumption, so they are an
+illustration, not a bound on monitoring.</li>
+</ul></li>
+<li><strong>What a null p does not prove.</strong> Monitoring by a
+small, quiet actor outside these cohorts cannot be excluded from p &gt;
+0.05. Nor can a reaction slower than 3 hours that leaves no age
+signature.</li>
+<li><strong>Where the strongest constraint comes from.</strong> The age
+distribution and the never-fetched commits. The timing test adds
+less.</li>
+</ul>
+<p><strong>Synthetic checks</strong>
+(<code>source/test_commitstats.py</code> →
+<code>results/synthetic-checks.json</code>):</p>
+<ul>
+<li><strong>Exactness.</strong> Under a constructed null with requests
+held fixed, the rejection rate was 3.3% at α = 0.05.</li>
+<li><strong>A realistic null.</strong> Bursty, day-trending series with
+a :00-minute cron, and random push minutes, gave 4.5%.</li>
+<li><strong>Power.</strong> A planted response gave power that rises
+with its size.</li>
+<li><strong>Failure mode.</strong> Pushes fixed at :58 gave 18% false
+positives, or 39% with a :00 cron. The observed push minutes do not show
+that pattern.</li>
+<li><strong>Mechanics.</strong> Unit tests cover window indexing,
+rotation, block eligibility, Holm, Kaplan–Meier and clustering.</li>
+</ul>
+<h2 id="limitations">10. Limitations</h2>
+<ul>
+<li><strong>The cohort and the clock barely overlap.</strong> Before Oct
+6 the cohort was absent from this repository; after Oct 13 there were no
+pushes.
+<ul>
+<li>So the informative timing data are about 15 episodes on 6 days.</li>
+<li>Later quiet days are background, not new treated observations.</li>
+</ul></li>
+<li><strong>Cohorts are user-agent claims.</strong> Address counts are
+not operator counts. Network and user-agent labels do not identify an
+operator or its purpose. Nothing here bears on AI training.</li>
+<li><strong>Policy changes muddy the outcome.</strong> Anubis changed
+who could fetch at all:
+<ul>
+<li>a 403 challenge is a fetch attempt;</li>
+<li>in the difficulty-2 phase, successful GETs measure solved
+challenges;</li>
+<li>declared crawlers were denied or challenged from Oct 4.</li>
+</ul></li>
+<li><strong>Logs see what reached Forgejo.</strong>
+<ul>
+<li>Legacy logs (before Oct 3 22:42:55) cannot attribute non-repository
+forge routes.</li>
+<li>Completion times are second-resolution before Oct 14.</li>
+<li>The start-time variant is JSON-era only.</li>
+</ul></li>
+<li><strong>GitHub is outside the logs.</strong> Its events API covers
+only about the last 30 days, and nothing here observes requests to
+GitHub.</li>
+<li><strong>The owner flag is incomplete.</strong> There were no
+HTTPS-push signals Oct 3–5, so flagging relies on the adjacent-day
+rule.</li>
+<li><strong>The dependence model is unverified.</strong> The intervals
+resample 32 window-overlap clusters or 10 dates. Pushes in separate
+windows can still share a crawler campaign or a day’s activity, and the
+two schemes give noticeably different widths.</li>
+<li><strong>Within-hour exchangeability is assumed, not
+demonstrated.</strong> The synthetic checks validate the mechanics under
+simulated nulls. They do not show that the real publication schedule is
+exchangeable within hours.</li>
+<li><strong>Ages are minute-resolution.</strong> Hash ages use the
+request-minute midpoint.</li>
+</ul>
+<h2 id="conclusion-on-the-evidence-ladder">11. Conclusion on the
+evidence ladder</h2>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Rung</th>
+<th>Supported?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Temporal association between pushes and requests</td>
+<td>Not detected (p = 0.15, driven by one day). One declared-crawler
+burst 20 minutes after one push (Oct 1), and three single browser-like
+visits</td>
+</tr>
+<tr>
+<td>Prompt response to publication</td>
+<td>Not observed: 0 of 48 episodes for the dominant cohort within 1 h.
+The Oct 1 burst is a single occurrence, ignored the next push, and
+resembles bursts that had no push nearby</td>
+</tr>
+<tr>
+<td>Preferential fetching of novel commits</td>
+<td>Not observed: the cohort requested old commits about 7 times as
+often per available commit-hour (over 7 d vs 6–24 h), and never reached
+most new ones</td>
+</tr>
+<tr>
+<td>Repeated monitoring behavior</td>
+<td>Not observed: no actor repeatedly fetched new commits soon after
+pushes. Intermittent monitoring, polling that never named commits, and
+activity outside these logs remain unresolved</td>
+</tr>
+<tr>
+<td>Identity or intent of any operator</td>
+<td>Not addressed by these data</td>
+</tr>
+</tbody>
+</table>
+<h2 id="a-prospective-design-if-wanted">12. A prospective design, if
+wanted</h2>
+<p>The historical data cannot test a monitor that would fire only when a
+crawler is active. For a clean test:</p>
+<ul>
+<li><strong>Fix the outcome and logging plan first.</strong> Keep the
+current JSON logs, add the <code>time_unix</code> and referer fields
+already present, and use this aggregator unchanged.</li>
+<li><strong>Publish separated pushes.</strong> Make 20 to 30 small
+pushes, each exposing one new-content commit.
+<ul>
+<li>Space them at least 3 hours apart, at randomized times drawn in
+advance, over 2 to 3 weeks.</li>
+<li>Include quiet control days.</li>
+</ul></li>
+<li><strong>Keep everything else constant.</strong> Make no
+<code>make deploy</code> coupling: push without deploying, so
+website-change and repository-change effects separate. Keep Anubis
+constant throughout.</li>
+<li><strong>Choose the primary outcome.</strong> Use first GET naming
+each new commit, by cohort, within 1 hour. Use the randomized schedule
+as the null.</li>
+</ul>
+<p>This requires creating artificial commits, which was not done here
+and needs the author’s go-ahead.</p>
+<h2 id="revisions-after-review-2026-10-20">13. Revisions after review
+(2026-10-20)</h2>
+<p>An independent spot-check (<code>SPOT-CHECK.txt</code>) reproduced
+the primary p, the window sums and the 90,122 count, and found the
+following. Every fix was re-run from the frozen tables; the primary null
+file is bit-identical.</p>
+<ol type="1">
+<li><strong>Conclusion.</strong> It now reads as observed behavior: no
+convincing evidence of repeated prompt fetching. It no longer excludes
+monitoring in general, and the mechanism language is softened from
+“link-following, not a trigger” to “consistent with link
+traversal”.</li>
+<li><strong>Estimands.</strong> The summary had mixed the adjusted
+excess (+2.36) with the raw leave-one-out mean (+0.55). Raw and adjusted
+are now reported side by side throughout, including without Oct 13 (raw
++0.55, adjusted −0.49).</li>
+<li><strong>Detection simulation.</strong>
+<ul>
+<li>“100% detection” is now “300/300 under the all-push injection
+model”.</li>
+<li>The difficulty-2 (68%) and new cohort-active-only (52%) results for
++10 requests are added.</li>
+</ul></li>
+<li><strong>Binomial bounds.</strong> They are now presented as
+illustrations under an independence model, and renamed in
+<code>results/power.json</code>. The episode denominators are now
+computed from the data, with the Oct 4 exclusion named.</li>
+<li><strong>“Per novel commit” row.</strong>
+<ul>
+<li>The old row was a batch-size-weighted episode mean; it is
+relabeled.</li>
+<li>The true aggregate, Σ Dᵢ / Σ nᵢ, is added: raw +0.72, adjusted
++0.40. It is a rescaling of the primary statistic, with the same p.</li>
+</ul></li>
+<li><strong>Removed history.</strong> Known removed hashes (6,615 GETs,
+4,960 returned 404) and unresolved hashes (2,873 GETs, 2,132 returned
+404) are now separate. Combined, 7,092 of 9,488 returned 404 and 2,337
+returned 403.</li>
+<li><strong>Dependence.</strong> A whole-date cluster bootstrap is
+added: −1.97 to +10.47 for the adjusted excess.</li>
+<li><strong>Minor.</strong>
+<ul>
+<li>Hash ages are labelled as minute-midpoint, with the minute-start
+youngest age (1.35 h) and the over-7-day count (87,265) added.</li>
+<li>The null-histogram figure no longer draws a leave-one-date-out
+statistic against the full-sample null.</li>
+<li>One error of my own is fixed: E058 falls on the Anubis deployment
+day, so fast fetches occurred in 3 of 43 episodes outside that day, not
+4 of 43.</li>
+</ul></li>
+</ol>
+<h2 id="reproduction">14. Reproduction</h2>
+<p><strong>Frozen inputs.</strong></p>
+<ul>
+<li><strong>Publication snapshot:</strong> 2026-10-19T22:23:19Z.</li>
+<li><strong>Request window:</strong> [2026-09-27T00:00Z,
+2026-10-19T22:00Z). The study window starts 2026-10-01; the planned
+endpoint 2026-10-20T00:00Z was not yet observed (A1).</li>
+<li><strong>GitHub events:</strong> fetched 2026-10-19 ~22:26Z.</li>
+<li><strong>Archive identities:</strong>
+<code>data/aggregation-meta.json</code> lists them
+(<code>raw_sha256</code> and compressed SHA-256 at read).</li>
+</ul>
+<p><strong>Software.</strong></p>
+<ul>
+<li><strong>Local:</strong> Python 3.14.8, numpy 2.4.3, scipy 1.17.1,
+matplotlib 3.10.8.</li>
+<li><strong>VPS:</strong> Python 3.14.8 (standard library only), git
+2.56.0.</li>
+<li><strong>Seed:</strong> 20261020 for every random draw.</li>
+</ul>
+<p><strong>Commands</strong> (from this directory;
+<code>PY=/home/jeans/Repos/personal/levineuwirth.org/.venv/bin/python</code>):</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Read-only VPS collection (sanitized), then reconstruction</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh</span> <span class="at">-F</span> ~/.ssh/config <span class="at">-o</span> BatchMode=yes vps python3 <span class="at">-</span> <span class="op">&lt;</span> source/collect_publication.py <span class="op">&gt;</span> data/publication-snapshot.json</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">#    data/github-push-events.json: gh api repos/levineuwirth/levineuwirth.org/events (kept fields only)</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> source/reconstruct_publication.py</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Read-only VPS aggregation (about 2.5 min), then tables</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh</span> <span class="at">-F</span> ~/.ssh/config <span class="at">-o</span> BatchMode=yes vps nice <span class="at">-n</span> 10 python3 <span class="at">-</span> <span class="op">&lt;</span> source/aggregate_requests.py <span class="op">&gt;</span> PRIVATE/aggregate.json</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> source/build_tables.py PRIVATE/aggregate.json</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Statistics and figures</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="va">$PY</span> source/test_commitstats.py</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="va">$PY</span> source/analysis.py</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="va">$PY</span> source/hash_analysis.py</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="va">$PY</span> source/power.py</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> source/exploratory_bursts.py</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="va">MPLCONFIGDIR</span><span class="op">=</span><span class="va">$(</span><span class="fu">mktemp</span> <span class="at">-d</span><span class="va">)</span> <span class="va">$PY</span> source/plots.py</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Private source check, aggregates only</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="ex">source/run_private_sources.sh</span> <span class="kw">|</span> <span class="ex">python3</span> source/summarize_private_sources.py</span></code></pre></div>
+<p><strong>Caveats for re-running.</strong></p>
+<ul>
+<li><strong>The aggregate holds no addresses, but it is not
+reviewed.</strong> <code>PRIVATE/aggregate.json</code> carries
+per-minute counts and hash rows only. Keep it out of the repository
+anyway; the reviewed tables are its reduction.</li>
+<li><strong>The snapshot is current state.</strong> Re-collecting the
+publication snapshot later reflects any newer pushes.</li>
+<li><strong>Archives can change.</strong> The archive for the live day
+is rewritten hourly until it rotates.</li>
+<li><strong>Reruns reproduce exactly.</strong> <code>results/</code>
+numbers reproduce exactly from <code>data/</code>.</li>
+</ul>
+<p><strong>Files.</strong></p>
+<ul>
+<li><strong>Inputs kept unchanged:</strong> <code>HANDOFF.txt</code>,
+<code>analysis-plan.json</code>, and the provisional snapshot and
+collector.</li>
+<li><strong>Review:</strong> <code>SPOT-CHECK.txt</code> (independent
+spot-check; corrections in § 13).</li>
+<li><strong>Design and methods:</strong> <code>amendments.json</code>,
+<code>methods-notes.md</code> (a methods read with quotes).</li>
+<li><strong>Data and results:</strong> <code>data/</code> (reviewed
+inputs) and <code>results/</code> (outputs and figures).</li>
+<li><strong>Hashes:</strong> <code>MANIFEST.sha256</code> covers every
+file here.</li>
+</ul>
+<h2 id="methods-sources">Methods sources</h2>
+<ul>
+<li>Amarasingham A, Harrison MT, Hatsopoulos NG, Geman S. Conditional
+modeling and the jitter method of spike resampling. <em>J
+Neurophysiol</em> 107(2):517–531 (2012). doi:10.1152/jn.00633.2011;
+supplement arXiv:1111.4296.</li>
+<li>Hemerik J, Goeman J. Exact testing with random permutations.
+<em>TEST</em> 27:811–825 (2018).</li>
+<li>Phipson B, Smyth GK. Permutation p-values should never be zero.
+<em>Stat Appl Genet Mol Biol</em> 9(1), Art. 39 (2010).
+doi:10.2202/1544-6115.1585.</li>
+<li>Mittleman MA, Mostofsky E. Exchangeability in the case-crossover
+design. <em>Int J Epidemiol</em> 43(5):1645–1655 (2014).
+doi:10.1093/ije/dyu081. This source supports the time-of-day referent
+design and its caution against treating several outcomes of one exposure
+as independent.</li>
+<li>Harris KD. A shift test for independence in generic time series.
+arXiv:2012.06862 (2020). Read for the failure modes of circular
+shifts.</li>
+</ul>
+</body>
+</html>

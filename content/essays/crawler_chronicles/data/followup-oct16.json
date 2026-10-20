@@ -1,0 +1,17 @@
+{
+  "observed_through_utc_exclusive": "2026-10-16T09:00:00Z",
+  "full_day_repository_http200_reduction_percent": 78.89182058047494,
+  "full_day_bytes200_reduction_percent": 70.00373083450297,
+  "latest24_repository_http200_reduction_percent": 85.09275392026238,
+  "latest24_bytes200_reduction_percent": 80.27121273445171,
+  "pre_oct9_13_mean_daily_repository_http200": 9119.2,
+  "post_oct15_daily_repository_http200": 3280,
+  "notes": [
+    "Daily comparison is Oct13 vs Oct15, both complete UTC days. Oct14 spans deployment and cookie migration.",
+    "Latest24 compares Oct15 09:00\u2013Oct16 09:00 with Oct13 09:00\u2013Oct14 09:00. Same UTC hours, different weekdays.",
+    "Only one full post-change day. The decline is observed, not a controlled causal estimate of proof-of-work difficulty.",
+    "Raw addresses and samples remain private. Unique-address counts were recomputed from records on the VPS.",
+    "Host reboot on Oct15 at 16:12 UTC caused a recorded counter reset; counter changes across it are not inferred.",
+    "The old Oct14 hard-link snapshot blocked nginx log rotation. On Oct16, all 22 links were replaced by independent checksum-identical copies; normal logrotate then succeeded. No evidence bytes were removed."
+  ]
+}

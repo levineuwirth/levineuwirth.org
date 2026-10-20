@@ -1,0 +1,515 @@
+{
+ "generated_at": "2026-10-19T22:35:03.396413+00:00",
+ "start": "2026-09-27T00:00:00+00:00",
+ "end_exclusive": "2026-10-19T22:00:00+00:00",
+ "minutes": 33000,
+ "json_first": "2026-10-03T22:42:55+00:00",
+ "sources": [
+  {
+   "file": "2642616459bff5f06134278187cb9f6ad7e81f3d200234f0d79b31aa550393d9.log.gz",
+   "kind": "legacy",
+   "first_time": "2026-09-27T00:41:01+00:00",
+   "last_time": "2026-10-03T22:42:55+00:00",
+   "raw_sha256": "1fb2f47aff05034c62ee8b8e995361be7b8e80922a25648d7e0db071de05d55b",
+   "raw_bytes": 741647680,
+   "captured_at": "2026-10-14T21:26:12.928446+00:00",
+   "compressed_sha256_at_read": "1481f926d87b0c71a643c21b78bce1f3db3493ada25ae3afd5ba5515a9441af5"
+  },
+  {
+   "file": "6af380a813a9eae8177e56a7d0c75db6a27d4eeed8de61370a9bda58dfcde531.log.gz",
+   "kind": "forgejo",
+   "first_time": "2026-10-03T22:42:55+00:00",
+   "last_time": "2026-10-05T00:42:16+00:00",
+   "raw_sha256": "8c5aefa23dc2d42720a697dc2ccabbc005fadae05b3f366281a7ecd8a17a7920",
+   "raw_bytes": 231109895,
+   "captured_at": "2026-10-14T21:24:26.330084+00:00",
+   "compressed_sha256_at_read": "efc6243a1200cb5daa4fbbc0fd97aeb9089b0db91a6eb5644bb7e6fe1cff6b20"
+  },
+  {
+   "file": "f26bf84e4ef24dc2ac1d72d7401306cf0aefe7970d330d7fb33074c5904d4bb3.log.gz",
+   "kind": "forgejo",
+   "first_time": "2026-10-05T00:42:17+00:00",
+   "last_time": "2026-10-06T00:59:24+00:00",
+   "raw_sha256": "abbd87fe0b7d58ef1e362616729b989249f399aceeb4ba17402fb89b3f63bc40",
+   "raw_bytes": 178704435,
+   "captured_at": "2026-10-14T21:25:06.335886+00:00",
+   "compressed_sha256_at_read": "31aefd386918955c40a47aaded0473216712434ab78eef3f9db8e9696caac74a"
+  },
+  {
+   "file": "280acc446df931ac2c68b0b01e48b2053d455e3d89e7edf09b7c9fb7f57bcc23.log.gz",
+   "kind": "forgejo",
+   "first_time": "2026-10-06T00:59:54+00:00",
+   "last_time": "2026-10-07T00:42:55+00:00",
+   "raw_sha256": "8bb53a233424a689db9c0ae73bedbadba201e347dc00867c49fda090f17c5267",
+   "raw_bytes": 18688251,
+   "captured_at": "2026-10-14T21:24:50.739512+00:00",
+   "compressed_sha256_at_read": "7d73f248c55118fc24a586ff8978fc4c2bc188b44d45219b260995ddc7b78534"
+  },
+  {
+   "file": "7156ce411a66bf1f49a3f8835d92710535bfe215ffc85bf6fc25b39bc164cf0e.log.gz",
+   "kind": "forgejo",
+   "first_time": "2026-10-07T00:42:59+00:00",
+   "last_time": "2026-10-08T00:52:25+00:00",
+   "raw_sha256": "9fb206c83611848d8b03293a18dcb251dc979b25bbab82d38cd6377e15a81772",
+   "raw_bytes": 10342293,
+   "captured_at": "2026-10-14T21:24:48.947410+00:00",
+   "compressed_sha256_at_read": "23c95d3d9cf3d0f0530e9e0ae1accdd4d707d300ca80f5739c8d52a279fd9780"
+  },
+  {
+   "file": "4db1de7f673a1541b7d7ac8bf56d4b95ef889aca9900de31d9a2384893d87e33.log.gz",
+   "kind": "forgejo",
+   "first_time": "2026-10-08T00:52:30+00:00",
+   "last_time": "2026-10-09T00:57:51+00:00",
+   "raw_sha256": "f3f80a902235cd9cea93f7742f9e62088e8d40b8d583d3f78debd4c6e78b2037",
+   "raw_bytes": 15306157,
+   "captured_at": "2026-10-14T21:24:48.048243+00:00",
+   "compressed_sha256_at_read": "e0e5606b439e458559600a4e4160aea9b9ea77cae6ed00c0a3e6b1885b05a117"
+  },
+  {
+   "file": "b6bb8a312e218d4c57aa83eaedb5e1d744d539ccb248bf887404dd0e3de20c30.log.gz",
+   "kind": "forgejo",
+   "first_time": "2026-10-09T00:58:01+00:00",
+   "last_time": "2026-10-10T00:57:40+00:00",
+   "raw_sha256": "f308b2ca0b006b8b541f581344db067fbf0d6712d79eda4085deda8f5beab2e4",
+   "raw_bytes": 45211520,
+   "captured_at": "2026-10-14T21:24:46.540064+00:00",
+   "compressed_sha256_at_read": "8c9612b413cc9bb19309d633ba875eb47874bea9449a82954e25636f49d5d8ec"
+  },
+  {
+   "file": "085cfb2e0423815d6af2ba11a4f208d6a78e8918a18598cf216bc25ae343fe78.log.gz",
+   "kind": "forgejo",
+   "first_time": "2026-10-10T00:58:07+00:00",
+   "last_time": "2026-10-11T00:29:39+00:00",
+   "raw_sha256": "7ac26e1866094ae543165a779ab7eb4e60a5e194687920bb22e20c94437c107f",
+   "raw_bytes": 72619588,
+   "captured_at": "2026-10-14T21:24:42.547816+00:00",
+   "compressed_sha256_at_read": "d239b09e937a0d6597b643062a022d930b0ab650e0f6ae38f337e3ab01e7c797"
+  },
+  {
+   "file": "ead442bc3298c5d51b595ae7463b994b63a37e9a42d27d31b7b09e803900edd0.log.gz",
+   "kind": "forgejo",
+   "first_time": "2026-10-11T00:29:43+00:00",
+   "last_time": "2026-10-12T00:20:17+00:00",
+   "raw_sha256": "96790d7750a944ccbfe535531c246554e7ec16eb746d5f06e127a9a4d785724b",
+   "raw_bytes": 78129809,
+   "captured_at": "2026-10-14T21:24:36.530316+00:00",
+   "compressed_sha256_at_read": "642fd2f9c01065e8409be1a53349da850eba507fc37cd29f1c81f652f13d7ea0"
+  },
+  {
+   "file": "8ee3fab91cc82d0c38f888abf1e4cea22cacb90302a58a9e6a54320d9f90f083.log.gz",
+   "kind": "forgejo",
+   "first_time": "2026-10-12T00:20:33+00:00",
+   "last_time": "2026-10-13T00:45:27+00:00",
+   "raw_sha256": "4ebafe01eb77decd86d7c06f941be401a080e2ebd309cc04f77bbc2026bf6a1f",
+   "raw_bytes": 35668241,
+   "captured_at": "2026-10-14T21:24:29.531163+00:00",
+   "compressed_sha256_at_read": "912025f88b81022c44be54a3e21b801919013f5c646d03a730a4c34834e62aea"
+  },
+  {
+   "file": "91c8f03eddeb50bded92758a8dc5d38452f83402ce57f4f9cf660701546b7833.log.gz",
+   "kind": "forgejo",
+   "first_time": "2026-10-13T00:45:33+00:00",
+   "last_time": "2026-10-14T00:39:54+00:00",
+   "raw_sha256": "cd486fde68d3fb3cbbd3fdb44aff86ba59ece56df0a62575a4b75d399a9eba32",
+   "raw_bytes": 118620638,
+   "captured_at": "2026-10-14T21:24:03.637208+00:00",
+   "compressed_sha256_at_read": "7e637a6cb5c8fe3fbc9059eacca5b7e6b38959d409510d2cc03581339b278ab6"
+  },
+  {
+   "file": "d0f38fe0247b6601f1b81108f0073643276dffa160d3b234e41b5727e8cf05ef.log.gz",
+   "kind": "forgejo",
+   "first_time": "2026-10-14T00:39:55+00:00",
+   "last_time": "2026-10-16T09:21:12+00:00",
+   "raw_sha256": "47ee9f61e13906a3584ed5fb86e5f63e83d04c8429b03dba700c2e690155c760",
+   "raw_bytes": 172394073,
+   "captured_at": "2026-10-16T09:25:22.791916+00:00",
+   "compressed_sha256_at_read": "1c10c05a8d5f27b14012c33f0b103d88a59ba0f423ef28d46033cad0ca795d77"
+  },
+  {
+   "file": "81ee616bbba8cb8c5c37a013721f00622ffdfae41cb14350cea58d8ce5809b6b.log.gz",
+   "kind": "forgejo",
+   "first_time": "2026-10-16T09:21:17+00:00",
+   "last_time": "2026-10-17T00:44:25+00:00",
+   "raw_sha256": "c156d28e26a53e0099b44bc8038579af190f62f9067f4825bb09c70e8c1001e3",
+   "raw_bytes": 10419006,
+   "captured_at": "2026-10-17T00:50:07.496249+00:00",
+   "compressed_sha256_at_read": "a0f348a94cbb66944a5bade4bdd486e799b8e7216abda1b2926f294d3f379f33"
+  },
+  {
+   "file": "1dd09280d964f11a0357fc6814adf49e0f560e7d4d95cb02fd3aeddb9f8dbd57.log.gz",
+   "kind": "forgejo",
+   "first_time": "2026-10-17T00:45:41+00:00",
+   "last_time": "2026-10-18T00:51:03+00:00",
+   "raw_sha256": "aed43a02a76cb14e487541aab87e6335cc74dea1ec4438cde556db73d7a6963d",
+   "raw_bytes": 8273296,
+   "captured_at": "2026-10-18T00:55:04.353319+00:00",
+   "compressed_sha256_at_read": "cd6a5e4a7fb6f290933c10d12942ece5b917b8abdbb0971861e8ad1c2048dc6e"
+  },
+  {
+   "file": "b71038739e75d869a4bd848df2b71347734eee29784ae63cec3af9b53ed1c51d.log.gz",
+   "kind": "forgejo",
+   "first_time": "2026-10-18T00:52:10+00:00",
+   "last_time": "2026-10-19T00:30:47+00:00",
+   "raw_sha256": "6846886e4709799f47d49c29371c6ce47eba47a83be3944fb1574806ab53ea8d",
+   "raw_bytes": 9007544,
+   "captured_at": "2026-10-19T00:35:05.527298+00:00",
+   "compressed_sha256_at_read": "bace1d8bf4cef6d7df8b2fdae8f075380878ca320cb2fdb300f8cdc9668dc30b"
+  },
+  {
+   "file": "7868098795945fd29c7a7cfcba9a9eba839df6d1904839c763fe6abfcb28053e.log.gz",
+   "kind": "forgejo",
+   "first_time": "2026-10-19T00:33:19+00:00",
+   "last_time": "2026-10-19T22:00:03+00:00",
+   "raw_sha256": "0fbdce1bd7fcfb71593a28357c9acd838e37fec8304c42b59b5f2e522d97a5d4",
+   "raw_bytes": 7208627,
+   "captured_at": "2026-10-19T22:00:05.152656+00:00",
+   "compressed_sha256_at_read": "facb0e4f4267270d2e9878a4546b47ffae8e1fc3a474c5bd06ff94ed5809a361"
+  }
+ ],
+ "per_archive": [
+  {
+   "file": "2642616459bff5f06134278187cb9f6ad7e81f3d200234f0d79b31aa550393d9.log.gz",
+   "kind": "legacy",
+   "first_in_range": "2026-09-27T00:41:01+00:00",
+   "last_in_range": "2026-10-03T22:42:54+00:00",
+   "backward_steps_over_1s": 0,
+   "diagnostics_delta": {
+    "legacy_lines": 2135701,
+    "malformed_legacy_parse": 13,
+    "legacy_at_or_after_json_start": 1
+   }
+  },
+  {
+   "file": "6af380a813a9eae8177e56a7d0c75db6a27d4eeed8de61370a9bda58dfcde531.log.gz",
+   "kind": "forgejo",
+   "first_in_range": "2026-10-03T22:42:55+00:00",
+   "last_in_range": "2026-10-05T00:42:16+00:00",
+   "backward_steps_over_1s": 4,
+   "diagnostics_delta": {
+    "forgejo_lines": 306710
+   }
+  },
+  {
+   "file": "f26bf84e4ef24dc2ac1d72d7401306cf0aefe7970d330d7fb33074c5904d4bb3.log.gz",
+   "kind": "forgejo",
+   "first_in_range": "2026-10-05T00:42:17+00:00",
+   "last_in_range": "2026-10-06T00:59:24+00:00",
+   "backward_steps_over_1s": 0,
+   "diagnostics_delta": {
+    "forgejo_lines": 248431
+   }
+  },
+  {
+   "file": "280acc446df931ac2c68b0b01e48b2053d455e3d89e7edf09b7c9fb7f57bcc23.log.gz",
+   "kind": "forgejo",
+   "first_in_range": "2026-10-06T00:59:54+00:00",
+   "last_in_range": "2026-10-07T00:42:55+00:00",
+   "backward_steps_over_1s": 0,
+   "diagnostics_delta": {
+    "forgejo_lines": 26886
+   }
+  },
+  {
+   "file": "7156ce411a66bf1f49a3f8835d92710535bfe215ffc85bf6fc25b39bc164cf0e.log.gz",
+   "kind": "forgejo",
+   "first_in_range": "2026-10-07T00:42:59+00:00",
+   "last_in_range": "2026-10-08T00:52:25+00:00",
+   "backward_steps_over_1s": 0,
+   "diagnostics_delta": {
+    "forgejo_lines": 14730
+   }
+  },
+  {
+   "file": "4db1de7f673a1541b7d7ac8bf56d4b95ef889aca9900de31d9a2384893d87e33.log.gz",
+   "kind": "forgejo",
+   "first_in_range": "2026-10-08T00:52:30+00:00",
+   "last_in_range": "2026-10-09T00:57:51+00:00",
+   "backward_steps_over_1s": 0,
+   "diagnostics_delta": {
+    "forgejo_lines": 21486
+   }
+  },
+  {
+   "file": "b6bb8a312e218d4c57aa83eaedb5e1d744d539ccb248bf887404dd0e3de20c30.log.gz",
+   "kind": "forgejo",
+   "first_in_range": "2026-10-09T00:58:01+00:00",
+   "last_in_range": "2026-10-10T00:57:40+00:00",
+   "backward_steps_over_1s": 0,
+   "diagnostics_delta": {
+    "forgejo_lines": 66102
+   }
+  },
+  {
+   "file": "085cfb2e0423815d6af2ba11a4f208d6a78e8918a18598cf216bc25ae343fe78.log.gz",
+   "kind": "forgejo",
+   "first_in_range": "2026-10-10T00:58:07+00:00",
+   "last_in_range": "2026-10-11T00:29:39+00:00",
+   "backward_steps_over_1s": 0,
+   "diagnostics_delta": {
+    "forgejo_lines": 106526
+   }
+  },
+  {
+   "file": "ead442bc3298c5d51b595ae7463b994b63a37e9a42d27d31b7b09e803900edd0.log.gz",
+   "kind": "forgejo",
+   "first_in_range": "2026-10-11T00:29:43+00:00",
+   "last_in_range": "2026-10-12T00:20:17+00:00",
+   "backward_steps_over_1s": 0,
+   "diagnostics_delta": {
+    "forgejo_lines": 114582
+   }
+  },
+  {
+   "file": "8ee3fab91cc82d0c38f888abf1e4cea22cacb90302a58a9e6a54320d9f90f083.log.gz",
+   "kind": "forgejo",
+   "first_in_range": "2026-10-12T00:20:33+00:00",
+   "last_in_range": "2026-10-13T00:45:27+00:00",
+   "backward_steps_over_1s": 0,
+   "diagnostics_delta": {
+    "forgejo_lines": 51896
+   }
+  },
+  {
+   "file": "91c8f03eddeb50bded92758a8dc5d38452f83402ce57f4f9cf660701546b7833.log.gz",
+   "kind": "forgejo",
+   "first_in_range": "2026-10-13T00:45:33+00:00",
+   "last_in_range": "2026-10-14T00:39:54+00:00",
+   "backward_steps_over_1s": 0,
+   "diagnostics_delta": {
+    "forgejo_lines": 173713
+   }
+  },
+  {
+   "file": "d0f38fe0247b6601f1b81108f0073643276dffa160d3b234e41b5727e8cf05ef.log.gz",
+   "kind": "forgejo",
+   "first_in_range": "2026-10-14T00:39:55+00:00",
+   "last_in_range": "2026-10-16T09:21:12.736000+00:00",
+   "backward_steps_over_1s": 0,
+   "diagnostics_delta": {
+    "forgejo_lines": 217116,
+    "excluded_check_requests": 1053
+   }
+  },
+  {
+   "file": "81ee616bbba8cb8c5c37a013721f00622ffdfae41cb14350cea58d8ce5809b6b.log.gz",
+   "kind": "forgejo",
+   "first_in_range": "2026-10-16T09:21:17.236000+00:00",
+   "last_in_range": "2026-10-17T00:44:25.615000+00:00",
+   "backward_steps_over_1s": 0,
+   "diagnostics_delta": {
+    "forgejo_lines": 10704,
+    "excluded_check_requests": 304
+   }
+  },
+  {
+   "file": "1dd09280d964f11a0357fc6814adf49e0f560e7d4d95cb02fd3aeddb9f8dbd57.log.gz",
+   "kind": "forgejo",
+   "first_in_range": "2026-10-17T00:45:41.173000+00:00",
+   "last_in_range": "2026-10-18T00:51:03.406000+00:00",
+   "backward_steps_over_1s": 0,
+   "diagnostics_delta": {
+    "forgejo_lines": 8667
+   }
+  },
+  {
+   "file": "b71038739e75d869a4bd848df2b71347734eee29784ae63cec3af9b53ed1c51d.log.gz",
+   "kind": "forgejo",
+   "first_in_range": "2026-10-18T00:52:10.285000+00:00",
+   "last_in_range": "2026-10-19T00:30:47.630000+00:00",
+   "backward_steps_over_1s": 0,
+   "diagnostics_delta": {
+    "forgejo_lines": 9403
+   }
+  },
+  {
+   "file": "7868098795945fd29c7a7cfcba9a9eba839df6d1904839c763fe6abfcb28053e.log.gz",
+   "kind": "forgejo",
+   "first_in_range": "2026-10-19T00:33:19.878000+00:00",
+   "last_in_range": "2026-10-19T21:59:59.489000+00:00",
+   "backward_steps_over_1s": 0,
+   "diagnostics_delta": {
+    "forgejo_lines": 7501,
+    "json_out_of_range": 4
+   }
+  }
+ ],
+ "diagnostics": {
+  "legacy_lines": 2135701,
+  "malformed_legacy_parse": 13,
+  "legacy_at_or_after_json_start": 1,
+  "forgejo_lines": 1384453,
+  "excluded_check_requests": 1357,
+  "json_out_of_range": 4
+ },
+ "owner": {
+  "owner_addresses": 6,
+  "owner_addresses_by_signal_date": {
+   "authenticated-page|2026-10-01": 1,
+   "login|2026-10-01": 1,
+   "receive-pack|2026-09-29": 1,
+   "receive-pack|2026-09-30": 1,
+   "receive-pack|2026-10-01": 4,
+   "receive-pack|2026-10-02": 1,
+   "receive-pack|2026-10-06": 2,
+   "receive-pack|2026-10-07": 3,
+   "receive-pack|2026-10-08": 3,
+   "receive-pack|2026-10-09": 2,
+   "receive-pack|2026-10-10": 1,
+   "receive-pack|2026-10-13": 2
+  },
+  "flag_rule": "address with an owner signal on that UTC date, or the adjacent dates",
+  "internal_networks_checked": 18
+ },
+ "series_keys": 812,
+ "hash_rows": 164433,
+ "column_totals": {
+  "w_get200_primary": 43425,
+  "w_get200_primary_owner": 0,
+  "w_get_primary_anystatus_owner": 0,
+  "w_get200_primary_internal": 0,
+  "w_get_primary_anystatus_internal": 0,
+  "w_get2xx_primary": 14,
+  "w_get3xx_primary": 1409,
+  "w_get403_primary": 45563,
+  "w_get404_primary": 118,
+  "w_get429_primary": 0,
+  "w_get499_primary": 269,
+  "w_get4xx_primary": 0,
+  "w_get5xx_primary": 2,
+  "w_get200_primary_ep_archive": 0,
+  "w_get200_primary_ep_blame": 8460,
+  "w_get200_primary_ep_commit": 796,
+  "w_get200_primary_ep_compare": 0,
+  "w_get200_primary_ep_feed": 3,
+  "w_get200_primary_ep_history-branch": 76,
+  "w_get200_primary_ep_history-commit": 9675,
+  "w_get200_primary_ep_history-other": 0,
+  "w_get200_primary_ep_meta": 25,
+  "w_get200_primary_ep_other": 16,
+  "w_get200_primary_ep_raw-branch": 67,
+  "w_get200_primary_ep_raw-commit": 6448,
+  "w_get200_primary_ep_raw-other": 0,
+  "w_get200_primary_ep_root": 0,
+  "w_get200_primary_ep_src-branch": 88,
+  "w_get200_primary_ep_src-commit": 17771,
+  "w_get200_primary_ep_src-other": 0,
+  "w_get200start_primary": 43343,
+  "w_get200start_primary_owner": 0,
+  "w_get200start_primary_internal": 0,
+  "w_head_primary": 0,
+  "w_post_other_primary": 0,
+  "w_get200_all": 116356,
+  "w_get200_all_owner": 38,
+  "w_get_all_anystatus_owner": 42,
+  "w_get200_all_internal": 2,
+  "w_get_all_anystatus_internal": 3,
+  "w_get2xx_all": 77,
+  "w_get3xx_all": 1488,
+  "w_get403_all": 91346,
+  "w_get404_all": 15615,
+  "w_get429_all": 0,
+  "w_get499_all": 1292,
+  "w_get4xx_all": 131,
+  "w_get5xx_all": 288,
+  "w_get200_all_ep_archive": 27,
+  "w_get200_all_ep_blame": 18903,
+  "w_get200_all_ep_commit": 3725,
+  "w_get200_all_ep_compare": 161,
+  "w_get200_all_ep_feed": 378,
+  "w_get200_all_ep_history-branch": 578,
+  "w_get200_all_ep_history-commit": 21301,
+  "w_get200_all_ep_history-other": 0,
+  "w_get200_all_ep_meta": 3932,
+  "w_get200_all_ep_other": 36,
+  "w_get200_all_ep_raw-branch": 479,
+  "w_get200_all_ep_raw-commit": 16228,
+  "w_get200_all_ep_raw-other": 0,
+  "w_get200_all_ep_root": 75,
+  "w_get200_all_ep_src-branch": 1084,
+  "w_get200_all_ep_src-commit": 49449,
+  "w_get200_all_ep_src-other": 0,
+  "w_get200start_all": 46126,
+  "w_get200start_all_owner": 2,
+  "w_get200start_all_internal": 2,
+  "w_head_all": 3123,
+  "w_post_other_all": 5,
+  "w_get200_meta": 1,
+  "w_get200_amazon": 12586,
+  "w_get200_otherbot": 42662,
+  "w_get200_other": 17682,
+  "r_pmacs_get200_primary": 18223,
+  "r_pmacs_get200_primary_owner": 0,
+  "r_pmacs_get200_all": 965426,
+  "r_pmacs_get200_all_owner": 0,
+  "r_pmacs_get_primary_anystatus": 43069,
+  "r_epiphany_get200_primary": 3063,
+  "r_epiphany_get200_primary_owner": 0,
+  "r_epiphany_get200_all": 91955,
+  "r_epiphany_get200_all_owner": 0,
+  "r_epiphany_get_primary_anystatus": 6462,
+  "r_levcs_get200_primary": 560,
+  "r_levcs_get200_primary_owner": 0,
+  "r_levcs_get200_all": 13325,
+  "r_levcs_get200_all_owner": 0,
+  "r_levcs_get_primary_anystatus": 1069,
+  "r_ozymandias_get200_primary": 101,
+  "r_ozymandias_get200_primary_owner": 0,
+  "r_ozymandias_get200_all": 2632,
+  "r_ozymandias_get200_all_owner": 0,
+  "r_ozymandias_get_primary_anystatus": 196,
+  "r_where-simd-helps_get200_primary": 5,
+  "r_where-simd-helps_get200_primary_owner": 0,
+  "r_where-simd-helps_get200_all": 2542,
+  "r_where-simd-helps_get200_all_owner": 7,
+  "r_where-simd-helps_get_primary_anystatus": 17,
+  "r_neuropose_get200_primary": 644,
+  "r_neuropose_get200_primary_owner": 0,
+  "r_neuropose_get200_all": 4801,
+  "r_neuropose_get200_all_owner": 0,
+  "r_neuropose_get_primary_anystatus": 1318,
+  "r_beyond_comorbidity_indices_get200_primary": 0,
+  "r_beyond_comorbidity_indices_get200_primary_owner": 0,
+  "r_beyond_comorbidity_indices_get200_all": 211,
+  "r_beyond_comorbidity_indices_get200_all_owner": 0,
+  "r_beyond_comorbidity_indices_get_primary_anystatus": 0,
+  "r_unknown-repo_get200_primary": 7,
+  "r_unknown-repo_get200_primary_owner": 0,
+  "r_unknown-repo_get200_all": 602,
+  "r_unknown-repo_get200_all_owner": 0,
+  "r_unknown-repo_get_primary_anystatus": 12,
+  "git_website_info-refs": 8,
+  "git_website_info-refs_flagged": 102,
+  "git_otherrepo_info-refs": 10,
+  "git_website_upload-pack": 8,
+  "git_website_upload-pack_flagged": 33,
+  "git_otherrepo_upload-pack": 19,
+  "git_website_receive-pack": 0,
+  "git_website_receive-pack_flagged": 20,
+  "git_otherrepo_receive-pack": 0,
+  "f_explore_all": 739,
+  "f_explore_200_primary": 21,
+  "f_user-profile_all": 146,
+  "f_user-profile_200_primary": 0,
+  "f_user-feed_all": 5,
+  "f_user-feed_200_primary": 0,
+  "f_api-repo-website_all": 8,
+  "f_api-repo-website_200_primary": 0,
+  "f_api-repo-other_all": 0,
+  "f_api-repo-other_200_primary": 0,
+  "f_forge-root_all": 5959,
+  "f_forge-root_200_primary": 0,
+  "f_login_all": 156289,
+  "f_login_200_primary": 0,
+  "f_pass-challenge_all": 54994,
+  "f_pass-challenge_200_primary": 0,
+  "f_anubis_all": 130514,
+  "f_anubis_200_primary": 121319,
+  "f_api-other_all": 645,
+  "f_api-other_200_primary": 0,
+  "f_assets_all": 335338,
+  "f_assets_200_primary": 330440,
+  "f_other_all": 70251,
+  "f_other_200_primary": 0,
+  "checks_excluded": 1357
+ }
+}

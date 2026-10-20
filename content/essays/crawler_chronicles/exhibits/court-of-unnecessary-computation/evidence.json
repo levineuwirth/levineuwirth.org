@@ -1,0 +1,83 @@
+{
+  "prepared_for": "Satirical petition for EGIHosting courtesy forwarding; no dispatch recorded.",
+  "provider_specific_observation": {
+    "cohort": "linux-chrome-150-155",
+    "grouped_prefix": "23.230.0.0/16",
+    "http200": 1385,
+    "period": "oct13",
+    "queried_at": "2026-10-14T20:27:50.348603+00:00",
+    "rdap": {
+      "cidrs": [
+        "23.230.0.0/16"
+      ],
+      "country": null,
+      "covers_entire_grouped_prefix": true,
+      "end": "23.230.255.255",
+      "entities": [
+        {
+          "fn": "EGIHosting",
+          "handle": "EGNL-1",
+          "kind": "org",
+          "roles": [
+            "registrant"
+          ]
+        }
+      ],
+      "handle": "NET-23-230-0-0-1",
+      "name": "EGNL-1",
+      "start": "23.230.0.0",
+      "type": "DIRECT ALLOCATION",
+      "url": "https://rdap.arin.net/registry/ip/23.230.0.0"
+    },
+    "routing": {
+      "asns": [
+        "10753"
+      ],
+      "prefix": "23.230.110.0/23",
+      "url": "https://stat.ripe.net/data/network-info/data.json?resource=23.230.110.0/23"
+    },
+    "unique_ips": 803
+  },
+  "server_wide_comparisons": {
+    "d4_last24": {
+      "start": "2026-10-15T09:49:23.860856+00:00",
+      "end": "2026-10-16T09:49:23.860856+00:00",
+      "hours": 24.0,
+      "http200": 3055,
+      "bytes200": 640861383
+    },
+    "d5_first24": {
+      "start": "2026-10-16T09:49:25.521649+00:00",
+      "end": "2026-10-17T09:49:25.521649+00:00",
+      "hours": 24.0,
+      "http200": 126,
+      "bytes200": 21032820
+    },
+    "d5_second24": {
+      "start": "2026-10-17T09:49:25.521649+00:00",
+      "end": "2026-10-18T09:49:25.521649+00:00",
+      "hours": 24.0,
+      "http200": 116,
+      "bytes200": 22529609
+    },
+    "latest24": {
+      "start": "2026-10-18T19:00:00+00:00",
+      "end": "2026-10-19T19:00:00+00:00",
+      "hours": 24.0,
+      "http200": 112,
+      "bytes200": 12528858
+    }
+  },
+  "source_hashes": {
+    "anubis/observations/2026-10-14/observations.json": "ad558d323581662040cafba63b8a03a82061e31cd5074454482ea13aa253d8e4",
+    "anubis/observations/2026-10-19/findings.json": "83447349fafcf41496062b9e054449bc503dba74e1142087df9f14610ee282d1"
+  },
+  "contact_source": "https://egihosting.com/contacts/",
+  "contact_checked": "2026-10-19",
+  "scope_notes": [
+    "Provider-associated figures cover the recorded user-agent cohort only.",
+    "Registry information identifies an allocation, not a customer or its intentions.",
+    "Server-wide figures are not assigned to this addressee.",
+    "Petition contains no individual client addresses or raw logs."
+  ]
+}

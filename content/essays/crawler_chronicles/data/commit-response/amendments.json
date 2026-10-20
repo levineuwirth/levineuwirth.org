@@ -1,0 +1,82 @@
+{
+  "recorded_at_utc": "2026-10-19T22:35:00Z",
+  "recorded_before_request_alignment": true,
+  "seen_before_recording": [
+    "HANDOFF.txt, analysis-plan.json, the provisional publication snapshot and collector (hashes verified against handoff-inputs.sha256).",
+    "A fresh sanitized publication collection (data/publication-snapshot.json, observed 2026-10-19T22:23:19Z), public GitHub push events for the mirror repository, the Forgejo upgrade runbook and archive manifest metadata.",
+    "Schema samples of one legacy and two JSON log lines with addresses and user agents redacted.",
+    "Earlier observation folders (2026-10-14/16/19), which report daily and hourly traffic without push alignment."
+  ],
+  "not_seen_before_recording": "No request counts have been aligned with push times, and no request series for the website repository has been aggregated in this thread.",
+  "original_plan_retained": "analysis-plan.json is unchanged. Its primary test is still run and reported, with the amendments below applied only where the plan was undefined or not executable as written. Each result is labelled planned, amended or exploratory.",
+  "amendments": [
+    {
+      "id": "A1",
+      "topic": "coverage endpoint",
+      "change": "Request data are frozen at 2026-10-19T22:00:00Z, the last closed hour at the original snapshot. The planned 2026-10-20T00:00:00Z endpoint was not yet observed and is not padded with zeros.",
+      "reason": "Coverage cap. The fresh collection at 22:23Z shows no website ref update after 2026-10-13T15:44:48Z, so the cap removes two hours of untreated background only."
+    },
+    {
+      "id": "A2",
+      "topic": "publication reconstruction",
+      "change": "Each current commit's first Forgejo publication is the first ref transaction that made it reachable from any branch, processed chronologically over all refs (retained reflogs at second precision; the deleted upgrade-check branch from its notification). Novel exposure is the set difference against everything previously reachable, including from deleted refs.",
+      "reason": "The provisional collector marked the left-censored first tip as new. The current graph has one root (22f02a9d, committed 2026-08-29 15:25:51Z): the history was rewritten and force-pushed, notified at 2026-08-29 16:40:34Z (action 199, 3 commits, tip 49d6d24). That notification dates the first retained reflog's old tip, so no current commit is left-censored. 90 of 92 earlier notifications name objects that no longer exist; requests for those hashes are classified as rewritten history, not as current commits."
+    },
+    {
+      "id": "A3",
+      "topic": "unit of treatment",
+      "change": "The unit is a publication episode: ref transactions in the same second are one episode (2026-10-01 12:27:01: main, essay-simd-correction and explorer-experiment, 14 novel commits). 'Ref updated' and 'novel commits exposed' are kept as separate fields; batch size is the graph-derived novel count, not the notification Len.",
+      "reason": "Notification Len for a new branch is a recent-commit cap: upgrade-check reports 10 but exposed 2 previously unpublished commits."
+    },
+    {
+      "id": "A4",
+      "topic": "upgrade-check",
+      "change": "upgrade-check (notification 2026-10-01 19:49:36Z; transaction within the preceding 20 s, all inside minute 19:49) is a publication episode exposing 2 novel commits by hash and in the activity feed, with the branch deleted in the same second. It is excluded from the primary test because its window overlaps the Forgejo 1.21 to 15.0.9 upgrade chain (19:24 to 19:45Z, repeated container restarts). It is reported descriptively and in hash-level analyses.",
+      "reason": "It was the post-upgrade verification push recorded in forgejo/UPGRADE.md. Exclusion is by an operational rule fixed before alignment, not by its outcome."
+    },
+    {
+      "id": "A5",
+      "topic": "GitHub precedence",
+      "change": "Forgejo publication time remains the exposure for Forgejo requests. Episodes whose novel commits were already on GitHub (public push events: 9 GitHub-only pushes from 2026-10-06 17:19Z to 2026-10-10 10:24Z, leading Forgejo by 4.5 min to 17.6 h) are flagged and dropped in a sensitivity analysis. Requests for such hashes on Forgejo before Forgejo publication are reported.",
+      "reason": "Every other Forgejo push reached GitHub 2 to 4 s later through the dual-push origin remote. First Forgejo reachability is not first public availability."
+    },
+    {
+      "id": "A6",
+      "topic": "block eligibility",
+      "change": "For window W, a UTC date-hour block H is eligible only if [H-W, H+60+W) lies entirely within (i) one log regime (legacy mixed-host before 2026-10-03T22:42:55Z, forge JSON from then on), (ii) one stable policy phase (before-anubis before 2026-10-04T00:00Z, or difficulty-2 from 2026-10-05T00:00Z to 2026-10-14T20:14:05.044611Z), (iii) no recorded operational disruption, and (iv) observed logging coverage. Eligibility is a block property, so it holds for all 60 placements; pushes in an ineligible block are all dropped, never re-selected per shift. A sensitivity relaxes rule (i) only.",
+      "reason": "The plan required valid windows but did not say they must hold for every shifted placement."
+    },
+    {
+      "id": "A7",
+      "topic": "operational disruptions",
+      "change": "Recorded disruptions: Forgejo upgrade 2026-10-01 19:24 to 19:45Z; the same night's switch of web source-archive routes to 404 (time to be located from archive-route status changes alone, then padded by 10 minutes on each side); Anubis deployment day 2026-10-04; host reboot 2026-10-15 16:12Z; difficulty and cookie transitions. Logging gaps: minutes outside archive spans; inter-archive gaps; runs of 10 or more consecutive minutes with no logged line where the surrounding six hours average 5 or more lines per minute; minutes in which at least 5 forge responses occurred and at least half were 5xx.",
+      "reason": "Spans and sparse rows do not certify uptime. These rules use log presence, status and operational records, not the primary outcome's alignment with pushes."
+    },
+    {
+      "id": "A8",
+      "topic": "outcome definition details",
+      "change": "Website repository requests match /neuwirth/<repo>[/...] with <repo> lower-cased and a trailing .git removed equal to levineuwirth.org; /neuwirth/levineuwirth.org.rss and .atom count as repository feeds. Git smart-protocol paths (info/refs, git-upload-pack, git-receive-pack, objects/, HEAD file), HEAD-method requests and maintenance check user agents are excluded from web outcomes. Smart-protocol fetches are a separate secondary series. Timestamps are completion times; JSON-era start time (completion minus request_time) is a sensitivity.",
+      "reason": "Exact matching and the feed route were unspecified; repository.rss was misrouted by the existing parser."
+    },
+    {
+      "id": "A9",
+      "topic": "owner activity",
+      "change": "Owner sessions are identified privately on the VPS: addresses that made a successful POST git-receive-pack, or a successful authenticated-only request (settings, logout, notifications, repository creation, admin, or a 303 POST to /user/login), flagged on that UTC date and the adjacent dates. The planned primary analysis keeps them; an amended sensitivity removes them, and their in-window counts are reported.",
+      "reason": "Every main push is a make deploy, and the owner may check the forge immediately afterwards. Only aggregates leave the VPS."
+    },
+    {
+      "id": "A10",
+      "topic": "secondary and robustness designs",
+      "change": "Added: (a) episode-level event study with leads and lags to 180 minutes against the same within-hour shift null; (b) a time-of-day referent null that moves each eligible episode to the same clock minute on other eligible days of the same phase; (c) hash-level time to first request for novel commits, with historical commits' request rates as availability-matched comparison; (d) other repositories as control outcomes; (e) synthetic planted-response and null simulations. The robust alternative statistic is the share of episodes with more requests after than before. These are amended (not prespecified in the plan) and the extra lag, cohort and endpoint searches are exploratory.",
+      "reason": "One shift null and a mean difference can be dominated by single bursts and assume within-hour exchangeability that the data may violate."
+    },
+    {
+      "id": "A11",
+      "recorded_at_utc": "2026-10-19T22:58:00Z",
+      "topic": "null validity checks and effect summaries",
+      "change": "(a) The p-value is (1+#{T_shift >= T_obs})/(1+10000). (b) Push minutes are tabulated by minute of hour before testing. (c) Robustness re-run with blocks offset by 30 minutes (H:30 to H+1:29), same eligibility rule. (d) Effect estimate is T_obs minus the null mean, with an episode-cluster bootstrap (clusters: episodes whose primary windows overlap) and a leave-one-day-out jackknife. (e) Edge hours whose windows leave the observed span are dropped a priori by the A6 rule.",
+      "reason": "Methods review (Amarasingham et al. 2012 and supplement; Hemerik and Goeman 2018; Phipson and Smyth 2010; Mittleman and Mostofsky 2014): rotations within fixed hours form a group, so the Monte Carlo p-value is valid under within-hour rotation exchangeability; hour boundaries can split bursts; a shift test yields a p-value, not an interval."
+    }
+  ],
+  "methods_notes": "Summarized from scratch notes of a methods read; sources listed in REPORT.md."
+}

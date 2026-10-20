@@ -1,0 +1,63 @@
+{
+ "note": "Exploratory: bursts of declared-crawler successful GETs before Anubis, and their lag from the last push.\n\nA burst is a run of 10-minute bins with at least 3 x max(median, 50) requests, Sep 27 to Oct 3 (UTC).\nChosen after seeing the Oct 1 11:40 burst; descriptive only. Writes results/declared-crawler-bursts.json.",
+ "median_per_10min": 18.0,
+ "threshold_per_10min": 150,
+ "bursts": [
+  {
+   "start_utc": "2026-09-29T08:20:00Z",
+   "minutes": 10,
+   "peak_per_10min": 290,
+   "requests": 290,
+   "minutes_since_last_episode": 6960
+  },
+  {
+   "start_utc": "2026-09-29T12:30:00Z",
+   "minutes": 10,
+   "peak_per_10min": 155,
+   "requests": 155,
+   "minutes_since_last_episode": 7210
+  },
+  {
+   "start_utc": "2026-09-29T14:30:00Z",
+   "minutes": 10,
+   "peak_per_10min": 180,
+   "requests": 180,
+   "minutes_since_last_episode": 7330
+  },
+  {
+   "start_utc": "2026-09-29T16:40:00Z",
+   "minutes": 10,
+   "peak_per_10min": 184,
+   "requests": 184,
+   "minutes_since_last_episode": 7460
+  },
+  {
+   "start_utc": "2026-10-01T11:40:00Z",
+   "minutes": 40,
+   "peak_per_10min": 635,
+   "requests": 1932,
+   "minutes_since_last_episode": 21
+  },
+  {
+   "start_utc": "2026-10-01T22:30:00Z",
+   "minutes": 20,
+   "peak_per_10min": 234,
+   "requests": 386,
+   "minutes_since_last_episode": 79
+  },
+  {
+   "start_utc": "2026-10-02T01:00:00Z",
+   "minutes": 10,
+   "peak_per_10min": 158,
+   "requests": 158,
+   "minutes_since_last_episode": 229
+  },
+  {
+   "start_utc": "2026-10-02T03:30:00Z",
+   "minutes": 20,
+   "peak_per_10min": 332,
+   "requests": 536,
+   "minutes_since_last_episode": 379
+  }
+ ]
+}

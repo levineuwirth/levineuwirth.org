@@ -1,0 +1,33 @@
+%!TEX program = lualatex
+% Compile separately, then outline all lettering through SVG for PDF renderer compatibility.
+\documentclass[tikz,border=1pt]{standalone}
+\usepackage{fontspec}
+\setmainfont{EB Garamond}[Renderer=Node]
+\definecolor{rubric}{HTML}{9E2B25}
+\begin{document}
+ \begin{tikzpicture}[scale=.86,baseline=(current bounding box.center)]
+  \draw[rubric,line width=.9pt] (0,0) circle (1.85);
+  \draw[rubric,line width=.25pt] (0,0) circle (1.75);
+  \draw[rubric,line width=.4pt] (0,0) circle (1.20);
+  \foreach[count=\sealindex from 0] \sealletter in {C,O,U,R,T,{},O,F,{},U,N,N,E,C,E,S,S,A,R,Y,{},C,O,M,P,U,T,A,T,I,O,N}{
+   \pgfmathsetmacro{\sealangle}{170-160*\sealindex/31}
+   \node[text=rubric,inner sep=0pt,font=\fontsize{5.8}{6}\selectfont,
+    rotate=\sealangle-90] at (\sealangle:1.49) {\sealletter};
+  }
+  \foreach[count=\sealindex from 0] \sealletter in {N,O,{},A,U,T,H,O,R,I,T,Y,.,{},S,E,V,E,R,A,L,{},F,E,E,L,I,N,G,S,.}{
+   \pgfmathsetmacro{\sealangle}{205+130*\sealindex/30}
+   \node[text=rubric,inner sep=0pt,font=\fontsize{5.1}{6}\selectfont,
+    rotate=\sealangle+90] at (\sealangle:1.49) {\sealletter};
+  }
+  \foreach \y in {-.45,0,.45}{
+   \draw[rubric,rounded corners=1pt,line width=.65pt] (-.56,\y-.17) rectangle (.56,\y+.17);
+   \fill[rubric] (-.39,\y) circle (.035);
+   \draw[rubric,line width=.35pt] (.12,\y)--(.40,\y);
+  }
+  \draw[rubric,line width=.5pt] (0,.62)--(0,.91);
+  \draw[rubric,fill=rubric!12] (0,.91)--(.46,.79)--(0,.68)--cycle;
+  \node[font=\fontsize{4}{5}\selectfont\scshape,text=rubric,inner sep=1pt]
+    at (0,-.82){one modest server};
+  \foreach \a in {0,30,...,330}{\fill[rubric] (\a:1.95) circle (.018);}
+ \end{tikzpicture}
+\end{document}

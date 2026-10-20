@@ -1,0 +1,156 @@
+Independent spot-check of the commit-response report
+2026-10-20. Original report, data, source, and manifest left unchanged.
+
+Verdict
+
+The main empirical result survives this check: there is no detected prompt
+increase in the primary outcome under the chosen rotation null, and the
+dominant UA cohort did not request any current commit within an hour of its
+reconstructed Forgejo publication. Several statistical and prose claims
+need correction before publication. These do not reverse the main result.
+
+Scope of verification
+
+- All 53 entries in the supplied MANIFEST.sha256 passed.
+- Independently summed minute windows from the frozen exported table:
+  40 episodes, 659 pre-window requests, 829 post-window requests.
+- Independently constructed the 60-rotation block contributions and 10,000
+  draws: p=0.1513848615138486, matching the report. Re-running the supplied
+  rotation implementation also reproduced primary-null.npy bit for bit.
+- Independently resolved commit prefixes against the publication table and
+  recounted primary-cohort GETs: 90,122. The earliest request-minute start
+  was 1.3461 hours after publication. Thus minute rounding cannot explain
+  away the absence of sub-hour requests in this cohort.
+- Verified old-hash status counts from hash-requests.csv.gz and the snapshot.
+- Re-ran the five deterministic tests for window indexing, rotations,
+  eligibility, Holm/Kaplan-Meier, and clustering; all passed.
+- Inspected publication reconstruction, aggregation, analysis, power code,
+  amendments, and outputs. Did not re-read the private VPS logs, rerun the
+  remote aggregation, re-identify addresses, or independently re-audit all
+  GitHub events. The claims about exact hourly agreement and remote
+  reproduction remain the other thread's checks, not new independent ones.
+
+Corrections and qualifications, in order of practical importance
+
+1. Limit the conclusion to observed behavior; no general exclusion of monitoring.
+
+REPORT.md:8-11, 35-53, 439-467 and the pasted summary.
+The observed absence of prompt hash-specific GETs is substantial evidence
+against a monitor that promptly FETCHED EACH NEW COMMIT in this cohort and
+this logging window. It cannot exclude polling that did not fetch commits,
+infrequent monitoring, long delays, other UAs, another host, or mechanisms
+outside these logs. Branch-view timing is consistent with link traversal;
+it does not identify the mechanism uniquely. "Fast fetches ... were not
+monitoring" is stronger than the available observational evidence.
+
+Suggested conclusion:
+"We found no convincing evidence of repeated, prompt fetching after pushes.
+The dominant user-agent cohort mostly revisited older commits and made no
+commit-specific GET within an hour of publication. This argues against a
+crawler that promptly fetched every new commit, while leaving intermittent
+or otherwise unobserved monitoring unresolved."
+
+2. Separate raw pre/post differences from null-adjusted excess.
+
+REPORT.md:13-17, 230-247; results/timing-results.json.
+Raw mean post-minus-pre = (829-659)/40 = +4.25 requests per episode.
+Expected difference over rotations = +1.8875.
+Adjusted excess = +2.3625. The interval [-1.4684, +7.7504] is for that
+adjusted excess, not for the raw after-minus-before difference.
+Without Oct13 the RAW mean is +0.5526, while ADJUSTED excess is -0.4860
+(p=0.7123, 38 episodes). The summary switches estimands between +2.4 and
++0.55. Label both or compare +2.36 to -0.49 consistently.
+
+3. Detection simulations are conditional, not a blanket power guarantee.
+
+source/power.py:27-41; REPORT.md:20-23 and 426-435.
+The headline simulation injects a response after EVERY eligible episode,
+including dates when this cohort was almost absent. It draws placebo
+publication minutes under the rotation null and injects Poisson requests
+in minutes +1..+10; "one per new commit" is an EXPECTED count in that
+model, not exactly one request for each new hash. It tests volume, not
+hash-specific behavior or a general family of monitoring mechanisms.
+
+The supplied difficulty-2-only simulation already gives ~68% detection for
++10 requests per episode, versus 300/300 for the all-date simulation.
+There are 20 eligible difficulty-2 episodes; the Oct6-13 active subset has
+only 15 episodes on six dates. A 15-episode active-only power study has not
+been supplied. My timing rerun on those 15 gives raw +11.2, adjusted +6.2733,
+p=0.1532, so the main null remains.
+
+Use "300/300 detections under the all-push injection model," rather than
+suggesting guaranteed detection of a real monitor. Synthetic calibration
+supports the mechanics under the simulated nulls; it does not demonstrate
+exchangeability of the actual observational publication schedule.
+
+4. The exact zero-event probability bounds require unsupported assumptions.
+
+source/power.py:45-70; REPORT.md:439-443.
+The numbers 6.7% and 18.1% use 1-0.05**(1/n), the zero-success bound under
+independent Bernoulli opportunities with a common probability. The report
+does not establish that model for clustered pushes and crawler campaigns;
+early inactive dates also differ from active dates. They are not
+assumption-free bounds on monitoring. Remove them or explicitly present
+them as an illustrative binomial model. The 271-commit bound in power.json
+is correctly named naive_independent but is likewise unsuitable for an
+inferential claim because commits arrive in batches.
+
+The 43-episode denominator is hard-coded in power.py. The first-fetch table
+actually contains 48 study episodes, including five on the Anubis deployment
+day; 43 excludes those five. Name that exclusion when quoting 0/43.
+
+5. The "per novel commit" statistic is mislabeled / implemented differently.
+
+source/analysis.py:224-245; REPORT.md sensitivity table.
+The docstring promises sum(D_i)/sum(n_i), but the code computes
+sum(n_i * D_i)/sum(n_i), where D_i is the episode request difference and
+n_i is its novel-commit count. That is an episode difference weighted by
+batch size, not aggregate requests per novel commit.
+
+With 235 eligible novel commits, the promised aggregate per-commit
+statistic is 170/235 = +0.7234 raw, +0.4021 adjusted. Its p-value remains
+0.1514 because this only rescales the primary statistic by a fixed positive
+constant. The reported +0.7702, p=0.5451 is for the different weighted
+statistic. Relabel the implemented statistic, or implement the promised one;
+do not interpret the current row as an independent per-commit result.
+
+6. The stale-history summary overstates both classification and 404s.
+
+REPORT.md:90-99; pasted summary "about 9,500 ... and got 404s".
+Known hashes from removed history: 6,615 GETs, of which 4,960 were 404.
+Unresolved hashes: 2,873 GETs, of which 2,132 were 404. These hashes have
+not all been demonstrated to belong to removed history.
+Combined: 9,488 GETs, 7,092 with status 404. Another 2,337 were 403.
+The report body says "mostly 404," which is more accurate than the pasted
+summary, but unresolved hashes should remain a separate category.
+
+7. The interval's dependence assumptions need a broader sensitivity.
+
+source/analysis.py:122-125; source/commitstats.py:clusters/cluster_bootstrap.
+The published interval resamples 32 clusters formed only by overlapping
+60-minute event windows. Nonoverlapping windows can still share a crawler
+campaign or a day's activity. Those clusters are not established independent.
+
+As a simple additional sensitivity, using the same per-episode adjusted
+contributions but resampling whole UTC dates (10 clusters, 10,000 bootstrap
+draws, seed 20261020) gives [-1.9666, +10.4654], wider than the published
+[-1.4684, +7.7504]. This does not make the day-bootstrap interval a validated
+95% guarantee with so few dates; it shows that dependence assumptions matter.
+Neither interval changes the broad absence of a clear timing result.
+
+Minor precision point
+
+The hash-age table uses minute midpoints, not exact request timestamps.
+The reported 87,270 requests older than seven days is reproducible under
+that rule; 87,265 are definitely older than seven days even at the start
+of their request minute. This tiny boundary difference is immaterial to
+the result. State the binning precision rather than implying exact ages.
+
+Recommended action
+
+Retain the main negative finding, fix the metric labels and weighted row,
+qualify power, remove or explicitly condition the binomial bounds, and
+soften claims about mechanism. Preserve the useful distinction between
+missing evidence of a statistical increase and direct observations of
+what was fetched. No change to the essay or a prospective experiment was
+made during this check.

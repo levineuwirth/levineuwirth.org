@@ -1,0 +1,72 @@
+{
+ "start": "2026-09-27T00:00:00+00:00",
+ "end_exclusive": "2026-10-19T22:00:00+00:00",
+ "minutes": 33000,
+ "uncovered_minutes_by_reason": {
+  "outside-archive-span": 44,
+  "quiet-gap": 36,
+  "repository-5xx-majority": 1,
+  "disruption:forgejo-upgrade-1.21-to-15.0.9": 30,
+  "disruption:archive-route-switch": 21,
+  "regime-change-minute": 1,
+  "disruption:host-reboot": 13,
+  "json-rotation-gap": 6
+ },
+ "rotation_gaps_over_60s": [
+  [
+   "2026-10-17T00:44:25Z",
+   "2026-10-17T00:45:41Z",
+   "json-rotation-gap"
+  ],
+  [
+   "2026-10-18T00:51:03Z",
+   "2026-10-18T00:52:10Z",
+   "json-rotation-gap"
+  ],
+  [
+   "2026-10-19T00:30:47Z",
+   "2026-10-19T00:33:19Z",
+   "json-rotation-gap"
+  ]
+ ],
+ "quiet_gaps": [
+  [
+   "2026-09-27T00:00:00Z",
+   "2026-09-27T00:41:00Z",
+   251.4
+  ],
+  [
+   "2026-09-28T02:12:00Z",
+   "2026-09-28T02:22:00Z",
+   270.7
+  ],
+  [
+   "2026-09-28T02:24:00Z",
+   "2026-09-28T02:38:00Z",
+   268.7
+  ],
+  [
+   "2026-10-14T19:21:00Z",
+   "2026-10-14T19:33:00Z",
+   56.5
+  ]
+ ],
+ "archive_route_switch": {
+  "last_200_before_last_404_minute": "2026-10-01T20:21:00Z",
+  "first_404_minute": "2026-10-01T20:21:00Z",
+  "archive_200_minutes_after_first_404": 0
+ },
+ "disruptions": [
+  [
+   "2026-10-01T19:20:00Z",
+   "2026-10-01T19:50:00Z",
+   "forgejo-upgrade-1.21-to-15.0.9"
+  ],
+  [
+   "2026-10-15T16:07:00Z",
+   "2026-10-15T16:20:00Z",
+   "host-reboot"
+  ]
+ ],
+ "rules": "amendments.json A6/A7"
+}

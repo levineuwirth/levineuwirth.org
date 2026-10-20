@@ -1,0 +1,4144 @@
+{
+  "code200_feed": {
+    "authority_link": "https://apps.db.ripe.net/db-web-ui/query?searchtext=103.144.160.0%2F23",
+    "retrieved_date_utc": "2026-10-14",
+    "sha256": "e7aa6b06b55210cd9abd26590090cc0b257dd6b1213a1b78c2f2d67c776653cc",
+    "url": "https://code200noc.github.io/code200-external-ASN.csv"
+  },
+  "coverage": {
+    "code200_feed": {
+      "collapsed_prefixes": 162,
+      "retrieved_date": "2026-10-14",
+      "url": "https://code200noc.github.io/code200-external-ASN.csv"
+    },
+    "created_at": "2026-10-14T20:46:49.204229+00:00",
+    "data": {
+      "forge_json_records_oct3_13": 1122615,
+      "legacy_records_oct1_3": 698797
+    },
+    "kind": "coverage",
+    "legacy_unparsed": 362,
+    "notes": [
+      "Legacy logs mix hosts; only /neuwirth/ routes are included.",
+      "Legacy bytes are response bodies; JSON bytes include headers. Do not treat these as exact bandwidth comparisons.",
+      "IP allocations and user agents do not identify the operator.",
+      "Oct14 is partial and excluded from completed-day tables."
+    ]
+  },
+  "limits": [
+    "IP registration, BGP origin and user agent are distinct evidence; none identifies a proxy customer.",
+    "The code200 feed was retrieved on October 14 and matched against October 13 requests. It lists externally announced ranges and may not cover all code200 infrastructure.",
+    "A /16 is an aggregation bin, not an assertion of common ownership. Registry lookups represent sampled suballocations unless covers_entire_grouped_prefix is true.",
+    "Network group rows below 20 requests are omitted; repository totals include them.",
+    "Legacy response sizes exclude headers; newer JSON sizes include them.",
+    "HTTP 200s count individual URLs and responses, including historical views, files, feeds and Git protocol URLs. They are not visits or unique files.",
+    "No inference is made that the post-Anubis crawl belongs to Meta.",
+    "The effect of difficulty 4 requires a subsequent observation window.",
+    "Synthetic difficulty-4 verification user agents are excluded from the repository aggregation."
+  ],
+  "meta_oct1_3": {
+    "attribution": "Declared Meta user agents and Meta-registered source addresses corroborate each other. This does not attribute the later Linux/Chrome crawl.",
+    "http200_under_neuwirth": 137249,
+    "observed_sample_origin_asn": "AS32934",
+    "prefix24_counts": {
+      "57.141.20.0/24": 137249
+    },
+    "registration": "Meta Platforms Ireland Limited",
+    "registration_source": "https://rdap.db.ripe.net/ip/57.141.20.0",
+    "routing_source": "https://stat.ripe.net/data/network-info/data.json?resource=57.141.20.0/24",
+    "unique_ips": 60
+  },
+  "network_attribution": [
+    {
+      "cohort": "linux-chrome-150-155",
+      "grouped_prefix": "72.63.0.0/16",
+      "http200": 2405,
+      "period": "oct13",
+      "queried_at": "2026-10-14T20:27:50.347800+00:00",
+      "rdap": {
+        "cidrs": [
+          "72.63.156.0/22"
+        ],
+        "country": "US",
+        "covers_entire_grouped_prefix": false,
+        "end": "72.63.159.255",
+        "entities": [
+          {
+            "fn": "code200_noc",
+            "handle": "CA9426-RIPE",
+            "kind": "group",
+            "roles": [
+              "administrative",
+              "technical"
+            ]
+          },
+          {
+            "fn": "Abuse-C Role",
+            "handle": "AR49890-RIPE",
+            "kind": "group",
+            "roles": [
+              "abuse"
+            ]
+          }
+        ],
+        "handle": "72.63.156.0 - 72.63.159.255",
+        "name": "US_MA_internet",
+        "start": "72.63.156.0",
+        "type": "ASSIGNED PA",
+        "url": "https://rdap.db.ripe.net/ip/72.63.156.0"
+      },
+      "routing": {
+        "asns": [
+          "6079"
+        ],
+        "prefix": "72.63.156.0/22",
+        "url": "https://stat.ripe.net/data/network-info/data.json?resource=72.63.156.0/22"
+      },
+      "unique_ips": 1557
+    },
+    {
+      "cohort": "linux-chrome-150-155",
+      "grouped_prefix": "23.230.0.0/16",
+      "http200": 1385,
+      "period": "oct13",
+      "queried_at": "2026-10-14T20:27:50.348603+00:00",
+      "rdap": {
+        "cidrs": [
+          "23.230.0.0/16"
+        ],
+        "country": null,
+        "covers_entire_grouped_prefix": true,
+        "end": "23.230.255.255",
+        "entities": [
+          {
+            "fn": "EGIHosting",
+            "handle": "EGNL-1",
+            "kind": "org",
+            "roles": [
+              "registrant"
+            ]
+          }
+        ],
+        "handle": "NET-23-230-0-0-1",
+        "name": "EGNL-1",
+        "start": "23.230.0.0",
+        "type": "DIRECT ALLOCATION",
+        "url": "https://rdap.arin.net/registry/ip/23.230.0.0"
+      },
+      "routing": {
+        "asns": [
+          "10753"
+        ],
+        "prefix": "23.230.110.0/23",
+        "url": "https://stat.ripe.net/data/network-info/data.json?resource=23.230.110.0/23"
+      },
+      "unique_ips": 803
+    },
+    {
+      "cohort": "linux-chrome-150-155",
+      "grouped_prefix": "205.188.0.0/16",
+      "http200": 1222,
+      "period": "oct13",
+      "queried_at": "2026-10-14T20:27:50.349113+00:00",
+      "rdap": {
+        "cidrs": [
+          "205.188.0.0/16"
+        ],
+        "country": "US",
+        "covers_entire_grouped_prefix": true,
+        "end": "205.188.255.255",
+        "entities": [
+          {
+            "fn": "code200_noc",
+            "handle": "CA9426-RIPE",
+            "kind": "group",
+            "roles": [
+              "administrative",
+              "technical"
+            ]
+          },
+          {
+            "fn": "UAB code200",
+            "handle": "ORG-UC48-RIPE",
+            "kind": "org",
+            "roles": [
+              "registrant"
+            ]
+          },
+          {
+            "fn": "Abuse-C Role",
+            "handle": "AR49890-RIPE",
+            "kind": "group",
+            "roles": [
+              "abuse"
+            ]
+          }
+        ],
+        "handle": "205.188.0.0 - 205.188.255.255",
+        "name": "LT-CODE200-19950321",
+        "start": "205.188.0.0",
+        "type": "ALLOCATED PA",
+        "url": "https://rdap.db.ripe.net/ip/205.188.0.0"
+      },
+      "routing": {
+        "asns": [
+          "6079"
+        ],
+        "prefix": "205.188.192.0/22",
+        "url": "https://stat.ripe.net/data/network-info/data.json?resource=205.188.192.0/22"
+      },
+      "unique_ips": 782
+    },
+    {
+      "cohort": "linux-chrome-150-155",
+      "grouped_prefix": "48.47.0.0/16",
+      "http200": 1043,
+      "period": "oct13",
+      "queried_at": "2026-10-14T20:27:50.349783+00:00",
+      "rdap": {
+        "cidrs": [
+          "48.44.0.0/14"
+        ],
+        "country": null,
+        "covers_entire_grouped_prefix": true,
+        "end": "48.47.255.255",
+        "entities": [
+          {
+            "fn": "AviationAI",
+            "handle": "AL-3130",
+            "kind": "org",
+            "roles": [
+              "registrant"
+            ]
+          }
+        ],
+        "handle": "NET-48-44-0-0-1",
+        "name": "AVIATIONAI",
+        "start": "48.44.0.0",
+        "type": "DIRECT ALLOCATION",
+        "url": "https://rdap.arin.net/registry/ip/48.44.0.0"
+      },
+      "routing": {
+        "asns": [
+          "7922"
+        ],
+        "prefix": "48.47.30.0/23",
+        "url": "https://stat.ripe.net/data/network-info/data.json?resource=48.47.30.0/23"
+      },
+      "unique_ips": 662
+    },
+    {
+      "cohort": "linux-chrome-150-155",
+      "grouped_prefix": "209.166.0.0/16",
+      "http200": 957,
+      "period": "oct13",
+      "queried_at": "2026-10-14T20:27:51.239332+00:00",
+      "rdap": {
+        "cidrs": [
+          "209.166.24.0/23"
+        ],
+        "country": null,
+        "covers_entire_grouped_prefix": false,
+        "end": "209.166.25.255",
+        "entities": [
+          {
+            "fn": "Private Customer",
+            "handle": "C11492615",
+            "kind": "org",
+            "roles": [
+              "registrant"
+            ]
+          }
+        ],
+        "handle": "NET-209-166-24-0-1",
+        "name": "GTT-CUST-PON2820638",
+        "start": "209.166.24.0",
+        "type": "ASSIGNMENT",
+        "url": "https://rdap.arin.net/registry/ip/209.166.24.0"
+      },
+      "routing": {
+        "asns": [
+          "3320"
+        ],
+        "prefix": "209.166.24.0/23",
+        "url": "https://stat.ripe.net/data/network-info/data.json?resource=209.166.24.0/23"
+      },
+      "unique_ips": 642
+    },
+    {
+      "cohort": "linux-chrome-150-155",
+      "grouped_prefix": "153.79.0.0/16",
+      "http200": 809,
+      "period": "oct13",
+      "queried_at": "2026-10-14T20:27:51.422389+00:00",
+      "rdap": {
+        "cidrs": [
+          "153.79.112.0/21"
+        ],
+        "country": "FR",
+        "covers_entire_grouped_prefix": false,
+        "end": "153.79.119.255",
+        "entities": [
+          {
+            "fn": "Abuse-C Role",
+            "handle": "AR66715-RIPE",
+            "kind": "group",
+            "roles": [
+              "abuse"
+            ]
+          }
+        ],
+        "handle": "153.79.112.0 - 153.79.119.255",
+        "name": "FR-ISP",
+        "start": "153.79.112.0",
+        "type": "LEGACY",
+        "url": "https://rdap.db.ripe.net/ip/153.79.112.0"
+      },
+      "routing": {
+        "asns": [
+          "30781"
+        ],
+        "prefix": "153.79.112.0/20",
+        "url": "https://stat.ripe.net/data/network-info/data.json?resource=153.79.112.0/20"
+      },
+      "unique_ips": 527
+    },
+    {
+      "cohort": "linux-chrome-150-155",
+      "grouped_prefix": "82.140.0.0/16",
+      "http200": 709,
+      "period": "oct13",
+      "queried_at": "2026-10-14T20:27:51.426378+00:00",
+      "rdap": {
+        "cidrs": [
+          "82.140.134.0/24"
+        ],
+        "country": "GB",
+        "covers_entire_grouped_prefix": false,
+        "end": "82.140.134.255",
+        "entities": [
+          {
+            "fn": "BITE NOC",
+            "handle": "BITE2000-RIPE",
+            "kind": "group",
+            "roles": [
+              "administrative",
+              "technical"
+            ]
+          },
+          {
+            "fn": "UAB \"Bite Lietuva\"",
+            "handle": "ORG-BGIS1-RIPE",
+            "kind": "org",
+            "roles": [
+              "registrant"
+            ]
+          },
+          {
+            "fn": "Abuse contact role object",
+            "handle": "ACRO26825-RIPE",
+            "kind": "group",
+            "roles": [
+              "abuse"
+            ]
+          }
+        ],
+        "handle": "82.140.134.0 - 82.140.134.255",
+        "name": "BITE-CODE",
+        "start": "82.140.134.0",
+        "type": "ASSIGNED PA",
+        "url": "https://rdap.db.ripe.net/ip/82.140.134.0"
+      },
+      "routing": {
+        "asns": [
+          "2856"
+        ],
+        "prefix": "82.140.134.0/24",
+        "url": "https://stat.ripe.net/data/network-info/data.json?resource=82.140.134.0/24"
+      },
+      "unique_ips": 445
+    },
+    {
+      "cohort": "linux-chrome-150-155",
+      "grouped_prefix": "201.14.0.0/16",
+      "http200": 701,
+      "period": "oct13",
+      "queried_at": "2026-10-14T20:27:51.568087+00:00",
+      "rdap_error": "HTTP Error 406: Not Acceptable",
+      "routing": {
+        "asns": [
+          "3257"
+        ],
+        "prefix": "201.14.240.0/24",
+        "url": "https://stat.ripe.net/data/network-info/data.json?resource=201.14.240.0/24"
+      },
+      "unique_ips": 455
+    },
+    {
+      "cohort": "linux-chrome-150-155",
+      "grouped_prefix": "31.98.0.0/16",
+      "http200": 525,
+      "period": "oct13",
+      "queried_at": "2026-10-14T20:27:51.813098+00:00",
+      "rdap": {
+        "cidrs": [
+          "31.98.0.0/19"
+        ],
+        "country": "FR",
+        "covers_entire_grouped_prefix": false,
+        "end": "31.98.31.255",
+        "entities": [
+          {
+            "fn": "Wookra, LLC",
+            "handle": "WL2349-RIPE",
+            "kind": "group",
+            "roles": [
+              "administrative",
+              "technical"
+            ]
+          },
+          {
+            "fn": "Abuse-C Role",
+            "handle": "AR78226-RIPE",
+            "kind": "group",
+            "roles": [
+              "abuse"
+            ]
+          }
+        ],
+        "handle": "31.98.0.0 - 31.98.31.255",
+        "name": "FR",
+        "start": "31.98.0.0",
+        "type": "ASSIGNED PA",
+        "url": "https://rdap.db.ripe.net/ip/31.98.0.0"
+      },
+      "routing": {
+        "asns": [
+          "30781"
+        ],
+        "prefix": "31.98.0.0/19",
+        "url": "https://stat.ripe.net/data/network-info/data.json?resource=31.98.0.0/19"
+      },
+      "unique_ips": 336
+    },
+    {
+      "cohort": "linux-chrome-150-155",
+      "grouped_prefix": "170.100.0.0/16",
+      "http200": 462,
+      "period": "oct13",
+      "queried_at": "2026-10-14T20:27:51.861805+00:00",
+      "rdap": {
+        "cidrs": [
+          "170.100.128.0/22"
+        ],
+        "country": "US",
+        "covers_entire_grouped_prefix": false,
+        "end": "170.100.131.255",
+        "entities": [
+          {
+            "fn": "Aviation RE LLC",
+            "handle": "ORG-ARL10-RIPE",
+            "kind": "org",
+            "roles": [
+              "registrant"
+            ]
+          },
+          {
+            "fn": "RIPE Admin",
+            "handle": "SP19000-RIPE",
+            "kind": "group",
+            "roles": [
+              "administrative",
+              "technical"
+            ]
+          },
+          {
+            "fn": "Abuse-C Role",
+            "handle": "AR61147-RIPE",
+            "kind": "group",
+            "roles": [
+              "abuse"
+            ]
+          }
+        ],
+        "handle": "170.100.128.0 - 170.100.131.255",
+        "name": "US-AVIATION-19940324",
+        "start": "170.100.128.0",
+        "type": "LEGACY",
+        "url": "https://rdap.db.ripe.net/ip/170.100.128.0"
+      },
+      "routing": {
+        "asns": [
+          "33659"
+        ],
+        "prefix": "170.100.128.0/22",
+        "url": "https://stat.ripe.net/data/network-info/data.json?resource=170.100.128.0/22"
+      },
+      "unique_ips": 295
+    },
+    {
+      "cohort": "linux-chrome-150-155",
+      "grouped_prefix": "84.46.0.0/16",
+      "http200": 368,
+      "period": "oct13",
+      "queried_at": "2026-10-14T20:27:52.125122+00:00",
+      "rdap_error": "HTTP Error 429: Too Many Requests",
+      "routing": {
+        "asns": [
+          "2856"
+        ],
+        "prefix": "84.46.183.0/24",
+        "url": "https://stat.ripe.net/data/network-info/data.json?resource=84.46.183.0/24"
+      },
+      "unique_ips": 240
+    },
+    {
+      "cohort": "linux-chrome-150-155",
+      "grouped_prefix": "86.38.0.0/16",
+      "http200": 334,
+      "period": "oct13",
+      "queried_at": "2026-10-14T20:27:52.199325+00:00",
+      "rdap_error": "HTTP Error 429: Too Many Requests",
+      "routing": {
+        "asns": [
+          "2856"
+        ],
+        "prefix": "86.38.123.0/24",
+        "url": "https://stat.ripe.net/data/network-info/data.json?resource=86.38.123.0/24"
+      },
+      "unique_ips": 215
+    },
+    {
+      "cohort": "linux-chrome-150-155",
+      "grouped_prefix": "153.52.0.0/16",
+      "http200": 330,
+      "period": "oct13",
+      "queried_at": "2026-10-14T20:27:52.311243+00:00",
+      "rdap_error": "HTTP Error 429: Too Many Requests",
+      "routing": {
+        "asns": [
+          "30781"
+        ],
+        "prefix": "153.52.218.0/23",
+        "url": "https://stat.ripe.net/data/network-info/data.json?resource=153.52.218.0/23"
+      },
+      "unique_ips": 217
+    },
+    {
+      "cohort": "linux-chrome-150-155",
+      "grouped_prefix": "198.145.0.0/16",
+      "http200": 199,
+      "period": "oct13",
+      "queried_at": "2026-10-14T20:27:52.370209+00:00",
+      "rdap_error": "HTTP Error 429: Too Many Requests",
+      "routing": {
+        "asns": [
+          "7015"
+        ],
+        "prefix": "198.145.140.0/24",
+        "url": "https://stat.ripe.net/data/network-info/data.json?resource=198.145.140.0/24"
+      },
+      "unique_ips": 118
+    },
+    {
+      "cohort": "linux-chrome-150-155",
+      "grouped_prefix": "31.132.0.0/16",
+      "http200": 189,
+      "period": "oct13",
+      "queried_at": "2026-10-14T20:27:52.491582+00:00",
+      "rdap_error": "HTTP Error 429: Too Many Requests",
+      "routing": {
+        "asns": [
+          "33287",
+          "33659"
+        ],
+        "prefix": "31.132.54.0/23",
+        "url": "https://stat.ripe.net/data/network-info/data.json?resource=31.132.54.0/23"
+      },
+      "unique_ips": 123
+    },
+    {
+      "cohort": "linux-chrome-150-155",
+      "grouped_prefix": "23.27.0.0/16",
+      "http200": 184,
+      "period": "oct13",
+      "queried_at": "2026-10-14T20:27:52.543117+00:00",
+      "rdap_error": "HTTP Error 429: Too Many Requests",
+      "routing": {
+        "asns": [
+          "11404"
+        ],
+        "prefix": "23.27.31.0/24",
+        "url": "https://stat.ripe.net/data/network-info/data.json?resource=23.27.31.0/24"
+      },
+      "unique_ips": 118
+    },
+    {
+      "cohort": "meta-declared",
+      "grouped_prefix": "57.141.0.0/16",
+      "http200": 137249,
+      "period": "oct1-3",
+      "queried_at": "2026-10-14T20:27:52.655939+00:00",
+      "rdap_error": "HTTP Error 429: Too Many Requests",
+      "routing": {
+        "asns": [
+          "32934"
+        ],
+        "prefix": "57.141.20.0/24",
+        "url": "https://stat.ripe.net/data/network-info/data.json?resource=57.141.20.0/24"
+      },
+      "unique_ips": 60
+    },
+    {
+      "cohort": "amazon-declared",
+      "grouped_prefix": "23.21.0.0/16",
+      "http200": 493,
+      "period": "oct1-3",
+      "queried_at": "2026-10-14T20:27:52.673869+00:00",
+      "rdap_error": "HTTP Error 429: Too Many Requests",
+      "routing": {
+        "asns": [
+          "14618"
+        ],
+        "prefix": "23.20.0.0/15",
+        "url": "https://stat.ripe.net/data/network-info/data.json?resource=23.20.0.0/15"
+      },
+      "unique_ips": 10
+    },
+    {
+      "cohort": "amazon-declared",
+      "grouped_prefix": "98.82.0.0/16",
+      "http200": 449,
+      "period": "oct1-3",
+      "queried_at": "2026-10-14T20:27:52.715506+00:00",
+      "rdap_error": "HTTP Error 429: Too Many Requests",
+      "routing": {
+        "asns": [
+          "14618"
+        ],
+        "prefix": "98.80.0.0/13",
+        "url": "https://stat.ripe.net/data/network-info/data.json?resource=98.80.0.0/13"
+      },
+      "unique_ips": 8
+    },
+    {
+      "cohort": "amazon-declared",
+      "grouped_prefix": "23.23.0.0/16",
+      "http200": 433,
+      "period": "oct1-3",
+      "queried_at": "2026-10-14T20:27:52.845396+00:00",
+      "rdap_error": "HTTP Error 429: Too Many Requests",
+      "routing": {
+        "asns": [
+          "14618"
+        ],
+        "prefix": "23.22.0.0/15",
+        "url": "https://stat.ripe.net/data/network-info/data.json?resource=23.22.0.0/15"
+      },
+      "unique_ips": 8
+    }
+  ],
+  "oct13": {
+    "code200_feed_http200": 3788,
+    "code200_feed_share_of_dominant": 0.2445132971856442,
+    "code200_feed_unique_ips200": 2342,
+    "dominant_cohort_http200": 15492,
+    "repository_http200": 15539
+  },
+  "recorded_at": "2026-10-14T20:50:27.310996+00:00",
+  "repositories": [
+    {
+      "data": {
+        "bytes": 376363,
+        "bytes200": 376363,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 18
+        },
+        "commits200": 0,
+        "endpoints": {
+          "packages": 4,
+          "projects": 14
+        },
+        "endpoints200": {
+          "packages": 4,
+          "projects": 14
+        },
+        "http200": 18,
+        "http403": 0,
+        "requests": 18,
+        "status": {
+          "200": 18
+        },
+        "unique_ips": 12,
+        "unique_paths": 2,
+        "user_agent_groups": {
+          "other": 18
+        }
+      },
+      "period": "oct1-3",
+      "repository": "-"
+    },
+    {
+      "data": {
+        "bytes": 11,
+        "bytes200": 0,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {},
+        "commits200": 0,
+        "endpoints": {
+          "root": 1
+        },
+        "endpoints200": {},
+        "http200": 0,
+        "http403": 0,
+        "requests": 1,
+        "status": {
+          "404": 1
+        },
+        "unique_ips": 1,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 1
+        }
+      },
+      "period": "oct1-3",
+      "repository": ".env"
+    },
+    {
+      "data": {
+        "bytes": 2071444283,
+        "bytes200": 2069465710,
+        "code200_feed_http200": 31,
+        "code200_feed_ips200": 31,
+        "cohort200": {
+          "amazon-declared": 1022,
+          "linux-chrome-150-155": 9,
+          "meta-declared": 8,
+          "other": 1414,
+          "other-declared-crawler": 2688
+        },
+        "commits200": 53,
+        "endpoints": {
+          "-": 6,
+          "action": 17,
+          "activity": 21,
+          "archive": 53,
+          "blame/branch": 38,
+          "blame/commit": 483,
+          "branch": 6,
+          "branches": 7,
+          "commit": 743,
+          "commits/branch": 61,
+          "commits/commit": 626,
+          "compare": 64,
+          "find/branch": 4,
+          "find/commit": 42,
+          "forks": 6,
+          "graph": 2,
+          "issues": 322,
+          "labels": 2,
+          "lastcommit": 2,
+          "milestones": 4,
+          "packages": 3,
+          "projects": 14,
+          "pulls": 106,
+          "raw/branch": 42,
+          "raw/commit": 409,
+          "releases": 4,
+          "releases.rss": 2,
+          "root": 14,
+          "rss/branch": 32,
+          "rss/commit": 371,
+          "src": 3,
+          "src/branch": 162,
+          "src/commit": 2013,
+          "stars": 6,
+          "tags": 4,
+          "tags.rss": 2,
+          "tree-list/commit": 3,
+          "watchers": 5,
+          "wiki": 4
+        },
+        "endpoints200": {
+          "-": 6,
+          "activity": 19,
+          "archive": 1,
+          "blame/branch": 38,
+          "blame/commit": 479,
+          "branches": 6,
+          "commit": 687,
+          "commits/branch": 58,
+          "commits/commit": 625,
+          "compare": 58,
+          "find/branch": 4,
+          "find/commit": 42,
+          "forks": 6,
+          "graph": 2,
+          "issues": 313,
+          "labels": 2,
+          "milestones": 4,
+          "packages": 3,
+          "projects": 14,
+          "pulls": 106,
+          "raw/branch": 42,
+          "raw/commit": 407,
+          "releases": 4,
+          "releases.rss": 2,
+          "root": 14,
+          "rss/branch": 32,
+          "src/branch": 137,
+          "src/commit": 2006,
+          "stars": 6,
+          "tags": 4,
+          "tags.rss": 2,
+          "tree-list/commit": 3,
+          "watchers": 5,
+          "wiki": 4
+        },
+        "http200": 5141,
+        "http403": 0,
+        "requests": 5708,
+        "status": {
+          "200": 5141,
+          "301": 17,
+          "303": 4,
+          "404": 413,
+          "405": 17,
+          "499": 112,
+          "502": 4
+        },
+        "unique_ips": 1980,
+        "unique_paths": 3769,
+        "user_agent_groups": {
+          "amazon-declared": 1187,
+          "linux-chrome-150-155": 10,
+          "meta-declared": 9,
+          "other": 1596,
+          "other-declared-crawler": 2906
+        }
+      },
+      "period": "oct1-3",
+      "repository": "LeVCS"
+    },
+    {
+      "data": {
+        "bytes": 65343,
+        "bytes200": 65181,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 4
+        },
+        "commits200": 0,
+        "endpoints": {
+          "root": 6
+        },
+        "endpoints200": {
+          "root": 4
+        },
+        "http200": 4,
+        "http403": 0,
+        "requests": 6,
+        "status": {
+          "200": 4,
+          "301": 1,
+          "499": 1
+        },
+        "unique_ips": 4,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 6
+        }
+      },
+      "period": "oct1-3",
+      "repository": "LeVCS.rss"
+    },
+    {
+      "data": {
+        "bytes": 3542805,
+        "bytes200": 3542729,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "amazon-declared": 2,
+          "other": 82,
+          "other-declared-crawler": 42
+        },
+        "commits200": 0,
+        "endpoints": {
+          "activity": 14,
+          "forks": 3,
+          "issues": 69,
+          "labels": 6,
+          "milestones": 3,
+          "packages": 6,
+          "projects": 6,
+          "root": 7,
+          "stars": 5,
+          "watchers": 5,
+          "wiki": 4
+        },
+        "endpoints200": {
+          "activity": 14,
+          "forks": 3,
+          "issues": 67,
+          "labels": 6,
+          "milestones": 3,
+          "packages": 6,
+          "projects": 6,
+          "root": 7,
+          "stars": 5,
+          "watchers": 5,
+          "wiki": 4
+        },
+        "http200": 126,
+        "http403": 0,
+        "requests": 128,
+        "status": {
+          "200": 126,
+          "303": 2
+        },
+        "unique_ips": 68,
+        "unique_paths": 19,
+        "user_agent_groups": {
+          "amazon-declared": 2,
+          "other": 84,
+          "other-declared-crawler": 42
+        }
+      },
+      "period": "oct1-3",
+      "repository": "beyond_comorbidity_indices"
+    },
+    {
+      "data": {
+        "bytes": 1622,
+        "bytes200": 1622,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 2
+        },
+        "commits200": 0,
+        "endpoints": {
+          "root": 2
+        },
+        "endpoints200": {
+          "root": 2
+        },
+        "http200": 2,
+        "http403": 0,
+        "requests": 2,
+        "status": {
+          "200": 2
+        },
+        "unique_ips": 2,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 2
+        }
+      },
+      "period": "oct1-3",
+      "repository": "beyond_comorbidity_indices.rss"
+    },
+    {
+      "data": {
+        "bytes": 11,
+        "bytes200": 0,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {},
+        "commits200": 0,
+        "endpoints": {
+          "root": 1
+        },
+        "endpoints200": {},
+        "http200": 0,
+        "http403": 0,
+        "requests": 1,
+        "status": {
+          "404": 1
+        },
+        "unique_ips": 1,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 1
+        }
+      },
+      "period": "oct1-3",
+      "repository": "docker-compose.yml"
+    },
+    {
+      "data": {
+        "bytes": 4593766777,
+        "bytes200": 4588037301,
+        "code200_feed_http200": 43,
+        "code200_feed_ips200": 43,
+        "cohort200": {
+          "amazon-declared": 6014,
+          "linux-chrome-150-155": 11,
+          "meta-declared": 101,
+          "other": 7043,
+          "other-declared-crawler": 3821
+        },
+        "commits200": 399,
+        "endpoints": {
+          "-": 35,
+          "action": 34,
+          "activity": 14,
+          "archive": 23,
+          "blame/branch": 41,
+          "blame/commit": 2354,
+          "branches": 2,
+          "commit": 2782,
+          "commits/branch": 73,
+          "commits/commit": 3462,
+          "compare": 27,
+          "find/branch": 4,
+          "find/commit": 58,
+          "forks": 6,
+          "graph": 3,
+          "issues": 452,
+          "labels": 2,
+          "lastcommit": 3,
+          "milestones": 10,
+          "packages": 2,
+          "projects": 10,
+          "pulls": 125,
+          "raw/branch": 53,
+          "raw/commit": 1947,
+          "release": 1,
+          "releases": 5,
+          "releases.rss": 1,
+          "root": 9,
+          "rss/branch": 52,
+          "rss/commit": 1865,
+          "src": 3,
+          "src/branch": 215,
+          "src/commit": 5841,
+          "stars": 6,
+          "tags": 3,
+          "tags.rss": 1,
+          "tree-list/commit": 20,
+          "watchers": 2,
+          "wiki": 2
+        },
+        "endpoints200": {
+          "-": 35,
+          "activity": 6,
+          "blame/branch": 41,
+          "blame/commit": 2315,
+          "branches": 2,
+          "commit": 2487,
+          "commits/branch": 68,
+          "commits/commit": 3422,
+          "compare": 20,
+          "find/branch": 4,
+          "find/commit": 58,
+          "forks": 5,
+          "graph": 3,
+          "issues": 438,
+          "labels": 2,
+          "milestones": 10,
+          "packages": 2,
+          "projects": 10,
+          "pulls": 125,
+          "raw/branch": 53,
+          "raw/commit": 1934,
+          "releases": 5,
+          "releases.rss": 1,
+          "root": 9,
+          "rss/branch": 52,
+          "src/branch": 185,
+          "src/commit": 5665,
+          "stars": 6,
+          "tags": 3,
+          "tags.rss": 1,
+          "tree-list/commit": 19,
+          "watchers": 2,
+          "wiki": 2
+        },
+        "http200": 16990,
+        "http403": 0,
+        "requests": 19548,
+        "status": {
+          "200": 16990,
+          "301": 14,
+          "303": 6,
+          "404": 1881,
+          "405": 34,
+          "499": 585,
+          "502": 22,
+          "504": 16
+        },
+        "unique_ips": 4924,
+        "unique_paths": 14981,
+        "user_agent_groups": {
+          "amazon-declared": 7224,
+          "linux-chrome-150-155": 12,
+          "meta-declared": 107,
+          "other": 8095,
+          "other-declared-crawler": 4110
+        }
+      },
+      "period": "oct1-3",
+      "repository": "epiphany"
+    },
+    {
+      "data": {
+        "bytes": 56149,
+        "bytes200": 55987,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 4
+        },
+        "commits200": 0,
+        "endpoints": {
+          "root": 6
+        },
+        "endpoints200": {
+          "root": 4
+        },
+        "http200": 4,
+        "http403": 0,
+        "requests": 6,
+        "status": {
+          "200": 4,
+          "301": 1,
+          "499": 1
+        },
+        "unique_ips": 4,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 6
+        }
+      },
+      "period": "oct1-3",
+      "repository": "epiphany.rss"
+    },
+    {
+      "data": {
+        "bytes": 143583,
+        "bytes200": 143583,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 3
+        },
+        "commits200": 0,
+        "endpoints": {
+          "root": 3
+        },
+        "endpoints200": {
+          "root": 3
+        },
+        "http200": 3,
+        "http403": 0,
+        "requests": 3,
+        "status": {
+          "200": 3
+        },
+        "unique_ips": 3,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 3
+        }
+      },
+      "period": "oct1-3",
+      "repository": "levcs"
+    },
+    {
+      "data": {
+        "bytes": 2989693807,
+        "bytes200": 2933195287,
+        "code200_feed_http200": 223,
+        "code200_feed_ips200": 217,
+        "cohort200": {
+          "amazon-declared": 3770,
+          "linux-chrome-150-155": 46,
+          "other": 6141,
+          "other-declared-crawler": 22544
+        },
+        "commits200": 147,
+        "endpoints": {
+          "(src": 1,
+          "-": 2,
+          "action": 10,
+          "activity": 42,
+          "archive": 109,
+          "blame/branch": 157,
+          "blame/commit": 4922,
+          "branch": 10,
+          "branches": 5,
+          "commit": 1537,
+          "commits/branch": 225,
+          "commits/commit": 5516,
+          "compare": 71,
+          "find/branch": 2,
+          "find/commit": 116,
+          "forks": 8,
+          "git-receive-pack": 5,
+          "git-upload-pack": 31,
+          "graph": 2,
+          "info": 40,
+          "issues": 428,
+          "labels": 4,
+          "lastcommit": 2,
+          "media/branch": 2,
+          "media/commit": 73,
+          "milestones": 13,
+          "packages": 8,
+          "projects": 17,
+          "pulls": 207,
+          "raw/branch": 196,
+          "raw/commit": 4354,
+          "releases": 8,
+          "releases.rss": 1,
+          "root": 38,
+          "rss/branch": 159,
+          "rss/commit": 3432,
+          "src": 2,
+          "src/branch": 459,
+          "src/commit": 16406,
+          "stars": 6,
+          "tags": 3,
+          "tree-list/commit": 2,
+          "watchers": 6,
+          "wiki": 9
+        },
+        "endpoints200": {
+          "-": 2,
+          "activity": 28,
+          "archive": 1,
+          "blame/branch": 156,
+          "blame/commit": 4590,
+          "branches": 5,
+          "commit": 1206,
+          "commits/branch": 215,
+          "commits/commit": 4949,
+          "compare": 46,
+          "find/branch": 2,
+          "find/commit": 116,
+          "forks": 8,
+          "git-receive-pack": 5,
+          "git-upload-pack": 31,
+          "graph": 2,
+          "info": 22,
+          "issues": 421,
+          "labels": 4,
+          "media/branch": 2,
+          "media/commit": 18,
+          "milestones": 13,
+          "packages": 8,
+          "projects": 17,
+          "pulls": 207,
+          "raw/branch": 192,
+          "raw/commit": 3963,
+          "releases": 8,
+          "releases.rss": 1,
+          "root": 36,
+          "rss/branch": 158,
+          "src/branch": 412,
+          "src/commit": 15631,
+          "stars": 6,
+          "tags": 3,
+          "tree-list/commit": 2,
+          "watchers": 6,
+          "wiki": 9
+        },
+        "http200": 32501,
+        "http403": 0,
+        "requests": 38646,
+        "status": {
+          "200": 32501,
+          "206": 36,
+          "301": 39,
+          "303": 5,
+          "304": 8,
+          "401": 18,
+          "404": 5580,
+          "405": 10,
+          "499": 393,
+          "502": 27,
+          "504": 29
+        },
+        "unique_ips": 6117,
+        "unique_paths": 28264,
+        "user_agent_groups": {
+          "amazon-declared": 4520,
+          "linux-chrome-150-155": 46,
+          "other": 8217,
+          "other-declared-crawler": 25863
+        }
+      },
+      "period": "oct1-3",
+      "repository": "levineuwirth.org"
+    },
+    {
+      "data": {
+        "bytes": 281242,
+        "bytes200": 281242,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 5
+        },
+        "commits200": 0,
+        "endpoints": {
+          "root": 5
+        },
+        "endpoints200": {
+          "root": 5
+        },
+        "http200": 5,
+        "http403": 0,
+        "requests": 5,
+        "status": {
+          "200": 5
+        },
+        "unique_ips": 5,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 5
+        }
+      },
+      "period": "oct1-3",
+      "repository": "levineuwirth.org.rss"
+    },
+    {
+      "data": {
+        "bytes": 111173811,
+        "bytes200": 111012837,
+        "code200_feed_http200": 4,
+        "code200_feed_ips200": 4,
+        "cohort200": {
+          "amazon-declared": 8,
+          "linux-chrome-150-155": 1,
+          "other": 487,
+          "other-declared-crawler": 448
+        },
+        "commits200": 32,
+        "endpoints": {
+          "-": 2,
+          "activity": 23,
+          "archive": 9,
+          "blame/branch": 12,
+          "blame/commit": 40,
+          "branch": 1,
+          "branches": 3,
+          "commit": 148,
+          "commits/branch": 30,
+          "commits/commit": 24,
+          "compare": 11,
+          "find/branch": 2,
+          "forks": 6,
+          "graph": 1,
+          "issues": 247,
+          "labels": 8,
+          "milestones": 11,
+          "packages": 6,
+          "projects": 9,
+          "pulls": 76,
+          "raw/branch": 12,
+          "raw/commit": 64,
+          "releases": 5,
+          "releases.rss": 2,
+          "root": 17,
+          "rss/branch": 14,
+          "rss/commit": 13,
+          "src": 3,
+          "src/branch": 118,
+          "src/commit": 135,
+          "stars": 6,
+          "tags": 3,
+          "tags.rss": 1,
+          "watchers": 4,
+          "wiki": 3
+        },
+        "endpoints200": {
+          "-": 2,
+          "activity": 23,
+          "blame/branch": 12,
+          "blame/commit": 40,
+          "branches": 3,
+          "commit": 109,
+          "commits/branch": 24,
+          "commits/commit": 24,
+          "compare": 7,
+          "find/branch": 2,
+          "forks": 6,
+          "graph": 1,
+          "issues": 244,
+          "labels": 8,
+          "milestones": 11,
+          "packages": 6,
+          "projects": 9,
+          "pulls": 76,
+          "raw/branch": 12,
+          "raw/commit": 64,
+          "releases": 5,
+          "releases.rss": 2,
+          "root": 14,
+          "rss/branch": 14,
+          "src/branch": 74,
+          "src/commit": 135,
+          "stars": 6,
+          "tags": 3,
+          "tags.rss": 1,
+          "watchers": 4,
+          "wiki": 3
+        },
+        "http200": 944,
+        "http403": 0,
+        "requests": 1069,
+        "status": {
+          "200": 944,
+          "301": 29,
+          "303": 4,
+          "404": 15,
+          "499": 73,
+          "504": 4
+        },
+        "unique_ips": 472,
+        "unique_paths": 424,
+        "user_agent_groups": {
+          "amazon-declared": 8,
+          "linux-chrome-150-155": 1,
+          "other": 610,
+          "other-declared-crawler": 450
+        }
+      },
+      "period": "oct1-3",
+      "repository": "neuropose"
+    },
+    {
+      "data": {
+        "bytes": 61390,
+        "bytes200": 61228,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 3
+        },
+        "commits200": 0,
+        "endpoints": {
+          "root": 5
+        },
+        "endpoints200": {
+          "root": 3
+        },
+        "http200": 3,
+        "http403": 0,
+        "requests": 5,
+        "status": {
+          "200": 3,
+          "301": 1,
+          "499": 1
+        },
+        "unique_ips": 3,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 5
+        }
+      },
+      "period": "oct1-3",
+      "repository": "neuropose.rss"
+    },
+    {
+      "data": {
+        "bytes": 125714359,
+        "bytes200": 124618350,
+        "code200_feed_http200": 21,
+        "code200_feed_ips200": 21,
+        "cohort200": {
+          "amazon-declared": 50,
+          "linux-chrome-150-155": 2,
+          "other": 527,
+          "other-declared-crawler": 573
+        },
+        "commits200": 5,
+        "endpoints": {
+          "-": 1,
+          "activity": 10,
+          "archive": 10,
+          "blame/branch": 58,
+          "blame/commit": 138,
+          "branch": 8,
+          "branches": 4,
+          "commit": 53,
+          "commits/branch": 61,
+          "commits/commit": 68,
+          "compare": 6,
+          "find/branch": 3,
+          "find/commit": 3,
+          "forks": 5,
+          "graph": 1,
+          "issues": 59,
+          "labels": 5,
+          "milestones": 6,
+          "packages": 4,
+          "projects": 12,
+          "pulls": 95,
+          "raw/branch": 56,
+          "raw/commit": 80,
+          "releases": 6,
+          "releases.rss": 1,
+          "root": 13,
+          "rss/branch": 46,
+          "rss/commit": 130,
+          "src": 1,
+          "src/branch": 250,
+          "src/commit": 158,
+          "stars": 6,
+          "tags": 3,
+          "tags.rss": 1,
+          "watchers": 5,
+          "wiki": 3
+        },
+        "endpoints200": {
+          "-": 1,
+          "activity": 9,
+          "blame/branch": 58,
+          "blame/commit": 136,
+          "branches": 4,
+          "commit": 36,
+          "commits/branch": 61,
+          "commits/commit": 68,
+          "compare": 6,
+          "find/branch": 3,
+          "find/commit": 3,
+          "forks": 5,
+          "graph": 1,
+          "issues": 58,
+          "labels": 5,
+          "milestones": 6,
+          "packages": 4,
+          "projects": 12,
+          "pulls": 93,
+          "raw/branch": 56,
+          "raw/commit": 78,
+          "releases": 5,
+          "releases.rss": 1,
+          "root": 10,
+          "rss/branch": 46,
+          "src/branch": 212,
+          "src/commit": 157,
+          "stars": 6,
+          "tags": 3,
+          "tags.rss": 1,
+          "watchers": 5,
+          "wiki": 3
+        },
+        "http200": 1152,
+        "http403": 0,
+        "requests": 1369,
+        "status": {
+          "200": 1152,
+          "301": 16,
+          "303": 1,
+          "404": 148,
+          "499": 52
+        },
+        "unique_ips": 763,
+        "unique_paths": 886,
+        "user_agent_groups": {
+          "amazon-declared": 50,
+          "linux-chrome-150-155": 4,
+          "other": 705,
+          "other-declared-crawler": 610
+        }
+      },
+      "period": "oct1-3",
+      "repository": "ozymandias"
+    },
+    {
+      "data": {
+        "bytes": 17891,
+        "bytes200": 17891,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 3
+        },
+        "commits200": 0,
+        "endpoints": {
+          "root": 5
+        },
+        "endpoints200": {
+          "root": 3
+        },
+        "http200": 3,
+        "http403": 0,
+        "requests": 5,
+        "status": {
+          "200": 3,
+          "499": 2
+        },
+        "unique_ips": 5,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 5
+        }
+      },
+      "period": "oct1-3",
+      "repository": "ozymandias.rss"
+    },
+    {
+      "data": {
+        "bytes": 11,
+        "bytes200": 0,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {},
+        "commits200": 0,
+        "endpoints": {
+          "root": 1
+        },
+        "endpoints200": {},
+        "http200": 0,
+        "http403": 0,
+        "requests": 1,
+        "status": {
+          "404": 1
+        },
+        "unique_ips": 1,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 1
+        }
+      },
+      "period": "oct1-3",
+      "repository": "phpinfo"
+    },
+    {
+      "data": {
+        "bytes": 11,
+        "bytes200": 0,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {},
+        "commits200": 0,
+        "endpoints": {
+          "root": 1
+        },
+        "endpoints200": {},
+        "http200": 0,
+        "http403": 0,
+        "requests": 1,
+        "status": {
+          "404": 1
+        },
+        "unique_ips": 1,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 1
+        }
+      },
+      "period": "oct1-3",
+      "repository": "phpinfo.php"
+    },
+    {
+      "data": {
+        "bytes": 95756057296,
+        "bytes200": 95634668764,
+        "code200_feed_http200": 304,
+        "code200_feed_ips200": 297,
+        "cohort200": {
+          "amazon-declared": 13554,
+          "linux-chrome-150-155": 65,
+          "meta-declared": 137140,
+          "other": 74561,
+          "other-declared-crawler": 84005
+        },
+        "commits200": 1685,
+        "endpoints": {
+          "-": 13009,
+          "action": 34,
+          "activity": 28,
+          "archive": 1534,
+          "blame/branch": 842,
+          "blame/commit": 35815,
+          "blame/tag": 15,
+          "branch": 95,
+          "branches": 5,
+          "commit": 29768,
+          "commits/branch": 1300,
+          "commits/commit": 65141,
+          "commits/tag": 60,
+          "compare": 192,
+          "find/branch": 18,
+          "find/commit": 923,
+          "find/tag": 4,
+          "forks": 8,
+          "graph": 16,
+          "issues": 1929,
+          "labels": 6,
+          "lastcommit": 12,
+          "milestones": 22,
+          "packages": 5,
+          "projects": 11,
+          "pulls": 774,
+          "raw/branch": 759,
+          "raw/commit": 42337,
+          "raw/tag": 11,
+          "releases": 6,
+          "releases.rss": 3,
+          "releases/tag": 10,
+          "root": 12,
+          "rss/branch": 694,
+          "rss/commit": 33757,
+          "rss/tag": 2,
+          "src": 19,
+          "src/branch": 3168,
+          "src/commit": 130964,
+          "src/tag": 495,
+          "stars": 6,
+          "tags": 4,
+          "tags.rss": 3,
+          "tree-list/commit": 41,
+          "watchers": 3,
+          "wiki": 6
+        },
+        "endpoints200": {
+          "-": 13009,
+          "activity": 14,
+          "archive": 1,
+          "blame/branch": 682,
+          "blame/commit": 34426,
+          "blame/tag": 11,
+          "branches": 2,
+          "commit": 22388,
+          "commits/branch": 1124,
+          "commits/commit": 63314,
+          "commits/tag": 31,
+          "compare": 106,
+          "find/branch": 18,
+          "find/commit": 921,
+          "find/tag": 4,
+          "forks": 8,
+          "graph": 3,
+          "issues": 759,
+          "labels": 6,
+          "lastcommit": 11,
+          "milestones": 21,
+          "packages": 5,
+          "projects": 11,
+          "pulls": 769,
+          "raw/branch": 725,
+          "raw/commit": 42182,
+          "raw/tag": 7,
+          "releases": 6,
+          "releases.rss": 3,
+          "releases/tag": 10,
+          "root": 11,
+          "rss/branch": 658,
+          "src/branch": 2583,
+          "src/commit": 125250,
+          "src/tag": 184,
+          "stars": 6,
+          "tags": 3,
+          "tags.rss": 3,
+          "tree-list/commit": 41,
+          "watchers": 3,
+          "wiki": 6
+        },
+        "http200": 309325,
+        "http403": 0,
+        "requests": 363866,
+        "status": {
+          "200": 309325,
+          "206": 1,
+          "301": 27,
+          "303": 21,
+          "404": 35255,
+          "405": 34,
+          "499": 18644,
+          "502": 201,
+          "504": 358
+        },
+        "unique_ips": 69930,
+        "unique_paths": 266198,
+        "user_agent_groups": {
+          "amazon-declared": 16312,
+          "linux-chrome-150-155": 71,
+          "meta-declared": 158031,
+          "other": 97109,
+          "other-declared-crawler": 92343
+        }
+      },
+      "period": "oct1-3",
+      "repository": "pmacs"
+    },
+    {
+      "data": {
+        "bytes": 163615,
+        "bytes200": 163453,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 5,
+          "other-declared-crawler": 2
+        },
+        "commits200": 0,
+        "endpoints": {
+          "root": 9
+        },
+        "endpoints200": {
+          "root": 7
+        },
+        "http200": 7,
+        "http403": 0,
+        "requests": 9,
+        "status": {
+          "200": 7,
+          "301": 1,
+          "499": 1
+        },
+        "unique_ips": 6,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 7,
+          "other-declared-crawler": 2
+        }
+      },
+      "period": "oct1-3",
+      "repository": "pmacs.rss"
+    },
+    {
+      "data": {
+        "bytes": 11,
+        "bytes200": 0,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {},
+        "commits200": 0,
+        "endpoints": {
+          "root": 1
+        },
+        "endpoints200": {},
+        "http200": 0,
+        "http403": 0,
+        "requests": 1,
+        "status": {
+          "404": 1
+        },
+        "unique_ips": 1,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 1
+        }
+      },
+      "period": "oct1-3",
+      "repository": "sendgrid.env"
+    },
+    {
+      "data": {
+        "bytes": 29442774,
+        "bytes200": 29411434,
+        "code200_feed_http200": 5,
+        "code200_feed_ips200": 5,
+        "cohort200": {
+          "amazon-declared": 7,
+          "linux-chrome-150-155": 1,
+          "other": 125,
+          "other-declared-crawler": 210
+        },
+        "commits200": 2,
+        "endpoints": {
+          "-": 1,
+          "activity": 8,
+          "blame/branch": 6,
+          "blame/commit": 6,
+          "branches": 3,
+          "commit": 16,
+          "commits/branch": 6,
+          "commits/commit": 7,
+          "compare": 3,
+          "find/branch": 1,
+          "forks": 5,
+          "issues": 82,
+          "labels": 1,
+          "milestones": 9,
+          "packages": 5,
+          "projects": 4,
+          "pulls": 89,
+          "raw/branch": 2,
+          "raw/commit": 9,
+          "releases": 4,
+          "releases.rss": 2,
+          "root": 10,
+          "rss/branch": 7,
+          "rss/commit": 6,
+          "src/branch": 44,
+          "src/commit": 20,
+          "stars": 2,
+          "tags": 2,
+          "watchers": 3,
+          "wiki": 3
+        },
+        "endpoints200": {
+          "-": 1,
+          "activity": 8,
+          "blame/branch": 6,
+          "blame/commit": 6,
+          "branches": 3,
+          "commit": 12,
+          "commits/branch": 6,
+          "commits/commit": 7,
+          "compare": 3,
+          "find/branch": 1,
+          "forks": 5,
+          "issues": 81,
+          "labels": 1,
+          "milestones": 9,
+          "packages": 5,
+          "projects": 4,
+          "pulls": 89,
+          "raw/branch": 2,
+          "raw/commit": 9,
+          "releases": 4,
+          "releases.rss": 2,
+          "root": 8,
+          "rss/branch": 7,
+          "src/branch": 34,
+          "src/commit": 20,
+          "stars": 2,
+          "tags": 2,
+          "watchers": 3,
+          "wiki": 3
+        },
+        "http200": 343,
+        "http403": 0,
+        "requests": 366,
+        "status": {
+          "200": 343,
+          "301": 7,
+          "303": 1,
+          "404": 6,
+          "499": 9
+        },
+        "unique_ips": 178,
+        "unique_paths": 108,
+        "user_agent_groups": {
+          "amazon-declared": 7,
+          "linux-chrome-150-155": 1,
+          "other": 145,
+          "other-declared-crawler": 213
+        }
+      },
+      "period": "oct1-3",
+      "repository": "specification-dilemma"
+    },
+    {
+      "data": {
+        "bytes": 6312,
+        "bytes200": 6312,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 2
+        },
+        "commits200": 0,
+        "endpoints": {
+          "root": 2
+        },
+        "endpoints200": {
+          "root": 2
+        },
+        "http200": 2,
+        "http403": 0,
+        "requests": 2,
+        "status": {
+          "200": 2
+        },
+        "unique_ips": 2,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 2
+        }
+      },
+      "period": "oct1-3",
+      "repository": "specification-dilemma.rss"
+    },
+    {
+      "data": {
+        "bytes": 1141938471,
+        "bytes200": 1141451910,
+        "code200_feed_http200": 4,
+        "code200_feed_ips200": 4,
+        "cohort200": {
+          "amazon-declared": 11,
+          "other": 871,
+          "other-declared-crawler": 512
+        },
+        "commits200": 15,
+        "endpoints": {
+          "-": 1,
+          "activity": 15,
+          "archive": 17,
+          "blame/branch": 35,
+          "blame/commit": 86,
+          "branch": 10,
+          "branches": 4,
+          "commit": 247,
+          "commits/branch": 73,
+          "commits/commit": 80,
+          "compare": 8,
+          "find/branch": 5,
+          "find/commit": 9,
+          "forks": 8,
+          "git-upload-pack": 1,
+          "graph": 1,
+          "info": 3,
+          "issues": 91,
+          "labels": 4,
+          "milestones": 10,
+          "packages": 6,
+          "projects": 16,
+          "pulls": 177,
+          "raw/branch": 45,
+          "raw/commit": 67,
+          "releases": 4,
+          "releases.rss": 2,
+          "root": 11,
+          "rss/branch": 42,
+          "rss/commit": 46,
+          "src": 5,
+          "src/branch": 148,
+          "src/commit": 251,
+          "stars": 8,
+          "tags": 5,
+          "tags.rss": 1,
+          "watchers": 5,
+          "wiki": 5
+        },
+        "endpoints200": {
+          "-": 1,
+          "activity": 15,
+          "blame/branch": 34,
+          "blame/commit": 83,
+          "branches": 4,
+          "commit": 205,
+          "commits/branch": 69,
+          "commits/commit": 80,
+          "compare": 8,
+          "find/branch": 5,
+          "find/commit": 9,
+          "forks": 8,
+          "git-upload-pack": 1,
+          "graph": 1,
+          "info": 1,
+          "issues": 90,
+          "labels": 4,
+          "milestones": 10,
+          "packages": 6,
+          "projects": 16,
+          "pulls": 177,
+          "raw/branch": 43,
+          "raw/commit": 66,
+          "releases": 4,
+          "releases.rss": 2,
+          "root": 11,
+          "rss/branch": 42,
+          "src/branch": 136,
+          "src/commit": 239,
+          "stars": 8,
+          "tags": 5,
+          "tags.rss": 1,
+          "watchers": 5,
+          "wiki": 5
+        },
+        "http200": 1394,
+        "http403": 0,
+        "requests": 1552,
+        "status": {
+          "200": 1394,
+          "301": 4,
+          "303": 6,
+          "401": 2,
+          "404": 73,
+          "499": 73
+        },
+        "unique_ips": 990,
+        "unique_paths": 714,
+        "user_agent_groups": {
+          "amazon-declared": 12,
+          "other": 999,
+          "other-declared-crawler": 541
+        }
+      },
+      "period": "oct1-3",
+      "repository": "where-simd-helps"
+    },
+    {
+      "data": {
+        "bytes": 41405,
+        "bytes200": 41405,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 5
+        },
+        "commits200": 0,
+        "endpoints": {
+          "root": 5
+        },
+        "endpoints200": {
+          "root": 5
+        },
+        "http200": 5,
+        "http403": 0,
+        "requests": 5,
+        "status": {
+          "200": 5
+        },
+        "unique_ips": 5,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 5
+        }
+      },
+      "period": "oct1-3",
+      "repository": "where-simd-helps.rss"
+    },
+    {
+      "data": {
+        "bytes": 15219343,
+        "bytes200": 14112728,
+        "code200_feed_http200": 20,
+        "code200_feed_ips200": 15,
+        "cohort200": {
+          "linux-chrome-150-155": 68,
+          "other": 28
+        },
+        "commits200": 13,
+        "endpoints": {
+          "archive": 2,
+          "blame/commit": 40,
+          "commit": 9,
+          "commits/branch": 1,
+          "commits/commit": 43,
+          "compare": 2,
+          "issues": 12,
+          "packages": 1,
+          "pulls": 13,
+          "raw/commit": 24,
+          "rss/commit": 11,
+          "src/commit": 143
+        },
+        "endpoints200": {
+          "blame/commit": 11,
+          "commit": 2,
+          "commits/commit": 18,
+          "compare": 1,
+          "raw/commit": 5,
+          "src/commit": 59
+        },
+        "http200": 96,
+        "http403": 204,
+        "requests": 301,
+        "status": {
+          "200": 96,
+          "304": 1,
+          "403": 204
+        },
+        "unique_ips": 183,
+        "unique_paths": 111,
+        "user_agent_groups": {
+          "linux-chrome-150-155": 133,
+          "other": 143,
+          "other-declared-crawler": 25
+        }
+      },
+      "period": "oct13",
+      "repository": "LeVCS"
+    },
+    {
+      "data": {
+        "bytes": 156531,
+        "bytes200": 0,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {},
+        "commits200": 0,
+        "endpoints": {
+          "issues": 27,
+          "labels": 2,
+          "milestones": 4,
+          "packages": 1,
+          "projects": 2
+        },
+        "endpoints200": {},
+        "http200": 0,
+        "http403": 36,
+        "requests": 36,
+        "status": {
+          "403": 36
+        },
+        "unique_ips": 31,
+        "unique_paths": 5,
+        "user_agent_groups": {
+          "other": 8,
+          "other-declared-crawler": 28
+        }
+      },
+      "period": "oct13",
+      "repository": "beyond_comorbidity_indices"
+    },
+    {
+      "data": {
+        "bytes": 68278918,
+        "bytes200": 60239739,
+        "code200_feed_http200": 78,
+        "code200_feed_ips200": 61,
+        "cohort200": {
+          "linux-chrome-150-155": 320
+        },
+        "commits200": 70,
+        "endpoints": {
+          "blame/commit": 396,
+          "commit": 273,
+          "commits/branch": 1,
+          "commits/commit": 519,
+          "find/commit": 2,
+          "issues": 15,
+          "pulls": 16,
+          "raw/commit": 198,
+          "root": 2,
+          "rss/commit": 30,
+          "src/branch": 5,
+          "src/commit": 535
+        },
+        "endpoints200": {
+          "blame/commit": 4,
+          "commit": 112,
+          "commits/commit": 29,
+          "find/commit": 1,
+          "raw/commit": 8,
+          "src/commit": 166
+        },
+        "http200": 320,
+        "http403": 1670,
+        "requests": 1992,
+        "status": {
+          "200": 320,
+          "403": 1670,
+          "499": 2
+        },
+        "unique_ips": 1580,
+        "unique_paths": 1247,
+        "user_agent_groups": {
+          "linux-chrome-150-155": 632,
+          "other": 1326,
+          "other-declared-crawler": 34
+        }
+      },
+      "period": "oct13",
+      "repository": "epiphany"
+    },
+    {
+      "data": {
+        "bytes": 1066535245,
+        "bytes200": 1014081548,
+        "code200_feed_http200": 2526,
+        "code200_feed_ips200": 1748,
+        "cohort200": {
+          "linux-chrome-150-155": 10412,
+          "other": 15
+        },
+        "commits200": 115,
+        "endpoints": {
+          "activity": 2,
+          "blame/commit": 4093,
+          "commit": 233,
+          "commits/branch": 1,
+          "commits/commit": 4430,
+          "find/commit": 8,
+          "git-receive-pack": 2,
+          "info": 6,
+          "issues": 40,
+          "media/commit": 11,
+          "milestones": 4,
+          "pulls": 39,
+          "raw/branch": 15,
+          "raw/commit": 3802,
+          "root": 6,
+          "rss/commit": 59,
+          "src/branch": 20,
+          "src/commit": 10160,
+          "stars": 1,
+          "tags": 2,
+          "tree-list/commit": 2
+        },
+        "endpoints200": {
+          "blame/commit": 2053,
+          "commit": 89,
+          "commits/commit": 2200,
+          "find/commit": 4,
+          "git-receive-pack": 2,
+          "info": 2,
+          "issues": 3,
+          "milestones": 1,
+          "pulls": 2,
+          "raw/commit": 1419,
+          "src/branch": 5,
+          "src/commit": 4645,
+          "tree-list/commit": 2
+        },
+        "http200": 10427,
+        "http403": 12029,
+        "requests": 22936,
+        "status": {
+          "200": 10427,
+          "206": 2,
+          "304": 375,
+          "401": 4,
+          "403": 12029,
+          "404": 44,
+          "499": 55
+        },
+        "unique_ips": 8534,
+        "unique_paths": 8891,
+        "user_agent_groups": {
+          "linux-chrome-150-155": 21656,
+          "other": 1188,
+          "other-declared-crawler": 92
+        }
+      },
+      "period": "oct13",
+      "repository": "levineuwirth.org"
+    },
+    {
+      "data": {
+        "bytes": 801738,
+        "bytes200": 0,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {},
+        "commits200": 0,
+        "endpoints": {
+          "archive": 4,
+          "commit": 13,
+          "commits/branch": 2,
+          "commits/commit": 2,
+          "issues": 36,
+          "milestones": 6,
+          "pulls": 25,
+          "raw/commit": 34,
+          "releases": 1,
+          "rss/commit": 6,
+          "src/branch": 4,
+          "src/commit": 19,
+          "wiki": 1
+        },
+        "endpoints200": {},
+        "http200": 0,
+        "http403": 153,
+        "requests": 153,
+        "status": {
+          "403": 153
+        },
+        "unique_ips": 119,
+        "unique_paths": 35,
+        "user_agent_groups": {
+          "other": 88,
+          "other-declared-crawler": 65
+        }
+      },
+      "period": "oct13",
+      "repository": "neuropose"
+    },
+    {
+      "data": {
+        "bytes": 328427,
+        "bytes200": 0,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {},
+        "commits200": 0,
+        "endpoints": {
+          "activity": 1,
+          "branch": 1,
+          "issues": 30,
+          "pulls": 29,
+          "raw/commit": 4,
+          "root": 3,
+          "rss/commit": 4
+        },
+        "endpoints200": {},
+        "http200": 0,
+        "http403": 70,
+        "requests": 72,
+        "status": {
+          "403": 70,
+          "404": 2
+        },
+        "unique_ips": 43,
+        "unique_paths": 9,
+        "user_agent_groups": {
+          "other": 12,
+          "other-declared-crawler": 60
+        }
+      },
+      "period": "oct13",
+      "repository": "ozymandias"
+    },
+    {
+      "data": {
+        "bytes": 1325648678,
+        "bytes200": 1285769190,
+        "code200_feed_http200": 1164,
+        "code200_feed_ips200": 795,
+        "cohort200": {
+          "linux-chrome-150-155": 4692
+        },
+        "commits200": 238,
+        "endpoints": {
+          "blame/branch": 1,
+          "blame/commit": 755,
+          "commit": 985,
+          "commits/commit": 1041,
+          "compare": 4,
+          "find/commit": 78,
+          "issues": 31,
+          "pulls": 11,
+          "raw/branch": 102,
+          "raw/commit": 1674,
+          "raw/tag": 6,
+          "root": 2,
+          "src/branch": 122,
+          "src/commit": 7330,
+          "src/tag": 10,
+          "tags": 1,
+          "tree-list/commit": 30
+        },
+        "endpoints200": {
+          "blame/commit": 404,
+          "commit": 308,
+          "commits/commit": 527,
+          "find/commit": 39,
+          "raw/commit": 259,
+          "src/commit": 3125,
+          "tree-list/commit": 30
+        },
+        "http200": 4692,
+        "http403": 7373,
+        "requests": 12183,
+        "status": {
+          "200": 4692,
+          "206": 2,
+          "304": 76,
+          "403": 7373,
+          "404": 8,
+          "499": 32
+        },
+        "unique_ips": 6265,
+        "unique_paths": 4382,
+        "user_agent_groups": {
+          "linux-chrome-150-155": 9306,
+          "other": 2849,
+          "other-declared-crawler": 28
+        }
+      },
+      "period": "oct13",
+      "repository": "pmacs"
+    },
+    {
+      "data": {
+        "bytes": 34352,
+        "bytes200": 0,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {},
+        "commits200": 0,
+        "endpoints": {
+          "activity": 2,
+          "pulls": 1,
+          "root": 3,
+          "stars": 1
+        },
+        "endpoints200": {},
+        "http200": 0,
+        "http403": 7,
+        "requests": 7,
+        "status": {
+          "403": 7
+        },
+        "unique_ips": 7,
+        "unique_paths": 4,
+        "user_agent_groups": {
+          "other": 4,
+          "other-declared-crawler": 3
+        }
+      },
+      "period": "oct13",
+      "repository": "specification-dilemma"
+    },
+    {
+      "data": {
+        "bytes": 4216555,
+        "bytes200": 3760758,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 4
+        },
+        "commits200": 0,
+        "endpoints": {
+          "activity": 1,
+          "issues": 30,
+          "packages": 1,
+          "pulls": 25,
+          "raw/branch": 19,
+          "raw/commit": 12,
+          "root": 2,
+          "src/commit": 4
+        },
+        "endpoints200": {
+          "raw/branch": 4
+        },
+        "http200": 4,
+        "http403": 90,
+        "requests": 94,
+        "status": {
+          "200": 4,
+          "403": 90
+        },
+        "unique_ips": 63,
+        "unique_paths": 23,
+        "user_agent_groups": {
+          "other": 37,
+          "other-declared-crawler": 57
+        }
+      },
+      "period": "oct13",
+      "repository": "where-simd-helps"
+    },
+    {
+      "data": {
+        "bytes": 8640,
+        "bytes200": 0,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {},
+        "commits200": 0,
+        "endpoints": {
+          "packages": 2
+        },
+        "endpoints200": {},
+        "http200": 0,
+        "http403": 2,
+        "requests": 2,
+        "status": {
+          "403": 2
+        },
+        "unique_ips": 2,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 2
+        }
+      },
+      "period": "oct5-8",
+      "repository": "-"
+    },
+    {
+      "data": {
+        "bytes": 70694422,
+        "bytes200": 44038274,
+        "code200_feed_http200": 2,
+        "code200_feed_ips200": 1,
+        "cohort200": {
+          "linux-chrome-150-155": 6,
+          "other": 156,
+          "other-declared-crawler": 1
+        },
+        "commits200": 45,
+        "endpoints": {
+          "action": 2,
+          "archive": 110,
+          "blame/branch": 54,
+          "blame/commit": 538,
+          "branch": 2,
+          "commit": 505,
+          "commits/branch": 79,
+          "commits/commit": 851,
+          "compare": 58,
+          "find/commit": 31,
+          "issues": 26,
+          "packages": 3,
+          "pulls": 15,
+          "raw/branch": 66,
+          "raw/commit": 77,
+          "releases": 1,
+          "root": 10,
+          "rss/branch": 61,
+          "rss/commit": 336,
+          "src/branch": 24,
+          "src/commit": 2984,
+          "stars": 3,
+          "watchers": 1
+        },
+        "endpoints200": {
+          "blame/commit": 3,
+          "commit": 1,
+          "commits/commit": 2,
+          "compare": 1,
+          "issues": 1,
+          "raw/commit": 1,
+          "src/branch": 1,
+          "src/commit": 153
+        },
+        "http200": 163,
+        "http403": 5663,
+        "requests": 5837,
+        "status": {
+          "200": 163,
+          "403": 5663,
+          "404": 2,
+          "499": 5,
+          "500": 4
+        },
+        "unique_ips": 5558,
+        "unique_paths": 1770,
+        "user_agent_groups": {
+          "amazon-declared": 1,
+          "linux-chrome-150-155": 12,
+          "other": 5783,
+          "other-declared-crawler": 41
+        }
+      },
+      "period": "oct5-8",
+      "repository": "LeVCS"
+    },
+    {
+      "data": {
+        "bytes": 28356,
+        "bytes200": 28356,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 1
+        },
+        "commits200": 0,
+        "endpoints": {
+          "root": 1
+        },
+        "endpoints200": {
+          "root": 1
+        },
+        "http200": 1,
+        "http403": 0,
+        "requests": 1,
+        "status": {
+          "200": 1
+        },
+        "unique_ips": 1,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 1
+        }
+      },
+      "period": "oct5-8",
+      "repository": "LeVCS.rss"
+    },
+    {
+      "data": {
+        "bytes": 391537,
+        "bytes200": 0,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {},
+        "commits200": 0,
+        "endpoints": {
+          "action": 2,
+          "issues": 64,
+          "milestones": 11,
+          "projects": 2,
+          "root": 4,
+          "stars": 2
+        },
+        "endpoints200": {},
+        "http200": 0,
+        "http403": 85,
+        "requests": 85,
+        "status": {
+          "403": 85
+        },
+        "unique_ips": 73,
+        "unique_paths": 7,
+        "user_agent_groups": {
+          "amazon-declared": 2,
+          "other": 49,
+          "other-declared-crawler": 34
+        }
+      },
+      "period": "oct5-8",
+      "repository": "beyond_comorbidity_indices"
+    },
+    {
+      "data": {
+        "bytes": 62757772,
+        "bytes200": 2897245,
+        "code200_feed_http200": 1,
+        "code200_feed_ips200": 1,
+        "cohort200": {
+          "linux-chrome-150-155": 17
+        },
+        "commits200": 5,
+        "endpoints": {
+          "activity": 4,
+          "archive": 100,
+          "blame/branch": 15,
+          "blame/commit": 401,
+          "commit": 4402,
+          "commits/branch": 69,
+          "commits/commit": 961,
+          "compare": 138,
+          "find/commit": 115,
+          "graph": 13,
+          "issues": 20,
+          "milestones": 4,
+          "packages": 1,
+          "pulls": 7,
+          "raw/branch": 25,
+          "raw/commit": 1183,
+          "releases": 2,
+          "root": 9,
+          "rss/branch": 17,
+          "rss/commit": 70,
+          "src/branch": 130,
+          "src/commit": 4240,
+          "stars": 1,
+          "wiki": 1
+        },
+        "endpoints200": {
+          "blame/commit": 3,
+          "commit": 2,
+          "commits/commit": 3,
+          "raw/commit": 2,
+          "src/commit": 7
+        },
+        "http200": 17,
+        "http403": 11861,
+        "requests": 11928,
+        "status": {
+          "200": 17,
+          "304": 1,
+          "403": 11861,
+          "404": 2,
+          "499": 23,
+          "500": 24
+        },
+        "unique_ips": 11455,
+        "unique_paths": 3162,
+        "user_agent_groups": {
+          "linux-chrome-150-155": 39,
+          "other": 11870,
+          "other-declared-crawler": 19
+        }
+      },
+      "period": "oct5-8",
+      "repository": "epiphany"
+    },
+    {
+      "data": {
+        "bytes": 14192,
+        "bytes200": 14192,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 1
+        },
+        "commits200": 0,
+        "endpoints": {
+          "root": 1
+        },
+        "endpoints200": {
+          "root": 1
+        },
+        "http200": 1,
+        "http403": 0,
+        "requests": 1,
+        "status": {
+          "200": 1
+        },
+        "unique_ips": 1,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 1
+        }
+      },
+      "period": "oct5-8",
+      "repository": "epiphany.rss"
+    },
+    {
+      "data": {
+        "bytes": 20874,
+        "bytes200": 0,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {},
+        "commits200": 0,
+        "endpoints": {
+          "root": 4
+        },
+        "endpoints200": {},
+        "http200": 0,
+        "http403": 4,
+        "requests": 4,
+        "status": {
+          "403": 4
+        },
+        "unique_ips": 4,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 2,
+          "other-declared-crawler": 2
+        }
+      },
+      "period": "oct5-8",
+      "repository": "levcs"
+    },
+    {
+      "data": {
+        "bytes": 377700401,
+        "bytes200": 230668139,
+        "code200_feed_http200": 270,
+        "code200_feed_ips200": 188,
+        "cohort200": {
+          "linux-chrome-150-155": 1103,
+          "other": 40,
+          "other-declared-crawler": 8
+        },
+        "commits200": 35,
+        "endpoints": {
+          "activity": 3,
+          "archive": 47,
+          "blame/branch": 45,
+          "blame/commit": 2484,
+          "branch": 2,
+          "commit": 5171,
+          "commits/branch": 136,
+          "commits/commit": 3771,
+          "compare": 859,
+          "find/branch": 6,
+          "find/commit": 379,
+          "git-receive-pack": 8,
+          "git-upload-pack": 4,
+          "info": 32,
+          "issues": 91,
+          "labels": 3,
+          "media/commit": 28,
+          "milestones": 3,
+          "packages": 2,
+          "pulls": 345,
+          "raw/branch": 110,
+          "raw/commit": 2386,
+          "releases": 3,
+          "root": 39,
+          "rss/branch": 47,
+          "rss/commit": 390,
+          "src/branch": 239,
+          "src/commit": 15115,
+          "stars": 3,
+          "tags": 3,
+          "tags.rss": 1,
+          "wiki": 6
+        },
+        "endpoints200": {
+          "activity": 1,
+          "blame/branch": 4,
+          "blame/commit": 206,
+          "commit": 65,
+          "commits/branch": 4,
+          "commits/commit": 210,
+          "git-receive-pack": 8,
+          "git-upload-pack": 4,
+          "info": 12,
+          "pulls": 5,
+          "raw/branch": 4,
+          "raw/commit": 314,
+          "root": 6,
+          "src/branch": 3,
+          "src/commit": 305
+        },
+        "http200": 1151,
+        "http403": 30457,
+        "requests": 31761,
+        "status": {
+          "200": 1151,
+          "304": 14,
+          "401": 20,
+          "403": 30457,
+          "404": 45,
+          "499": 45,
+          "500": 28,
+          "502": 1
+        },
+        "unique_ips": 29210,
+        "unique_paths": 7301,
+        "user_agent_groups": {
+          "linux-chrome-150-155": 2006,
+          "other": 29603,
+          "other-declared-crawler": 152
+        }
+      },
+      "period": "oct5-8",
+      "repository": "levineuwirth.org"
+    },
+    {
+      "data": {
+        "bytes": 217890,
+        "bytes200": 217890,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 3
+        },
+        "commits200": 0,
+        "endpoints": {
+          "root": 3
+        },
+        "endpoints200": {
+          "root": 3
+        },
+        "http200": 3,
+        "http403": 0,
+        "requests": 3,
+        "status": {
+          "200": 3
+        },
+        "unique_ips": 3,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 3
+        }
+      },
+      "period": "oct5-8",
+      "repository": "levineuwirth.org.rss"
+    },
+    {
+      "data": {
+        "bytes": 60955097,
+        "bytes200": 55575481,
+        "code200_feed_http200": 92,
+        "code200_feed_ips200": 84,
+        "cohort200": {
+          "linux-chrome-150-155": 401,
+          "other": 7
+        },
+        "commits200": 32,
+        "endpoints": {
+          "action": 2,
+          "activity": 1,
+          "archive": 6,
+          "blame/branch": 12,
+          "blame/commit": 110,
+          "branch": 1,
+          "commit": 315,
+          "commits/branch": 17,
+          "commits/commit": 184,
+          "compare": 8,
+          "find/commit": 8,
+          "graph": 2,
+          "issues": 22,
+          "labels": 2,
+          "milestones": 5,
+          "packages": 2,
+          "projects": 20,
+          "pulls": 32,
+          "raw/branch": 26,
+          "raw/commit": 259,
+          "releases": 5,
+          "root": 19,
+          "rss/branch": 7,
+          "rss/commit": 63,
+          "src/branch": 14,
+          "src/commit": 283,
+          "stars": 5,
+          "tree-list/commit": 3,
+          "wiki": 4
+        },
+        "endpoints200": {
+          "blame/branch": 6,
+          "blame/commit": 51,
+          "commit": 94,
+          "commits/branch": 6,
+          "commits/commit": 65,
+          "find/commit": 3,
+          "projects": 10,
+          "pulls": 2,
+          "raw/branch": 4,
+          "raw/commit": 59,
+          "rss/branch": 3,
+          "src/branch": 3,
+          "src/commit": 98,
+          "tree-list/commit": 3,
+          "wiki": 1
+        },
+        "http200": 408,
+        "http403": 989,
+        "requests": 1437,
+        "status": {
+          "200": 408,
+          "304": 7,
+          "403": 989,
+          "404": 29,
+          "500": 4
+        },
+        "unique_ips": 964,
+        "unique_paths": 452,
+        "user_agent_groups": {
+          "amazon-declared": 2,
+          "linux-chrome-150-155": 830,
+          "other": 542,
+          "other-declared-crawler": 63
+        }
+      },
+      "period": "oct5-8",
+      "repository": "neuropose"
+    },
+    {
+      "data": {
+        "bytes": 7261534,
+        "bytes200": 2593239,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 52,
+          "other-declared-crawler": 1
+        },
+        "commits200": 5,
+        "endpoints": {
+          "activity": 7,
+          "archive": 3,
+          "blame/branch": 7,
+          "blame/commit": 58,
+          "branch": 4,
+          "commit": 42,
+          "commits/branch": 54,
+          "commits/commit": 107,
+          "compare": 1,
+          "git-upload-pack": 2,
+          "graph": 1,
+          "info": 1,
+          "issues": 256,
+          "labels": 3,
+          "milestones": 4,
+          "pulls": 175,
+          "raw/branch": 15,
+          "raw/commit": 54,
+          "releases": 5,
+          "root": 7,
+          "rss/commit": 81,
+          "src/branch": 16,
+          "src/commit": 112,
+          "stars": 3
+        },
+        "endpoints200": {
+          "blame/commit": 1,
+          "commits/branch": 7,
+          "commits/commit": 11,
+          "git-upload-pack": 2,
+          "info": 1,
+          "issues": 16,
+          "src/commit": 15
+        },
+        "http200": 53,
+        "http403": 945,
+        "requests": 1018,
+        "status": {
+          "200": 53,
+          "403": 945,
+          "404": 17,
+          "499": 3
+        },
+        "unique_ips": 920,
+        "unique_paths": 321,
+        "user_agent_groups": {
+          "amazon-declared": 2,
+          "other": 958,
+          "other-declared-crawler": 58
+        }
+      },
+      "period": "oct5-8",
+      "repository": "ozymandias"
+    },
+    {
+      "data": {
+        "bytes": 6213,
+        "bytes200": 6213,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 1
+        },
+        "commits200": 0,
+        "endpoints": {
+          "root": 1
+        },
+        "endpoints200": {
+          "root": 1
+        },
+        "http200": 1,
+        "http403": 0,
+        "requests": 1,
+        "status": {
+          "200": 1
+        },
+        "unique_ips": 1,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 1
+        }
+      },
+      "period": "oct5-8",
+      "repository": "ozymandias.rss"
+    },
+    {
+      "data": {
+        "bytes": 1056236071,
+        "bytes200": 176312513,
+        "code200_feed_http200": 61,
+        "code200_feed_ips200": 54,
+        "cohort200": {
+          "linux-chrome-150-155": 267,
+          "other": 6,
+          "other-declared-crawler": 1
+        },
+        "commits200": 45,
+        "endpoints": {
+          "activity": 2,
+          "archive": 475,
+          "blame/branch": 1118,
+          "blame/commit": 16511,
+          "blame/tag": 511,
+          "commit": 27941,
+          "commits/branch": 3242,
+          "commits/commit": 54488,
+          "commits/tag": 699,
+          "compare": 823,
+          "find/branch": 23,
+          "find/commit": 668,
+          "find/tag": 3,
+          "graph": 1,
+          "issues": 1111,
+          "labels": 3,
+          "packages": 2,
+          "projects": 2,
+          "pulls": 7,
+          "raw/branch": 1862,
+          "raw/commit": 20730,
+          "raw/tag": 641,
+          "releases": 2,
+          "root": 19,
+          "rss/branch": 1044,
+          "rss/commit": 72,
+          "rss/tag": 5,
+          "src": 31,
+          "src/branch": 14848,
+          "src/commit": 35660,
+          "src/tag": 310,
+          "stars": 1,
+          "tags": 3,
+          "watchers": 1,
+          "wiki": 1
+        },
+        "endpoints200": {
+          "blame/branch": 2,
+          "blame/commit": 21,
+          "commit": 204,
+          "commits/commit": 14,
+          "raw/commit": 11,
+          "releases": 1,
+          "root": 2,
+          "rss/branch": 1,
+          "src/branch": 1,
+          "src/commit": 17
+        },
+        "http200": 274,
+        "http403": 181956,
+        "requests": 182860,
+        "status": {
+          "200": 274,
+          "303": 2,
+          "304": 4,
+          "403": 181956,
+          "404": 50,
+          "499": 403,
+          "500": 165,
+          "502": 6
+        },
+        "unique_ips": 144972,
+        "unique_paths": 37814,
+        "user_agent_groups": {
+          "linux-chrome-150-155": 511,
+          "meta-declared": 458,
+          "other": 181806,
+          "other-declared-crawler": 85
+        }
+      },
+      "period": "oct5-8",
+      "repository": "pmacs"
+    },
+    {
+      "data": {
+        "bytes": 20710,
+        "bytes200": 20710,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 1
+        },
+        "commits200": 0,
+        "endpoints": {
+          "root": 1
+        },
+        "endpoints200": {
+          "root": 1
+        },
+        "http200": 1,
+        "http403": 0,
+        "requests": 1,
+        "status": {
+          "200": 1
+        },
+        "unique_ips": 1,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 1
+        }
+      },
+      "period": "oct5-8",
+      "repository": "pmacs.rss"
+    },
+    {
+      "data": {
+        "bytes": 843990,
+        "bytes200": 59849,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other-declared-crawler": 1
+        },
+        "commits200": 0,
+        "endpoints": {
+          "action": 2,
+          "activity": 4,
+          "branch": 1,
+          "commit": 6,
+          "issues": 63,
+          "milestones": 2,
+          "packages": 2,
+          "pulls": 59,
+          "raw/commit": 6,
+          "releases": 1,
+          "root": 13,
+          "src/branch": 4,
+          "stars": 4,
+          "watchers": 1,
+          "wiki": 2
+        },
+        "endpoints200": {
+          "root": 1
+        },
+        "http200": 1,
+        "http403": 168,
+        "requests": 170,
+        "status": {
+          "200": 1,
+          "403": 168,
+          "404": 1
+        },
+        "unique_ips": 84,
+        "unique_paths": 20,
+        "user_agent_groups": {
+          "amazon-declared": 2,
+          "other": 39,
+          "other-declared-crawler": 129
+        }
+      },
+      "period": "oct5-8",
+      "repository": "specification-dilemma"
+    },
+    {
+      "data": {
+        "bytes": 111472375,
+        "bytes200": 102706736,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "linux-chrome-150-155": 2,
+          "other": 35,
+          "other-declared-crawler": 1
+        },
+        "commits200": 3,
+        "endpoints": {
+          "action": 1,
+          "activity": 3,
+          "archive": 3,
+          "blame/branch": 25,
+          "blame/commit": 189,
+          "branch": 1,
+          "branches": 1,
+          "commit": 416,
+          "commits/branch": 37,
+          "commits/commit": 330,
+          "compare": 12,
+          "find/branch": 9,
+          "find/commit": 19,
+          "issues": 70,
+          "milestones": 6,
+          "packages": 2,
+          "pulls": 33,
+          "raw/branch": 18,
+          "raw/commit": 216,
+          "releases": 2,
+          "root": 4,
+          "rss/branch": 2,
+          "rss/commit": 2,
+          "settings": 1,
+          "src/branch": 59,
+          "src/commit": 417,
+          "stars": 5,
+          "tags": 1,
+          "wiki": 2
+        },
+        "endpoints200": {
+          "blame/branch": 3,
+          "blame/commit": 4,
+          "commit": 1,
+          "commits/branch": 5,
+          "commits/commit": 7,
+          "issues": 9,
+          "raw/commit": 1,
+          "root": 1,
+          "src/commit": 7
+        },
+        "http200": 38,
+        "http403": 1837,
+        "requests": 1886,
+        "status": {
+          "200": 38,
+          "304": 1,
+          "403": 1837,
+          "404": 3,
+          "405": 1,
+          "499": 4,
+          "500": 2
+        },
+        "unique_ips": 1806,
+        "unique_paths": 491,
+        "user_agent_groups": {
+          "linux-chrome-150-155": 7,
+          "other": 1808,
+          "other-declared-crawler": 71
+        }
+      },
+      "period": "oct5-8",
+      "repository": "where-simd-helps"
+    },
+    {
+      "data": {
+        "bytes": 9087,
+        "bytes200": 9087,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 1
+        },
+        "commits200": 0,
+        "endpoints": {
+          "root": 1
+        },
+        "endpoints200": {
+          "root": 1
+        },
+        "http200": 1,
+        "http403": 0,
+        "requests": 1,
+        "status": {
+          "200": 1
+        },
+        "unique_ips": 1,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 1
+        }
+      },
+      "period": "oct5-8",
+      "repository": "where-simd-helps.rss"
+    },
+    {
+      "data": {
+        "bytes": 15849,
+        "bytes200": 0,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {},
+        "commits200": 0,
+        "endpoints": {
+          "packages": 2,
+          "projects": 1
+        },
+        "endpoints200": {},
+        "http200": 0,
+        "http403": 3,
+        "requests": 3,
+        "status": {
+          "403": 3
+        },
+        "unique_ips": 3,
+        "unique_paths": 2,
+        "user_agent_groups": {
+          "other": 2,
+          "other-declared-crawler": 1
+        }
+      },
+      "period": "oct9-13",
+      "repository": "-"
+    },
+    {
+      "data": {
+        "bytes": 123532599,
+        "bytes200": 116551670,
+        "code200_feed_http200": 116,
+        "code200_feed_ips200": 92,
+        "cohort200": {
+          "linux-chrome-150-155": 540,
+          "other": 174,
+          "other-declared-crawler": 4
+        },
+        "commits200": 49,
+        "endpoints": {
+          "activity": 1,
+          "archive": 6,
+          "blame/branch": 6,
+          "blame/commit": 145,
+          "branches": 1,
+          "commit": 168,
+          "commits/branch": 26,
+          "commits/commit": 188,
+          "compare": 15,
+          "find/commit": 2,
+          "git-upload-pack": 2,
+          "graph": 1,
+          "info": 1,
+          "issues": 90,
+          "labels": 1,
+          "packages": 4,
+          "projects": 2,
+          "pulls": 83,
+          "raw/branch": 11,
+          "raw/commit": 100,
+          "releases": 2,
+          "root": 14,
+          "rss/commit": 41,
+          "src/branch": 18,
+          "src/commit": 1241,
+          "stars": 6,
+          "tree-list/commit": 1,
+          "watchers": 2,
+          "wiki": 1
+        },
+        "endpoints200": {
+          "blame/commit": 40,
+          "commit": 70,
+          "commits/branch": 7,
+          "commits/commit": 79,
+          "compare": 3,
+          "find/commit": 1,
+          "git-upload-pack": 2,
+          "info": 1,
+          "pulls": 1,
+          "raw/commit": 25,
+          "src/commit": 485,
+          "stars": 3,
+          "tree-list/commit": 1
+        },
+        "http200": 718,
+        "http403": 1438,
+        "requests": 2179,
+        "status": {
+          "200": 718,
+          "301": 8,
+          "304": 9,
+          "403": 1438,
+          "404": 6
+        },
+        "unique_ips": 1197,
+        "unique_paths": 865,
+        "user_agent_groups": {
+          "linux-chrome-150-155": 1037,
+          "other": 969,
+          "other-declared-crawler": 173
+        }
+      },
+      "period": "oct9-13",
+      "repository": "LeVCS"
+    },
+    {
+      "data": {
+        "bytes": 492449,
+        "bytes200": 18317,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 2,
+          "other-declared-crawler": 1
+        },
+        "commits200": 0,
+        "endpoints": {
+          "git-upload-pack": 1,
+          "info": 1,
+          "issues": 78,
+          "labels": 4,
+          "milestones": 6,
+          "packages": 3,
+          "projects": 9,
+          "root": 2,
+          "stars": 6,
+          "wiki": 2
+        },
+        "endpoints200": {
+          "git-upload-pack": 1,
+          "info": 1,
+          "stars": 1
+        },
+        "http200": 3,
+        "http403": 109,
+        "requests": 112,
+        "status": {
+          "200": 3,
+          "403": 109
+        },
+        "unique_ips": 66,
+        "unique_paths": 10,
+        "user_agent_groups": {
+          "other": 27,
+          "other-declared-crawler": 85
+        }
+      },
+      "period": "oct9-13",
+      "repository": "beyond_comorbidity_indices"
+    },
+    {
+      "data": {
+        "bytes": 754116967,
+        "bytes200": 718879944,
+        "code200_feed_http200": 493,
+        "code200_feed_ips200": 331,
+        "cohort200": {
+          "linux-chrome-150-155": 2073,
+          "other": 4
+        },
+        "commits200": 163,
+        "endpoints": {
+          "activity": 1,
+          "archive": 12,
+          "blame/branch": 4,
+          "blame/commit": 1644,
+          "commit": 1339,
+          "commits/branch": 7,
+          "commits/commit": 2023,
+          "find/commit": 13,
+          "forks": 1,
+          "git-upload-pack": 2,
+          "info": 1,
+          "issues": 48,
+          "packages": 2,
+          "projects": 1,
+          "pulls": 43,
+          "raw/branch": 3,
+          "raw/commit": 1159,
+          "releases": 1,
+          "root": 9,
+          "rss/branch": 2,
+          "rss/commit": 94,
+          "src/branch": 41,
+          "src/commit": 2827,
+          "stars": 3,
+          "tree-list/commit": 5,
+          "watchers": 1,
+          "wiki": 1
+        },
+        "endpoints200": {
+          "blame/branch": 1,
+          "blame/commit": 212,
+          "commit": 499,
+          "commits/commit": 195,
+          "find/commit": 7,
+          "git-upload-pack": 2,
+          "info": 1,
+          "raw/branch": 1,
+          "raw/commit": 240,
+          "rss/branch": 1,
+          "src/branch": 2,
+          "src/commit": 911,
+          "tree-list/commit": 5
+        },
+        "http200": 2077,
+        "http403": 7187,
+        "requests": 9287,
+        "status": {
+          "200": 2077,
+          "304": 8,
+          "403": 7187,
+          "499": 15
+        },
+        "unique_ips": 6600,
+        "unique_paths": 5002,
+        "user_agent_groups": {
+          "linux-chrome-150-155": 3781,
+          "other": 5401,
+          "other-declared-crawler": 105
+        }
+      },
+      "period": "oct9-13",
+      "repository": "epiphany"
+    },
+    {
+      "data": {
+        "bytes": 88669,
+        "bytes200": 80107,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 1
+        },
+        "commits200": 0,
+        "endpoints": {
+          "root": 3
+        },
+        "endpoints200": {
+          "root": 1
+        },
+        "http200": 1,
+        "http403": 2,
+        "requests": 3,
+        "status": {
+          "200": 1,
+          "403": 2
+        },
+        "unique_ips": 2,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 2,
+          "other-declared-crawler": 1
+        }
+      },
+      "period": "oct9-13",
+      "repository": "levcs"
+    },
+    {
+      "data": {
+        "bytes": 3613992269,
+        "bytes200": 3459268120,
+        "code200_feed_http200": 7246,
+        "code200_feed_ips200": 4157,
+        "cohort200": {
+          "linux-chrome-150-155": 31118,
+          "other": 27,
+          "other-declared-crawler": 1
+        },
+        "commits200": 191,
+        "endpoints": {
+          "activity": 2,
+          "archive": 5,
+          "blame/branch": 160,
+          "blame/commit": 11873,
+          "branch": 14,
+          "branches": 1,
+          "commit": 1395,
+          "commits/branch": 147,
+          "commits/commit": 14064,
+          "find/commit": 43,
+          "forks": 1,
+          "git-receive-pack": 5,
+          "git-upload-pack": 2,
+          "graph": 1,
+          "info": 26,
+          "issues": 99,
+          "labels": 2,
+          "media/branch": 2,
+          "media/commit": 92,
+          "milestones": 7,
+          "packages": 4,
+          "pulls": 84,
+          "raw/branch": 244,
+          "raw/commit": 11181,
+          "releases": 2,
+          "root": 30,
+          "rss/branch": 9,
+          "rss/commit": 271,
+          "src": 2,
+          "src/branch": 238,
+          "src/commit": 27015,
+          "stars": 5,
+          "tags": 2,
+          "tree-list/commit": 15,
+          "wiki": 2
+        },
+        "endpoints200": {
+          "blame/branch": 78,
+          "blame/commit": 6180,
+          "commit": 611,
+          "commits/branch": 72,
+          "commits/commit": 7082,
+          "find/commit": 23,
+          "git-receive-pack": 5,
+          "git-upload-pack": 2,
+          "info": 6,
+          "issues": 3,
+          "milestones": 1,
+          "pulls": 2,
+          "raw/branch": 62,
+          "raw/commit": 4471,
+          "rss/branch": 2,
+          "src/branch": 94,
+          "src/commit": 12436,
+          "stars": 1,
+          "tree-list/commit": 15
+        },
+        "http200": 31146,
+        "http403": 34611,
+        "requests": 67045,
+        "status": {
+          "200": 31146,
+          "206": 4,
+          "303": 1,
+          "304": 897,
+          "401": 20,
+          "403": 34611,
+          "404": 161,
+          "499": 203,
+          "502": 2
+        },
+        "unique_ips": 22788,
+        "unique_paths": 26462,
+        "user_agent_groups": {
+          "linux-chrome-150-155": 61523,
+          "other": 5260,
+          "other-declared-crawler": 262
+        }
+      },
+      "period": "oct9-13",
+      "repository": "levineuwirth.org"
+    },
+    {
+      "data": {
+        "bytes": 237197,
+        "bytes200": 237197,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "other": 3
+        },
+        "commits200": 0,
+        "endpoints": {
+          "root": 3
+        },
+        "endpoints200": {
+          "root": 3
+        },
+        "http200": 3,
+        "http403": 0,
+        "requests": 3,
+        "status": {
+          "200": 3
+        },
+        "unique_ips": 2,
+        "unique_paths": 1,
+        "user_agent_groups": {
+          "other": 3
+        }
+      },
+      "period": "oct9-13",
+      "repository": "levineuwirth.org.rss"
+    },
+    {
+      "data": {
+        "bytes": 45770007,
+        "bytes200": 41383574,
+        "code200_feed_http200": 43,
+        "code200_feed_ips200": 38,
+        "cohort200": {
+          "linux-chrome-150-155": 215,
+          "other": 5
+        },
+        "commits200": 25,
+        "endpoints": {
+          "activity": 1,
+          "archive": 4,
+          "blame/commit": 82,
+          "commit": 140,
+          "commits/branch": 3,
+          "commits/commit": 73,
+          "compare": 27,
+          "find/branch": 1,
+          "git-upload-pack": 2,
+          "info": 1,
+          "issues": 95,
+          "milestones": 10,
+          "packages": 5,
+          "projects": 10,
+          "pulls": 106,
+          "raw/branch": 8,
+          "raw/commit": 273,
+          "releases": 8,
+          "root": 13,
+          "rss/branch": 1,
+          "rss/commit": 45,
+          "src/branch": 15,
+          "src/commit": 130,
+          "stars": 2,
+          "tags": 1,
+          "wiki": 3
+        },
+        "endpoints200": {
+          "blame/commit": 44,
+          "commit": 55,
+          "commits/commit": 34,
+          "compare": 11,
+          "git-upload-pack": 2,
+          "info": 1,
+          "projects": 5,
+          "raw/commit": 25,
+          "root": 1,
+          "src/commit": 42
+        },
+        "http200": 220,
+        "http403": 817,
+        "requests": 1059,
+        "status": {
+          "200": 220,
+          "301": 3,
+          "304": 1,
+          "403": 817,
+          "404": 18
+        },
+        "unique_ips": 677,
+        "unique_paths": 278,
+        "user_agent_groups": {
+          "amazon-declared": 1,
+          "linux-chrome-150-155": 453,
+          "other": 415,
+          "other-declared-crawler": 190
+        }
+      },
+      "period": "oct9-13",
+      "repository": "neuropose"
+    },
+    {
+      "data": {
+        "bytes": 10490219,
+        "bytes200": 7651615,
+        "code200_feed_http200": 23,
+        "code200_feed_ips200": 19,
+        "cohort200": {
+          "linux-chrome-150-155": 99,
+          "other": 18,
+          "other-declared-crawler": 2
+        },
+        "commits200": 3,
+        "endpoints": {
+          "activity": 5,
+          "blame/branch": 20,
+          "blame/commit": 31,
+          "branch": 2,
+          "branches": 1,
+          "commit": 30,
+          "commits/branch": 7,
+          "commits/commit": 37,
+          "compare": 1,
+          "find/branch": 1,
+          "find/commit": 3,
+          "forks": 2,
+          "git-upload-pack": 2,
+          "info": 1,
+          "issues": 99,
+          "labels": 6,
+          "packages": 1,
+          "projects": 1,
+          "pulls": 78,
+          "raw/branch": 69,
+          "raw/commit": 111,
+          "releases": 1,
+          "root": 15,
+          "rss/branch": 2,
+          "rss/commit": 12,
+          "src": 2,
+          "src/branch": 66,
+          "src/commit": 83,
+          "stars": 2,
+          "tags": 1,
+          "tree-list/commit": 1,
+          "watchers": 1,
+          "wiki": 7
+        },
+        "endpoints200": {
+          "blame/branch": 1,
+          "blame/commit": 15,
+          "commit": 6,
+          "commits/branch": 1,
+          "commits/commit": 20,
+          "find/commit": 2,
+          "git-upload-pack": 2,
+          "info": 1,
+          "issues": 2,
+          "raw/branch": 11,
+          "raw/commit": 12,
+          "rss/branch": 1,
+          "src/commit": 41,
+          "tree-list/commit": 1,
+          "wiki": 3
+        },
+        "http200": 119,
+        "http403": 572,
+        "requests": 701,
+        "status": {
+          "200": 119,
+          "303": 1,
+          "304": 2,
+          "403": 572,
+          "404": 7
+        },
+        "unique_ips": 449,
+        "unique_paths": 276,
+        "user_agent_groups": {
+          "amazon-declared": 2,
+          "linux-chrome-150-155": 192,
+          "other": 340,
+          "other-declared-crawler": 167
+        }
+      },
+      "period": "oct9-13",
+      "repository": "ozymandias"
+    },
+    {
+      "data": {
+        "bytes": 4439761656,
+        "bytes200": 4304642574,
+        "code200_feed_http200": 2660,
+        "code200_feed_ips200": 1782,
+        "cohort200": {
+          "linux-chrome-150-155": 11276,
+          "other": 3,
+          "other-declared-crawler": 2
+        },
+        "commits200": 625,
+        "endpoints": {
+          "archive": 10,
+          "blame/branch": 2,
+          "blame/commit": 1914,
+          "branch": 2,
+          "branches": 2,
+          "commit": 3625,
+          "commits/branch": 13,
+          "commits/commit": 2317,
+          "compare": 17,
+          "find/branch": 1,
+          "find/commit": 130,
+          "forks": 1,
+          "git-upload-pack": 2,
+          "graph": 1,
+          "info": 1,
+          "issues": 129,
+          "labels": 1,
+          "milestones": 1,
+          "projects": 1,
+          "pulls": 46,
+          "raw/branch": 400,
+          "raw/commit": 6166,
+          "raw/tag": 46,
+          "releases": 1,
+          "releases/tag": 2,
+          "root": 18,
+          "rss/branch": 1,
+          "rss/commit": 92,
+          "src": 3,
+          "src/branch": 530,
+          "src/commit": 18799,
+          "src/tag": 67,
+          "stars": 4,
+          "tags": 2,
+          "tree-list/commit": 46
+        },
+        "endpoints200": {
+          "blame/commit": 1072,
+          "commit": 1134,
+          "commits/commit": 1198,
+          "find/commit": 60,
+          "git-upload-pack": 2,
+          "info": 1,
+          "raw/commit": 663,
+          "root": 1,
+          "src/commit": 7103,
+          "stars": 1,
+          "tree-list/commit": 46
+        },
+        "http200": 11281,
+        "http403": 22788,
+        "requests": 34393,
+        "status": {
+          "200": 11281,
+          "206": 2,
+          "304": 162,
+          "403": 22788,
+          "404": 93,
+          "499": 67
+        },
+        "unique_ips": 20320,
+        "unique_paths": 11825,
+        "user_agent_groups": {
+          "amazon-declared": 1,
+          "linux-chrome-150-155": 21532,
+          "other": 12746,
+          "other-declared-crawler": 114
+        }
+      },
+      "period": "oct9-13",
+      "repository": "pmacs"
+    },
+    {
+      "data": {
+        "bytes": 862607,
+        "bytes200": 500667,
+        "code200_feed_http200": 1,
+        "code200_feed_ips200": 1,
+        "cohort200": {
+          "linux-chrome-150-155": 5,
+          "other": 3
+        },
+        "commits200": 1,
+        "endpoints": {
+          "activity": 3,
+          "blame/branch": 2,
+          "branches": 1,
+          "commits/commit": 3,
+          "compare": 1,
+          "forks": 3,
+          "git-upload-pack": 2,
+          "graph": 1,
+          "info": 1,
+          "issues": 12,
+          "milestones": 7,
+          "packages": 3,
+          "projects": 1,
+          "pulls": 13,
+          "raw/branch": 3,
+          "raw/commit": 1,
+          "releases": 5,
+          "root": 13,
+          "src/branch": 5,
+          "src/commit": 2,
+          "stars": 4,
+          "tags": 1,
+          "watchers": 2,
+          "wiki": 1
+        },
+        "endpoints200": {
+          "commits/commit": 1,
+          "forks": 1,
+          "git-upload-pack": 2,
+          "info": 1,
+          "releases": 1,
+          "stars": 1,
+          "watchers": 1
+        },
+        "http200": 8,
+        "http403": 82,
+        "requests": 90,
+        "status": {
+          "200": 8,
+          "403": 82
+        },
+        "unique_ips": 76,
+        "unique_paths": 32,
+        "user_agent_groups": {
+          "amazon-declared": 1,
+          "linux-chrome-150-155": 10,
+          "other": 51,
+          "other-declared-crawler": 28
+        }
+      },
+      "period": "oct9-13",
+      "repository": "specification-dilemma"
+    },
+    {
+      "data": {
+        "bytes": 14957786,
+        "bytes200": 13214695,
+        "code200_feed_http200": 0,
+        "code200_feed_ips200": 0,
+        "cohort200": {
+          "linux-chrome-150-155": 1,
+          "other": 15,
+          "other-declared-crawler": 4
+        },
+        "commits200": 1,
+        "endpoints": {
+          "activity": 6,
+          "archive": 2,
+          "blame/branch": 1,
+          "blame/commit": 2,
+          "branch": 6,
+          "commit": 17,
+          "commits/branch": 7,
+          "commits/commit": 5,
+          "git-upload-pack": 2,
+          "graph": 1,
+          "info": 1,
+          "issues": 81,
+          "milestones": 1,
+          "packages": 2,
+          "projects": 1,
+          "pulls": 73,
+          "raw/branch": 26,
+          "raw/commit": 39,
+          "releases": 4,
+          "root": 10,
+          "rss/branch": 43,
+          "rss/commit": 3,
+          "src/branch": 17,
+          "src/commit": 13,
+          "stars": 5,
+          "tags": 1,
+          "wiki": 1
+        },
+        "endpoints200": {
+          "blame/commit": 1,
+          "git-upload-pack": 2,
+          "info": 1,
+          "raw/branch": 4,
+          "root": 1,
+          "rss/branch": 8,
+          "stars": 3
+        },
+        "http200": 20,
+        "http403": 339,
+        "requests": 370,
+        "status": {
+          "200": 20,
+          "301": 4,
+          "403": 339,
+          "404": 7
+        },
+        "unique_ips": 232,
+        "unique_paths": 116,
+        "user_agent_groups": {
+          "amazon-declared": 3,
+          "linux-chrome-150-155": 8,
+          "other": 190,
+          "other-declared-crawler": 169
+        }
+      },
+      "period": "oct9-13",
+      "repository": "where-simd-helps"
+    }
+  ],
+  "scope": "HTTP requests whose path begins /neuwirth/; no unique-visitor estimate"
+}

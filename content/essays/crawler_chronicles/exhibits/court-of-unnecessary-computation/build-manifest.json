@@ -1,0 +1,18 @@
+{
+  "source_sha256": "5f2fee035083f426387496f34c1c9ab572564d483fb7d9398464fab1fb7d7ff9",
+  "pdf_sha256": "7e4614cefefd0c8f35847f3345e8d2eac7b74ea1a2955baa296730243f94d2f9",
+  "seal": {
+    "seal.tex": "24ef2f1978dd2feeb059938a07365c0aeb1707ff0cd08aa78bfd026a7eac934f",
+    "court-seal.svg": "70ae262e718e1007de255c7d01c3fe97a189892ee913e1fc31c1ea18dd260366",
+    "court-seal.pdf": "48676768b0a0d4cd9a449c2ccfd2759cf29f7e0858c1ef5eaca969a89b049877"
+  },
+  "seal_rendering": "Vector outlines only; no fonts or raster images.",
+  "atlas_styles": {
+    "atlas.sty": "35c4c6bbe427806b37646722e9b32ef1be7bd99f3cd09e0ff21bb30604344887",
+    "atlas-grand.sty": "cc7135ca0ef086a3c6dd5e39fe0f6c9b0c78c3241c0fd7b7908330d0904b6ac7"
+  },
+  "build_logs": "/home/jeans/scratch/tmp/crawler-chancery-xlp28e_4",
+  "passes": 3,
+  "shell_escape": false,
+  "status": "Satirical petition prepared for dispatch; no dispatch recorded."
+}

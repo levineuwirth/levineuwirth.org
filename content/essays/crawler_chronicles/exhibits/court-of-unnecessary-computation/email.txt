@@ -1,0 +1,24 @@
+Dear EGIHosting team,
+
+WHEREAS the undersigned maintains one (1) small Git server at https://git.levineuwirth.org;
+
+WHEREAS certain computational visitors have demonstrated an interest in its earlier editions exceeding that ordinarily exhibited by the author himself;
+
+AND WHEREAS old programming mistakes were retained for version control, without any expectation that they would attract a distributed archaeological expedition;
+
+The undersigned respectfully petitions for a little proportion.
+
+The factual basis for contacting you is narrow. On 13 October 2026 UTC, our retained access-log aggregation recorded 1,385 successful repository responses to a Linux/Chrome 150-or-155 user-agent cohort from 803 distinct addresses within 23.230.0.0/16. The ARIN lookup retained on 14 October identified EGIHosting as that allocation's registrant.
+
+This identifies a network lead, not the customer's identity or purpose, and does not establish that EGIHosting commissioned the traffic. The wider server figures in the attachment are explicitly separate from these provider-associated observations.
+
+If feasible, would you forward this message to the relevant customer, with an invitation to consider whether it has perhaps acquired enough historical versions of my code, or could conduct its visits a little more gently? I am not requesting the customer's identity, account records, or any other identifying information, though if they wish to make themselves known, I will not decline.
+
+The Court of Unnecessary Computation, whose only recognized jurisdiction is the author's page margins, also requests compensation. No deadline is imposed. Silence will not be treated as an admission outright, but it will indubitably may fail to prevent a sequel.
+
+Thank you for reading an unusually elaborate way of saying: please consider passing this along. I appreciate that the person tending the abuse mailbox is unlikely to be the person dispatching the crawler.
+
+Respectfully, and with more stationery than the matter requires,
+Levi Neuwirth
+Keeper of the Premises | Disciple of the Universe
+https://levineuwirth.org
