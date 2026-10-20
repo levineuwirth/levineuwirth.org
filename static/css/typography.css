@@ -758,6 +758,30 @@ a[data-link-icon-type="svg"]:hover::after {
     opacity: 0.8;
 }
 
+/* Explicit [passage]{.link-icons-end}: the filter leaves the text links
+   in place and collects their icons after the passage's punctuation. */
+a.link-icon-deferred[data-link-icon-type="svg"]::after {
+    content: none;
+}
+
+.link-icons-tail {
+    white-space: nowrap;
+}
+
+a.link-icon-end {
+    display: inline-block;
+    text-decoration: none;
+}
+
+a.link-icon-end:focus-visible {
+    outline: 1px solid currentColor;
+    outline-offset: 2px;
+}
+
+a.link-icon-end:focus-visible::after {
+    opacity: 1;
+}
+
 a[data-link-icon="external"]::after {
     mask-image: url('/images/link-icons/external.svg');
     -webkit-mask-image: url('/images/link-icons/external.svg');

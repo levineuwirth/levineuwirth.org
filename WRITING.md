@@ -594,6 +594,25 @@ the content host.
 | `apple.com` | Apple |
 | Everything else | Generic external arrow |
 
+### Collecting link icons at the end of a passage
+
+Wrap a quotation or sentence in `[...]{.link-icons-end}` to move its link
+icons after its closing punctuation:
+
+```markdown
+["[The claim](https://example.org/claim) mentions
+[4chan](https://en.wikipedia.org/wiki/4chan)."]{.link-icons-end}^[A note.]
+```
+
+The linked words keep their destinations and previews. Each trailing icon
+is also a link, named for the original link text for screen readers. Icons
+stay in source order, including repeated icons for different destinations.
+Put the sidenote outside the wrapper to keep its marker after the icons.
+Nested marked passages collect their own icons; links inside notes remain
+with their notes. Links without a normal domain or internal-page icon
+(such as same-page anchors, source references, and PDF links) keep their
+existing presentation. Trailing icons are omitted when printing.
+
 ### Link preview popups
 
 Hovering over a link shows a context-aware popup. All automatic — no

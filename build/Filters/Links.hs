@@ -13,6 +13,7 @@ module Filters.Links (apply, pdfViewerTarget) where
 import           Data.Text            (Text)
 import qualified Data.Text            as T
 import           Text.Pandoc.Definition
+import           Text.Pandoc.Shared   (stringify)
 import           Text.Pandoc.Walk     (walk)
 import           Config               (SiteConfig (..), siteOwnHosts)
 import           Utils                (isPdfUrl, pdfViewerUrl)
@@ -22,9 +23,52 @@ import           Utils                (isPdfUrl, pdfViewerUrl)
 --   the anchor @pdf-link@), then general classification. The second pass
 --   explicitly skips anchors the PDF pass already claimed — the viewer URL
 --   is root-relative, so without that guard it would also be classified as
---   an internal page link and get double chrome.
+--   an internal page link and get double chrome. Finally, author-marked
+--   spans collect the classified icons at the end of their passage.
 apply :: SiteConfig -> Pandoc -> Pandoc
-apply cfg = walk (classifyLink cfg) . walk classifyPdfLink
+apply cfg = walk deferIcons . walk (classifyLink cfg) . walk classifyPdfLink
+
+-- | An author-marked span owns the trailing icons for its inline links.
+-- Keep the original anchors (and their popup metadata) in the prose, and
+-- emit independently named anchors after the span's closing punctuation.
+-- Notes and nested opt-in spans own their links; never collect those here.
+deferIcons :: Inline -> Inline
+deferIcons (Span attr@(_, classes, _) ils)
+    | "link-icons-end" `elem` classes =
+        let (body, icons) = collectIcons ils
+        in Span attr (body ++ [Span ("", ["link-icons-tail"], [])
+                              (Str "\x2060" : icons) | not (null icons)])
+deferIcons x = x
+
+collectIcons :: [Inline] -> ([Inline], [Inline])
+collectIcons ils = let (body, icons) = unzip (map collect ils)
+                   in (body, concat icons)
+  where
+    collect (Link (ident, classes, kvs) label target@(url, _))
+        | lookup "data-link-icon-type" kvs == Just "svg"
+        , "link-icon-deferred" `notElem` classes
+        , "link-icon-end" `notElem` classes =
+            let name = T.strip (stringify label)
+                iconAttrs = ("", classes ++ ["link-icon-end"],
+                    ("aria-label", if T.null name then url else name)
+                    : filter ((/= "aria-label") . fst) kvs)
+            in (Link (ident, classes ++ ["link-icon-deferred"], kvs) label target,
+                [Link iconAttrs [] target])
+    collect x@(Span (_, classes, _) _)
+        | any (`elem` classes) ["link-icons-end", "link-icons-tail"] = (x, [])
+    collect (Span attr xs)    = descend (Span attr) xs
+    collect (Emph xs)         = descend Emph xs
+    collect (Underline xs)    = descend Underline xs
+    collect (Strong xs)       = descend Strong xs
+    collect (Strikeout xs)    = descend Strikeout xs
+    collect (Superscript xs)  = descend Superscript xs
+    collect (Subscript xs)    = descend Subscript xs
+    collect (SmallCaps xs)    = descend SmallCaps xs
+    collect (Quoted kind xs) = descend (Quoted kind) xs
+    collect (Cite refs xs)    = descend (Cite refs) xs
+    collect x                = (x, [])
+    descend ctor xs = let (body, icons) = collectIcons xs
+                      in (ctor body, icons)
 
 -- | Rewrite root-relative PDF links to open via the vendored PDF.js viewer.
 --   Preserves the original path in @data-pdf-src@ so the popup thumbnail

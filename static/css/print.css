@@ -294,6 +294,10 @@
         display: none !important;
     }
 
+    .link-icons-tail {
+        display: none !important;
+    }
+
     /* External links keep their default underline — readers can follow
        the live URL via the PDF's preserved link metadata. We don't
        inline the href as printed text because (a) it duplicates the

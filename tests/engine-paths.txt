@@ -265,6 +265,7 @@ tests/test_identity.py
 tests/test_import_content.py
 tests/test_import_photo.py
 tests/test_js_dates.py
+tests/test_link_icons_end.py
 tests/test_music.py
 tests/test_pagefind_index.py
 tests/test_pdf_urls.py
