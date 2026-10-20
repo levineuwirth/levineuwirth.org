@@ -109,7 +109,13 @@ Fields include the client address, hostname and selected vhost, original
 path, method, protocol, status, bytes sent (including headers), request
 length, request ID, total duration, backend timings/status, proxy cache
 status, response encoding, rate-limit outcome, referring host, and user
-agent. Durations are in seconds. Backend fields are strings because a
+agent. Since 2026-10-14, records also include a millisecond Unix completion
+timestamp (`time_unix`), worker PID, connection ID and request count on that
+connection, TLS version/cipher, Accept-Language and Sec-Fetch site/mode/destination
+claims. These support interarrival, connection reuse and browser-consistency
+analysis; headers can be spoofed and connection IDs need the worker/reload
+context. Older records lack these additive fields.
+Durations are in seconds. Backend fields are strings because a
 request can have multiple attempts, or no backend at all. Total duration
 includes client upload/download time: a long CouchDB changes feed or Git
 transfer is not necessarily a slow backend. Cache status describes nginx's

@@ -174,6 +174,8 @@ class NginxLogging(unittest.TestCase):
             ua = 'test "quoted" \\ agent'
             self.assertEqual(self.request(host, '/?token=secret', extra=(
                 '-A', ua, '-e', 'https://example.org/private?secret=value',
+                '-H', 'Accept-Language: en-GB,en;q=0.9', '-H', 'Sec-Fetch-Site: none',
+                '-H', 'Sec-Fetch-Mode: navigate', '-H', 'Sec-Fetch-Dest: document',
                 '-H', 'Authorization: Bearer TOPSECRET', '-H', 'Cookie: secret=COOKIE')), '200')
             self.assertEqual(self.request(host, '/redirect?token=secret', tls=False), '301')
             rows = self.records(name + '.access.json.log')
@@ -184,6 +186,16 @@ class NginxLogging(unittest.TestCase):
             self.assertEqual(record['status'], 200)
             self.assertIsInstance(record['request_time'], (int, float))
             self.assertRegex(record['request_id'], r'^[a-f0-9]{32}$')
+            self.assertLess(abs(record['time_unix'] - time.time()), 30)
+            self.assertRegex(record['connection'], r'^\d+$')
+            self.assertRegex(record['nginx_pid'], r'^\d+$')
+            self.assertGreaterEqual(record['connection_requests'], 1)
+            self.assertTrue(record['tls_protocol'].startswith('TLS'))
+            self.assertTrue(record['tls_cipher'])
+            self.assertEqual(record['accept_language'], 'en-GB,en;q=0.9')
+            self.assertEqual(record['sec_fetch_site'], 'none')
+            self.assertEqual(record['sec_fetch_mode'], 'navigate')
+            self.assertEqual(record['sec_fetch_dest'], 'document')
             self.assertNotIn('secret', json.dumps(record).lower())
             self.assertNotIn('COOKIE', json.dumps(record))
             if name != 'site':

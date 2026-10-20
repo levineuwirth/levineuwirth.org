@@ -34,7 +34,7 @@ state. Its metrics/health listener is private at `127.0.0.1:9091`.
 6. Allow read-only static resources, favicon and user/repository
    feeds. These exceptions still deny Meta.
 7. Challenge everything else, including curl and clients with no user agent,
-   with a difficulty-2 JavaScript proof of work and **HTTP 403**. Browsers
+   with a difficulty-5 JavaScript proof of work and **HTTP 403**. Browsers
    solve and follow the challenge normally; tools see a failed HTTP request
    instead of successful HTML masquerading as a downloaded file.
 
@@ -42,6 +42,114 @@ Browsers need JavaScript and cookies for protected pages. A successful
 challenge lasts up to seven days and is tied to the client address; a network
 change can require another. The persistent signing key and challenge store
 allow a container restart without forcing every reader through the challenge.
+
+The difficulty was raised from 2 to 4 on 2026-10-14 at 20:14 UTC after a
+distributed crawl was observed solving roughly one challenge per repository page. The
+rule was renamed to `challenge-web-d4` to require a new pass: in Anubis
+1.28.1, a rule's cookie identity includes its name and matching conditions,
+but not its challenge difficulty. The change is a trial; compare successful
+repository responses and bytes over matching UTC periods, and check visitor
+solve times before increasing the difficulty further. Existing Git, API,
+search-crawler and static-resource exceptions are retained.
+
+`COOKIE_PREFIX=levineuwirth-d4-anubis` gave the difficulty-4 trial a fresh cookie
+namespace (installed at 20:45 UTC): Firefox migration checks found that an
+old auth cookie could survive replacement and cause a challenge loop. Both
+the renamed rule and the fresh namespace are intentional. That namespace is
+now superseded by the difficulty-5 trial described below.
+
+The completed rollout passed old-cookie migration, repeat visits and the
+login form in Chromium and Firefox, real HTTPS Git discovery/transfer,
+the updater's protocol probes and a two-minute stability check. Aggregate
+traffic tables and chart data are under `observations/2026-10-14/`;
+the pre-change logs, metrics and configuration are retained privately on
+the VPS under `/root/anubis-observations/20261014T201402Z/`.
+
+On **2026-10-16 at 09:49:25 UTC**, the next trial raised `fast` difficulty from
+4 to 5, renamed the challenge rule to `challenge-web-d5`, and moved to
+`COOKIE_PREFIX=levineuwirth-d5-anubis`. Preserve this prefix across container
+updates. The image and other policy rules are unchanged. This adds 16 times
+the expected hashing work per challenge; it does not predict a corresponding
+traffic reduction.
+
+Both Chromium and Firefox passed migration from valid d4 cookies, five fresh
+sessions each, repeat repository requests and the login form. Median worker
+solve times in those five fresh desktop sessions were 1.237 s and 2.238 s;
+the largest was 5.723 s. End-to-end page arrival includes additional network
+and rendering time. These are controlled browser measurements, not trusted
+timings from arbitrary access-log clients. HTTPS Git, updater protocol checks
+and a two-minute container stability check passed.
+
+Compare the next 48 hours through **2026-10-18 09:49 UTC**, keeping the partial
+cutover hour separate. October 17 and 18 will provide the next two complete
+UTC days at this setting if it is retained. There is no scheduled automatic
+revert. Private pre-change counters, configuration, Docker events, current
+forge log and cold challenge state are under
+`/root/anubis-observations/difficulty-5-20261016T094922Z/`. Verification and
+trial metadata are in `observations/2026-10-16/difficulty-5/`.
+
+## Ongoing observations
+
+`anubis-observe.timer` runs every five minutes, starting 2026-10-14 21:23 UTC.
+The stdlib-only `tools/anubis-observe.py` saves Prometheus counters, container
+identity/start time/health, hashed policy/Compose/nginx configurations and
+available Anubis Docker events privately under `/root/anubis-observations/live/`.
+Counter differences carry the actual interval and become null across process
+resets. Docker events overlap by two seconds: deduplicate their original JSON
+lines before analysis. Docker retention or container replacement can leave gaps;
+client-reported challenge solve times are not trusted CPU measurements.
+
+Active forge, website and CSP logs are copied once per UTC hour. Every run also
+checks rotations, including the old mixed-host log, before nginx's normal
+retention removes them. Each original log has one gzip archive that grows with
+its source, identified by its first line; source names, byte counts, SHA-256 and
+time bounds are recorded in `manifest.json`. Repeated snapshots and rotations
+do not multiply request counts. Previous content must remain an identical prefix.
+Archives are not automatically pruned. At less than 2 GiB free, collection fails
+without deleting evidence; check the unit and disk use before it reaches that
+floor. This is a local evidence archive, not an off-host backup.
+
+Use independent copies for one-off snapshots too. Hard links to nginx rotations
+can stop compression because [logrotate rejects multiply linked files by
+default](https://github.com/logrotate/logrotate/blob/main/logrotate.8.in).
+The original October 14 snapshot used hard links; on October 16 its 22 linked
+files were replaced with independent copies, every SHA-256 preserved, and the
+normal rotation service completed successfully. The ongoing gzip collector
+already uses independent files. The repair record is in
+`observations/2026-10-16/logrotate-repair.json`.
+
+Hourly, `tools/anubis-traffic.py` recomputes the last 72 completed UTC hours into
+`live/recent/`. `hourly.csv` groups by hour, historical policy interval,
+user-agent cohort, repository, endpoint, method and response code, with bytes,
+unique IP counts and summed request durations. `hourly-summary.csv` gives
+repository totals by hour/cohort. Check-user-agent requests are excluded by
+default. Missing rows are not certified zero hours, unique IP counts cannot be
+summed across cells, and legacy body-only byte counts stay separate from modern
+counts including headers. Raw evidence supports new groupings later.
+
+Recompute a fixed window without changing collection:
+
+```sh
+/usr/local/bin/anubis-traffic.py --state /root/anubis-observations/live \
+  --output /root/anubis-observations/live/history-20261014 \
+  --since 2026-10-01T00:00:00Z --until 2026-10-14T00:00:00Z
+systemctl status anubis-observe.timer anubis-observe.service
+journalctl -u anubis-observe.service -n 20 --no-pager
+```
+
+Install both Python tools in `/usr/local/bin/` mode 0755, and both
+`systemd/anubis-observe.*` units in `/etc/systemd/system/` mode 0644. Create
+`/root/anubis-observations/` mode 0700, run `systemd-analyze verify` on the units,
+then `systemctl daemon-reload` and `systemctl enable --now anubis-observe.timer`.
+The first run captures retained logs, so it is larger than routine runs. Its
+service limits CPU to 25% and memory to 512 MiB. It does not restart Anubis.
+
+Raw records, addresses, full Docker URLs and configuration snapshots remain root
+private. Only reviewed aggregates belong in this repository or the essay. See
+[`observations/README.md`](observations/README.md) for the analysis conventions.
+
+## Access behaviour
+
 Unauthenticated API calls and raw-file URLs also encounter the challenge;
 automations should use an authenticated API or Git, and `curl --fail` for
 HTTP downloads (curl without that flag does not fail on HTTP errors).

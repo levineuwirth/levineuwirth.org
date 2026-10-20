@@ -78,6 +78,7 @@ site-files:
 - tests/identity-allowances.yaml
 - tests/identity-policy.yaml
 - tests/test_anubis.py
+- tests/test_anubis_observe.py
 - tests/test_anubis_update.py
 - tests/test_backup_pair.py
 - tests/test_bibliography.py
@@ -94,6 +95,8 @@ site-files:
 - tools/anki-sync-backup.sh
 - tools/anki-sync-hash
 - tools/anki-sync-upgrade.sh
+- tools/anubis-observe.py
+- tools/anubis-traffic.py
 - tools/anubis-update.py
 - tools/backup-pair.sh
 - tools/borg-offhost.sh

@@ -22,6 +22,9 @@ services:
       COOKIE_HTTP_ONLY: "true"
       COOKIE_SAME_SITE: Lax
       COOKIE_EXPIRATION_TIME: 168h
+      # Give the difficulty-5 policy fresh cookies; old Firefox cookies can
+      # otherwise survive replacement and cause repeated challenges.
+      COOKIE_PREFIX: levineuwirth-d5-anubis
       SLOG_LEVEL: INFO
       GOMEMLIMIT: 128MiB
       GOMAXPROCS: "1"

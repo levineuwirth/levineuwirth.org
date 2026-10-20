@@ -20,6 +20,7 @@ All times UTC. `+n` is the timer's `RandomizedDelaySec`.
 | `forgejo-update` | daily 05:00 +15m | pulls `forgejo:15`; backs up, recreates, checks (state in `/var/lib/forgejo-update/`) |
 | `couchdb-update` | daily 05:30 +15m | pulls `couchdb:3`; backs up, copies `couchdb-data` cold, recreates, checks; puts data and image back on failure (state in `/var/lib/couchdb-update/`) |
 | `anubis-update` | daily 06:00 +15m | resolves the latest stable 1.x image to a digest; backs up, saves cold challenge state, replaces, checks stability and rolls back on failure (`anubis/README.md`); waits for `forgejo-update`, whose lock it shares |
+| `anubis-observe` | every 5 min | private counters/configuration/events; hourly access-log preservation and rolling 72-hour reports in `/root/anubis-observations/live/`; no service restart |
 | `vps-offsite-verify` | 1st 05:00 +1h | `borg check`, then restores the newest archive of every set from the storage box |
 
 Containers: `forgejo` (127.0.0.1:3000, and :2222 for git over ssh) and

@@ -48,12 +48,12 @@ bots:
        path.startsWith("/assets/") || path.startsWith("/avatars/") ||
        path.matches("^/[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)?[.](rss|atom)$"))
 
-  - name: challenge-web
+  - name: challenge-web-d5
     path_regex: '.*'
     action: CHALLENGE
     challenge:
       algorithm: fast
-      difficulty: 2
+      difficulty: 5
 
 dnsbl: false
 honeypot:
