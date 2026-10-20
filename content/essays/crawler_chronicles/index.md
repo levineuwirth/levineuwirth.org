@@ -3,7 +3,7 @@ title: "Crawler Chronicles"
 date: 2026-10-14
 revised:
   - date: "2026-10-19"
-status: "Working Model"
+status: "Working model"
 description: "Computational strangers known and unknown wreak havoc (or, at least, attempt to do so) upon levineuwirth.org."
 abstract: >
   Computational strangers known and unknown wreak havoc (or, at least, attempt to do so) upon levineuwirth.org.
