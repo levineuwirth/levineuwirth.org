@@ -89,9 +89,9 @@ Less than a week passed from the 8th and something startling was occurring. The 
 What can we deduce? This is certainly a distributed and automated scraping effort targeted at levineuwirth.org. I do not know how deliberate it is — my intuition at first was that perhaps there *was* a human involved, but further investigation seems to loosely suggest that the choice of my Forgejo instance as a target did not require human intervention or approval — and I do not know *who* is behind the effort.
 
 ### The new swarm's addresses
-I was able to find by a similar analysis of the addresses to the one that pinpointed meta that busy groups within the distributed effort fell within allocations registered to hosting business such as EGIHosting. Curious; A quick search on LinkedIn showed nothing about this entity nor anyone associated with it. Another group fell to some entity called "AviationAI." There remain other sampled addresses that seem to originate with more familiar service providers. Coincidence? Frontier-lab backed botnet devastating the vulnerable machines of America? While the original Dead Internet theory authors may prefer the latter, I strongly believe the evidence suggests the former, [at least for now](https://incidentdatabase.ai/cite/1604/).
+I was able to find by a similar analysis of the addresses to the one that pinpointed Meta that busy groups within the distributed effort fell within allocations registered to hosting businesses such as EGIHosting. Curious; a quick search on LinkedIn showed nothing about this entity nor anyone associated with it. Another group fell to some entity called "AviationAI." There remain other sampled addresses that seem to originate with more familiar service providers. Coincidence? Frontier-lab backed botnet devastating the vulnerable machines of America? While the original Dead Internet theory authors may prefer the latter, I strongly believe the evidence suggests the former, [at least for now](https://incidentdatabase.ai/cite/1604/).
 
-There was one lead which was particularly useful: that of **UAB code200**. Registry records associated some of the sampled allocations with this mysterious oranization, and RIPE records linked to a network list published by its network operations account. I obtained a copy of that list and tried matching it against the previous day's requests. **3,788 successful repository responses came from 2,342 addresses in that published list.** They accounted for **24.5%** of the 15,492 successful responses in the dominant Chrome 155 group, which gives something of the infrastructure a name.
+There was one lead which was particularly useful: that of **UAB code200**. Registry records associated some of the sampled allocations with this mysterious organization, and RIPE records linked to a network list published by its network operations account. I obtained a copy of that list and tried matching it against the previous day's requests. **3,788 successful repository responses came from 2,342 addresses in that published list.** They accounted for **24.5%** of the 15,492 successful responses in the dominant Chrome 155 group, which gives something of the infrastructure a name.
 
 **Is it still Meta?** I am unsure, but [Occam's Razor](https://en.wikipedia.org/wiki/Occam%27s_razor) seems to suggest that the answer is yes. If Meta had by some logic previously singled out and initiated so many requests to git.levineuwirth.org that they accounted for over 100,000 in 3 days, then it seems that of all potential parties to launch such a distributed effort in such a short turnaround — recall that we went from 233 successful requests on October 8th to 15,539 on the 13th — the one who had prior foreknowledge of what the repository had and why it would be appealing, if at all, would be the most likely and simplest choice. I'm continuing to investigate and add more granularity to the logs to gain more information.
 
@@ -105,7 +105,7 @@ My first premonition was that the crawlers' traffic might be associated with com
 Could it be that this was *really* the case? I planned an experiment and some statistical analysis to find out.
 
 ### When does a commit become available?
-I knew that a commit's date wasn't the time that a crawler could see it, because I often make commits locally and then publish them concurrently in batches with a single push. Thus there is a reduction; ten commit creation dates may collapse into a singular moment of arrival on the server, at which point a crawler would be able to react. Forgejo had retained branch reflogs and push notifications; on the VPS, these reflogs record when a reference changes, and the notifications follow asynchronously (usually within a few seconds). We can recover the transaction history:
+I knew that a commit's date wasn't the time that a crawler could see it, because I often make commits locally and then publish them concurrently in batches with a single push. Thus there is a reduction; ten commit creation dates may collapse into a singular moment of arrival on the server, only at which point a crawler would be able to react. Forgejo had retained branch reflogs and push notifications; on the VPS, these reflogs record when a reference changes, and the notifications follow asynchronously (usually within a few seconds). We can recover the transaction history:
 
 ```bash
 # Run against the server's bare repository, not a local clone's reflog.
@@ -114,7 +114,7 @@ git --git-dir=/path/to/server/repository.git \
 ```
 ![Distribution of publication episodes for public-facing git.levineuwirth.org repositories.](figures/publication-timeline.png)
 
-By reconstructing which commits made each update reachable across all branches, I was able to determine that **48 publication episodes exposing 271 commits** occured on October 1 through October 13 on the Forgeo instance. There were also GitHub only pushes that had GitHub receive commits up to 17 hours before Forgejo in some instances.^[Obviously, I am not a GitHub administrator, and I cannot SSH into the servers of GitHub as `root`, and even if I could, these jocular musings would hardly be my priority — I'd probably do something about how awful [CI](https://en.wikipedia.org/wiki/Continuous_integration) is, or, perhaps, reveal to the world what exactly the *real* GitHub uptime is, since it certainly is **ludicrously** inflated by their calculations!]
+By reconstructing which commits made each update reachable across all branches, I was able to determine that **48 publication episodes exposing 271 commits** occurred on October 1 through October 13 on the Forgejo instance. There were also GitHub only pushes that had GitHub receive commits up to 17 hours before Forgejo in some instances.^[Obviously, I am not a GitHub administrator, and I cannot SSH into the servers of GitHub as `root`, and even if I could, these jocular musings would hardly be my priority — I'd probably do something about how awful [CI](https://en.wikipedia.org/wiki/Continuous_integration) is, or, perhaps, reveal to the world what exactly the *real* GitHub uptime is, since it certainly is **ludicrously** inflated by their calculations!]
 
 The next step was a simple comparison: counting successful GET requests of the website repository in the 30 minutes before and after each publication. The minute of any specific push was omitted.
 
@@ -160,7 +160,7 @@ So there were 829 requests after pushes, and 659 before. A raw difference of 4.2
 Resampling clusters of overlapping request windows gave an interval of **−1.47 to +7.75** for the adjusted excess, while resapmling entire dates widened it considerable to **-1.97 to +10.47**. So we'd need something else.
 
 ### What did the requests *actually* name?
-A route like `/neuwirth/levineuwirth.org/src/commit/<hash>/index.md` identifies a particular version, so after resolving hashes against the commit graph, we could compare the first Forgeo publication of some version with the request time. 
+A route like `/neuwirth/levineuwirth.org/src/commit/<hash>/index.md` identifies a particular version, so after resolving hashes against the commit graph, we could compare the first Forgejo publication of some version with the request time. 
 
 ![Request time versus first Forgejo publication of the commit.](data/commit-response/results/figures/request-vs-publication.svg)
 
@@ -192,7 +192,7 @@ This identifies a network lead, not the customer's identity or purpose, and does
 
 If feasible, would you forward this message to the relevant customer, with an invitation to consider whether it has perhaps acquired enough historical versions of my code, or could conduct its visits a little more gently? I am not requesting the customer's identity, account records, or any other identifying information, though if they wish to make themselves known, I will not decline.
 
-The Court of Unnecessary Computation, whose only recognized jurisdiction is the author's page margins, also requests compensation. No deadline is imposed. Silence will not be treated as an admission outright, but it will indubitably may fail to prevent a sequel.
+The Court of Unnecessary Computation, whose only recognized jurisdiction is the author's page margins, also requests compensation. No deadline is imposed. Silence will not be treated as an admission outright, but it will indubitably fail to prevent a sequel.
 
 Thank you for reading an unusually elaborate way of saying: please consider passing this along. I appreciate that the person tending the abuse mailbox is unlikely to be the person dispatching the crawler.
 
