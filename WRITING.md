@@ -705,6 +705,9 @@ For a captioned figure, add a title string. Pandoc wraps it in `<figure>`/`<figc
 ![Alt text](/images/my-image.png "Caption shown below.")
 ```
 
+A raw-HTML `<figure>` narrower than the column, such as one holding inline
+SVG, sits flush left; `<figure class="centered">` centers it.
+
 **Lightbox:** standalone images automatically get `data-lightbox="true"`.
 Clicking opens a fullscreen overlay; close with ×, click outside, or Escape.
 Images inside hyperlinks get lazy loading only — no lightbox.
