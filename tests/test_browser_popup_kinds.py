@@ -210,7 +210,8 @@ class PopupKinds(unittest.TestCase):
         for browser in BROWSERS:
             with self.subTest(browser=browser):
                 page = self.open(browser, LIST)
-                marker = page.locator(".item-card-revised").first
+                # A revision's note is optional: the first card that has one.
+                marker = page.locator("li.item-card:has(.item-card-revision-note) .item-card-revised").first
                 card = marker.locator("xpath=ancestor::li[contains(@class, 'item-card')]")
                 date = card.locator(".item-card-date").inner_text().strip()
                 note = card.locator(".item-card-revision-note").text_content().strip()
