@@ -1,8 +1,6 @@
 ---
 title: "Crawler Chronicles"
-date: 2026-10-14
-revised:
-  - date: "2026-10-19"
+date: 2026-10-20
 status: "Working model"
 description: "Computational strangers known and unknown wreak havoc (or, at least, attempt to do so) upon levineuwirth.org."
 abstract: >
@@ -12,7 +10,7 @@ summary: |
   Throughout the summer of 2026, traffic from crawlers and scraping of levineuwirth.org (especially the git.levineuwirth.org Forgejo instance) related to AI organizations rapidly increased. By October 2026, git.levineuwirth.org was receiving over 200,000 repository requests per day; over 50% came from crawlers directly attributed to Meta. On October 4th, Anubis was introduced; I also began logging automated requests to get some insight into how they operate.
 ---
 
-The [Dead Internet theory](https://en.wikipedia.org/wiki/Dead_Internet_theory) posits that the demise internet *has* indeed already occurred, and that it is attributable to bots. The theory [as described in 2021](https://forum.agoraroad.com/index.php?threads/dead-internet-theory-most-of-the-internet-is-fake.3011/) was highly conspiratorial, with a sort of peculiarity that undoubtedly provided much of the initial intrigue. Would I, for instance, have accepted the sweeping claims of some coordinated and covert undertaking with advanced intelligences of the artificial sort creating different internets for phones and PCs? Would I have personally believed that [“[Zuckerberg and other tech guys were all on](https://mindseyemag.com/magazine/dead-internet-theory-mot-of-the-internet-is-fake/) [4chan](https://en.wikipedia.org/wiki/4chan) at some point?”]{.link-icons-end}^[Not that I actually had any knowledge then, nor now, of exactly *what* 4chan is or aspires to be, but I disgress. My broadest understanding of this matter is a meme that I saw on Reddit as a high schooler,  who avidly enjoyed r/ProgrammerHumor, in which allusions to the television show Spongebob Squarepants are used to facilitate understanding of the website's rather severe differences in severity.]
+The [Dead Internet theory](https://en.wikipedia.org/wiki/Dead_Internet_theory) posits that the demise of the internet *has* indeed already occurred, and that it is attributable to bots. The theory [as described in 2021](https://forum.agoraroad.com/index.php?threads/dead-internet-theory-most-of-the-internet-is-fake.3011/) was highly conspiratorial, with a sort of peculiarity that undoubtedly provided much of the initial intrigue. Would I, for instance, have accepted the sweeping claims of some coordinated and covert undertaking with advanced intelligences of the artificial sort creating different internets for phones and PCs? Would I have personally believed that [“[Zuckerberg and other tech guys were all on](https://mindseyemag.com/magazine/dead-internet-theory-mot-of-the-internet-is-fake/) [4chan](https://en.wikipedia.org/wiki/4chan) at some point?”]{.link-icons-end}^[Not that I actually had any knowledge then, nor now, of exactly *what* 4chan is or aspires to be, but I disgress. My broadest understanding of this matter is a meme that I saw on Reddit as a high schooler,  who avidly enjoyed r/ProgrammerHumor, in which allusions to the television show Spongebob Squarepants are used to facilitate understanding of the website's rather severe differences in severity.]
 
 While I severely doubt that I would have believed such egregious claims in the year 2021, and thus would have likely dismissed any theories of a "Dead Internet" as nonsense, perhaps the year 2026 has become destined as a time to reevaluate. I formally propose that [levineuwirth.org](/index.html), and more specifically [git.levineuwirth.org](https://git.levineuwirth.org), have unintentionally become a strong piece of evidence for this theory, perhaps even including the [Zuckerberg](https://en.wikipedia.org/wiki/Mark_Zuckerberg) part. Throughout the summer of 2026, automated requests from LLM-related crawlers on this website grew rapidly, surpassing 200,000 per day by October, with over 100,000 coming from addresses affiliated with [Meta](https://ai.meta.com/). This page will serve to capture the ongoing "Crawler Chronicles" as an essential piece of evidence in favor of dead internet speculation familiar and egregious.
 
@@ -222,6 +220,116 @@ I shall update this page if and when I receive any substantive response from EGI
 
 ## What Now?
 Traffic has died down significantly, but I am, of course knowing me, not done. Some further experiments are coming and I will update this page and continue to chronicle what happens. The tale has just begun.
+
+<figure class="centered">
+<svg viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg" width="200" height="200" role="img" aria-labelledby="crawler-spider-title">
+<title id="crawler-spider-title">A question mark whose dot is a spider, hanging from the thread that draws it.</title>
+<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+<circle cx="140" cy="140" r="128" stroke-width="0.6"/>
+<path d="M 104 92 C 104 64 121 46 142 46 C 164 46 179 62 179 83 C 179 103 163 112 153 120 C 145 126 140 134 140 150" stroke-width="1.4"/>
+<line x1="140" y1="150" x2="140" y2="177" stroke-width="0.5"/>
+<g stroke-width="1.2">
+<path d="M 144.06 212.525 L 157.4 217.6 L 161.75 237.9"/>
+<path d="M 145.51 209.625 L 164.65 207.45 L 176.25 223.4"/>
+<path d="M 145.51 205.275 L 164.65 192.95 L 177.7 197.3"/>
+<path d="M 144.06 202.375 L 158.85 182.8 L 173.35 174.1"/>
+<path d="M 135.94 212.525 L 122.6 217.6 L 118.25 237.9"/>
+<path d="M 134.49 209.625 L 115.35 207.45 L 103.75 223.4"/>
+<path d="M 134.49 205.275 L 115.35 192.95 L 102.3 197.3"/>
+<path d="M 135.94 202.375 L 121.15 182.8 L 106.65 174.1"/>
+</g>
+</g>
+<g fill="currentColor" stroke="none">
+<circle cx="104" cy="92" r="2.6"/>
+<ellipse cx="140" cy="188.6" rx="10.15" ry="11.6"/>
+<circle cx="140" cy="206.725" r="6.525"/>
+</g>
+</svg>
+<svg viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg" width="200" height="200" role="img" aria-labelledby="crawler-scales-title">
+<title id="crawler-scales-title">The scales of Anubis: a feather against a sinking pan heaped with crawler requests, more of the swarm drifting in, above a line of commits.</title>
+<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+<circle cx="140" cy="140" r="128" stroke-width="0.6"/>
+<path d="M 144.5 81 C 145.5 75 146 70 145 66 L 148 52 L 142 63.5 C 139 65 135 66 131.5 67.5 L 125 70.5 L 126.5 72.5 L 132 73 C 135 73.5 136.5 76 137 81" stroke-width="1.0"/>
+<path d="M 145 66 L 143.5 64.5" stroke-width="0.5"/>
+<line x1="135.5" y1="81.5" x2="146" y2="81.5" stroke-width="1.0"/>
+<line x1="140" y1="81.5" x2="140" y2="192" stroke-width="1.4"/>
+<circle cx="140" cy="92" r="3" stroke-width="1.0"/>
+<rect x="126" y="192" width="28" height="6" stroke-width="1.0"/>
+<rect x="114" y="198" width="52" height="6" stroke-width="1.0"/>
+<line x1="76.35" y1="85.31" x2="203.65" y2="98.69" stroke-width="1.4"/>
+<path d="M 52.35 141.31 L 76.35 85.31 L 100.35 141.31" stroke-width="0.5"/>
+<path d="M 50.35 141.31 Q 76.35 153.31 102.35 141.31" stroke-width="1.2"/>
+<path d="M 76.95 145.81 C 68.95 134.81 65.95 118.81 70.95 108.81 C 73.95 105.81 77.95 107.81 75.95 111.81 C 83.95 121.81 83.95 135.81 76.95 145.81 Z" stroke-width="0.8"/>
+<path d="M 76.95 145.81 C 75.95 133.81 73.95 121.81 71.95 112.81" stroke-width="0.5"/>
+<g stroke-width="0.3">
+<line x1="76.65" y1="140.73" x2="72.15" y2="136.73"/>
+<line x1="76.65" y1="140.73" x2="80.65" y2="136.23"/>
+<line x1="76.1" y1="135.66" x2="71.6" y2="131.66"/>
+<line x1="76.1" y1="135.66" x2="80.1" y2="131.16"/>
+<line x1="75.38" y1="130.58" x2="70.88" y2="126.58"/>
+<line x1="75.38" y1="130.58" x2="79.38" y2="126.08"/>
+<line x1="74.54" y1="125.5" x2="70.04" y2="121.5"/>
+<line x1="74.54" y1="125.5" x2="78.54" y2="121"/>
+<line x1="73.58" y1="120.43" x2="69.08" y2="116.43"/>
+<line x1="73.58" y1="120.43" x2="77.58" y2="115.93"/>
+</g>
+<path d="M 179.65 154.69 L 203.65 98.69 L 227.65 154.69" stroke-width="0.5"/>
+<path d="M 177.65 154.69 Q 203.65 166.69 229.65 154.69" stroke-width="1.2"/>
+<g stroke-width="0.8">
+<line x1="87.4" y1="226" x2="108.6" y2="226"/>
+<line x1="115.4" y1="226" x2="136.6" y2="226"/>
+<line x1="143.4" y1="226" x2="164.6" y2="226"/>
+<line x1="171.4" y1="226" x2="192.6" y2="226"/>
+<line x1="80.6" y1="226" x2="50" y2="226" stroke-width="0.5" stroke-dasharray="2 3"/>
+</g>
+<g stroke-width="1.0">
+<circle cx="84" cy="226" r="3.4"/>
+<circle cx="112" cy="226" r="3.4"/>
+<circle cx="140" cy="226" r="3.4"/>
+<circle cx="168" cy="226" r="3.4"/>
+</g>
+</g>
+<g fill="currentColor" stroke="none">
+<circle cx="138.4" cy="68.2" r="0.8"/>
+<circle cx="196" cy="226" r="3.4"/>
+<circle cx="192.15" cy="157.69" r="1.3"/>
+<circle cx="196.75" cy="157.69" r="1.3"/>
+<circle cx="201.35" cy="157.69" r="1.3"/>
+<circle cx="205.95" cy="157.69" r="1.3"/>
+<circle cx="210.55" cy="157.69" r="1.3"/>
+<circle cx="215.15" cy="157.69" r="1.3"/>
+<circle cx="194.45" cy="153.69" r="1.3"/>
+<circle cx="199.05" cy="153.69" r="1.3"/>
+<circle cx="203.65" cy="153.69" r="1.3"/>
+<circle cx="208.25" cy="153.69" r="1.3"/>
+<circle cx="212.85" cy="153.69" r="1.3"/>
+<circle cx="196.75" cy="149.69" r="1.3"/>
+<circle cx="201.35" cy="149.69" r="1.3"/>
+<circle cx="205.95" cy="149.69" r="1.3"/>
+<circle cx="210.55" cy="149.69" r="1.3"/>
+<circle cx="199.05" cy="145.69" r="1.3"/>
+<circle cx="203.65" cy="145.69" r="1.3"/>
+<circle cx="208.25" cy="145.69" r="1.3"/>
+<circle cx="201.35" cy="141.69" r="1.3"/>
+<circle cx="205.95" cy="141.69" r="1.3"/>
+<circle cx="203.65" cy="137.69" r="1.3"/>
+<circle cx="166" cy="50" r="0.8"/>
+<circle cx="181" cy="41" r="0.8"/>
+<circle cx="194" cy="56" r="1.0"/>
+<circle cx="208" cy="44" r="0.8"/>
+<circle cx="221" cy="58" r="1.0"/>
+<circle cx="186" cy="70" r="1.0"/>
+<circle cx="205" cy="72" r="1.2"/>
+<circle cx="234" cy="74" r="0.8"/>
+<circle cx="219" cy="84" r="1.2"/>
+<circle cx="233" cy="96" r="1.0"/>
+<circle cx="227" cy="112" r="1.2"/>
+<circle cx="176" cy="62" r="0.8"/>
+<circle cx="198" cy="34" r="0.8"/>
+<circle cx="240" cy="88" r="0.8"/>
+</g>
+</svg>
+</figure>
 
 ::: {.aftermatter #commit-response-appendix-material}
 
