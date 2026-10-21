@@ -49,6 +49,7 @@ import Contexts                   (siteCtx, authorLinksField, canonicalUrlPath)
 import Marks                      (hasMonogram, monogramSvgFieldFor,
                                    hasMonogramFieldFor)
 import qualified Patterns         as P
+import EngineFiles                (filesIn)
 import FooterData                 (normaliseUrl)
 import Utils                      (exposureISO, formatBytes, inDefault, isDevBuild, isSafeUrl, median, outputDirFor, parseIsoDate, readingTime)
 
@@ -734,15 +735,17 @@ getOutputStats = do
 -- IO: lines of code
 -- ---------------------------------------------------------------------------
 
+-- | Files and lines directly in a directory, the site's and the engine's
+--   together, each name counted once ("EngineFiles").
 countLinesDir :: FilePath -> String -> (FilePath -> Bool) -> IO (Int, Int)
 countLinesDir dir ext skipPred = do
-    entries <- listDirectory dir `catch` (\(_ :: IOException) -> return [])
+    entries <- filesIn dir
     let files = filter (\e -> takeExtension e == ext && not (skipPred e)) entries
     -- Use strict text IO so the file handle is released as soon as the
     -- contents are read; the prior 'readFile' chained lazy IO under
     -- 'forM', leaving every handle open until the loop forced 'lines'.
     ls <- fmap sum $ forM files $ \e -> do
-        content <- TIO.readFile (dir </> e)
+        content <- TIO.readFile e
                      `catch` (\(_ :: IOException) -> return T.empty)
         return (length (T.lines content))
     return (length files, ls)

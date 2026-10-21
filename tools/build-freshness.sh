@@ -86,6 +86,10 @@ DRAFT_HASH_FILE="$STATE_DIR/unpublished-hash.txt"
 # Templates are deliberately absent — Hakyll tracks those itself. The
 # engine's files are digested by their path in the engine, so moving them
 # under engine/ (A6) changes nothing here.
+#
+# Also the overrides: which of a site file and an engine file wins is
+# settled as the rules are evaluated (build/EngineFiles.hs), so adding or
+# removing one needs a clean build. With no overrides this adds nothing.
 rules_hash() {
     local build cabal
     build=$(engine_path build)
@@ -95,13 +99,29 @@ rules_hash() {
         sha256sum cabal.project cabal.project.freeze
         (cd "$(dirname "$cabal")" && sha256sum "$(basename "$cabal")")
         sha256sum site.yaml
+        overrides | sed 's/^/override /'
     } | sha256sum | cut -d' ' -f1
+}
+
+# Site files with an engine file at the same path under engine/. The
+# engine's tests and demonstration site, build directories and dot
+# entries are no site's inputs, and are not looked at.
+overrides() {
+    [ -d engine ] || return 0
+    (cd engine && find . -mindepth 1 \( -name '.*' -o -name __pycache__ -o -name dist-newstyle \
+                                       -o -name fixture-site -o -path ./tests \) -prune \
+                    -o \( -type f -o -type l \) -print) |
+        sed 's|^\./||' | LC_ALL=C sort |
+        while IFS= read -r file; do
+            if [ -e "$file" ] || [ -L "$file" ]; then printf '%s\n' "$file"; fi
+        done
 }
 
 # Paths whose deletion/rename removes a published route. archive/ is here
 # because an evicted snapshot leaves archive/<slug>/index.html behind;
-# code-refs/ for the same reason (`tools/code-refs.py gc`).
-DIFF_PATHS=(content/ static/ data/ archive/ code-refs/)
+# code-refs/ for the same reason (`tools/code-refs.py gc`); the engine's
+# static files are served as the site's are.
+DIFF_PATHS=(content/ static/ data/ archive/ code-refs/ engine/static/)
 
 # Frontmatter fields that generate routes of their own (tag indexes, author
 # pages, collection and series listings, epistemic-status listings).
@@ -189,7 +209,7 @@ check() {
     if [ ! -f "$RULES_HASH_FILE" ]; then
         reasons+=("no rules-hash on record (first run under freshness tracking)")
     elif [ "$(rules_hash)" != "$(cat "$RULES_HASH_FILE")" ]; then
-        reasons+=("build rules changed (build/**/*.hs, cabal metadata or site.yaml)")
+        reasons+=("build rules changed (build/**/*.hs, cabal metadata, site.yaml or overrides)")
     fi
 
     base=""

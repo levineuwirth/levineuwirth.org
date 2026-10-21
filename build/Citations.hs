@@ -30,6 +30,8 @@ module Citations
     ( applyCitations
       -- * For synthetic bibliography pages (Phase 6b)
     , renderBibliographyHtml
+      -- * The style, for dependency tracking
+    , cslStyles
     ) where
 
 import           Control.Monad.State.Strict (State, gets, modify', runState)
@@ -44,7 +46,10 @@ import           Text.Pandoc
 import           Text.Pandoc.Citeproc (processCitations)
 import           Text.Pandoc.Walk
 
+import           Hakyll              (Pattern, (.||.))
+
 import           BibExtras           (BibExtra (..), emptyBibExtra, parseBibExtras)
+import           EngineFiles         (resolveFile)
 import qualified Filters.Archive     (annotateBlock)
 import qualified Filters.Links       (pdfViewerTarget)
 
@@ -68,7 +73,8 @@ applyCitations frKeys bibPath doc
         -- in parallel with citeproc. These don't affect citation
         -- resolution — they enhance the rendered bibliography entries.
         extras       <- parseBibExtras (T.unpack bibPath)
-        let doc1      = injectMeta frKeys bibPath doc
+        csl          <- cslStyle
+        let doc1      = injectMeta csl frKeys bibPath doc
         processed    <- runIOorExplode $ processCitations doc1
         let (body, citedHtml, furtherHtml) = transformAndExtract extras frKeys processed
         return (body, citedHtml, furtherHtml)
@@ -95,7 +101,8 @@ renderBibliographyHtml :: [FilePath]            -- ^ .bib paths
                       -> IO Text
 renderBibliographyHtml _ _ [] = return ""
 renderBibliographyHtml bibPaths extras keys = do
-    let doc = synthesizeNociteDoc bibPaths keys
+    csl <- cslStyle
+    let doc = synthesizeNociteDoc csl bibPaths keys
     processed <- runIOorExplode $ processCitations doc
     let refsDivs = concatMap unwrapRefs (pandocBlocks processed)
         ordered  = reorderByKeys keys refsDivs
@@ -110,11 +117,11 @@ renderBibliographyHtml bibPaths extras keys = do
 --   @nocite@ metadata entry listing every supplied citekey. Runs
 --   through 'processCitations' to emit a fully-formatted @refs@ Div
 --   containing every entry.
-synthesizeNociteDoc :: [FilePath] -> [String] -> Pandoc
-synthesizeNociteDoc bibPaths keys =
+synthesizeNociteDoc :: Text -> [FilePath] -> [String] -> Pandoc
+synthesizeNociteDoc csl bibPaths keys =
     let meta = Meta $ Map.fromList
             [ ("bibliography", bibPathMeta bibPaths)
-            , ("csl",          MetaString "data/chicago-notes.csl")
+            , ("csl",          MetaString csl)
             , ("nocite",       nociteVal (map T.pack keys))
             ]
     in Pandoc meta []
@@ -141,6 +148,20 @@ reorderByKeys keys divs =
 
 
 -- ---------------------------------------------------------------------------
+-- The style
+-- ---------------------------------------------------------------------------
+
+-- | The CSL style a page gets unless it names one: the site's, else the
+--   engine's ("EngineFiles").
+cslStyle :: IO Text
+cslStyle = T.pack <$> resolveFile "data/chicago-notes.csl"
+
+-- | Every CSL style the site and the engine have. Citeproc reads them
+--   outside Hakyll, so the compilers load these to depend on them.
+cslStyles :: Pattern
+cslStyles = "data/*.csl" .||. "engine/data/*.csl"
+
+-- ---------------------------------------------------------------------------
 -- Detection
 -- ---------------------------------------------------------------------------
 
@@ -159,8 +180,8 @@ hasCitations frKeys doc =
 -- ---------------------------------------------------------------------------
 
 -- | Inject default bibliography / CSL paths and nocite for further-reading.
-injectMeta :: [Text] -> Text -> Pandoc -> Pandoc
-injectMeta frKeys bibPath (Pandoc meta blocks) =
+injectMeta :: Text -> [Text] -> Text -> Pandoc -> Pandoc
+injectMeta csl frKeys bibPath (Pandoc meta blocks) =
     let meta1  = if null frKeys then meta
                  else insertMeta "nocite" (nociteVal frKeys) meta
         meta2  = case lookupMeta "bibliography" meta1 of
@@ -169,7 +190,7 @@ injectMeta frKeys bibPath (Pandoc meta blocks) =
                    Just _  -> meta1
         meta3  = case lookupMeta "csl" meta2 of
                    Nothing -> insertMeta "csl"
-                                (MetaString "data/chicago-notes.csl") meta2
+                                (MetaString csl) meta2
                    Just _  -> meta2
     in Pandoc meta3 blocks
   where

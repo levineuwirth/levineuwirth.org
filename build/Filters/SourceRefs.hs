@@ -36,13 +36,14 @@ module Filters.SourceRefs
     ) where
 
 import           Config               (SiteConfig (..))
+import           EngineFiles          (existingFile)
 import           Control.Monad        (when)
 import           Data.IORef           (IORef, atomicModifyIORef', newIORef, readIORef)
 import qualified Data.Map.Strict      as Map
 import           Data.Text            (Text)
 import qualified Data.Text            as T
 import           Hakyll               (Pattern, fromFilePath, fromGlob, matches)
-import           System.Directory     (doesFileExist)
+import           Data.Maybe           (isJust)
 import           System.IO.Unsafe     (unsafePerformIO)
 import           Text.Pandoc.Definition
 import           Text.Pandoc.Walk     (walkM)
@@ -227,8 +228,9 @@ hasKnownExt t =
 --   instead of staying "absent" for the process lifetime. (A file
 --   /deleted/ mid-watch stays cached as present until restart — the
 --   benign direction: the popup fetch 404s and simply never appears.)
---   The build process's working directory is the project root, so the
---   path can be passed straight to 'doesFileExist' without prefixing.
+--   The build's working directory is the site, and a path names the
+--   site's file or, failing that, the engine's ("EngineFiles"), as the
+--   @/source/@ rule serves it.
 {-# NOINLINE existsCacheRef #-}
 existsCacheRef :: IORef (Map.Map Text Bool)
 existsCacheRef = unsafePerformIO (newIORef Map.empty)
@@ -239,7 +241,7 @@ existsCached path = do
     case Map.lookup path cache of
         Just b  -> pure b
         Nothing -> do
-            b <- doesFileExist (T.unpack path)
+            b <- isJust <$> existingFile (T.unpack path)
             when b $
                 atomicModifyIORef' existsCacheRef (\m -> (Map.insert path b m, ()))
             pure b

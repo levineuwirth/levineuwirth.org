@@ -47,16 +47,17 @@ import           Data.Maybe             (fromMaybe)
 import qualified Data.Text              as T
 import           System.Directory       (doesFileExist)
 import           SvgColor               (blackToCurrentColor)
-import           System.Environment     (lookupEnv)
+import           System.Environment     (getEnvironment, lookupEnv)
 import           System.Exit            (ExitCode (..))
-import           System.FilePath        ((</>))
+import           System.FilePath        (searchPathSeparator, takeDirectory, (</>))
 import           System.IO              (hPutStrLn, stderr)
-import           System.Process         (readProcessWithExitCode)
+import           System.Process         (CreateProcess (..), proc, readCreateProcessWithExitCode)
 import           System.Timeout         (timeout)
 import           Text.Read              (readMaybe)
 import qualified Text.Pandoc            as Pandoc
 import           Text.Pandoc.Definition
 import           Text.Pandoc.Walk       (walkM)
+import           EngineFiles            (resolveFile)
 import           PandocOptions          (readerOpts, writerOpts)
 import qualified Utils                  as U
 
@@ -121,6 +122,18 @@ pythonExe = do
     inVenv <- doesFileExist venvPython
     return (if inVenv then venvPython else "python3")
 
+-- | The scripts' environment: this process's, with the directory that
+--   holds @tools/viz_theme.py@ first on @PYTHONPATH@. The scripts put
+--   @tools@ on their own path, which finds the theme only while it is the
+--   site's; the engine's is under @engine/tools@ ("EngineFiles").
+scriptEnvironment :: IO [(String, String)]
+scriptEnvironment = do
+    theme     <- takeDirectory <$> resolveFile ("tools" </> "viz_theme.py")
+    inherited <- getEnvironment
+    let rest = [p | Just p <- [lookup "PYTHONPATH" inherited], not (null p)]
+        path = foldr1 (\a b -> a ++ [searchPathSeparator] ++ b) (theme : rest)
+    pure (("PYTHONPATH", path) : filter ((/= "PYTHONPATH") . fst) inherited)
+
 -- | Run @\<python\> <script>@.  Returns the script\'s stdout on success, or an
 --   error message on failure (non-zero exit, missing @script=@ attribute, or
 --   missing script file).  See 'pythonExe' for interpreter selection.
@@ -135,9 +148,11 @@ runScript baseDir attrs =
                 then return (Left ("script not found: " ++ fullPath))
                 else do
                     py     <- pythonExe
+                    envir  <- scriptEnvironment
                     limit  <- scriptTimeoutSeconds
                     result <- withDeadline limit
-                        (readProcessWithExitCode py [fullPath] "")
+                        (readCreateProcessWithExitCode
+                            ((proc py [fullPath]) { env = Just envir }) "")
                         `catch` (\e -> return (Just (ExitFailure 1, "", show (e :: IOException))))
                     return $ case result of
                         Nothing -> Left $
@@ -172,7 +187,7 @@ scriptTimeoutSeconds = do
 -- | Run an action under a deadline in seconds; 'Nothing' on expiry.
 --
 --   'timeout' delivers an asynchronous exception, which unwinds
---   'readProcessWithExitCode'\'s @withCreateProcess@ bracket; that
+--   'readCreateProcessWithExitCode'\'s @withCreateProcess@ bracket; that
 --   bracket's cleanup terminates the child and closes its pipes, so the
 --   stuck interpreter does not outlive the build. A non-positive limit
 --   means "no deadline".

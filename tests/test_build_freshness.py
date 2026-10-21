@@ -314,6 +314,40 @@ class BuildFreshnessTestCase(unittest.TestCase):
         self.assertIn("build rules changed", self.check("engine/tools"))
         self.assertTrue(self.cleaned())
 
+    def test_an_override_added_or_removed_forces_a_clean(self):
+        # Which file wins is settled as the rules are evaluated
+        # (build/EngineFiles.hs), so an override changes the rules.
+        self.write("engine/templates/page.html", "engine\n")
+        self.write("engine/static/css/base.css", "body{}\n")
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "engine defaults")
+        self.assertIn("incremental build OK", self.check())
+        self.write("templates/page.html", "site\n")
+        self.assertIn("build rules changed", self.check())
+        self.assertTrue(self.cleaned())
+        self.run_script("stamp")
+        os.unlink(self.root / "CLEANED")
+        self.write("templates/page.html", "site, edited\n")
+        self.assertIn("incremental build OK", self.check())
+        os.unlink(self.root / "templates" / "page.html")
+        self.assertIn("build rules changed", self.check())
+        self.assertTrue(self.cleaned())
+
+    def test_the_engine_tests_and_demonstration_site_are_not_overrides(self):
+        for rel in ("tests/test_a.py", "fixture-site/site.yaml", "dist-newstyle/cache/plan.json"):
+            self.write(rel, "site\n")
+            self.write(f"engine/{rel}", "engine\n")
+        self.assertIn("incremental build OK", self.check())
+        self.assertFalse(self.cleaned())
+
+    def test_an_engine_static_deletion_forces_a_clean(self):
+        self.write("engine/static/js/a.js", "1\n")
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "engine script")
+        os.unlink(self.root / "engine" / "static" / "js" / "a.js")
+        self.assertIn("uncommitted deletions", self.check())
+        self.assertTrue(self.cleaned())
+
     def test_content_deletion_forces_a_clean(self):
         os.unlink(self.root / "content" / "essays" / "one.md")
         self.assertIn("uncommitted deletions", self.check())

@@ -29,11 +29,12 @@ import Authors    (buildAllAuthors, applyAuthorRules)
 import Backlinks  (backlinkRules)
 import FooterData (footerRules)
 import BibExtras  (BibExtra (..), emptyBibExtra, firstAuthorSurname, parseBibExtras)
-import Citations  (renderBibliographyHtml)
+import Citations  (cslStyles, renderBibliographyHtml)
 import Compilers  (essayCompiler, postCompiler, pageCompiler, poetryCompiler, fictionCompiler,
                    compositionCompiler, sidecarCompiler)
 import Catalog      (musicCatalogCtx)
 import Commonplace  (commonplaceCtx)
+import EngineFiles  (engineTwins, siteRelative, staticRules, templateRules)
 import Now          (nowCtx, nowLastUpdated)
 import Vita         (vitaCtx, projectsCtx)
 import Contexts   (feedTitleField, siteCtx, essayCtx, postCtx, pageCtx, poetryCtx, fictionCtx, compositionCtx,
@@ -49,7 +50,7 @@ import Tags       (buildAllTags, applyTagRules, sidecarIdentifier,
 import Pagination (blogPaginateRules)
 import Stability  (resolveStability)
 import Stats      (statsRules)
-import Utils      (cacheDirFor, confidencePercent, contentPageRoute, escapeHtml, formatIso, inDefault, stripHtmlComments,
+import Utils      (cacheDirFor, confidencePercent, contentPageRoute, escapeHtml, formatIso, inDefault,
                    isDevBuild, metadataKeywords, outputDirFor, stripPrefixRoute,
                    trustScore)
 
@@ -87,7 +88,7 @@ siteConfiguration = siteConfigurationFor False
 siteConfigurationFor :: Bool -> Configuration
 siteConfigurationFor dev = defaultConfiguration
     { ignoreFile = \path ->
-        ignoreFile defaultConfiguration path || neverPublish path
+        ignoreFile defaultConfiguration path || neverPublish path || notSiteInput path
     , destinationDirectory = outputDirFor dev
     , storeDirectory       = cacheDirFor dev
     , tmpDirectory         = cacheDirFor dev ++ "/tmp"
@@ -140,6 +141,16 @@ neverPublish path =
         [ ".env", ".DS_Store", ".netrc", ".npmrc", ".pypirc"
         -- Planning checklists, at any depth.
         , "checklist.md" ]
+
+-- | Directories in the site's tree that are not its input: the engine's
+--   demonstration site, which has content of its own, and cabal's build
+--   directory under @engine/@ as at the root. Unlike 'neverPublish' they
+--   are not private, so Git keeps them. Hakyll passes 'ignoreFile' a bare
+--   name, never a path, so they are refused by name at any depth. The
+--   engine's @tests/@ cannot be told from a site's that way: it is walked,
+--   and no rule claims it.
+notSiteInput :: FilePath -> Bool
+notSiteInput path = takeFileName path `elem` ["fixture-site", "dist-newstyle"]
 
 -- | One library shelf: a portal and the cards it shows, and whether the
 --   portal holds more than that.
@@ -245,6 +256,7 @@ rules = do
     -- excludes them entirely from every match, listing, and asset rule below.
     -- ---------------------------------------------------------------------------
     isDev <- preprocess isDevBuild
+    twins <- engineTwins
     let allEssays = if isDev
                     then P.essayPattern .||. P.draftEssayPattern
                     else P.essayPattern
@@ -303,45 +315,10 @@ rules = do
         route   $ stripPrefixRoute "content/"
         compile copyFileCompiler
 
-    -- CSS — must be matched before the broad static/** rule to avoid
-    -- double-matching (compressCssCompiler vs. copyFileCompiler).
-    match "static/css/*" $ do
-        route   $ stripPrefixRoute "static/"
-        compile compressCssCompiler
-
-    -- All other static files (fonts, JS, images, …). Build-time
-    -- sidecars produced by the Python tooling (.dims.yaml, .exif.yaml,
-    -- .palette.yaml) are excluded — they're consumed by Hakyll at
-    -- compile time and have no role in the deployed site.
-    match (   "static/**"
-        .&&. complement "static/css/*"
-        .&&. complement "static/**/*.dims.yaml"
-        .&&. complement "static/**/*.exif.yaml"
-        .&&. complement "static/**/*.palette.yaml"
-        ) $ do
-        route   $ stripPrefixRoute "static/"
-        compile copyFileCompiler
-
-    -- Static-image dimension sidecars (@static\/images\/foo.jpg.dims.yaml@).
-    --
-    -- Excluded from the copy rule above (they are compile-time inputs, not
-    -- deliverables), which left them claimed by no rule at all and so
-    -- outside Hakyll's universe — where a pattern dependency naming them
-    -- could never fire, because the modified set is intersected with the
-    -- claimed identifiers. Matched here without a route for exactly the
-    -- reason the essay sidecars are: to make them trackable. Audit B11.
-    match "static/**/*.dims.yaml" $ compile getResourceLBS
-
-    -- Templates. Their HTML comments are notes for whoever edits them
-    -- (audit IDs, why a partial is shaped as it is) and are dropped as each
-    -- template compiles: a comment in a partial rendered inside a loop
-    -- shipped once per item (about 750 copies of photo-card's across the
-    -- photography pages), 1.3 MB of comments across the site. Comments in
-    -- content are untouched.
-    match "templates/**" $ compile $ cached "Site.templateWithoutComments" $ do
-        item <- getResourceBody
-        tpl  <- compileTemplateItem (fmap stripHtmlComments item)
-        return (itemSetBody tpl item)
+    -- Static files and templates, the site's and the engine's that no site
+    -- file overrides ("EngineFiles").
+    staticRules twins
+    templateRules twins
 
     -- The repository and the public site carry the same licence texts.
     match (fromList ["LICENSE", "LICENSE-CONTENT"]) $ do
@@ -363,18 +340,19 @@ rules = do
     -- a @/source/…@ target. Files in @static/@ are also served under their
     -- normal /js/, /css/ paths via a separate rule above; the
     -- @"source-preview"@ version lets Hakyll compile the same identifier
-    -- twice without conflict.
+    -- twice without conflict. An engine file is served at its site path,
+    -- unless a site file there overrides it.
     -- ---------------------------------------------------------------------------
-    let sourcePreviewable = foldr1 (.||.) (map fromGlob SR.sourcePreviewGlobs)
+    let sourcePreviewable = foldr1 (.||.) [fromGlob g .||. twins g | g <- SR.sourcePreviewGlobs]
     match sourcePreviewable $ version "source-preview" $ do
-        route   $ customRoute (\ident -> "source/" ++ toFilePath ident)
+        route   $ customRoute (\ident -> "source/" ++ siteRelative (toFilePath ident))
         compile copyFileCompiler
 
     -- Markdown among them also gets a sectioned rendering, so a popup can
     -- show a .md file as prose, or just the section a #fragment names
     -- (MarkdownSections; renderMarkdownPopup in static/js/popups.js).
     match (sourcePreviewable .&&. "**.md") $ version "source-sections" $ do
-        route   $ customRoute (\ident -> "source/" ++ toFilePath ident ++ ".sections.json")
+        route   $ customRoute (\ident -> "source/" ++ siteRelative (toFilePath ident) ++ ".sections.json")
         compile markdownSectionsCompiler
 
     -- Code-reference snapshots — GitHub blobs, trees and commits that prose
@@ -424,7 +402,7 @@ rules = do
     --
     -- Consumers: the essay pipeline (Compilers.trackBibliographyInputs)
     -- and the synthetic /bibliography/ index and keyword pages below.
-    match ("data/*.bib" .||. "data/*.csl") $ compile getResourceString
+    match ("data/*.bib" .||. cslStyles) $ compile getResourceString
 
     -- Commonplace YAML — compiled as a raw string so it can be loaded
     -- with dependency tracking by the commonplace page compiler.
@@ -541,11 +519,12 @@ rules = do
                       -- the same filter (B11).
                       .||. "static/**/*.dims.yaml"
                       .||. "tools/viz_theme.py"
+                      .||. "engine/tools/viz_theme.py"
                       .||. (if isDev
                               then "content/drafts/essays/**/figures/**"
                                    .||. "content/drafts/essays/**/*.dims.yaml"
                               else fromList []))
-    match "tools/viz_theme.py" $ compile getResourceLBS
+    match ("tools/viz_theme.py" .||. "engine/tools/viz_theme.py") $ compile getResourceLBS
 
     rulesExtraDependencies [figureDep] $ match allEssays $ do
         -- content/essays/foo.md → essays/foo.html, a directory essay or
@@ -1063,7 +1042,7 @@ rules = do
     -- files itself, because citeproc wants paths, not contents.
     let trackBibInputs :: Compiler ()
         trackBibInputs = void
-            (loadAll (("data/*.bib" .||. "data/*.csl") .&&. hasNoVersion)
+            (loadAll (("data/*.bib" .||. cslStyles) .&&. hasNoVersion)
                 :: Compiler [Item String])
 
     create ["bibliography/index.html"] $ do

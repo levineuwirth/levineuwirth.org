@@ -31,6 +31,7 @@ Run with:  .venv/bin/python -m unittest discover -s tests
 from __future__ import annotations
 
 import functools
+import os
 import re
 import subprocess
 import sys
@@ -38,7 +39,7 @@ import unittest
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from tests._helpers import SITE_ROOT, engine_path
+from tests._helpers import SITE_ROOT, engine_path, script_env
 
 SITE_DIR = SITE_ROOT / "_site"
 VENV_PYTHON = SITE_ROOT / ".venv" / "bin" / "python3"
@@ -72,12 +73,25 @@ def figure_scripts() -> list[Path]:
     return sorted(set(found))
 
 
+def theme_dir() -> Path:
+    """Where Filters.Viz finds tools/viz_theme.py: the site's, else the
+    engine's (build/EngineFiles.hs)."""
+    for root in (SITE_ROOT, SITE_ROOT / "engine"):
+        if (root / "tools" / "viz_theme.py").is_file():
+            return root / "tools"
+    raise AssertionError("no tools/viz_theme.py in the site or its engine")
+
+
 @functools.lru_cache(maxsize=None)
 def render(script: Path) -> str:
-    """Run a figure script the way Filters.Viz does: from the repo root."""
+    """Run a figure script the way Filters.Viz does: from the site, with
+    the theme's directory first on PYTHONPATH."""
+    env = script_env()
+    env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(theme_dir()), env.get("PYTHONPATH")]))
     result = subprocess.run(
         [str(VENV_PYTHON), str(script)],
         cwd=SITE_ROOT,
+        env=env,
         capture_output=True,
         text=True,
         timeout=120,

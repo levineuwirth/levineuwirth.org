@@ -16,6 +16,7 @@ build/Config.hs
 build/Contexts.hs
 build/Dingbat.hs
 build/Drafts.hs
+build/EngineFiles.hs
 build/Filters.hs
 build/Filters/Aftermatter.hs
 build/Filters/Archive.hs
@@ -254,6 +255,7 @@ tests/test_deploy_guard.py
 tests/test_drafts.py
 tests/test_dynamic_assets.py
 tests/test_embed_extract.py
+tests/test_engine_files.py
 tests/test_epistemic_vocab.py
 tests/test_extract_exif.py
 tests/test_font_sources.py

@@ -116,10 +116,10 @@ buildTOC doc = renderTOC (buildTree (collectHeadings doc))
 
 -- | Register the bibliography inputs a citeproc run reads as tracked
 --   Hakyll dependencies: the page's own @.bib@ file and every CSL style
---   under @data\/@.
+--   ('Citations.cslStyles').
 --
 --   Both are read through 'unsafeCompiler' (and, for the CSL, from a path
---   hard-coded in "Citations"), so nothing else puts them in the
+--   resolved in "Citations"), so nothing else puts them in the
 --   dependency graph. Only files some rule actually claims can be
 --   'load'ed — an identifier outside Hakyll's universe is a hard error,
 --   and can never be out of date either — hence the 'getMatches' guard
@@ -132,7 +132,7 @@ buildTOC doc = renderTOC (buildTree (collectHeadings doc))
 trackBibliographyInputs :: Identifier -> Compiler ()
 trackBibliographyInputs bibIdent = do
     track (fromList [bibIdent])
-    track ("data/*.csl" .&&. hasNoVersion)
+    track (Citations.cslStyles .&&. hasNoVersion)
   where
     track pat = do
         ids <- getMatches pat

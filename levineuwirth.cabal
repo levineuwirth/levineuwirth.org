@@ -25,6 +25,7 @@ executable site
         Backlinks
         Dingbat
         Drafts
+        EngineFiles
         PageScan
         RouteCheck
         PandocOptions
