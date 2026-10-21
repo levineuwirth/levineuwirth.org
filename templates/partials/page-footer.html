@@ -41,7 +41,7 @@
         <circle r="3.5"/>
     </g>
 </svg>
-<div class="page-meta-footer" data-pagefind-ignore="all">
+<section class="page-meta-footer" aria-label="About this page" data-pagefind-ignore="all">
 
     $if(further-reading-refs)$
     <div class="meta-footer-full" id="further-reading">
@@ -59,10 +59,10 @@
 
     $if(footer-deps)$$endif$
     $if(backlinks)$
-    <div class="meta-footer-full meta-footer-backlinks" id="backlinks">
-        <h3>Backlinks</h3>
+    <section class="meta-footer-full meta-footer-backlinks" id="backlinks" aria-labelledby="backlinks-heading">
+        <h3 id="backlinks-heading">Backlinks</h3>
         $backlinks$
-    </div>
+    </section>
     $endif$
 
     $if(similar-links)$
@@ -113,4 +113,4 @@
 
     </div>
 
-</div>
+</section>

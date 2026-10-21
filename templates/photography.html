@@ -75,10 +75,10 @@
             $if(footer-deps)$$endif$
             $if(backlinks)$
             <footer class="page-meta-footer">
-                <div class="meta-footer-full meta-footer-backlinks" id="backlinks">
-                    <h3>Backlinks</h3>
+                <section class="meta-footer-full meta-footer-backlinks" id="backlinks" aria-labelledby="backlinks-heading">
+                    <h3 id="backlinks-heading">Backlinks</h3>
                     $backlinks$
-                </div>
+                </section>
             </footer>
             $endif$
         </article>

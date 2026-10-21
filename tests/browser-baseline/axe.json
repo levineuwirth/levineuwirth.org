@@ -3,53 +3,49 @@
   "target-size": 21
  },
  "build": {
-  "region": 3
+  "region": 2
  },
  "colophon": {
-  "region": 9,
+  "region": 4,
   "target-size": 1
- },
- "commonplace": {
-  "region": 1
  },
  "composition": {
   "heading-order": 1,
-  "label-content-name-mismatch": 2,
-  "region": 1
+  "label-content-name-mismatch": 2
  },
  "essay-grd": {
   "empty-table-header": 4,
-  "region": 5,
+  "region": 4,
   "target-size": 3
  },
  "essay-notes": {
   "heading-order": 1,
-  "region": 7
+  "region": 3
  },
  "essay-proofbroker": {
-  "region": 10,
+  "region": 4,
   "target-size": 4
  },
  "essay-r6": {
-  "region": 10
+  "region": 4
  },
  "essay-scaling": {
-  "region": 5
+  "region": 4
  },
  "essay-simd": {
-  "region": 5,
+  "region": 4,
   "target-size": 1
  },
  "essay-verified": {
-  "region": 12,
+  "region": 4,
   "target-size": 1
  },
  "me": {
-  "region": 9,
+  "region": 4,
   "target-size": 2
  },
  "memento": {
-  "region": 6
+  "region": 3
  },
  "photo-contact": {
   "image-redundant-alt": 377
@@ -59,9 +55,9 @@
  },
  "poem": {
   "heading-order": 1,
-  "region": 4
+  "region": 3
  },
  "stats": {
-  "region": 3
+  "region": 2
  }
 }
