@@ -34,7 +34,7 @@ trap - ERR
 [ -n "$BACKUP" ] && rm -f "$BACKUP"
 
 echo "==> Verifying build..."
-cabal build
+cabal build exe:site
 
 echo ""
 echo "Done. cabal.project.freeze updated."

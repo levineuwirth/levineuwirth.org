@@ -246,5 +246,31 @@ class ProviderWalkTests(unittest.TestCase):
         self.assertEqual(done.stdout.splitlines(), refused)
 
 
+
+@requires_cabal
+class RefreezeTests(unittest.TestCase):
+    def test_refreeze_verifies_a_package_below_the_site_root(self):
+        with tempfile.TemporaryDirectory(prefix="refreeze-engine-") as tmp:
+            root = Path(tmp)
+            engine = root / "engine"
+            engine.mkdir()
+            # A real, minimal Cabal package: no network or external libraries.
+            (root / "cabal.project").write_text(
+                "packages: engine\nactive-repositories: :none\n")
+            (engine / "example-engine.cabal").write_text(
+                "cabal-version: 3.0\nname: example-engine\nversion: 0.1.0.0\n"
+                "build-type: Simple\nexecutable site\n  main-is: Main.hs\n"
+                "  build-depends: base\n  default-language: Haskell2010\n")
+            (engine / "Main.hs").write_text('main :: IO ()\nmain = putStrLn "built"\n')
+            done = subprocess.run(["bash", str(engine_path("tools/refreeze.sh"))],
+                                  cwd=root, env=script_env(), capture_output=True,
+                                  text=True, timeout=120)
+            self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
+            self.assertTrue((root / "cabal.project.freeze").is_file())
+            binary = subprocess.check_output(["cabal", "list-bin", "-v0", "exe:site"],
+                                             cwd=root, env=script_env(), text=True).strip()
+            self.assertEqual(subprocess.check_output([binary], text=True).strip(), "built")
+
+
 if __name__ == "__main__":
     unittest.main()
