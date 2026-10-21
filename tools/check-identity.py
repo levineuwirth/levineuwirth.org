@@ -6,7 +6,9 @@ legacy names, the ln namespace patterns, and the files and directories staying
 in the site; it is not part of the engine. Every file Git sees has an owner.
 An engine path names a file by its path in the engine, found under engine/
 once A6 moves it there and at the root until then; scans and allowances use
-that name, so a move is not a relocation. Allowances cover individual
+that name, so a move is not a relocation. A site file that overrides an
+engine file at the same path (overrides.yaml) is the site's, and the engine's
+is the one under engine/. Allowances cover individual
 occurrences. Stable IDs survive reviewed location
 changes; every recorded revision must be a subset of the previous revision.
 There is deliberately no command to refresh or regenerate allowances.
@@ -28,6 +30,7 @@ ENGINE = "engine/"
 ALLOWANCES = "tests/identity-allowances.yaml"
 POLICY = "tests/identity-policy.yaml"
 PATHS = "tests/engine-paths.txt"
+OVERRIDES = "overrides.yaml"
 
 
 def denylist(config: dict, fixed: list[str]) -> list[str]:
@@ -168,6 +171,18 @@ def load_policy(root: Path) -> dict:
     return policy
 
 
+def overridden(root: Path) -> set[str]:
+    """Paths where the site's overrides.yaml says a site file overrides the
+    engine's: the site's at that path, the engine's under engine/."""
+    path = root / OVERRIDES
+    document = yaml.safe_load(path.read_text()) if path.exists() else []
+    if not isinstance(document, list) or not all(
+            isinstance(e, dict) and isinstance(e.get("site"), str) and isinstance(e.get("engine"), str)
+            for e in document):
+        raise ValueError(f"{OVERRIDES} must be a list of entries with a site and an engine path")
+    return {e["engine"] for e in document if e["site"] == e["engine"]}
+
+
 def visible_files(root: Path) -> set[str]:
     # What Git sees: tracked files plus untracked ones not ignored, so a new
     # file needs an owner before it can be committed, while caches, downloads
@@ -189,15 +204,21 @@ def inventory(root: Path, policy: dict) -> list[str]:
     # vendored file, or a site or vendored directory (an entry ending in /).
     # An engine path inside a site directory is the engine's. Under engine/,
     # only engine paths and vendored files belong, by their path there, and
-    # each engine path is in one place. Engine and site entries must exist;
-    # vendored files are downloaded and need not.
+    # each engine path is in one place, unless a site file overrides it: then
+    # it is both an engine path and a site file, and the engine's is under
+    # engine/. Engine and site entries must exist; vendored files are
+    # downloaded and need not.
     owned = policy["site-files"] + policy["vendored-files"]
     files = [e for e in owned if not e.endswith("/")]
     directories = [e for e in owned if e.endswith("/")]
     listed = paths + files + directories
     candidates = visible_files(root)
-    conflicting = sorted({e for e in listed if listed.count(e) > 1}
-                         | {p for p in paths if p in candidates and ENGINE + p in candidates})
+    overrides = overridden(root)
+    paired = overrides & set(paths) & set(policy["site-files"])
+    conflicting = sorted({e for e in listed if listed.count(e) > (2 if e in paired else 1)}
+                         | {p for p in paths if p in candidates and ENGINE + p in candidates
+                            and p not in paired}
+                         | (overrides - paired))
     exact = set(paths) | set(files)
     vendored = policy["vendored-files"]
 
@@ -211,6 +232,7 @@ def inventory(root: Path, policy: dict) -> list[str]:
     unclassified = sorted(p for p in candidates if not owner(p))
     site = policy["site-files"]
     missing = sorted({p for p in paths if p not in candidates and ENGINE + p not in candidates}
+                     | {ENGINE + p for p in paired if ENGINE + p not in candidates}
                      | ({e for e in site if not e.endswith("/")} - candidates)
                      | {d for d in site if d.endswith("/") and not any(p.startswith(d) for p in candidates)})
     if unclassified or missing or conflicting:

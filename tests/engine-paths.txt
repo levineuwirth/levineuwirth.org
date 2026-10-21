@@ -157,6 +157,7 @@ static/licenses/monolith-CC0.txt
 static/licenses/monolith-dependencies.txt
 static/templates/epistemic-figure-reference.svg
 static/templates/mark-template.svg
+templates/404.html
 templates/archive-index.html
 templates/archive.html
 templates/author-index.html
@@ -178,12 +179,14 @@ templates/new.html
 templates/page.html
 templates/partials/archive-banner.html
 templates/partials/archive-removal-notice.html
+templates/partials/footer.html
 templates/partials/head.html
 templates/partials/item-card.html
 templates/partials/list-controls.html
 templates/partials/metadata-header.html
 templates/partials/metadata-tail.html
 templates/partials/nav.html
+templates/partials/ornament.html
 templates/partials/page-footer.html
 templates/partials/paginate-nav.html
 templates/partials/photo-card.html

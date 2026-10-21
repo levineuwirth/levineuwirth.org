@@ -171,7 +171,28 @@ class IdentityTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, message):
                     checker.inventory(root, policy)
                 (root / name).unlink()
+            # A site file may override an engine file at the same path when
+            # overrides.yaml says so: it is then the site's, and the engine's
+            # is the one under engine/.
+            (root / "data/style.csl").write_text("")
+            overriding = dict(policy, **{"site-files": policy["site-files"] + [checker.OVERRIDES,
+                                                                               "data/style.csl"]})
+            (root / checker.OVERRIDES).write_text(
+                "- site: data/style.csl\n  engine: data/style.csl\n  reviewed: x\n")
+            self.assertEqual(checker.inventory(root, overriding), ["Makefile", "data/style.csl"])
+            with self.assertRaisesRegex(ValueError, r"conflicting=\['data/style.csl'\]"):
+                checker.inventory(root, dict(overriding, **{"site-files": policy["site-files"]
+                                                            + [checker.OVERRIDES]}))
             (root / "engine/data/style.csl").unlink()
+            with self.assertRaisesRegex(ValueError, r"missing=\['engine/data/style.csl'\]"):
+                checker.inventory(root, overriding)
+            (root / checker.OVERRIDES).write_text("- site: data/style.csl\n")
+            with self.assertRaisesRegex(ValueError, "site and an engine path"):
+                checker.inventory(root, overriding)
+            (root / checker.OVERRIDES).unlink()
+            with self.assertRaisesRegex(ValueError, r"conflicting=\['data/style.csl'\]"):
+                checker.inventory(root, overriding)
+            (root / "data/style.csl").unlink()
             with self.assertRaisesRegex(ValueError, r"missing=\['data/style.csl'\]"):
                 checker.inventory(root, policy)
             (root / checker.POLICY).write_text(yaml.safe_dump(dict(policy, extra=[])))

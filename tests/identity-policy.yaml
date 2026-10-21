@@ -44,6 +44,7 @@ site-files:
 - data/
 - forgejo/
 - nginx/
+- overrides.yaml
 - paper/
 - site.yaml
 - static/apple-touch-icon.png
@@ -68,6 +69,7 @@ site-files:
 - systemd/
 - templates/404.html
 - templates/partials/footer.html
+- templates/partials/ornament.html
 - templates/projects.html
 - templates/vita.html
 - tests/browser-baseline/axe.json

@@ -1,0 +1,15 @@
+# Site files that override an engine file at the same path. `reviewed` is
+# the engine file's Git blob id when the override was last checked against
+# it; a different blob means the engine changed under the override.
+- site: templates/404.html
+  engine: templates/404.html
+  reviewed: b28f130ea9387c2aa78dda684aac519d49b3bc32
+  note: the site's voice, and its search and library pages
+- site: templates/partials/footer.html
+  engine: templates/partials/footer.html
+  reviewed: 8571d4685f8fdb27738e71e5855e491756188f44
+  note: identity, vita and projects, licenses, memento mori, build time and signature
+- site: templates/partials/ornament.html
+  engine: templates/partials/ornament.html
+  reviewed: 8bd1bda3354286c1b7580a1924eff061ef1a84be
+  note: the hand-drawn ornament

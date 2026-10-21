@@ -5,11 +5,13 @@ import json
 import os
 import re
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import unittest
 
-from tests._helpers import ENGINE, copy_engine_tree, engine_path, requires_cabal, script_env, write_site_config
+from tests._helpers import (ENGINE, SITE_ROOT, copy_engine_tree, engine_path, load_tool, requires_cabal,
+                            script_env, site_binary, write_site_config)
 
 
 @requires_cabal
@@ -42,7 +44,7 @@ main = hakyll $ do
               <> constField "url" "/probe" <> constField "canonical-url" "/probe"
               <> bodyField "body"
     forM_ ["partials/head.html", "partials/footer.html", "partials/nav.html",
-           "partials/archive-removal-notice.html",
+           "partials/archive-removal-notice.html", "partials/ornament.html",
            "404.html", "score-reader-default.html"] $ \\name ->
         create [fromFilePath name] $ do
             route idRoute
@@ -180,3 +182,30 @@ main = hakyll $ do
             ornaments = {name: (root / "_site" / name).read_text() for name in expected}
             self.assertEqual(ornaments, expected)
             self.assertEqual((root / "_site/link-graph.txt").read_text(), "True")
+
+    def test_the_engine_defaults_carry_the_site_s_identity_and_no_other(self):
+        # The engine's own footer, not-found page and ornament, which this
+        # site overrides (overrides.yaml), so its build never renders them.
+        # None may carry this site's identity (tools/check-identity.py).
+        config = json.loads(subprocess.check_output([str(site_binary()), "config"],
+                                                    cwd=SITE_ROOT, text=True))
+        identity = load_tool("check-identity.py").denylist(config, [])
+        with tempfile.TemporaryDirectory(prefix="engine-defaults-") as tmp:
+            root = Path(tmp)
+            shutil.copytree(engine_path("templates"), root / "templates")
+            write_site_config(root, title="Atelier & Co", host="atelier.example",
+                              url="https://atelier.example", email="studio@atelier.example",
+                              **{"code-license": "Apache-2.0"})
+            done = subprocess.run([str(self.binary), "build"], cwd=root, env=script_env(),
+                                  capture_output=True, text=True, timeout=60)
+            self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
+            pages = {name: (root / "_site" / name).read_text()
+                     for name in ("partials/footer.html", "404.html", "partials/ornament.html")}
+            self.assertIn('<a href="/">atelier.example</a>', pages["partials/footer.html"])
+            self.assertIn(">Apache-2.0</a>", pages["partials/footer.html"])
+            self.assertIn("Atelier &amp; Co", pages["404.html"])
+            self.assertIn('href="mailto:studio@atelier.example"', pages["404.html"])
+            self.assertIn('class="footer-ornament"', pages["partials/ornament.html"])
+            for name, page in pages.items():
+                self.assertEqual([t for t in identity if t.lower() in page.lower()], [], name)
+                self.assertNotIn("<!--", page, name)
