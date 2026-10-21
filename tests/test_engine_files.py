@@ -8,6 +8,7 @@ scratch site.
 """
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -17,6 +18,8 @@ from tests._helpers import ENGINE, SITE_ROOT, engine_path, requires_cabal, scrip
 PROBE = '''{-# LANGUAGE OverloadedStrings #-}
 import Control.Monad (forM_, (>=>))
 import EngineFiles
+import Compilers (essayCompiler, photographyCompiler)
+import Config (configRules)
 import Hakyll
 import System.Environment (getArgs)
 
@@ -29,6 +32,14 @@ main = getArgs >>= \\args -> case args of
         twins <- engineTwins
         staticRules twins
         templateRules twins
+        configRules
+        dims <- makePatternDependency (staticImageDimensions .&&. hasNoVersion)
+        rulesExtraDependencies [dims] $ match "content/essays/*.md" $ do
+            route $ setExtension "html"
+            compile essayCompiler
+        match "content/photography/*.md" $ do
+            route $ setExtension "html"
+            compile photographyCompiler
         forM_ ["plain.html", "shadowed.html"] $ \\name ->
             create [fromFilePath name] $ do
                 route idRoute
@@ -126,6 +137,84 @@ class EngineFilesTests(unittest.TestCase):
         self.assertEqual(self.built("js/shared.js"), "site();\n")
         self.assertFalse((self.root / "_site/images/a.png.dims.yaml").exists())
         self.assertFalse((self.root / "_site/engine").exists())
+
+    def test_template_migration_cleans_then_engine_edits_rebuild(self):
+        # Exercise the real freshness decision and alias rules together.
+        from tests.test_build_freshness import BuildFreshnessTestCase
+        fixture = BuildFreshnessTestCase()
+        fixture.binary = site_binary()
+        self.addCleanup(fixture.doCleanups)
+        fixture.setUp()
+        self.root = fixture.root
+        # The probe has no need for the helper's dummy essay or minimal config.
+        (self.root / "content/essays/one.md").unlink()
+        shutil.copy2(SITE_ROOT / "site.yaml", self.root / "site.yaml")
+        self.write("templates/plain.html", "before move")
+        self.write("templates/shadowed.html", "unchanged")
+        fixture.git("add", "content", "site.yaml", "templates")
+        fixture.git("commit", "-q", "-m", "probe inputs")
+        self.run_probe("build")
+        fixture.run_script("stamp")
+        (self.root / "engine/templates").mkdir(parents=True)
+        (self.root / "templates/plain.html").rename(self.root / "engine/templates/plain.html")
+        self.assertIn("build rules changed", fixture.check())
+        self.assertTrue(fixture.cleaned())
+        self.run_probe("clean")
+        self.run_probe("build")
+        fixture.run_script("stamp")
+        (self.root / "CLEANED").unlink()
+        self.assertEqual(self.built("plain.html"), "before move")
+        stamp = (self.root / "engine/templates/plain.html").stat().st_mtime
+        self.write("engine/templates/plain.html", "after engine edit", stamp + 2)
+        self.assertIn("incremental build OK", fixture.check())
+        self.run_probe("build")
+        self.assertEqual(self.built("plain.html"), "after engine edit")
+
+    def image_pages(self):
+        shutil.copy2(SITE_ROOT / "site.yaml", self.root / "site.yaml")
+        pages = ("content/essays/image.md", "content/photography/image.md")
+        for page in pages:
+            self.write(page, "![Standalone](/images/probe.jpg)\n\n"
+                       "Inline ![inline](/images/probe.jpg) image.\n\n"
+                       "![Local](local.jpg)\n")
+            self.write(str(Path(page).parent / "local.jpg.dims.yaml"), "width: 33\nheight: 22\n")
+        self.write("static/images/probe.jpg", "image fixture")
+        self.write("static/images/probe.webp", "webp fixture")
+        self.write("static/images/probe.jpg.dims.yaml", "width: 640\nheight: 480\n")
+        return [str(Path(page).with_suffix(".html")) for page in pages]
+
+    def test_image_rendering_survives_move_and_site_sidecars_win(self):
+        pages = self.image_pages()
+        self.run_probe("build")
+        before = [self.built(page) for page in pages]
+        for html in before:
+            self.assertEqual(html.count('<picture>'), 2)
+            self.assertEqual(html.count('width="640"'), 2)
+            self.assertIn('width="33"', html)
+        (self.root / "static").rename(self.root / "engine/static")
+        self.run_probe("clean")
+        self.run_probe("build")
+        self.assertEqual([self.built(page) for page in pages], before)
+        self.write("static/images/probe.jpg.dims.yaml", "width: 320\nheight: 240\n")
+        self.run_probe("build")
+        for page in pages:
+            self.assertEqual(self.built(page).count('width="320"'), 2)
+        # Shadowed engine sidecars must not make the dependency pattern
+        # disagree with Hakyll's claimed identifiers on every build.
+        log = self.run_probe("build")
+        for page in pages:
+            self.assertNotIn("updated " + str(Path(page).with_suffix(".md")), log)
+
+    def test_engine_sidecar_edits_rebuild_essay_and_photo(self):
+        pages = self.image_pages()
+        (self.root / "static").rename(self.root / "engine/static")
+        self.run_probe("build")
+        sidecar = self.root / "engine/static/images/probe.jpg.dims.yaml"
+        self.write(str(sidecar.relative_to(self.root)), "width: 800\nheight: 600\n",
+                   sidecar.stat().st_mtime + 2)
+        self.run_probe("build")
+        for page in pages:
+            self.assertEqual(self.built(page).count('width="800"'), 2)
 
     def test_raw_reads_take_the_site_file_then_the_engine_s(self):
         self.write("data/both.csl", "site")

@@ -34,7 +34,7 @@ import Compilers  (essayCompiler, postCompiler, pageCompiler, poetryCompiler, fi
                    compositionCompiler, sidecarCompiler)
 import Catalog      (musicCatalogCtx)
 import Commonplace  (commonplaceCtx)
-import EngineFiles  (engineTwins, siteRelative, staticRules, templateRules)
+import EngineFiles  (engineTwins, siteRelative, staticImageDimensions, staticRules, templateRules)
 import Now          (nowCtx, nowLastUpdated)
 import Vita         (vitaCtx, projectsCtx)
 import Contexts   (feedTitleField, siteCtx, essayCtx, postCtx, pageCtx, poetryCtx, fictionCtx, compositionCtx,
@@ -515,9 +515,9 @@ rules = do
                      (     "content/essays/**/figures/**"
                       .||. "content/essays/**/*.dims.yaml"
                       -- Essays embed site-wide images from /images/; their
-                      -- dimension sidecars live under static/ and are read by
+                      -- dimension sidecars live under either static/ root and are read by
                       -- the same filter (B11).
-                      .||. "static/**/*.dims.yaml"
+                      .||. staticImageDimensions
                       .||. "tools/viz_theme.py"
                       .||. "engine/tools/viz_theme.py"
                       .||. (if isDev

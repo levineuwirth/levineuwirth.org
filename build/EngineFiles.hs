@@ -21,7 +21,9 @@
 --
 -- Which file wins is decided as the rules are evaluated, so adding or
 -- removing an override needs a clean build (removing one always does):
--- tools/build-freshness.sh counts the overrides into its rules hash.
+-- tools/build-freshness.sh counts overrides and template aliases into its
+-- rules hash. A root template moved into the engine must also acquire the
+-- alias dependency instead of keeping its cached resource compiler result.
 module EngineFiles
     ( engineDir
     , siteRelative
@@ -32,6 +34,7 @@ module EngineFiles
     , fromEngine
     , templateRules
     , staticRules
+    , staticImageDimensions
     ) where
 
 import           Control.Exception (IOException, catch)
@@ -149,4 +152,11 @@ staticRules twins = do
     -- could never fire, because the modified set is intersected with the
     -- claimed identifiers. Matched here without a route for exactly the
     -- reason the essay sidecars are: to make them trackable. Audit B11.
-    match (served "static/**/*.dims.yaml") $ compile getResourceLBS
+    -- Claim shadowed sidecars too: the dependency pattern covers both
+    -- roots, and every identifier it sees must have an unversioned rule.
+    match staticImageDimensions $ compile getResourceLBS
+
+-- | Dimension inputs read outside Hakyll by Filters.Images. Both roots
+-- are tracked, including new sidecars and site overrides.
+staticImageDimensions :: Pattern
+staticImageDimensions = "static/**/*.dims.yaml" .||. "engine/static/**/*.dims.yaml"

@@ -705,7 +705,7 @@ entries:
   string: data-ln-idx
 - id: I0144
   file: tools/build-freshness.sh
-  line: 96
+  line: 97
   column: 25
   string: levineuwirth
 - id: I0145

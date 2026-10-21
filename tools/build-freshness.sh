@@ -83,13 +83,14 @@ DRAFT_HASH_FILE="$STATE_DIR/unpublished-hash.txt"
 # Everything that changes the compiled site generator: the Haskell rules
 # and the cabal metadata (dependency-bound moves change behaviour too),
 # plus site.yaml: identity and feed settings can change route shape.
-# Templates are deliberately absent — Hakyll tracks those itself. The
+# Template contents are absent — Hakyll tracks those itself. The
 # engine's files are digested by their path in the engine, so moving them
 # under engine/ (A6) changes nothing here.
 #
-# Also the overrides: which of a site file and an engine file wins is
+# Also the overrides and template aliases: which file or compiler wins is
 # settled as the rules are evaluated (build/EngineFiles.hs), so adding or
-# removing one needs a clean build. With no overrides this adds nothing.
+# removing one needs a clean build. A moved template also needs its old
+# resource identifier recompiled as an alias to acquire the new dependency.
 rules_hash() {
     local build cabal
     build=$(engine_path build)
@@ -99,21 +100,25 @@ rules_hash() {
         sha256sum cabal.project cabal.project.freeze
         (cd "$(dirname "$cabal")" && sha256sum "$(basename "$cabal")")
         sha256sum site.yaml
-        overrides | sed 's/^/override /'
+        file_rules
     } | sha256sum | cut -d' ' -f1
 }
 
-# Site files with an engine file at the same path under engine/. The
+# Site overrides and unshadowed engine templates (alias identifiers). The
 # engine's tests and demonstration site, build directories and dot
 # entries are no site's inputs, and are not looked at.
-overrides() {
+file_rules() {
     [ -d engine ] || return 0
     (cd engine && find . -mindepth 1 \( -name '.*' -o -name __pycache__ -o -name dist-newstyle \
                                        -o -name fixture-site -o -path ./tests \) -prune \
                     -o \( -type f -o -type l \) -print) |
         sed 's|^\./||' | LC_ALL=C sort |
         while IFS= read -r file; do
-            if [ -e "$file" ] || [ -L "$file" ]; then printf '%s\n' "$file"; fi
+            if [ -e "$file" ] || [ -L "$file" ]; then
+                printf 'override %s\n' "$file"
+            elif [[ "$file" == templates/* ]]; then
+                printf 'template-alias %s\n' "$file"
+            fi
         done
 }
 
@@ -209,7 +214,7 @@ check() {
     if [ ! -f "$RULES_HASH_FILE" ]; then
         reasons+=("no rules-hash on record (first run under freshness tracking)")
     elif [ "$(rules_hash)" != "$(cat "$RULES_HASH_FILE")" ]; then
-        reasons+=("build rules changed (build/**/*.hs, cabal metadata, site.yaml or overrides)")
+        reasons+=("build rules changed (build/**/*.hs, cabal metadata, site.yaml, overrides or template aliases)")
     fi
 
     base=""

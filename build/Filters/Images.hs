@@ -51,6 +51,7 @@ import           Text.Pandoc.Walk     (walk, walkM)
 import           System.Directory     (doesFileExist)
 import           System.FilePath      (replaceExtension, takeExtension, (</>))
 import qualified Utils                as U
+import           EngineFiles          (resolveFile)
 
 -- | Apply image attribute injection and WebP wrapping to the entire document.
 --
@@ -99,7 +100,7 @@ transformBlock srcDir b@(Figure figAttr caption [Plain [Image imgAttr alt target
     if not (isLocalRaster src)
         then pure b
         else do
-            hasWebp <- doesFileExist (webpPhysicalPath srcDir (fst target))
+            hasWebp <- webpPhysicalPath srcDir (fst target) >>= doesFileExist
             if not hasWebp
                 then pure b  -- Pandoc handles aria-hidden naturally on the no-WebP path.
                 else synthesizeFigure srcDir figAttr caption imgAttr alt target
@@ -167,7 +168,7 @@ renderImg srcDir attr0 alt0 target@(src, _) lightbox = do
     dims <- if local then readDims srcDir src else pure Nothing
     if isRaster
         then do
-            hasWebp <- doesFileExist (webpPhysicalPath srcDir src)
+            hasWebp <- webpPhysicalPath srcDir src >>= doesFileExist
             if hasWebp
                 then pure $ RawInline (Format "html")
                                       (renderPicture attr alt target lightbox dims)
@@ -199,28 +200,30 @@ renderImg srcDir attr0 alt0 target@(src, _) lightbox = do
 -- | Physical on-disk path of the @.webp@ companion for a Markdown image src.
 --
 --   Absolute paths (@/images/foo.jpg@) resolve under @static/@ because that
---   is where Hakyll's static-asset rule writes them from. Relative paths
+--   is where Hakyll's static-asset rule writes them from (site first,
+--   then engine). Relative paths
 --   resolve against the source file's directory, where Pandoc already
 --   expects co-located assets to live.
-webpPhysicalPath :: FilePath -> Text -> FilePath
+webpPhysicalPath :: FilePath -> Text -> IO FilePath
 webpPhysicalPath srcDir src =
-    let s = T.unpack src
-        physical = if "/" `isPrefixOf` s
-                   then "static" ++ s
-                   else srcDir </> s
-    in replaceExtension physical ".webp"
+    imageInputPath srcDir src (`replaceExtension` ".webp")
 
 -- | Physical on-disk path of the @.dims.yaml@ sidecar for a Markdown
 --   image src. Same path-resolution rules as 'webpPhysicalPath'; the
 --   sidecar lives next to the original image with the literal
 --   extension @.dims.yaml@ appended.
-dimsPhysicalPath :: FilePath -> Text -> FilePath
+dimsPhysicalPath :: FilePath -> Text -> IO FilePath
 dimsPhysicalPath srcDir src =
+    imageInputPath srcDir src (++ ".dims.yaml")
+
+-- Resolve the companion itself, so each site file overrides its engine
+-- default. Co-located content stays relative to the source directory.
+imageInputPath :: FilePath -> Text -> (FilePath -> FilePath) -> IO FilePath
+imageInputPath srcDir src companion =
     let s = T.unpack src
-        physical = if "/" `isPrefixOf` s
-                   then "static" ++ s
-                   else srcDir </> s
-    in physical ++ ".dims.yaml"
+    in if "/" `isPrefixOf` s
+       then resolveFile (companion ("static" ++ s))
+       else pure (companion (srcDir </> s))
 
 -- | Read the @{image}.dims.yaml@ sidecar and return @(width, height)@
 --   when present and parseable. Returns 'Nothing' on absent file,
@@ -229,7 +232,7 @@ dimsPhysicalPath srcDir src =
 --   guess that would size the image wrong on first paint).
 readDims :: FilePath -> Text -> IO (Maybe (Int, Int))
 readDims srcDir src = do
-    let path = dimsPhysicalPath srcDir src
+    path <- dimsPhysicalPath srcDir src
     exists <- doesFileExist path
     if not exists
         then pure Nothing

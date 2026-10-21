@@ -36,6 +36,7 @@ import qualified Citations
 import qualified Filters.Headings           as Headings
 import qualified Filters.Score              as Score
 import qualified Filters.Viz               as Viz
+import           EngineFiles                (staticImageDimensions)
 
 -- ---------------------------------------------------------------------------
 -- Reader / writer options
@@ -276,7 +277,7 @@ photographyCompiler = do
     when ("![" `isInfixOf` src) $
         void $ getMatches (   "content/photography/*.dims.yaml"
                          .||. "content/photography/*/*.dims.yaml"
-                         .||. "static/**/*.dims.yaml")
+                         .||. staticImageDimensions)
     return htmlItem
 
 -- | Reduced pipeline for tag-meta sidecar markdown files. Applies
