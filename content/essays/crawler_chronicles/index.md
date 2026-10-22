@@ -220,6 +220,7 @@ I additionally attached this PDF, which was created using `latex-atlas`, a side-
 
 ### A response
 On October 22, I got the following response:
+
 <details class="correspondence">
 <summary>Read the email to EGIHosting</summary>
 
