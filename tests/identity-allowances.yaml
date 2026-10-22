@@ -5,12 +5,12 @@ initial-count: 159
 entries:
 - id: I0001
   file: Makefile
-  line: 421
+  line: 420
   column: 96
   string: levineuwirth
 - id: I0002
   file: Makefile
-  line: 583
+  line: 582
   column: 19
   string: levineuwirth.org
 - id: I0003

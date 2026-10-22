@@ -60,7 +60,7 @@ class PublishedLicenseTests(unittest.TestCase):
     def test_distributed_notices_match_the_repository(self):
         pairs = [(SITE_ROOT / "LICENSE", SITE / "licenses/MIT.txt"),
                  (SITE_ROOT / "LICENSE-CONTENT", SITE / "licenses/CC-BY-NC-SA-4.0.txt")]
-        # The engine's notices and the site's; one directory until A6d.
+        # The engine's notices and the site's.
         for static in dict.fromkeys((engine_path("static"), SITE_ROOT / "static")):
             pairs += [(p, SITE / p.relative_to(static))
                       for p in (static / "licenses").glob("*.txt")]

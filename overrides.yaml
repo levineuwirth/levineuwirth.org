@@ -13,3 +13,99 @@
   engine: templates/partials/ornament.html
   reviewed: 8bd1bda3354286c1b7580a1924eff061ef1a84be
   note: the hand-drawn ornament
+- site: static/apple-touch-icon.png
+  engine: static/apple-touch-icon.png
+  reviewed: 815d15b491ddd8cb05f4ec579637d9ea7d9a977f
+  note: the rooted-L mark
+- site: static/favicon-96x96.png
+  engine: static/favicon-96x96.png
+  reviewed: 5586a8bf3db8f351ac2075888bbca00cbe0365ee
+  note: the rooted-L mark
+- site: static/favicon.ico
+  engine: static/favicon.ico
+  reviewed: 62dc29162eb6eda086c55aeb46653c913b7c9dd0
+  note: the rooted-L mark
+- site: static/favicon.svg
+  engine: static/favicon.svg
+  reviewed: a0dbe8060e3dbd06d605024515b54a7f592794fb
+  note: the rooted-L mark, in the site's ink and paper, light and dark
+- site: static/images/dingbats/academic.svg
+  engine: static/images/dingbats/academic.svg
+  reviewed: 503c85053d3718967cbed8aae4bec3989ccbd01c
+  note: the drawn academic ornament
+- site: static/images/dingbats/ai.svg
+  engine: static/images/dingbats/ai.svg
+  reviewed: 503c85053d3718967cbed8aae4bec3989ccbd01c
+  note: the drawn ai ornament
+- site: static/images/dingbats/artistic.svg
+  engine: static/images/dingbats/artistic.svg
+  reviewed: 503c85053d3718967cbed8aae4bec3989ccbd01c
+  note: the drawn artistic ornament
+- site: static/images/dingbats/clef.svg
+  engine: static/images/dingbats/clef.svg
+  reviewed: 503c85053d3718967cbed8aae4bec3989ccbd01c
+  note: the drawn clef ornament
+- site: static/images/dingbats/fiction.svg
+  engine: static/images/dingbats/fiction.svg
+  reviewed: 503c85053d3718967cbed8aae4bec3989ccbd01c
+  note: the drawn fiction ornament
+- site: static/images/dingbats/fleuron.svg
+  engine: static/images/dingbats/fleuron.svg
+  reviewed: 503c85053d3718967cbed8aae4bec3989ccbd01c
+  note: the drawn fleuron ornament
+- site: static/images/dingbats/library-divider.svg
+  engine: static/images/dingbats/library-divider.svg
+  reviewed: edb8ef06ccfd4e9db7176a8f658ce5bd01492ca7
+  note: the drawn library divider ornament
+- site: static/images/dingbats/lozenge.svg
+  engine: static/images/dingbats/lozenge.svg
+  reviewed: 503c85053d3718967cbed8aae4bec3989ccbd01c
+  note: the drawn lozenge ornament
+- site: static/images/dingbats/memento.svg
+  engine: static/images/dingbats/memento.svg
+  reviewed: 503c85053d3718967cbed8aae4bec3989ccbd01c
+  note: the drawn memento ornament
+- site: static/images/dingbats/nonfiction.svg
+  engine: static/images/dingbats/nonfiction.svg
+  reviewed: 503c85053d3718967cbed8aae4bec3989ccbd01c
+  note: the drawn nonfiction ornament
+- site: static/images/dingbats/poetry.svg
+  engine: static/images/dingbats/poetry.svg
+  reviewed: 503c85053d3718967cbed8aae4bec3989ccbd01c
+  note: the drawn poetry ornament
+- site: static/images/dingbats/professional.svg
+  engine: static/images/dingbats/professional.svg
+  reviewed: 503c85053d3718967cbed8aae4bec3989ccbd01c
+  note: the drawn professional ornament
+- site: static/images/dingbats/research.svg
+  engine: static/images/dingbats/research.svg
+  reviewed: 503c85053d3718967cbed8aae4bec3989ccbd01c
+  note: the drawn research ornament
+- site: static/images/dingbats/tech.svg
+  engine: static/images/dingbats/tech.svg
+  reviewed: 503c85053d3718967cbed8aae4bec3989ccbd01c
+  note: the drawn tech ornament
+- site: static/images/dingbats/trefoil.svg
+  engine: static/images/dingbats/trefoil.svg
+  reviewed: 503c85053d3718967cbed8aae4bec3989ccbd01c
+  note: the drawn trefoil ornament
+- site: static/images/link-icons/internal.svg
+  engine: static/images/link-icons/internal.svg
+  reviewed: 40b07c47f0d74a446f2a3477b5c9021800d67648
+  note: the cursive L
+- site: static/logo-sprite.svg
+  engine: static/logo-sprite.svg
+  reviewed: 82cb581515a7161e1083340cf5402f410eb472f6
+  note: the rooted-L mark, two-tone in the logo tokens
+- site: static/og-image.png
+  engine: static/og-image.png
+  reviewed: 54f42a98cdb9e57036edb90e678f5b748d424450
+  note: the site's preview card
+- site: static/web-app-manifest-192x192.png
+  engine: static/web-app-manifest-192x192.png
+  reviewed: 4cbbb174313d163ec9032dee4a804e7521acedd4
+  note: the rooted-L mark
+- site: static/web-app-manifest-512x512.png
+  engine: static/web-app-manifest-512x512.png
+  reviewed: 0883ebdc35ae091f5cc2d0881c2c9af9d9807ec3
+  note: the rooted-L mark

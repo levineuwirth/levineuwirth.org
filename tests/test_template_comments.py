@@ -39,7 +39,7 @@ class TemplateCommentTests(unittest.TestCase):
 
     def test_no_template_keeps_a_comment(self) -> None:
         # Every comment a template has today is closed and is removed.
-        # The engine's templates and the site's; one directory until A6c.
+        # The engine's templates and the site's.
         for root in dict.fromkeys((engine_path("templates"), SITE_ROOT / "templates")):
             for path in sorted(root.rglob("*.html")):
                 with self.subTest(template=path.relative_to(root.parent).as_posix()):

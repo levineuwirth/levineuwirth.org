@@ -136,7 +136,7 @@ build-locked:
 	@$(MAKE) -s pdf-thumbs
 	@$(call tool,download-pdfjs.sh)
 	@$(call tool,download-leaflet.sh)
-	# The semantic-search model (static/models/, gitignored), like the two
+	# The semantic-search model (engine/static/models/, gitignored), like the two
 	# above: without it the deploy's rsync --delete would remove the
 	# published model (audit D07). Skips present files after re-checking
 	# their pinned SHA-256.
@@ -275,16 +275,16 @@ sign:
 download-model:
 	@$(call tool,download-model.sh)
 
-# Vendor Mozilla's prebuilt PDF.js viewer into static/pdfjs/.
+# Vendor Mozilla's prebuilt PDF.js viewer into engine/static/pdfjs/.
 # Runs automatically as part of `build` (skips when already present).
-# Files are gitignored; sha256-verified against tools/pdfjs-checksums.sha256.
+# Files are gitignored; sha256-verified against engine/tools/pdfjs-checksums.sha256.
 download-pdfjs:
 	@$(call tool,download-pdfjs.sh)
 
-# Vendor Leaflet + leaflet.markercluster into static/leaflet/.
+# Vendor Leaflet + leaflet.markercluster into engine/static/leaflet/.
 # Used only by /photography/map/. Runs automatically as part of `build`
 # (skips when already present). Files are gitignored; sha256-verified
-# against tools/leaflet-checksums.sha256.
+# against engine/tools/leaflet-checksums.sha256.
 download-leaflet:
 	@$(call tool,download-leaflet.sh)
 
@@ -356,9 +356,8 @@ pdf-thumbs-locked:
 	# PDF would silently ship without a thumbnail.
 	# Walk ALL of static/ (not just papers/): /cv.pdf and /resume.pdf are
 	# the most-linked PDFs on the site and need hover thumbnails too.
-	# pdfjs/ is pruned — the vendored viewer ships sample PDFs.
 	@if command -v pdftoppm >/dev/null 2>&1; then \
-	  find static -path static/pdfjs -prune -o -name '*.pdf' -print 2>/dev/null | while read pdf; do \
+	  find static -name '*.pdf' -print 2>/dev/null | while read pdf; do \
 	    thumb="$${pdf%.pdf}.thumb"; \
 	    if [ ! -f "$${thumb}.png" ] || [ "$$pdf" -nt "$${thumb}.png" ]; then \
 	      echo "  pdf-thumb $$pdf"; \

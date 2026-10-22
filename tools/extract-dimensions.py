@@ -47,7 +47,7 @@ SITE_ROOT = sitelib.SITE_ROOT
 # .dims.yaml". The few extra bytes of YAML are immaterial.
 WALK_ROOTS = list(dict.fromkeys([
     sitelib.engine_path("static/images"),  # the engine's (link icons)
-    SITE_ROOT / "static" / "images",       # the site's; the same directory until A6d
+    SITE_ROOT / "static" / "images",       # the site's
     SITE_ROOT / "content",
 ]))
 

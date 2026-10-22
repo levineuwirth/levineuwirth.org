@@ -8,7 +8,9 @@ scratch site.
 """
 import os
 from pathlib import Path
+import re
 import shutil
+import struct
 import subprocess
 import tempfile
 import unittest
@@ -270,6 +272,47 @@ class RefreezeTests(unittest.TestCase):
             binary = subprocess.check_output(["cabal", "list-bin", "-v0", "exe:site"],
                                              cwd=root, env=script_env(), text=True).strip()
             self.assertEqual(subprocess.check_output([binary], text=True).strip(), "built")
+
+
+# A root-relative image the engine's templates, styles or scripts name.
+# PDF.js, Leaflet and the search model are downloaded with their own files.
+IMAGE_URL = re.compile(r"""(?:["'(]|\$site-url\$)(/[\w./-]+\.(?:svg|png|ico|jpe?g|webp|gif))""")
+DOWNLOADED = ("/pdfjs/", "/leaflet/", "/models/")
+
+
+class EngineDefaultsTests(unittest.TestCase):
+    """A site brings its own icons, logo, preview card and ornaments
+    (overrides.yaml); the engine has a neutral default for each, so a site
+    that brings none still builds."""
+
+    def test_every_image_the_engine_names_is_its_own(self):
+        named = set()
+        for directory in ("templates", "static/css", "static/js"):
+            for path in engine_path(directory).rglob("*"):
+                if path.is_file():
+                    named.update(url for url in IMAGE_URL.findall(path.read_text(errors="replace"))
+                                 if not url.startswith(DOWNLOADED))
+        self.assertGreater(len(named), 40)
+        static = engine_path("static")
+        self.assertEqual(sorted(u for u in named if not (static / u.lstrip("/")).is_file()), [])
+
+    def test_each_icon_is_the_size_the_engine_declares(self):
+        declared = {}
+        for tag in re.findall(r"<link [^>]*>", engine_path("templates/partials/head.html").read_text()):
+            href, sizes = re.search(r'href="(/[^"]+\.png)"', tag), re.search(r'sizes="(\d+)x(\d+)"', tag)
+            if href and sizes:
+                declared[href[1]] = (int(sizes[1]), int(sizes[2]))
+        manifest = engine_path("templates/site.webmanifest").read_text()
+        for src, width, height in re.findall(r'"src": "([^"]+)",\s*"sizes": "(\d+)x(\d+)"', manifest):
+            declared[src] = (int(width), int(height))
+        self.assertEqual(len(declared), 4)
+        # The engine's default and the site's own, which stands in for it.
+        for static in dict.fromkeys((engine_path("static"), SITE_ROOT / "static")):
+            for url, size in declared.items():
+                with self.subTest(icon=static / url.lstrip("/")):
+                    header = (static / url.lstrip("/")).read_bytes()[:24]
+                    self.assertEqual(header[:8], b"\x89PNG\r\n\x1a\n")
+                    self.assertEqual(struct.unpack(">II", header[16:24]), size)
 
 
 if __name__ == "__main__":

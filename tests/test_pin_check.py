@@ -14,7 +14,7 @@ from tests._helpers import engine_path, script_env
 
 class VendoringAcrossTheMove(unittest.TestCase):
     def test_pins_are_found_where_a6_has_moved_them(self):
-        # A6d moves the vendored assets and their checksums under engine/
+        # A6d moved the vendored assets and their checksums under engine/
         # before A6e moves the scripts: a downloader still in tools/ must
         # verify the files it has against the moved pins, not refuse and
         # delete them.

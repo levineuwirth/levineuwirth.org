@@ -172,7 +172,7 @@ do it.
   archive steps) with a notice and continues.
 
 - **Client-side semantic search.** Downloads a quantized ONNX model
-  used by `static/js/semantic-search.js` (run once; files are gitignored):
+  used by `engine/static/js/semantic-search.js` (run once; files are gitignored):
 
   ```sh
   make download-model
@@ -188,8 +188,8 @@ do it.
   `make validate REQUIRE_WEBP=1`; `make deploy REQUIRE_WEBP=` overrides it.
 
 - **PDF thumbnails.** `make pdf-thumbs` (also run by `make build`)
-  generates first-page thumbnails for every PDF under `static/` except the
-  vendored `static/pdfjs/`, using `pdftoppm` (`poppler` on Arch,
+  generates first-page thumbnails for every PDF under the site's `static/`,
+  using `pdftoppm` (`poppler` on Arch,
   `poppler-utils` on Debian/Ubuntu). Without it the target prints a notice
   and skips.
 
@@ -210,14 +210,18 @@ the Makefile does not pass it on from `.env`.
   Haskell build system (Hakyll rules, Pandoc filters, contexts), with the
   cabal file beside it; see `engine/build/Filters/` for the Pandoc AST
   transforms (sidenotes, wikilinks, transclusion, score embedding, viz, …).
-  `engine/templates/` holds the Hakyll/Pandoc HTML templates. A site file at
-  the same path without `engine/` overrides the engine's when
-  `overrides.yaml` declares it.
+  `engine/templates/` holds the Hakyll/Pandoc HTML templates, and
+  `engine/static/` the CSS, JS, KaTeX, generic link icons and neutral
+  defaults for the site's identity assets; the PDF.js, Leaflet and
+  search-model downloads land there too. A site file at the same path
+  without `engine/` overrides the engine's when `overrides.yaml` declares it.
 - `content/` — authored Markdown (essays, poetry, fiction, music,
   photography, standalone pages).
 - `templates/` — the site's own templates: the CV pages, and the footer,
   ornament and not-found page that override the engine's.
-- `static/` — CSS, JS, fonts, images, vendored PDF.js.
+- `static/` — the site's fonts, images, papers and CV, and its identity
+  assets (icons, logo, preview card, ornaments), which override the
+  engine's defaults.
 - `tools/` — Python tooling (embeddings, importers) and shell scripts.
 - `data/` — generated and source data (commonplace.yaml, annotations.json,
   bibliographies, similar-links.json).
