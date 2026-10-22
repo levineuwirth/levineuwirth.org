@@ -5,7 +5,7 @@
 Personal site of Levi Neuwirth — essays, poetry, fiction, music, photography,
 and a CV.
 Built with [Hakyll](https://jaspervdj.be/hakyll/) and [Pandoc](https://pandoc.org/),
-with a custom build system in `build/` and a Haskell + JS + Python toolchain.
+with a custom build system in `engine/build/` and a Haskell + JS + Python toolchain.
 
 ## Quickstart
 
@@ -21,7 +21,7 @@ make deploy-clean       # force a full rebuild, then deploy
 
 `make build` is incremental by default; `tools/build-freshness.sh` forces a
 full rebuild automatically when one is required for correctness (the Hakyll
-rules under `build/` or the cabal metadata changed, content was deleted or
+rules under `engine/build/` or the cabal metadata changed, content was deleted or
 renamed, route-defining frontmatter such as `tags:` changed, or the last full
 rebuild is over 7 days old — compile-time values like stability labels drift
 otherwise). `make deploy-clean` forces one manually.
@@ -93,7 +93,7 @@ need no special handling (`content/<page>.md` → `/<page>.html`) need no entry.
 
 `manifest` contains `name`, `short-name`, `description`, `theme-color` and
 `background-color`. The build generates `/site.webmanifest` from these values
-and `templates/site.webmanifest`; the template owns the icon routes and app
+and `engine/templates/site.webmanifest`; the template owns the icon routes and app
 shell settings. `signing-fingerprint` is the displayed signing subkey in the
 footer. Template identity is HTML-escaped; manifest values are JSON-encoded.
 
@@ -139,7 +139,7 @@ the first commit containing it freezes that population.
 
 Essay directories are copied **recursively**: everything under
 `content/essays/<slug>/` that is not itself a page source is published as-is
-(`build/Site.hs`, the `content/essays/**` match). That rule is deliberately
+(`engine/build/Site.hs`, the `content/essays/**` match). That rule is deliberately
 broad so figures, data files, and scripts sit next to the prose that uses
 them — but it means a stray artifact dropped into an essay directory
 (a scratch CSV) becomes a public URL, whether or not Git ignores
@@ -147,7 +147,7 @@ it. Git-ignoring a file does not keep it out of the build. A stray `.md`
 there (say `notes.md` beside `index.md`) is compiled as an essay.
 
 Two checks stand in the way, and both go by file name only.
-`neverPublish` in `build/Site.hs` keeps private-looking names out of the
+`neverPublish` in `engine/build/Site.hs` keeps private-looking names out of the
 build: `*.local.md`, `*.draft.md`, key and credential files, `.env`, editor
 backups, swap and `.pyc` files, `*.tmp`, `*.part`, `*.partial`, `*.log`, `__pycache__/`.
 `tools/check-site.py`, the post-build artifact gate, fails the build when a
@@ -206,17 +206,22 @@ the Makefile does not pass it on from `.env`.
 
 ## Repository layout
 
-- `build/` — Haskell build system (Hakyll rules, Pandoc filters, contexts).
-  See `build/Filters/` for the Pandoc AST transforms (sidenotes,
-  wikilinks, transclusion, score embedding, viz, …).
+- `engine/` — the engine, kept apart from the site: `engine/build/` is the
+  Haskell build system (Hakyll rules, Pandoc filters, contexts), with the
+  cabal file beside it; see `engine/build/Filters/` for the Pandoc AST
+  transforms (sidenotes, wikilinks, transclusion, score embedding, viz, …).
+  `engine/templates/` holds the Hakyll/Pandoc HTML templates. A site file at
+  the same path without `engine/` overrides the engine's when
+  `overrides.yaml` declares it.
 - `content/` — authored Markdown (essays, poetry, fiction, music,
   photography, standalone pages).
-- `templates/` — Hakyll/Pandoc HTML templates.
+- `templates/` — the site's own templates: the CV pages, and the footer,
+  ornament and not-found page that override the engine's.
 - `static/` — CSS, JS, fonts, images, vendored PDF.js.
 - `tools/` — Python tooling (embeddings, importers) and shell scripts.
 - `data/` — generated and source data (commonplace.yaml, annotations.json,
   bibliographies, similar-links.json).
-- `yaml-source/` — the CV and résumé sources: `build/Vita.hs` renders
+- `yaml-source/` — the CV and résumé sources: `engine/build/Vita.hs` renders
   `/about.html` from `yaml-source/data/`, and `make pdfs` typesets
   `static/cv.pdf` and `static/resume.pdf` (needs XeLaTeX).
 - `archive/` — preserved copies of cited external works, listed in
@@ -294,11 +299,11 @@ that live in `http { }` (`proxy_cache_path`, `limit_req_zone`, the
 
 ## Architecture pointers
 
-- `build/Site.hs` is the Hakyll rules entry point.
-- `build/Patterns.hs` defines canonical content patterns shared by
+- `engine/build/Site.hs` is the Hakyll rules entry point.
+- `engine/build/Patterns.hs` defines canonical content patterns shared by
   Backlinks, Authors, Tags, and Site.
-- `build/Compilers.hs` wires the Pandoc filter chain into Hakyll.
-- `build/Filters/Images.hs` does WebP `<picture>` wrapping; requires
+- `engine/build/Compilers.hs` wires the Pandoc filter chain into Hakyll.
+- `engine/build/Filters/Images.hs` does WebP `<picture>` wrapping; requires
   the `.webp` companions produced by `tools/convert-images.sh`.
 
 ## Graph-theory research

@@ -176,11 +176,13 @@ def overridden(root: Path) -> set[str]:
     engine's: the site's at that path, the engine's under engine/."""
     path = root / OVERRIDES
     document = yaml.safe_load(path.read_text()) if path.exists() else []
+    # The engine lets a site file override only the engine file at its own
+    # path, so an entry naming two paths can only be a mistake.
     if not isinstance(document, list) or not all(
-            isinstance(e, dict) and isinstance(e.get("site"), str) and isinstance(e.get("engine"), str)
+            isinstance(e, dict) and isinstance(e.get("site"), str) and e.get("engine") == e["site"]
             for e in document):
-        raise ValueError(f"{OVERRIDES} must be a list of entries with a site and an engine path")
-    return {e["engine"] for e in document if e["site"] == e["engine"]}
+        raise ValueError(f"{OVERRIDES} must be a list of entries with a site path and the same engine path")
+    return {e["site"] for e in document}
 
 
 def visible_files(root: Path) -> set[str]:

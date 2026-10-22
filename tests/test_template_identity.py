@@ -189,7 +189,8 @@ main = hakyll $ do
         # None may carry this site's identity (tools/check-identity.py).
         config = json.loads(subprocess.check_output([str(site_binary()), "config"],
                                                     cwd=SITE_ROOT, text=True))
-        identity = load_tool("check-identity.py").denylist(config, [])
+        checker = load_tool("check-identity.py")
+        identity = checker.denylist(config, checker.load_policy(SITE_ROOT)["fixed-strings"])
         with tempfile.TemporaryDirectory(prefix="engine-defaults-") as tmp:
             root = Path(tmp)
             shutil.copytree(engine_path("templates"), root / "templates")

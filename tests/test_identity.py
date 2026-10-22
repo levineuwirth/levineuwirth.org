@@ -186,9 +186,11 @@ class IdentityTests(unittest.TestCase):
             (root / "engine/data/style.csl").unlink()
             with self.assertRaisesRegex(ValueError, r"missing=\['engine/data/style.csl'\]"):
                 checker.inventory(root, overriding)
-            (root / checker.OVERRIDES).write_text("- site: data/style.csl\n")
-            with self.assertRaisesRegex(ValueError, "site and an engine path"):
-                checker.inventory(root, overriding)
+            for entry in ("- site: data/style.csl\n",
+                          "- site: data/style.csl\n  engine: data/other.csl\n"):
+                (root / checker.OVERRIDES).write_text(entry)
+                with self.assertRaisesRegex(ValueError, "the same engine path"):
+                    checker.inventory(root, overriding)
             (root / checker.OVERRIDES).unlink()
             with self.assertRaisesRegex(ValueError, r"conflicting=\['data/style.csl'\]"):
                 checker.inventory(root, overriding)
