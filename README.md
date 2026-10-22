@@ -256,6 +256,12 @@ are worth knowing before the first deploy of the day:
   against `_site/` — the same artifact gate `make build` runs — so the
   output tree can be checked without deploying anything. Run it after any
   change to the build rules.
+- **`SKIP_TESTS=1`** skips both suites inside that validate, for a deploy
+  the suites cannot say anything about — a one-word typo fixed in
+  `content/`, say: `make deploy SKIP_TESTS=1`. The skip prints a banner;
+  `tools/check-site.py`, the provenance check, the build, the clean-tree
+  checks, the signature and the recheck all still run. It is an escape
+  hatch for a known-irrelevant change, not a faster `make deploy`.
 - **Branch check.** `make deploy` refuses to run on any branch but `main`,
   since it pushes `main` while the site would be built from that branch.
 - **Clean-tree check.** `make deploy` refuses to publish when build inputs
