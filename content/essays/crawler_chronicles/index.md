@@ -222,7 +222,7 @@ I additionally attached this PDF, which was created using `latex-atlas`, a side-
 On October 22, I got the following response:
 
 <details class="correspondence">
-<summary>Read the email to EGIHosting</summary>
+<summary>Read the reply from EGIHosting</summary>
 
 <div class="correspondence-body">
 
@@ -242,7 +242,7 @@ Best wishes,
 
 </details>
 
-Intriguing. I didn't really ask a *question*, so to speak, and I find it curious that they use the plural for "end-users." It is also curious that while I can see the name of the person who handled forwarding the abuse notice along^[I've redacted this from the response here, for obvious reasons. You'll have to take my word that this did reach at least *one* human with EGIHosting, and note that I make no claim it reached a human *anywhere else*.], they did not fill in any entity name after "Best wishes," or, at a minimum, it was redacted when forwarded to me.^[I have reason to believe that isn't the case, as I am nearly positive the forwarding mechanicism on the "complainant" (my) end is automated. (Aside, isn't "complainant" a hilarious word? I find it so!)] What does this mean for our theory and that of the Dead Internet at large?
+Intriguing. I didn't really ask a *question*, so to speak, and I find it curious that they use the plural for "end-users." It is also curious that while I can see the name of the person who handled forwarding the abuse notice along^[I've redacted this from the response here, for obvious reasons. You'll have to take my word that this did reach at least *one* human with EGIHosting, and note that I make no claim it reached a human *anywhere else*.], they did not fill in any entity name after "Best wishes," or, at a minimum, it was redacted when forwarded to me.^[I have reason to believe that isn't the case, as I am nearly positive the forwarding mechanism on the "complainant" (my) end is automated. (Aside, isn't "complainant" a hilarious word? I find it so!)] What does this mean for our theory and that of the Dead Internet at large?
 
 I currently postulate that there may be some [dummy corporation](https://en.wikipedia.org/wiki/Dummy_corporation) or otherwise that handles scraping of this sort distributed across VPS services to obfuscate the true identity of the scraper. In that regime, the VPS might not need to serve as anything more than a [VPN](https://en.wikipedia.org/wiki/Virtual_private_network). It might also be a true middle party that acts as a data broker, selling to further parties down the line. I think that the plural "end-users" is a subtle hint towards the latter, but of course, we cannot truly be sure.
 
