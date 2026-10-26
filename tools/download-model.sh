@@ -20,6 +20,7 @@ set -euo pipefail
 
 # shellcheck source=tools/site-paths.sh
 source "$(dirname "$0")/site-paths.sh"
+no_site_copy models
 MODEL_DIR="$(engine_path static)/models/all-MiniLM-L6-v2"
 BASE_URL="https://huggingface.co/Xenova/all-MiniLM-L6-v2/resolve/main"
 CHECKSUMS="$(engine_path tools/model-checksums.sha256)"

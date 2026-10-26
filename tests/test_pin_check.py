@@ -9,7 +9,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests._helpers import engine_path, script_env
+from tests._helpers import engine_path, script_env, stub_bin
 
 
 class VendoringAcrossTheMove(unittest.TestCase):
@@ -37,6 +37,36 @@ class VendoringAcrossTheMove(unittest.TestCase):
             self.assertEqual(done.returncode, 0, done.stderr)
             self.assertEqual(done.stdout.count("sha256 verified"), 5)
             self.assertTrue((model / "onnx/model_quantized.onnx").is_file())
+
+    def test_a_download_left_in_the_site_is_refused(self):
+        # The build serves a site file over the engine's, so a static/pdfjs,
+        # leaflet or models kept from before the move would outrank the
+        # engine's copy, unannounced. Each downloader stops before it
+        # fetches anything (curl is stubbed to fail, should one try).
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "tools").mkdir()
+            for name in ("download-pdfjs.sh", "download-leaflet.sh", "download-model.sh",
+                         "site-paths.sh", "pin-check.sh"):
+                shutil.copy2(engine_path(f"tools/{name}"), root / "tools" / name)
+            env = script_env(stub_bin(root / "stubs", ["curl"], "#!/bin/sh\nexit 97\n"))
+            (root / "engine/static").mkdir(parents=True)
+            for script, directory in (("download-pdfjs.sh", "pdfjs"),
+                                      ("download-leaflet.sh", "leaflet"),
+                                      ("download-model.sh", "models")):
+                with self.subTest(script=script):
+                    (root / "static" / directory).mkdir(parents=True)
+                    done = subprocess.run(["bash", f"tools/{script}"], cwd=root, env=env,
+                                          capture_output=True, text=True, timeout=30)
+                    self.assertEqual(done.returncode, 1, done.stderr)
+                    self.assertIn(f"static/{directory}: left from before the engine took it over",
+                                  done.stderr)
+                    self.assertFalse((root / "engine/static" / directory).exists())
+            # Before the move, the engine's static/ is the site's.
+            shutil.rmtree(root / "engine")
+            done = subprocess.run(["bash", "-c", "source tools/site-paths.sh && no_site_copy models"],
+                                  cwd=root, env=env, capture_output=True, text=True, timeout=30)
+            self.assertEqual(done.returncode, 0, done.stderr)
 
 
 class PinVerify(unittest.TestCase):

@@ -12,6 +12,10 @@
 #                      engine/ once A6 moves it there, beside these tools,
 #                      or, while A6 has moved these tools and not it,
 #                      beside the site
+#   no_site_copy DIR   fail if the site still holds the engine's static/DIR
+#                      (a download from before the engine took it over):
+#                      the build serves a site file over the engine's, so
+#                      the old copy would win, unannounced
 
 SITE_ROOT="$(cd "${SITE_ROOT:-.}" && pwd)"
 ENGINE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -25,4 +29,13 @@ engine_path() {
         fi
     done
     printf '%s\n' "$ENGINE/$1"
+}
+
+no_site_copy() {
+    local engine site="$SITE_ROOT/static/$1"
+    engine="$(engine_path static)/$1"
+    if [ -e "$site" ] && [ "$site" != "$engine" ]; then
+        echo "static/$1: left from before the engine took it over, and the build would serve it over $engine; move it there or delete it" >&2
+        return 1
+    fi
 }

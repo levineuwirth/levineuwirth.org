@@ -32,6 +32,7 @@ set -euo pipefail
 
 # shellcheck source=tools/site-paths.sh
 source "$(dirname "$0")/site-paths.sh"
+no_site_copy leaflet
 LEAFLET_DIR="$(engine_path static)/leaflet"
 CHECKSUMS="$(engine_path tools/leaflet-checksums.sha256)"
 # shellcheck source=tools/pin-check.sh

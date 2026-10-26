@@ -356,8 +356,9 @@ pdf-thumbs-locked:
 	# PDF would silently ship without a thumbnail.
 	# Walk ALL of static/ (not just papers/): /cv.pdf and /resume.pdf are
 	# the most-linked PDFs on the site and need hover thumbnails too.
+	# An old static/pdfjs/ (download-pdfjs.sh refuses it) is pruned.
 	@if command -v pdftoppm >/dev/null 2>&1; then \
-	  find static -name '*.pdf' -print 2>/dev/null | while read pdf; do \
+	  find static -path static/pdfjs -prune -o -name '*.pdf' -print 2>/dev/null | while read pdf; do \
 	    thumb="$${pdf%.pdf}.thumb"; \
 	    if [ ! -f "$${thumb}.png" ] || [ "$$pdf" -nt "$${thumb}.png" ]; then \
 	      echo "  pdf-thumb $$pdf"; \

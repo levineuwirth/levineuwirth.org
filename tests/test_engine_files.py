@@ -296,21 +296,29 @@ class EngineDefaultsTests(unittest.TestCase):
         static = engine_path("static")
         self.assertEqual(sorted(u for u in named if not (static / u.lstrip("/")).is_file()), [])
 
-    def test_each_icon_is_the_size_the_engine_declares(self):
+    def test_each_image_is_the_size_the_engine_declares(self):
+        head = engine_path("templates/partials/head.html").read_text()
         declared = {}
-        for tag in re.findall(r"<link [^>]*>", engine_path("templates/partials/head.html").read_text()):
+        for tag in re.findall(r"<link [^>]*>", head):
             href, sizes = re.search(r'href="(/[^"]+\.png)"', tag), re.search(r'sizes="(\d+)x(\d+)"', tag)
             if href and sizes:
                 declared[href[1]] = (int(sizes[1]), int(sizes[2]))
+        card = re.search(r'property="og:image" content="\$site-url\$(/[^"]+)"', head)[1]
+        declared[card] = tuple(int(re.search(rf'property="og:image:{side}" content="(\d+)"', head)[1])
+                               for side in ("width", "height"))
         manifest = engine_path("templates/site.webmanifest").read_text()
         for src, width, height in re.findall(r'"src": "([^"]+)",\s*"sizes": "(\d+)x(\d+)"', manifest):
             declared[src] = (int(width), int(height))
-        self.assertEqual(len(declared), 4)
-        # The engine's default and the site's own, which stands in for it.
-        for static in dict.fromkeys((engine_path("static"), SITE_ROOT / "static")):
-            for url, size in declared.items():
-                with self.subTest(icon=static / url.lstrip("/")):
-                    header = (static / url.lstrip("/")).read_bytes()[:24]
+        self.assertEqual(len(declared), 5)
+        for url, size in declared.items():
+            # The engine's default, and the site's own where it has one.
+            rel = url.lstrip("/")
+            images = [engine_path("static") / rel]
+            if (SITE_ROOT / "static" / rel).is_file():
+                images.append(SITE_ROOT / "static" / rel)
+            for image in dict.fromkeys(images):
+                with self.subTest(image=image):
+                    header = image.read_bytes()[:24]
                     self.assertEqual(header[:8], b"\x89PNG\r\n\x1a\n")
                     self.assertEqual(struct.unpack(">II", header[16:24]), size)
 
