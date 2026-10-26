@@ -106,12 +106,15 @@ descriptions and the author are escaped for the feed's XML.
 
 ## Engine identity check
 
-`make test` checks the files listed in `tests/engine-paths.txt` against the
-identity returned by `site config`. `tests/identity-policy.yaml` records the
-site's files and directories, vendored files, legacy names, and case-sensitive
-patterns for the `ln` namespace. Every file Git sees (tracked, or untracked and
-not ignored) must have exactly one owner, so a new file is classified before it
-is committed. Downloaded vendor files need not be present to run this check.
+`make test` checks the engine's files, everything under `engine/` but its
+vendored code, against the identity returned by `site config`.
+`tests/identity-policy.yaml` records the site's files and directories, the
+engine's vendored files, legacy names, and case-sensitive patterns for the
+`ln` namespace. Every file Git sees (tracked, or untracked and not ignored)
+must have exactly one owner: under `engine/`, the engine; elsewhere, the site,
+by a policy entry, so a new site file is classified before it is committed. A
+site file at an engine file's path must be declared in `overrides.yaml`.
+Downloaded vendor files need not be present to run this check.
 
 `tests/identity-allowances.yaml` is a frozen migration inventory. Each stable
 ID covers exactly one string at a file, line and column. Delete an entry when

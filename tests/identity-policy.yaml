@@ -1,14 +1,14 @@
 # Site-owned migration policy, not an engine default.
 #
-# Every file Git sees has one owner: tests/engine-paths.txt (the engine),
-# site-files, or vendored-files. An entry ending in / covers a directory; an
-# engine path inside a site directory stays the engine's. Files that will move
-# as they are belong to the engine even when they carry identity, which the
-# frozen allowances then record. The site keeps its prose (README, design
-# docs, licenses, THIRD-PARTY), ops, content tests, baselines and identity
-# overrides; the engine writes its own documents and notices at extraction
-# (A10, Q3). Vendored files are third-party, unscanned, and move with the
-# engine; downloaded ones need not be present.
+# Every file Git sees has one owner. The engine owns what is under engine/,
+# named by its path there; files that moved as they are carry identity, which
+# the frozen allowances record. The site owns the rest: each file is named in
+# site-files, or is inside a directory named there (an entry ending in /). The
+# site keeps its prose (README, design docs, licenses, THIRD-PARTY), ops,
+# content tests, baselines and identity overrides; the engine writes its own
+# documents and notices at extraction (A10, Q3). vendored-files are the
+# engine's third-party code, by its path in the engine: unscanned, and need
+# not be present when they are downloaded.
 #
 # fixed-strings match case-insensitively, as the identity from `site config`
 # and the font names from tools/fonts.yaml do. fixed-patterns are
@@ -92,7 +92,6 @@ site-files:
 - tests/browser-baseline/budgets.json
 - tests/browser-baseline/outside.json
 - tests/browser-baseline/overflow.json
-- tests/engine-paths.txt
 - tests/identity-allowances.yaml
 - tests/identity-policy.yaml
 - tests/test_anubis.py
