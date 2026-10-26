@@ -18,6 +18,9 @@ import yaml
 from tests._helpers import load_tool
 
 archive = load_tool("archive.py")
+# Its User-Agent names the site, from site.yaml through the generator,
+# which these tests do without.
+archive.user_agent = lambda: "archive-test"
 
 BODY = b"%PDF-1.4 small\n" * 10
 

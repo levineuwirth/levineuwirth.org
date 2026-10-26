@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-archive.py — Build-time link-archiving tool for levineuwirth.org.
+archive.py — Build-time link-archiving tool for the site.
 
 Reads archive/manifest.yaml, fetches any manifest URL that has no local
 artifact yet, stores it under archive/<slug>/, extracts readable text,
@@ -79,17 +79,9 @@ STATE_OUT     = SITE_ROOT / "data" / "archive-state.json"
 ROT_FAILS     = 3       # consecutive failed scans before `rotted` is considered
 ROT_DAYS      = 14      # ... and the streak must also span at least this many days
 
-# Probed before a link-rot scan; unreachable -> the scan is inconclusive
-# (offline machine, dead DNS) and state is left untouched. Guards the
-# unattended timer-run case: three offline scans spanning two weeks would
-# otherwise flip every entry to `rotted` at once.
-CHECK_CANARY  = "https://levineuwirth.org/"
-
 SIZE_CAP      = 25 * 1024 * 1024          # 25 MB per-artifact cap
 TIMEOUT       = 60                        # seconds, per network request
 WAYBACK_TIMEOUT = 120                     # seconds — Save Page Now is slow
-USER_AGENT    = ("levineuwirth.org/archive "
-                 "(ln@levineuwirth.org; removal requests honored)")
 
 # Per-type on-disk names. The artifact is committed; the .txt is generated
 # (gitignored) and regenerated whenever the artifact's SHA-256 changes.
@@ -107,6 +99,21 @@ ARCHIVE_CSP = (
     "style-src-attr 'unsafe-inline'; font-src data:; "
     "script-src 'none'; object-src 'none'; frame-src 'none'"
 )
+
+
+def check_canary() -> str:
+    """Probed before a link-rot scan: the site's own front page (site.yaml).
+    Unreachable -> the scan is inconclusive (offline machine, dead DNS) and
+    state is left untouched. Guards the unattended timer-run case: three
+    offline scans spanning two weeks would otherwise flip every entry to
+    `rotted` at once."""
+    return sitelib.site_config()["url"] + "/"
+
+
+def user_agent() -> str:
+    """Who is fetching, and whom to write to (site.yaml)."""
+    config = sitelib.site_config()
+    return f"{config['host']}/archive ({config['contact-email']}; removal requests honored)"
 
 
 def log(msg: str) -> None:
@@ -214,7 +221,7 @@ def probe_headers(url: str) -> dict[str, str]:
     """Best-effort HEAD request. Returns the response headers as a
     lowercased-key dict, or {} on any failure (some servers reject HEAD)."""
     req = urllib.request.Request(url, method="HEAD",
-                                 headers={"User-Agent": USER_AGENT})
+                                 headers={"User-Agent": user_agent()})
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
             return {k.lower(): v for k, v in resp.headers.items()}
@@ -229,7 +236,7 @@ def probe_headers_get(url: str) -> dict[str, str]:
     it on HEAD) is still honoured."""
     req = urllib.request.Request(
         url, method="GET",
-        headers={"User-Agent": USER_AGENT, "Range": "bytes=0-0"})
+        headers={"User-Agent": user_agent(), "Range": "bytes=0-0"})
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
             return {k.lower(): v for k, v in resp.headers.items()}
@@ -273,7 +280,7 @@ def download(url: str, dest: Path, what: str = "",
     fallback is legitimate); or "skip" for a policy or local failure
     (noarchive, the cap, disk) that a fallback must not circumvent. Only
     "ok" leaves a file. `what` and `cap_hint` complete the cap message."""
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    req = urllib.request.Request(url, headers={"User-Agent": user_agent()})
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
             # X-Robots-Tag: noarchive — honour the archiving-specific
@@ -475,7 +482,7 @@ def fetch_html(url: str, dest: Path) -> str:
         return "skip"
 
     cmd = [mono, "--no-js", "--ignore-errors", "--quiet",
-           "--timeout", str(TIMEOUT), "--user-agent", USER_AGENT,
+           "--timeout", str(TIMEOUT), "--user-agent", user_agent(),
            "--base-url", effective_url, "--output", str(tmp), "-"]
     try:
         proc = subprocess.run(cmd, input=source.read_bytes(),
@@ -1174,7 +1181,7 @@ def wayback_save(url: str) -> None:
     # Page Now sees the original URL shape.
     req = urllib.request.Request(
         "https://web.archive.org/save/" + quote(url, safe=":/?&=#"),
-        headers={"User-Agent": USER_AGENT})
+        headers={"User-Agent": user_agent()})
     try:
         with urllib.request.urlopen(req, timeout=WAYBACK_TIMEOUT):
             pass
@@ -1187,7 +1194,7 @@ def wayback_lookup(url: str) -> str | None:
     None if there is no capture (or the availability API is unreachable)."""
     api = ("https://archive.org/wayback/available?url="
            + quote(url, safe=""))
-    req = urllib.request.Request(api, headers={"User-Agent": USER_AGENT})
+    req = urllib.request.Request(api, headers={"User-Agent": user_agent()})
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
             data = json.loads(resp.read().decode("utf-8"))
@@ -1265,7 +1272,7 @@ def probe_url(url: str) -> tuple[str, str | None]:
     HEAD and 206 to GET for a live document, which was on course to be
     marked rotted and replaced by the local copy (audit C03)."""
     for method in ("HEAD", "GET"):
-        headers = {"User-Agent": USER_AGENT}
+        headers = {"User-Agent": user_agent()}
         if method == "GET":
             headers["Range"] = "bytes=0-0"
         req = urllib.request.Request(url, method=method, headers=headers)
@@ -1341,8 +1348,8 @@ def cmd_check() -> int:
     # is evidence about the *targets* — record nothing rather than a
     # spurious `fail` against every entry. Exit 0: an offline laptop is
     # not a unit failure; the scan simply retries on the next timer fire.
-    if to_probe and probe_url(CHECK_CANARY)[0] == "fail":
-        log(f"check: canary {CHECK_CANARY} unreachable — offline or DNS "
+    if to_probe and probe_url(canary := check_canary())[0] == "fail":
+        log(f"check: canary {canary} unreachable — offline or DNS "
             f"down; scan inconclusive, state left untouched")
         return 0
 

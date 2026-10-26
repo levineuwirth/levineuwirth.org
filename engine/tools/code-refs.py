@@ -171,7 +171,7 @@ class PrivateRepository(FetchError):
 
 
 def http_get(url: str, *, api: bool) -> bytes:
-    headers = {"User-Agent": "levineuwirth.org code-refs"}
+    headers = {"User-Agent": f"{sitelib.site_config()['host']} code-refs"}
     if api:
         headers["Accept"] = "application/vnd.github+json"
         token = os.environ.get("GITHUB_TOKEN")

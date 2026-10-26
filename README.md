@@ -19,7 +19,7 @@ make deploy             # preflight → build (incremental) → validate → sig
 make deploy-clean       # force a full rebuild, then deploy
 ```
 
-`make build` is incremental by default; `tools/build-freshness.sh` forces a
+`make build` is incremental by default; `engine/tools/build-freshness.sh` forces a
 full rebuild automatically when one is required for correctness (the Hakyll
 rules under `engine/build/` or the cabal metadata changed, content was deleted or
 renamed, route-defining frontmatter such as `tags:` changed, or the last full
@@ -30,7 +30,7 @@ For day-to-day work, prefer `make dev` (which serves the site on
 which rebuilds on save and serves the site locally).
 
 `build`, `deploy`, `watch` and `dev` each hold an exclusive lock on
-`data/.site-build.lock` (`tools/with-lock.sh`, via `flock`), as do the
+`data/.site-build.lock` (`engine/tools/with-lock.sh`, via `flock`), as do the
 targets that write `_site/`, `_cache/` or `static/` (`clean`, `sign`,
 `compress-assets`, `convert-images`, `thumbnails`, `pdf-thumbs`) and
 `validate`. A second one fails at once instead of interleaving writes;
@@ -128,9 +128,9 @@ the first commit containing it freezes that population.
 - `pagefind` on `PATH`. Not optional: `make build` indexes `_site/` with it
   and fails without it.
 - `python3`, `git`, `curl`, `unzip` and `sha256sum`. The build vendors
-  PDF.js, Leaflet and the search model through `tools/download-*.sh`, which
+  PDF.js, Leaflet and the search model through `engine/tools/download-*.sh`, which
   verify pinned SHA-256 sums (`unzip` is for PDF.js).
-- `flock` (util-linux); without it `tools/with-lock.sh` warns and runs
+- `flock` (util-linux); without it `engine/tools/with-lock.sh` warns and runs
   unlocked.
 - For `make deploy`: `gpg` with the signing subkey, `ssh` and `rsync`.
 - Optional: `uv`, `cwebp` and `pdftoppm` — see below.
@@ -150,7 +150,7 @@ Two checks stand in the way, and both go by file name only.
 `neverPublish` in `engine/build/Site.hs` keeps private-looking names out of the
 build: `*.local.md`, `*.draft.md`, key and credential files, `.env`, editor
 backups, swap and `.pyc` files, `*.tmp`, `*.part`, `*.partial`, `*.log`, `__pycache__/`.
-`tools/check-site.py`, the post-build artifact gate, fails the build when a
+`engine/tools/check-site.py`, the post-build artifact gate, fails the build when a
 name on its own list (`PRIVATE_FILE_GLOBS`) reaches `_site/` anyway,
 compressed and signed copies included. `make build` runs it automatically
 and `make validate` runs the same gate by hand. Neither can tell what an
@@ -161,7 +161,7 @@ do it.
 
 ## Optional features
 
-- **Similar-links and embeddings.** `tools/embed.py` precomputes
+- **Similar-links and embeddings.** `engine/tools/embed.py` precomputes
   page-level embeddings for the "Related" block. To enable:
 
   ```sh
@@ -178,7 +178,7 @@ do it.
   make download-model
   ```
 
-- **Image conversion.** `make build` calls `tools/convert-images.sh` to
+- **Image conversion.** `make build` calls `engine/tools/convert-images.sh` to
   produce `.webp` companions next to every JPEG/PNG. Requires `cwebp`
   (`libwebp-utils` on Arch — *not* `libwebp`, which ships only the
   library and no `cwebp` binary; `webp` on Debian/Ubuntu). Without it the
@@ -200,7 +200,7 @@ do it.
 it. `git push` uses your own git credentials (credential helper), not
 anything in `.env`.
 
-`GITHUB_TOKEN` is read only by `tools/code-refs.py`, from the environment, to
+`GITHUB_TOKEN` is read only by `engine/tools/code-refs.py`, from the environment, to
 raise the GitHub API rate limit for code snapshots. Export it in your shell:
 the Makefile does not pass it on from `.env`.
 
@@ -210,10 +210,12 @@ the Makefile does not pass it on from `.env`.
   Haskell build system (Hakyll rules, Pandoc filters, contexts), with the
   cabal file beside it; see `engine/build/Filters/` for the Pandoc AST
   transforms (sidenotes, wikilinks, transclusion, score embedding, viz, …).
-  `engine/templates/` holds the Hakyll/Pandoc HTML templates, and
+  `engine/templates/` holds the Hakyll/Pandoc HTML templates,
   `engine/static/` the CSS, JS, KaTeX, generic link icons and neutral
-  defaults for the site's identity assets; the PDF.js, Leaflet and
-  search-model downloads land there too. A site file at the same path
+  defaults for the site's identity assets (the PDF.js, Leaflet and
+  search-model downloads land there too), and `engine/tools/` the build's
+  Python and shell tooling (embeddings, importers, checks), which reads
+  the site's identity from `site.yaml`. A site file at the same path
   without `engine/` overrides the engine's when `overrides.yaml` declares it.
 - `content/` — authored Markdown (essays, poetry, fiction, music,
   photography, standalone pages).
@@ -222,7 +224,11 @@ the Makefile does not pass it on from `.env`.
 - `static/` — the site's fonts, images, papers and CV, and its identity
   assets (icons, logo, preview card, ornaments), which override the
   engine's defaults.
-- `tools/` — Python tooling (embeddings, importers) and shell scripts.
+- `tools/` — the site's own tools: the VPS backup, update and status
+  scripts, the Anubis and Forgejo helpers, `cv-pdfs.py`, and the font
+  configuration that `engine/tools/subset-fonts.py` reads (`fonts.yaml`,
+  `font-sources.json`); and, until it moves into the engine, the browser
+  test harness (`tools/browser/`).
 - `data/` — generated and source data (commonplace.yaml, annotations.json,
   bibliographies, similar-links.json).
 - `yaml-source/` — the CV and résumé sources: `engine/build/Vita.hs` renders
@@ -231,7 +237,7 @@ the Makefile does not pass it on from `.env`.
 - `archive/` — preserved copies of cited external works, listed in
   `archive/manifest.yaml`; see `ARCHIVE.md`.
 - `code-refs/` — snapshots of linked GitHub code for the hover popups,
-  written by `tools/code-refs.py` during the build. Tracked: commit it when
+  written by `engine/tools/code-refs.py` during the build. Tracked: commit it when
   a build changes it, or `make deploy` refuses.
 - `tests/` — the Python `unittest` suite run by `make test` and
   `make validate`; `make test-clean` runs it on HEAD in a fresh clone. The
@@ -258,10 +264,10 @@ the Makefile does not pass it on from `.env`.
 VPS. `git push -u origin main` goes to both Forgejo and GitHub (`origin`
 has two push URLs), and the rsync is preceded by a dry run that refuses a
 destination without an `index.html` or a transfer that would delete more
-than `DEPLOY_MAX_DELETE` files (see `tools/deploy-guard.sh`). These guards
+than `DEPLOY_MAX_DELETE` files (see `engine/tools/deploy-guard.sh`). These guards
 are worth knowing before the first deploy of the day:
 
-- **`make validate`** runs the test suite and then `tools/check-site.py`
+- **`make validate`** runs the test suite and then `engine/tools/check-site.py`
   against `_site/` — the same artifact gate `make build` runs — so the
   output tree can be checked without deploying anything. Run it after any
   change to the build rules.
@@ -281,7 +287,7 @@ are worth knowing before the first deploy of the day:
   built. An edit made while the build ran stops the deploy with nothing
   pushed or published.
 - **Score pages.** The score pages are gitignored, so `deploy-preflight`
-  runs `tools/music-import.py check` and refuses when pages are missing or
+  runs `engine/tools/music-import.py check` and refuses when pages are missing or
   incomplete, rather than letting a fresh checkout delete the published
   scores.
 - **`SKIP_SNAPSHOT=1`** skips `make build`'s automatic `git add content/` +
@@ -308,7 +314,7 @@ that live in `http { }` (`proxy_cache_path`, `limit_req_zone`, the
   Backlinks, Authors, Tags, and Site.
 - `engine/build/Compilers.hs` wires the Pandoc filter chain into Hakyll.
 - `engine/build/Filters/Images.hs` does WebP `<picture>` wrapping; requires
-  the `.webp` companions produced by `tools/convert-images.sh`.
+  the `.webp` companions produced by `engine/tools/convert-images.sh`.
 
 ## Graph-theory research
 

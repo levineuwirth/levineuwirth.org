@@ -1,0 +1,132 @@
+# The site's web fonts, which the engine's tools/subset-fonts.py subsets
+# from their upstream releases:
+#
+#     uv run --with fonttools --with brotli engine/tools/subset-fonts.py
+#
+# Spectral and JetBrains Mono come from the Google Fonts repository
+# (github.com/google/fonts), Fira Sans 4.301 from bBox Type's
+# (github.com/bBoxType/FiraSans). A source is `<upstream>:<path>`, the path
+# under that upstream's pinned revision; tools/font-sources.json pins each
+# download's SHA-256. To upgrade, review the new upstream revision and
+# bytes, update the revisions here and the digests there together, then
+# compare font metrics and browser layout again.
+#
+# What the subsets keep, and why (audit V08):
+#   - Latin Extended-A in full (ł in "Prałat–Wormald", 11 pages), ← → ↑ ↓,
+#     ● ○ (the epistemic dots, 21 pages), ≤ ≥ ≈, □ in Spectral; box drawing
+#     in JetBrains Mono (the levcs diagram); Fira Sans gains c2sc, tnum and
+#     lnum, which the all-small-caps labels and tabular figures ask for.
+#   - Fira Sans 4.301 reserves the name "Fira" in its name table (bBox's
+#     OFL.txt omits it; the notice written beside the fonts follows the
+#     font), and a subset is a Modified Version, which may not use it
+#     (audit C05). The OFL limits that to "the primary font name as
+#     presented to the users", so the subset's name records say "LN Sans";
+#     the copyright, trademark and license notices keep Fira's, and the
+#     stylesheets still call it "Fira Sans". Google Fonts' copy reserves no
+#     name but is the older 4.203, whose letters are up to 1.4 % wider:
+#     0.5 % on a line of interface text, enough to move the nav's wrap
+#     points.
+
+upstreams:
+  google: https://raw.githubusercontent.com/google/fonts/9710da1eacb3be272583c3224dcb70f9da6eadbb/ofl
+  bbox: https://raw.githubusercontent.com/bBoxType/FiraSans/f54eeb3124c63fe9b5bcd36d09d1cd46788cd15e
+
+# The subsets and each family's OFL notice go here.
+output: static/fonts
+
+# Latin-1, Latin Extended-A, the punctuation block, and the few symbols
+# the prose uses; a family may add its own.
+unicodes: U+0000-00FF,U+0100-017F,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+2074,U+20AC,U+2122,U+2190-2193,U+2212,U+2215,U+FEFF,U+FFFD
+
+# Each family: its OpenType features, extra characters, what it must cover
+# after subsetting (audit V08), its license notice (written as the first
+# name, from the upstream text at the second), and its faces (upstream
+# source, subset written). `weight` instances a variable font at that
+# weight; `rename` gives the subset a primary name in place of a reserved
+# one, and fails if any primary name record still carries `reserved`.
+families:
+  spectral:
+    features: liga,dlig,smcp,c2sc,onum,lnum,pnum,tnum,frac,ordn,sups,subs,ss01,ss02,ss03,ss04,ss05,kern
+    unicodes: U+2248,U+2264-2265,U+25A1,U+25CB,U+25CF
+    must-cover: łŁ←→●○≤≥≈□
+    license: [OFL-Spectral.txt, "google:spectral/OFL.txt"]
+    faces:
+      - ["google:spectral/Spectral-Regular.ttf", spectral-regular.woff2]
+      - ["google:spectral/Spectral-Italic.ttf", spectral-italic.woff2]
+      - ["google:spectral/Spectral-SemiBold.ttf", spectral-semibold.woff2]
+      - ["google:spectral/Spectral-SemiBoldItalic.ttf", spectral-semibold-italic.woff2]
+      - ["google:spectral/Spectral-Bold.ttf", spectral-bold.woff2]
+      - ["google:spectral/Spectral-BoldItalic.ttf", spectral-bold-italic.woff2]
+  firasans:
+    features: smcp,c2sc,liga,kern,tnum,lnum
+    must-cover: łŁ←→
+    license: [OFL-FiraSans.txt, "bbox:OFL.txt"]
+    rename: {from: Fira Sans, to: LN Sans, reserved: Fira}
+    faces:
+      - ["bbox:Fira_Sans_4_3/Fonts/Fira_Sans_TTF_4301/Normal/Roman/FiraSans-Regular.ttf", fira-sans-regular.woff2]
+      - ["bbox:Fira_Sans_4_3/Fonts/Fira_Sans_TTF_4301/Normal/Roman/FiraSans-SemiBold.ttf", fira-sans-semibold.woff2]
+  jetbrainsmono:
+    features: liga,kern,calt
+    unicodes: U+2500-257F
+    must-cover: ─│┌┐└┘├┤┬┴┼
+    license: [OFL-JetBrainsMono.txt, "google:jetbrainsmono/OFL.txt"]
+    weight: 400
+    faces:
+      - ["google:jetbrainsmono/JetBrainsMono[wght].ttf", jetbrains-mono-regular.woff2]
+      - ["google:jetbrainsmono/JetBrainsMono-Italic[wght].ttf", jetbrains-mono-italic.woff2]
+
+# Fallback faces, written between the markers in `css` (site file first,
+# then the engine's). Each set stands in for one web family on the systems
+# that have its reference font, under every name that font goes by: the
+# full name ("Tinos Bold Italic") and the PostScript name
+# ("Tinos-BoldItalic"), which is what local() matches. A weight range
+# takes the semibold's measure: headings and labels are 600, 700 is rarer.
+# Monospace has none: JetBrains Mono and Courier both advance 0.6 em, and
+# code is seldom above the fold.
+fallbacks:
+  css: static/css/base.css
+  begin: "/* BEGIN fallback faces — written by tools/subset-fonts.py */"
+  end: "/* END fallback faces */"
+  # The web faces a set stands in for: style, CSS weight and style, subset.
+  faces:
+    serif:
+      - [Regular, "400", normal, spectral-regular.woff2]
+      - [Italic, "400", italic, spectral-italic.woff2]
+      - [Bold, "600 700", normal, spectral-semibold.woff2]
+      - [BoldItalic, "600 700", italic, spectral-semibold-italic.woff2]
+    sans:
+      - [Regular, "400", normal, fira-sans-regular.woff2]
+      - [Bold, "600 700", normal, fira-sans-semibold.woff2]
+  # Each set's local() names, by the tool's naming schemes (full, ps, ms;
+  # a third item replaces the scheme's suffix for Regular), and its
+  # reference font: one file, with {style} for a static family, or a roman
+  # and an italic variable font, instanced at the style's weight.
+  sets:
+    - family: Spectral on Georgia
+      faces: serif
+      local: [[full, Georgia], [ps, Georgia, ""], [full, Gelasio, " Regular"], [ps, Gelasio]]
+      reference: "google:gelasio/Gelasio[wght].ttf"
+      reference-italic: "google:gelasio/Gelasio-Italic[wght].ttf"
+      instance: true
+    - family: Spectral on Times
+      faces: serif
+      local: [[full, Times New Roman], [ms, TimesNewRomanPS], [full, Liberation Serif],
+              [ps, LiberationSerif, ""], [full, Tinos], [ps, Tinos]]
+      reference: "google:tinos/Tinos-{style}.ttf"
+    - family: Spectral on Noto
+      faces: serif
+      local: [[full, Noto Serif], [ps, NotoSerif]]
+      reference: "google:notoserif/NotoSerif[wdth,wght].ttf"
+      reference-italic: "google:notoserif/NotoSerif-Italic[wdth,wght].ttf"
+      instance: true
+    - family: Fira Sans on Arial
+      faces: sans
+      local: [[full, Arial], [ms, Arial], [full, Liberation Sans], [ps, LiberationSans, ""],
+              [full, Arimo], [ps, Arimo]]
+      reference: "google:arimo/Arimo[wght].ttf"
+      instance: true
+    - family: Fira Sans on Roboto
+      faces: sans
+      local: [[full, Roboto], [ps, Roboto]]
+      reference: "google:roboto/Roboto[wdth,wght].ttf"
+      instance: true

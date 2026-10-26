@@ -1673,7 +1673,7 @@ order, it:
 passphrase to be cached. Run once per boot (or per 24h expiry):
 
 ```bash
-./tools/preset-signing-passphrase.sh
+engine/tools/preset-signing-passphrase.sh
 ```
 
 **Image conversion:** `make build` automatically runs `tools/convert-images.sh`
@@ -1685,7 +1685,7 @@ prints a warning and ships the heavier originals or no thumbnail;
 `make validate REQUIRE_WEBP=1` makes "JPEGs but no WebP" an error.
 
 **Python environment:** the embedding pipeline requires `uv sync` to be run
-once. After that, `make build` invokes `uv run python tools/embed.py`
+once. After that, `make build` invokes `uv run python engine/tools/embed.py`
 automatically. If `.venv` is absent, the step is skipped with a warning and
 the build continues normally.
 

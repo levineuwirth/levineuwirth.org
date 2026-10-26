@@ -11,10 +11,9 @@
 # engine; downloaded ones need not be present.
 #
 # fixed-strings match case-insensitively, as the identity from `site config`
-# does. fixed-patterns are case-sensitive regular expressions for the ln
+# and the font names from tools/fonts.yaml do. fixed-patterns are case-sensitive regular expressions for the ln
 # namespace, renamed in A9; they catch new names in it as well as old ones.
 fixed-strings:
-- LN Sans                                    # Fira's rename; fonts.yaml in A6e
 - 619844703EC398E70B0045D7150F08179CFEEFE3   # the signing subkey's keygrip
 fixed-patterns:
 - '\bln[A-Z]\w*'          # lnUtils, window.lnEnhance, dataset.lnEnhanced
@@ -124,6 +123,7 @@ site-files:
 - tools/couchdb-update.sh
 - tools/cv-pdfs.py
 - tools/font-sources.json
+- tools/fonts.yaml
 - tools/forgejo-backup.sh
 - tools/forgejo-reconcile.py
 - tools/forgejo-sync.sh

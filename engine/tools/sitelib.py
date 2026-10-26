@@ -10,9 +10,11 @@ the path, which works whether it runs as a script or a test loads it by path:
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess
+import sys
 from collections.abc import Iterator
 from contextlib import contextmanager
 from functools import lru_cache
@@ -27,9 +29,9 @@ def site_root() -> Path:
 
 
 # The site as the tool started, for tools that name their paths once. The
-# engine is wherever these tools are: ENGINE holds tools/, the repository's
-# root until A6 moves the engine into engine/ in batches, and its other
-# files (templates, static assets, build/) are found through 'engine_path'.
+# engine is wherever these tools are: ENGINE holds tools/ (the site's
+# engine/ since A6e), and its other files (templates, static assets,
+# build/) are found through 'engine_path'.
 SITE_ROOT = site_root()
 ENGINE = Path(__file__).resolve().parent.parent
 
@@ -130,3 +132,22 @@ def site_binary() -> str:
     return subprocess.check_output(
         ["cabal", "list-bin", "-v0", "exe:site"], cwd=ENGINE, text=True,
     ).strip()
+
+
+@lru_cache(maxsize=1)
+def site_config() -> dict:
+    """The site's site.yaml as the generator reads and checks it (`site
+    config`): the identity a tool states (host, url, emails, the signing
+    fingerprint) comes from here, not from the tool."""
+    return json.loads(subprocess.check_output([site_binary(), "config"], cwd=site_root(), text=True))
+
+
+if __name__ == "__main__":
+    # `sitelib.py config KEY` prints one value, for the shell tools
+    # (site-paths.sh's site_config).
+    if len(sys.argv) != 3 or sys.argv[1] != "config":
+        sys.exit("usage: sitelib.py config KEY")
+    value = site_config().get(sys.argv[2])
+    if not isinstance(value, str):
+        sys.exit(f"site config: no {sys.argv[2]}")
+    print(value)

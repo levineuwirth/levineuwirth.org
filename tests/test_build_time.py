@@ -18,10 +18,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests._helpers import SITE_ROOT, engine_path, script_env
+from tests._helpers import SITE_ROOT, engine_path, script_env, stub_bin
 
 STAMP = engine_path("tools/stamp-build-time.py")
 SIGN = engine_path("tools/sign-site.sh")
+PRESET = engine_path("tools/preset-signing-passphrase.sh")
+GPG_PRESET = Path("/usr/lib/gnupg/gpg-preset-passphrase")
 FOOTER = '<footer><span class="footer-build-time" data-build-time></span></footer>'
 
 
@@ -142,6 +144,37 @@ class SignTests(unittest.TestCase):
         self.assertNotEqual(done.returncode, 0)
         self.assertIn("could not hash every page", done.stderr)
         self.assertEqual(self.manifest.read_bytes(), before)
+
+    def site_yaml_names_the_key(self, **extra) -> dict[str, str]:
+        # `site config` (stubbed) gives site.yaml's fingerprint, spaced as
+        # the footer shows it.
+        spaced = " ".join(self.key[i:i + 8] for i in range(0, len(self.key), 8))
+        stub = stub_bin(self.root / "bin", ["site"],
+                        f"#!/bin/sh\necho '{{\"signing-fingerprint\": \"{spaced}\"}}'\n")
+        return script_env(GNUPGHOME=str(self.home), SITE_BINARY=str(stub / "site"), **extra)
+
+    def test_without_a_key_named_the_site_s_signs(self):
+        done = subprocess.run(["bash", str(SIGN), str(self.site)], capture_output=True, text=True,
+                              env=self.site_yaml_names_the_key(SIGN_MANIFEST=str(self.manifest)),
+                              timeout=120)
+        self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
+        self.assertTrue(self.manifest.read_text().startswith(f"v2 key {self.key} site "))
+        self.assertTrue(self.verifies("index.html"))
+
+    @unittest.skipUnless(GPG_PRESET.is_file(), "needs gpg-preset-passphrase")
+    def test_the_passphrase_is_cached_for_the_site_s_key(self):
+        # By keygrip, which the script finds from the fingerprint.
+        (self.home / "gpg-agent.conf").write_text("allow-preset-passphrase\n")
+        subprocess.run(["gpgconf", "--homedir", str(self.home), "--kill", "gpg-agent"],
+                       check=True, capture_output=True)
+        listing = subprocess.run(["gpg", "--homedir", str(self.home), "--with-colons", "--with-keygrip",
+                                  "--list-keys", self.key], check=True, capture_output=True, text=True)
+        keygrip = next(line.split(":")[9] for line in listing.stdout.splitlines()
+                       if line.startswith("grp:"))
+        done = subprocess.run(["bash", str(PRESET)], input="passphrase\n", capture_output=True,
+                              text=True, env=self.site_yaml_names_the_key(), timeout=60)
+        self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
+        self.assertIn(f"Passphrase cached for keygrip {keygrip} ", done.stdout)
 
 
 if __name__ == "__main__":

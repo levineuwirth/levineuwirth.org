@@ -771,7 +771,7 @@ marks can ignore the warning.
 
 It is not installed by default. To install it:
 
-    ln -s ../../tools/hooks/pre-commit-marks.sh .git/hooks/pre-commit
+    ln -s ../../engine/tools/hooks/pre-commit-marks.sh .git/hooks/pre-commit
 
 ---
 

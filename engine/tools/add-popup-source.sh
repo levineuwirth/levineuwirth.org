@@ -21,7 +21,6 @@ set -euo pipefail
 # shellcheck source=tools/site-paths.sh
 source "$(dirname "$0")/site-paths.sh"
 NGINX_CONF="$SITE_ROOT/nginx/popup-proxy.conf"
-ORIGIN="https://levineuwirth.org"
 
 # ── helpers ──────────────────────────────────────────────────────────
 
@@ -43,6 +42,11 @@ EOF
 }
 
 [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]] && { usage; exit 0; }
+
+# The site, for the probe's Origin and the proxy's User-Agent.
+ORIGIN="$(site_config url)"
+HOST="$(site_config host)"
+CONTACT="$(site_config contact-email)"
 
 # ── interactive prompts ──────────────────────────────────────────────
 
@@ -164,7 +168,7 @@ location /proxy/$NAME/ {
     set \$upstream_$NAME $UPSTREAM_HOST;
     proxy_pass https://\$upstream_$NAME/;
     proxy_set_header Host \$upstream_$NAME;
-    proxy_set_header User-Agent "levineuwirth.org popup-proxy (ln@levineuwirth.org)";
+    proxy_set_header User-Agent "$HOST popup-proxy ($CONTACT)";
     proxy_ssl_server_name on;
 
     proxy_cache popup_proxy;

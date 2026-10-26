@@ -23,10 +23,17 @@
 
 set -euo pipefail
 
+# shellcheck source=tools/site-paths.sh
+source "$(dirname "$0")/site-paths.sh"
 GNUPGHOME="${GNUPGHOME:-$HOME/.gnupg-signing}"
 SITE_DIR="${1:-_site}"
-# The tests sign with a throwaway key; production uses the default.
-SIGNING_KEY="${SIGNING_KEY:-C9A42A6FAD444FBE566FD738531BDC1CC2707066}"
+# The tests sign with a throwaway key; production uses the subkey site.yaml
+# records (signing-fingerprint).
+SIGNING_KEY="${SIGNING_KEY:-$(site_config signing-fingerprint | tr -d ' ')}"
+if [ -z "$SIGNING_KEY" ]; then
+    echo "Error: no signing key; site.yaml has no signing-fingerprint." >&2
+    exit 1
+fi
 SIGN_MANIFEST="${SIGN_MANIFEST:-${SITE_ROOT:-.}/data/sign-manifest.txt}"
 
 if [ ! -d "$SITE_DIR" ]; then

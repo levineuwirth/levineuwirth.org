@@ -6,15 +6,27 @@
 # agent cache expires).  The passphrase is cached for 24 h (see gpg-agent.conf).
 #
 # Usage:
-#   ./tools/preset-signing-passphrase.sh
+#   engine/tools/preset-signing-passphrase.sh
 #
 # The script will prompt for the passphrase via the terminal (not pinentry).
 
 set -euo pipefail
 
+# shellcheck source=tools/site-paths.sh
+source "$(dirname "$0")/site-paths.sh"
 GNUPGHOME="${GNUPGHOME:-$HOME/.gnupg-signing}"
-KEYGRIP="619844703EC398E70B0045D7150F08179CFEEFE3"
 GPG_PRESET="/usr/lib/gnupg/gpg-preset-passphrase"
+
+# The agent caches by keygrip: the signing subkey's, found from the
+# fingerprint site.yaml records (signing-fingerprint).
+FINGERPRINT="$(site_config signing-fingerprint | tr -d ' ')"
+KEYGRIP="$(gpg --homedir "$GNUPGHOME" --batch --with-colons --with-keygrip --list-keys "$FINGERPRINT" 2>/dev/null \
+    | awk -F: -v fpr="$FINGERPRINT" '$1 == "fpr" { hit = ($10 == fpr) } $1 == "grp" && hit { print $10; exit }' \
+    || true)"
+if [ -z "$KEYGRIP" ]; then
+    echo "Error: no key ${FINGERPRINT:-(no signing-fingerprint)} in $GNUPGHOME" >&2
+    exit 1
+fi
 
 if [ ! -x "$GPG_PRESET" ]; then
     echo "Error: gpg-preset-passphrase not found at $GPG_PRESET" >&2

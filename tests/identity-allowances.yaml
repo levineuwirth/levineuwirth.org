@@ -643,41 +643,6 @@ entries:
   line: 78
   column: 77
   string: levineuwirth.org
-- id: I0132
-  file: tools/add-popup-source.sh
-  line: 24
-  column: 17
-  string: levineuwirth.org
-- id: I0133
-  file: tools/add-popup-source.sh
-  line: 167
-  column: 34
-  string: levineuwirth.org
-- id: I0134
-  file: tools/add-popup-source.sh
-  line: 167
-  column: 64
-  string: ln@levineuwirth.org
-- id: I0135
-  file: tools/archive.py
-  line: 3
-  column: 49
-  string: levineuwirth.org
-- id: I0136
-  file: tools/archive.py
-  line: 86
-  column: 26
-  string: levineuwirth.org
-- id: I0137
-  file: tools/archive.py
-  line: 91
-  column: 19
-  string: levineuwirth.org
-- id: I0138
-  file: tools/archive.py
-  line: 92
-  column: 20
-  string: ln@levineuwirth.org
 - id: I0139
   file: tools/browser/csp_run.py
   line: 5
@@ -713,26 +678,6 @@ entries:
   line: 155
   column: 25
   string: levineuwirth.org
-- id: I0146
-  file: tools/check-site.py
-  line: 152
-  column: 65
-  string: levineuwirth
-- id: I0147
-  file: tools/check-site.py
-  line: 441
-  column: 57
-  string: levineuwirth
-- id: I0148
-  file: tools/code-refs.py
-  line: 174
-  column: 31
-  string: levineuwirth.org
-- id: I0149
-  file: tools/preset-signing-passphrase.sh
-  line: 16
-  column: 10
-  string: 619844703EC398E70B0045D7150F08179CFEEFE3
 - id: I0150
   file: tools/profile-build-arm.sh
   line: 26
@@ -748,31 +693,6 @@ entries:
   line: 64
   column: 25
   string: levineuwirth.org
-- id: I0153
-  file: tools/sign-site.sh
-  line: 29
-  column: 29
-  string: C9A42A6FAD444FBE566FD738531BDC1CC2707066
-- id: I0154
-  file: tools/subset-fonts.py
-  line: 9
-  column: 10
-  string: levineuwirth
-- id: I0155
-  file: tools/subset-fonts.py
-  line: 29
-  column: 18
-  string: LN Sans
-- id: I0156
-  file: tools/subset-fonts.py
-  line: 70
-  column: 35
-  string: levineuwirth
-- id: I0157
-  file: tools/subset-fonts.py
-  line: 110
-  column: 38
-  string: LN Sans
 - id: I0158
   file: tools/viz_theme.py
   line: 2

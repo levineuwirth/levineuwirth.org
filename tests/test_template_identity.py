@@ -190,7 +190,8 @@ main = hakyll $ do
         config = json.loads(subprocess.check_output([str(site_binary()), "config"],
                                                     cwd=SITE_ROOT, text=True))
         checker = load_tool("check-identity.py")
-        identity = checker.denylist(config, checker.load_policy(SITE_ROOT)["fixed-strings"])
+        identity = checker.denylist(config, checker.load_policy(SITE_ROOT)["fixed-strings"]
+                                    + checker.font_names(SITE_ROOT))
         with tempfile.TemporaryDirectory(prefix="engine-defaults-") as tmp:
             root = Path(tmp)
             shutil.copytree(engine_path("templates"), root / "templates")

@@ -66,6 +66,18 @@ class IdentityTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 checker.scanners([], [bad])
 
+    def test_the_names_a_site_gives_its_fonts_are_identity(self):
+        # A subset renamed from a reserved name carries the site's own
+        # (tools/fonts.yaml); a site may have no fonts.yaml, or no renames.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.assertEqual(checker.font_names(root), [])
+            (root / checker.FONTS).parent.mkdir(parents=True)
+            (root / checker.FONTS).write_text(
+                "families:\n  plain: {}\n"
+                "  renamed: {rename: {from: Upstream Sans, to: Qz Sans, reserved: Upstream}}\n")
+            self.assertEqual(checker.font_names(root), ["Qz Sans"])
+
     def test_removal_and_relocation_allowed_but_no_replacement_or_growth(self):
         before = manifest([dict(file="a", line=1, column=1, string="Author"),
                            dict(file="b", line=2, column=1, string="Host")])

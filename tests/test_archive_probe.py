@@ -11,6 +11,9 @@ from unittest import mock
 from tests._helpers import load_tool
 
 archive = load_tool("archive.py", "archive_tool")
+# Its User-Agent names the site, from site.yaml through the generator,
+# which these tests do without.
+archive.user_agent = lambda: "archive-test"
 
 URL = "https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.203.pdf"
 

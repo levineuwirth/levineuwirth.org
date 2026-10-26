@@ -7,11 +7,11 @@
 #
 # Install (one-time):
 #
-#     ln -s ../../tools/hooks/pre-commit-marks.sh .git/hooks/pre-commit
+#     ln -s ../../engine/tools/hooks/pre-commit-marks.sh .git/hooks/pre-commit
 #
 # Or chain into an existing pre-commit:
 #
-#     bash tools/hooks/pre-commit-marks.sh
+#     bash engine/tools/hooks/pre-commit-marks.sh
 #
 # Scope: newly-added (status `A`) .md files under content/essays/.
 # Modified files are not warned about — the author has presumably made

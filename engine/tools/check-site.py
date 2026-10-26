@@ -149,7 +149,7 @@ ID_ATTR_RE = re.compile(r"""\bid\s*=\s*["']([^"']+)["']""")
 # ---------------------------------------------------------------------------
 #
 # image-targets covers <img> and <source>; these cover everything else a page
-# loads or a reader follows. A local URL resolves the way nginx/levineuwirth.conf's
+# loads or a reader follows. A local URL resolves the way the site's nginx server's
 # try_files does ($uri, the directory's index.html, $uri.html), and a fragment on an HTML target
 # must name an id, or an <a name>, on that page.
 #
@@ -438,7 +438,7 @@ class AnchorIndex:
 def resolve_target(site_dir: str, page_dir: str, path: str) -> str | None:
     """The site-relative file nginx would serve for a local path, or None.
 
-    Mirrors ``try_files $uri $uri/ $uri.html`` in nginx/levineuwirth.conf,
+    Mirrors ``try_files $uri $uri/ $uri.html`` in the site's nginx server,
     where a directory without its slash is first redirected to it. A path
     that climbs out of the site resolves to nothing.
     """

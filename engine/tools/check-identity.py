@@ -15,7 +15,6 @@ There is deliberately no command to refresh or regenerate allowances.
 """
 from __future__ import annotations
 
-import json
 from pathlib import Path
 import re
 import subprocess
@@ -24,13 +23,23 @@ import sys
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from sitelib import SITE_ROOT, site_binary
+from sitelib import SITE_ROOT, site_config
 
 ENGINE = "engine/"
 ALLOWANCES = "tests/identity-allowances.yaml"
 POLICY = "tests/identity-policy.yaml"
 PATHS = "tests/engine-paths.txt"
 OVERRIDES = "overrides.yaml"
+FONTS = "tools/fonts.yaml"
+
+
+def font_names(root: Path) -> list[str]:
+    """The names the site's fonts.yaml gives its font subsets in place of a
+    reserved one: the site's own, so identity."""
+    path = root / FONTS
+    document = yaml.safe_load(path.read_text()) if path.exists() else {}
+    families = (document or {}).get("families") or {}
+    return [spec["rename"]["to"] for spec in families.values() if "rename" in spec]
 
 
 def denylist(config: dict, fixed: list[str]) -> list[str]:
@@ -247,7 +256,7 @@ def check(root: Path, config: dict) -> tuple[int, int]:
     paths = inventory(root, policy)
     document = yaml.safe_load((root / ALLOWANCES).read_text())
     check_history(root, document)
-    found = occurrences(root, paths, denylist(config, policy["fixed-strings"]),
+    found = occurrences(root, paths, denylist(config, policy["fixed-strings"] + font_names(root)),
                         policy["fixed-patterns"])
     errors = check_occurrences(found, document)
     if errors:
@@ -257,8 +266,7 @@ def check(root: Path, config: dict) -> tuple[int, int]:
 
 def main() -> int:
     try:
-        config = json.loads(subprocess.check_output([site_binary(), "config"], cwd=SITE_ROOT, text=True))
-        paths, count = check(SITE_ROOT, config)
+        paths, count = check(SITE_ROOT, site_config())
         print(f"identity: {paths} engine files; {count} frozen allowances remain")
         return 0
     except (OSError, ValueError, subprocess.CalledProcessError) as error:

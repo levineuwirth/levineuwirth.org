@@ -51,8 +51,8 @@ PY      := $(if $(wildcard $(VENV_PY)),$(VENV_PY),python3)
 LOCK_FILE := data/.site-build.lock
 WITH_LOCK  = $(call tool,with-lock.sh) $(LOCK_FILE)
 
-# An engine tool by name: under engine/tools/ once A6 moves the engine
-# there, in tools/ beside the site until then (tools/sitelib.py's
+# An engine tool by name: under engine/tools/ since A6e, or in tools/
+# beside the site, the fallback A6f removes (as tools/sitelib.py's
 # engine_path). The site's own tools (cv-pdfs.py) are named directly.
 tool = $(firstword $(wildcard engine/tools/$(1)) tools/$(1))
 
