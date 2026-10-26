@@ -165,8 +165,12 @@ do it.
   page-level embeddings for the "Related" block. To enable:
 
   ```sh
-  uv sync                 # creates .venv with sentence-transformers, faiss-cpu
+  make venv               # creates .venv with sentence-transformers, faiss-cpu
   ```
+
+  The Python project (`pyproject.toml`, `uv.lock`) is the engine's, and the
+  environment is the site's own `.venv`, so a bare `uv` command needs both
+  named: `UV_PROJECT_ENVIRONMENT="$PWD/.venv" uv run --frozen --project engine …`.
 
   Without `.venv` the build skips embedding (and the photo sidecar and
   archive steps) with a notice and continues.
@@ -217,7 +221,10 @@ the Makefile does not pass it on from `.env`.
   Python and shell tooling (embeddings, importers, checks), which reads
   the site's identity from `site.yaml`, with the browser test harness in
   `engine/tools/browser/`, and `engine/tests/` the engine's test suite
-  and golden fixtures. A site file at the same path
+  and golden fixtures. `engine/engine.mk` holds the build, test and report
+  targets, which the site's `Makefile` includes beside its own (the CV
+  PDFs, the deploy), and `engine/pyproject.toml` the tools' Python project,
+  synced into the site's `.venv` by `make venv`. A site file at the same path
   without `engine/` overrides the engine's when `overrides.yaml` declares it.
 - `content/` — authored Markdown (essays, poetry, fiction, music,
   photography, standalone pages).

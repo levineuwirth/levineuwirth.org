@@ -1,7 +1,8 @@
 # The site's web fonts, which the engine's tools/subset-fonts.py subsets
 # from their upstream releases:
 #
-#     uv run --with fonttools --with brotli engine/tools/subset-fonts.py
+#     UV_PROJECT_ENVIRONMENT="$PWD/.venv" uv run --frozen --project engine \
+#         --with fonttools --with brotli engine/tools/subset-fonts.py
 #
 # Spectral and JetBrains Mono come from the Google Fonts repository
 # (github.com/google/fonts), Fira Sans 4.301 from bBox Type's

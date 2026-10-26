@@ -3,16 +3,6 @@
 bootstrap-parent: 07e71c98c90b2a65149113fe4693b335d0f1ccfd
 initial-count: 159
 entries:
-- id: I0001
-  file: Makefile
-  line: 421
-  column: 96
-  string: levineuwirth
-- id: I0002
-  file: Makefile
-  line: 583
-  column: 19
-  string: levineuwirth.org
 - id: I0003
   file: data/chicago-notes.csl
   line: 8
@@ -675,7 +665,7 @@ entries:
   string: levineuwirth
 - id: I0145
   file: tools/build-notes-font.py
-  line: 155
+  line: 156
   column: 25
   string: levineuwirth.org
 - id: I0150

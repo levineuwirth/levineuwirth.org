@@ -1609,7 +1609,7 @@ surrounding paragraph as context.
 
 Related pages are computed by `tools/embed.py` using semantic embeddings
 (`nomic-embed-text-v1.5` + FAISS). Runs automatically during `make build`
-when the Python environment is set up (`uv sync`). No markup needed.
+when the Python environment is set up (`make venv`). No markup needed.
 
 ---
 
@@ -1679,13 +1679,13 @@ engine/tools/preset-signing-passphrase.sh
 **Image conversion:** `make build` automatically runs `engine/tools/convert-images.sh`
 to generate WebP companions for JPEG/PNG images (requires `cwebp`). It also
 generates responsive photo variants via `make thumbnails` (requires Pillow,
-which `uv sync` installs) and first-page PDF thumbnails via `pdftoppm`
+which `make venv` installs) and first-page PDF thumbnails via `pdftoppm`
 (requires `poppler`). When a tool is missing the build still succeeds, but it
 prints a warning and ships the heavier originals or no thumbnail;
 `make validate REQUIRE_WEBP=1` makes "JPEGs but no WebP" an error.
 
-**Python environment:** the embedding pipeline requires `uv sync` to be run
-once. After that, `make build` invokes `uv run python engine/tools/embed.py`
+**Python environment:** the embedding pipeline requires `make venv` to be run
+once. After that, `make build` invokes `.venv/bin/python3 engine/tools/embed.py`
 automatically. If `.venv` is absent, the step is skipped with a warning and
 the build continues normally.
 

@@ -28,6 +28,7 @@ site-files:
 - ARCHIVE.md
 - LICENSE
 - LICENSE-CONTENT
+- Makefile
 - MARKS.md
 - PHOTOGRAPHY.md
 - README.md

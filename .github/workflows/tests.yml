@@ -22,7 +22,11 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-      - name: Python environment (uv.lock)
-        run: uv sync --frozen
+      # The engine's Python project, synced into the site's .venv (`make
+      # venv`); absolute, as uv resolves a relative path against engine/.
+      - name: Python environment (engine/uv.lock)
+        run: uv sync --frozen --project engine
+        env:
+          UV_PROJECT_ENVIRONMENT: ${{ github.workspace }}/.venv
       - name: Tests
-        run: uv run python engine/tests/ci.py
+        run: .venv/bin/python engine/tests/ci.py

@@ -128,7 +128,7 @@ def is_iso_date(value) -> bool:
     return isinstance(value, str) and bool(ISO_DATE_RE.match(value.strip()))
 
 
-@unittest.skipIf(yaml is None, "PyYAML not installed — run `uv sync`")
+@unittest.skipIf(yaml is None, "PyYAML not installed — run `make venv`")
 class FrontMatterTests(unittest.TestCase):
     """Every published page's front matter speaks the site's vocabulary."""
 

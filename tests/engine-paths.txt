@@ -2,7 +2,6 @@
 # Every other file's owner is recorded in identity-policy.yaml.
 # A6 uses this inventory for moves; mixed files may split before they move.
 .python-version
-Makefile
 build/Archive.hs
 build/ArchiveIndex.hs
 build/Authors.hs
@@ -60,6 +59,7 @@ build/Tags.hs
 build/Utils.hs
 build/Vita.hs
 data/chicago-notes.csl
+engine.mk
 levineuwirth.cabal
 pyproject.toml
 static/apple-touch-icon.png
