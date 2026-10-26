@@ -234,8 +234,9 @@ content/photography/**/*.psd
 # Build profiles from tools/profile-build.py: local measurements, never published.
 .build-profiles/
 
-# Browser harness (tools/browser/): results and screenshots, and axe-core,
-# which is fetched rather than vendored (see tools/browser/README.md).
+# Browser harness (engine/tools/browser/): results and screenshots, and
+# axe-core, which is fetched rather than vendored (see its README.md); the
+# tools/browser/ rule keeps a copy fetched before A6f ignored.
 /.browser-runs/
 tools/browser/axe.min.js
 engine/tools/browser/axe.min.js
