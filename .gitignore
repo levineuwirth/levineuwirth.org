@@ -46,14 +46,12 @@ _cache-dev/
 *.swo
 
 # Python bytecode caches, and uv's environment (uv also writes its own
-# .gitignore inside it; this does not rely on that). The engine/ twin is
-# the one a bare `uv` against the engine's project makes, without
-# `make venv`'s UV_PROJECT_ENVIRONMENT.
+# .gitignore inside it; this does not rely on that). What the engine
+# writes inside engine/ is ignored by engine/.gitignore.
 **/__pycache__/
 *.pyc
 *.pyo
 /.venv/
-/engine/.venv/
 /anubis/state/
 # Crawl aggregates pulled from the VPS for review; kept out of the repo.
 /anubis/observations/
@@ -132,27 +130,24 @@ yaml-source/variants/private/
 yaml-source/variants/*.yml
 
 # Model files for client-side semantic search (~22 MB binary artifacts).
-# Download with: make download-model. Each download, the generated WebP
-# companions and axe-core land in the engine's static/ or tools/, which A6
-# moves under engine/; each rule has an engine/ twin.
+# Download with: make download-model. The downloads, the WebP companions
+# of the engine's images and axe-core land under engine/ since A6, which
+# engine/.gitignore covers; these rules keep a tree's copies from before
+# then ignored.
 static/models/
-engine/static/models/
 
 # Vendored PDF.js viewer (~18 MB uncompressed, pinned in tools/download-pdfjs.sh).
 # Download with: make download-pdfjs
 static/pdfjs/
-engine/static/pdfjs/
 
 # Vendored Leaflet + leaflet.markercluster (~150 KB total, pinned in
 # tools/download-leaflet.sh). Used by the /photography/map/ page only.
 # Download with: make download-leaflet (runs as part of `make build`).
 static/leaflet/
-engine/static/leaflet/
 
 # Generated WebP companions (produced by tools/convert-images.sh at build time).
 # To intentionally commit a WebP, use: git add -f path/to/file.webp
 static/**/*.webp
-engine/static/**/*.webp
 content/**/*.webp
 
 # Photography sidecars (produced by tools/extract-exif.py and
@@ -167,9 +162,7 @@ content/photography/**/*.palette.yaml
 # attrs on every <img> for CLS prevention). Same churn-avoidance reasons
 # as the photography sidecars above; recreated on every `make build`.
 **/*.dims.yaml
-# ...except the golden fixture's: it is test input (the expected width and
-# height of plate.png), and a fresh checkout without it failed the golden test.
-!engine/tests/golden/*.dims.yaml
+# (The golden fixture's, which is test input, engine/.gitignore keeps.)
 
 # Photography delivery images.
 #
@@ -242,4 +235,3 @@ content/photography/**/*.psd
 # tools/browser/ rule keeps a copy fetched before A6f ignored.
 /.browser-runs/
 tools/browser/axe.min.js
-engine/tools/browser/axe.min.js
