@@ -16,5 +16,9 @@ Documentation=file://%h/Repos/personal/levineuwirth.org/ARCHIVE.md
 [Service]
 Type=oneshot
 WorkingDirectory=%h/Repos/personal/levineuwirth.org
+# cabal (ghcup's), which finds the generator the scan asks for the site's
+# url, host and contact address (sitelib.site_config). It takes the one
+# last built and compiles nothing, so it cannot race a build.
+Environment=PATH=%h/build/.ghcup/bin:/usr/local/bin:/usr/bin
 ExecStart=/usr/bin/make archive-check
 Nice=10

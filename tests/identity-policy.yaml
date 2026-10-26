@@ -11,8 +11,9 @@
 # engine; downloaded ones need not be present.
 #
 # fixed-strings match case-insensitively, as the identity from `site config`
-# and the font names from tools/fonts.yaml do. fixed-patterns are case-sensitive regular expressions for the ln
-# namespace, renamed in A9; they catch new names in it as well as old ones.
+# and the font names from tools/fonts.yaml do. fixed-patterns are
+# case-sensitive regular expressions for the ln namespace, renamed in A9;
+# they catch new names in it as well as old ones.
 fixed-strings:
 - 619844703EC398E70B0045D7150F08179CFEEFE3   # the signing subkey's keygrip
 fixed-patterns:

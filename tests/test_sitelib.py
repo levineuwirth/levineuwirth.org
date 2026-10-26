@@ -5,14 +5,16 @@ not, a PID-unique or a fixed temporary, cleanup on failure or not); the
 merged one keeps the strongest of each, and these check them."""
 
 import os
+import shutil
 import stat
+import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
 
-from tests._helpers import engine_path
+from tests._helpers import engine_path, stub_bin
 
 # The directory sitelib.py is in, not tools/ wherever one exists: A6 can
 # leave engine/tools/ holding only what moved first.
@@ -91,6 +93,60 @@ class AtomicPath(unittest.TestCase):
 
     def test_slugify(self):
         self.assertEqual(sitelib.slugify("Rilke's  Duino_Elegies — I"), "rilkes-duino-elegies-i")
+
+
+class SiteConfig(unittest.TestCase):
+    """The site's identity comes from the generator last built: the link-rot
+    timer and the passphrase preset ask outside the build lock, where a
+    compile could race a build's. A stub cabal notes each call."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.dir = Path(tmp.name)
+        self.log = self.dir / "cabal.log"
+        self.binary = self.dir / "site"
+        self.built = self.dir / "built"
+        self.built.write_text("#!/bin/sh\necho '{\"host\": \"example.org\"}'\n")
+        self.built.chmod(0o755)
+        stub = stub_bin(self.dir / "bin", ["cabal"],
+                        f'#!/bin/sh\necho "$1" >> "{self.log}"\n'
+                        f'case "$1" in\n'
+                        f'  build) cp "{self.built}" "{self.binary}" ;;\n'
+                        f'  list-bin) echo "{self.binary}" ;;\n'
+                        f'esac\n')
+        env = mock.patch.dict(os.environ, {"PATH": f"{stub}{os.pathsep}{os.environ['PATH']}"})
+        env.start()
+        self.addCleanup(env.stop)
+        os.environ.pop("SITE_BINARY", None)
+        for cached in (sitelib.site_binary, sitelib.site_config):
+            cached.cache_clear()
+            self.addCleanup(cached.cache_clear)
+
+    def calls(self) -> list[str]:
+        return self.log.read_text().split() if self.log.exists() else []
+
+    def test_asks_the_generator_last_built(self):
+        shutil.copy(self.built, self.binary)
+        self.assertEqual(sitelib.site_config()["host"], "example.org")
+        self.assertEqual(self.calls(), ["list-bin"])
+
+    def test_the_shell_tools_ask_it_too(self):
+        # site-paths.sh's site_config, for sign-site.sh and the preset.
+        shutil.copy(self.built, self.binary)
+        done = subprocess.run([sys.executable, sitelib.__file__, "config", "host"],
+                              capture_output=True, text=True, timeout=30)
+        self.assertEqual(done.stdout, "example.org\n", done.stderr)
+        self.assertEqual(self.calls(), ["list-bin"])
+
+    def test_builds_only_when_there_is_none(self):
+        self.assertEqual(sitelib.site_config()["host"], "example.org")
+        self.assertEqual(self.calls(), ["list-bin", "build", "list-bin"])
+
+    def test_a_check_may_ask_for_a_fresh_one(self):
+        shutil.copy(self.built, self.binary)
+        sitelib.site_config(build=True)
+        self.assertEqual(self.calls(), ["build", "list-bin"])
 
 
 if __name__ == "__main__":

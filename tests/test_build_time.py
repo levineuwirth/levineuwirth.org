@@ -145,34 +145,43 @@ class SignTests(unittest.TestCase):
         self.assertIn("could not hash every page", done.stderr)
         self.assertEqual(self.manifest.read_bytes(), before)
 
-    def site_yaml_names_the_key(self, **extra) -> dict[str, str]:
-        # `site config` (stubbed) gives site.yaml's fingerprint, spaced as
-        # the footer shows it.
-        spaced = " ".join(self.key[i:i + 8] for i in range(0, len(self.key), 8))
+    def site_yaml_names_a_subkey(self, **extra) -> tuple[dict[str, str], str, str]:
+        # As in production, site.yaml names a signing subkey, whose keygrip
+        # is not the primary key's. `site config` (stubbed) gives its
+        # fingerprint, spaced as the footer shows it. Returns the
+        # environment, the subkey's fingerprint and its keygrip.
+        subprocess.run(["gpg", "--homedir", str(self.home), "--batch", "--passphrase", "",
+                        "--quick-add-key", self.key, "ed25519", "sign", "never"],
+                       check=True, capture_output=True, timeout=60)
+        listing = subprocess.run(["gpg", "--homedir", str(self.home), "--with-colons", "--with-keygrip",
+                                  "--list-keys", self.key], check=True, capture_output=True, text=True).stdout
+        subkey = listing[listing.index("\nsub:"):].splitlines()
+        fingerprint = next(line.split(":")[9] for line in subkey if line.startswith("fpr:"))
+        keygrip = next(line.split(":")[9] for line in subkey if line.startswith("grp:"))
+        spaced = " ".join(fingerprint[i:i + 8] for i in range(0, len(fingerprint), 8))
         stub = stub_bin(self.root / "bin", ["site"],
                         f"#!/bin/sh\necho '{{\"signing-fingerprint\": \"{spaced}\"}}'\n")
-        return script_env(GNUPGHOME=str(self.home), SITE_BINARY=str(stub / "site"), **extra)
+        env = script_env(GNUPGHOME=str(self.home), SITE_BINARY=str(stub / "site"), **extra)
+        return env, fingerprint, keygrip
 
     def test_without_a_key_named_the_site_s_signs(self):
+        env, fingerprint, _ = self.site_yaml_names_a_subkey(SIGN_MANIFEST=str(self.manifest))
         done = subprocess.run(["bash", str(SIGN), str(self.site)], capture_output=True, text=True,
-                              env=self.site_yaml_names_the_key(SIGN_MANIFEST=str(self.manifest)),
-                              timeout=120)
+                              env=env, timeout=120)
         self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
-        self.assertTrue(self.manifest.read_text().startswith(f"v2 key {self.key} site "))
+        self.assertTrue(self.manifest.read_text().startswith(f"v2 key {fingerprint} site "))
         self.assertTrue(self.verifies("index.html"))
 
     @unittest.skipUnless(GPG_PRESET.is_file(), "needs gpg-preset-passphrase")
     def test_the_passphrase_is_cached_for_the_site_s_key(self):
-        # By keygrip, which the script finds from the fingerprint.
+        # By the subkey's keygrip, which the script finds from its
+        # fingerprint.
         (self.home / "gpg-agent.conf").write_text("allow-preset-passphrase\n")
         subprocess.run(["gpgconf", "--homedir", str(self.home), "--kill", "gpg-agent"],
                        check=True, capture_output=True)
-        listing = subprocess.run(["gpg", "--homedir", str(self.home), "--with-colons", "--with-keygrip",
-                                  "--list-keys", self.key], check=True, capture_output=True, text=True)
-        keygrip = next(line.split(":")[9] for line in listing.stdout.splitlines()
-                       if line.startswith("grp:"))
+        env, _, keygrip = self.site_yaml_names_a_subkey()
         done = subprocess.run(["bash", str(PRESET)], input="passphrase\n", capture_output=True,
-                              text=True, env=self.site_yaml_names_the_key(), timeout=60)
+                              text=True, env=env, timeout=60)
         self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
         self.assertIn(f"Passphrase cached for keygrip {keygrip} ", done.stdout)
 

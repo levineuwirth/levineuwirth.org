@@ -1676,7 +1676,7 @@ passphrase to be cached. Run once per boot (or per 24h expiry):
 engine/tools/preset-signing-passphrase.sh
 ```
 
-**Image conversion:** `make build` automatically runs `tools/convert-images.sh`
+**Image conversion:** `make build` automatically runs `engine/tools/convert-images.sh`
 to generate WebP companions for JPEG/PNG images (requires `cwebp`). It also
 generates responsive photo variants via `make thumbnails` (requires Pillow,
 which `uv sync` installs) and first-page PDF thumbnails via `pdftoppm`
