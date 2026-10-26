@@ -16,13 +16,9 @@ import sys
 import urllib.request
 from pathlib import Path
 
-# A6e moves sitelib before A6f moves this harness. Resolve the helper
-# from the code checkout, independently of SITE_ROOT and the working directory.
-_root = Path(__file__).resolve().parents[2]
-for _tools in (_root / "engine/tools", _root / "tools"):
-    if (_tools / "sitelib.py").is_file():
-        sys.path.insert(0, str(_tools))
-        break
+# sitelib, in the engine's tools/ above this harness, whatever SITE_ROOT
+# and the working directory are.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import sitelib  # noqa: E402
 
 # Vendored: axe-core goes beside the record it is checked against, wherever

@@ -18,7 +18,7 @@ from pathlib import Path
 from tests._helpers import engine_path, script_env
 
 TOOL = engine_path("tools/build-inputs.py")
-INPUTS = ["static", "data", "tools", "nginx", "Makefile", "yaml-source"]
+INPUTS = ["engine", "static", "data", "tools", "nginx", "Makefile", "yaml-source"]
 
 
 class BuildInputsTests(unittest.TestCase):
@@ -29,6 +29,7 @@ class BuildInputsTests(unittest.TestCase):
         for rel, text in {"static/js/a.js": "a", "static/css/b.css": "b",
                           "data/now.yaml": "now", "Makefile": "all:",
                           "nginx/site.conf": "server {}", "tools/browser/lib.py": "",
+                          "engine/tools/browser/lib.py": "", "engine/tests/test_a.py": "",
                           "data/.compress-cache/x.gz": "", "data/.site-build.lock": "",
                           "data/sign-manifest.txt": "", "yaml-source/data/vita.yml": "",
                           "yaml-source/build/r.aux": "", "yaml-source/output/r.pdf": "",
@@ -84,7 +85,8 @@ class BuildInputsTests(unittest.TestCase):
 
     def test_what_is_not_an_input(self) -> None:
         self.run_tool("record", *INPUTS)
-        for rel in ("nginx/site.conf", "tools/browser/lib.py", "data/.compress-cache/x.gz",
+        for rel in ("nginx/site.conf", "tools/browser/lib.py", "engine/tools/browser/lib.py",
+                    "engine/tests/test_a.py", "data/.compress-cache/x.gz",
                     "data/.site-build.lock", "data/sign-manifest.txt",
                     # The résumé's artifacts and private variants: the site
                     # reads yaml-source/data/ alone.

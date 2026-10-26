@@ -293,7 +293,7 @@ http {
         """
         import yaml
         from unittest.mock import patch
-        module = load_tool('anubis-update.py', 'anubis_update_real')
+        module = load_tool('anubis-update.py', 'anubis_update_real', site=True)
         fixture = self
         service = yaml.safe_load((ROOT / 'anubis/docker-compose.yml').read_text())['services']['anubis']
         base = service['image']

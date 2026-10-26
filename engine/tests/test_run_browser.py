@@ -228,50 +228,47 @@ class RunBrowser(unittest.TestCase):
 
 
 class BrowserImports(unittest.TestCase):
-    """Fresh interpreters catch imports hidden by an already loaded sitelib."""
+    """Fresh interpreters catch imports hidden by an already loaded sitelib:
+    the harness takes sitelib from the engine's tools/ above it, and axe-core
+    from beside its pin there."""
 
-    def check_layouts(self, script: str) -> None:
-        for layout in ("original", "pins-moved", "tools-moved", "harness-moved"):
-            with self.subTest(layout=layout), tempfile.TemporaryDirectory() as tmp:
-                root = Path(tmp) / "checkout"
-                engine = root / "engine"
-                tools = (engine if layout in ("tools-moved", "harness-moved") else root) / "tools"
-                harness = (engine if layout == "harness-moved" else root) / "tools/browser"
-                pins = (root if layout == "original" else engine) / "tools/browser"
-                for directory in (tools, harness, pins):
-                    directory.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(engine_path("tools/sitelib.py"), tools / "sitelib.py")
-                shutil.copy2(engine_path(f"tools/browser/{script}.py"), harness / f"{script}.py")
-                payload = b"// already verified axe fixture\n"
-                (pins / "axe.min.js").write_bytes(payload)
-                (pins / "axe-version").write_text(
-                    f"test-version {hashlib.sha256(payload).hexdigest()}\n")
-                # SITE_ROOT and cwd are deliberately outside the code checkout.
-                # A site-local module must never supply engine helpers.
-                site = Path(tmp) / "site"
-                (site / "tools").mkdir(parents=True)
-                (site / "tools/sitelib.py").write_text("raise AssertionError('site helper imported')")
-                env = {**os.environ, "SITE_ROOT": str(site), "BROWSER_OUT": str(site / "out")}
-                probe = (
-                    "import json, runpy, sys; "
-                    "m = runpy.run_path(sys.argv[1]); "
-                    "print(json.dumps([m['sitelib'].__file__, "
-                    "str(m.get('AXE', m.get('TARGET')))])); "
-                    + ("sys.exit(m['main']())" if script == "fetch_axe" else "")
-                )
-                done = subprocess.run(
-                    [sys.executable, "-I", "-B", "-c", probe, str(harness / f"{script}.py")],
-                    cwd=site, env=env, capture_output=True, text=True, timeout=10)
-                self.assertEqual(done.returncode, 0, done.stderr)
-                self.assertEqual(json.loads(done.stdout),
-                                 [str(tools / "sitelib.py"), str(pins / "axe.min.js")])
-                self.assertEqual((pins / "axe.min.js").read_bytes(), payload)
+    def check(self, script: str) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tools = Path(tmp) / "checkout/engine/tools"
+            harness = pins = tools / "browser"
+            harness.mkdir(parents=True)
+            shutil.copy2(engine_path("tools/sitelib.py"), tools / "sitelib.py")
+            shutil.copy2(engine_path(f"tools/browser/{script}.py"), harness / f"{script}.py")
+            payload = b"// already verified axe fixture\n"
+            (pins / "axe.min.js").write_bytes(payload)
+            (pins / "axe-version").write_text(
+                f"test-version {hashlib.sha256(payload).hexdigest()}\n")
+            # SITE_ROOT and cwd are deliberately outside the code checkout.
+            # A site-local module must never supply engine helpers.
+            site = Path(tmp) / "site"
+            (site / "tools").mkdir(parents=True)
+            (site / "tools/sitelib.py").write_text("raise AssertionError('site helper imported')")
+            env = {**os.environ, "SITE_ROOT": str(site), "BROWSER_OUT": str(site / "out")}
+            probe = (
+                "import json, runpy, sys; "
+                "m = runpy.run_path(sys.argv[1]); "
+                "print(json.dumps([m['sitelib'].__file__, "
+                "str(m.get('AXE', m.get('TARGET')))])); "
+                + ("sys.exit(m['main']())" if script == "fetch_axe" else "")
+            )
+            done = subprocess.run(
+                [sys.executable, "-I", "-B", "-c", probe, str(harness / f"{script}.py")],
+                cwd=site, env=env, capture_output=True, text=True, timeout=10)
+            self.assertEqual(done.returncode, 0, done.stderr)
+            self.assertEqual(json.loads(done.stdout),
+                             [str(tools / "sitelib.py"), str(pins / "axe.min.js")])
+            self.assertEqual((pins / "axe.min.js").read_bytes(), payload)
 
-    def test_lib_import_across_moves(self) -> None:
-        self.check_layouts("lib")
+    def test_lib_imports_the_engine_s_helpers(self) -> None:
+        self.check("lib")
 
-    def test_fetch_axe_across_moves(self) -> None:
-        self.check_layouts("fetch_axe")
+    def test_fetch_axe_imports_the_engine_s_helpers(self) -> None:
+        self.check("fetch_axe")
 
 
 if __name__ == "__main__":

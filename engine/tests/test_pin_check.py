@@ -12,17 +12,20 @@ from pathlib import Path
 from tests._helpers import engine_path, script_env, stub_bin
 
 
-class VendoringAcrossTheMove(unittest.TestCase):
-    def test_pins_are_found_where_a6_has_moved_them(self):
-        # A6d moved the vendored assets and their checksums under engine/
-        # before A6e moves the scripts: a downloader still in tools/ must
-        # verify the files it has against the moved pins, not refuse and
-        # delete them.
+class Vendoring(unittest.TestCase):
+    """A downloader in the engine, run from the site: what it vendors and the
+    pins it checks against are the engine's."""
+
+    def engine_in(self, root: Path, *scripts: str) -> None:
+        (root / "engine/tools").mkdir(parents=True)
+        for name in (*scripts, "site-paths.sh", "pin-check.sh"):
+            shutil.copy2(engine_path(f"tools/{name}"), root / "engine/tools" / name)
+
+    def test_files_present_are_checked_against_the_engine_s_pins(self):
+        # Verified, not refused, deleted and fetched again.
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            for name in ("download-model.sh", "site-paths.sh", "pin-check.sh"):
-                (root / "tools").mkdir(exist_ok=True)
-                shutil.copy2(engine_path(f"tools/{name}"), root / "tools" / name)
+            self.engine_in(root, "download-model.sh")
             model = root / "engine/static/models/all-MiniLM-L6-v2"
             pins = []
             for rel in ("config.json", "tokenizer.json", "tokenizer_config.json",
@@ -30,9 +33,8 @@ class VendoringAcrossTheMove(unittest.TestCase):
                 (model / rel).parent.mkdir(parents=True, exist_ok=True)
                 (model / rel).write_text(rel)
                 pins.append(f"{hashlib.sha256(rel.encode()).hexdigest()}  {rel}\n")
-            (root / "engine/tools").mkdir()
             (root / "engine/tools/model-checksums.sha256").write_text("".join(pins))
-            done = subprocess.run(["bash", "tools/download-model.sh"], cwd=root, env=script_env(),
+            done = subprocess.run(["bash", "engine/tools/download-model.sh"], cwd=root, env=script_env(),
                                   capture_output=True, text=True, timeout=30)
             self.assertEqual(done.returncode, 0, done.stderr)
             self.assertEqual(done.stdout.count("sha256 verified"), 5)
@@ -45,10 +47,7 @@ class VendoringAcrossTheMove(unittest.TestCase):
         # fetches anything (curl is stubbed to fail, should one try).
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / "tools").mkdir()
-            for name in ("download-pdfjs.sh", "download-leaflet.sh", "download-model.sh",
-                         "site-paths.sh", "pin-check.sh"):
-                shutil.copy2(engine_path(f"tools/{name}"), root / "tools" / name)
+            self.engine_in(root, "download-pdfjs.sh", "download-leaflet.sh", "download-model.sh")
             env = script_env(stub_bin(root / "stubs", ["curl"], "#!/bin/sh\nexit 97\n"))
             (root / "engine/static").mkdir(parents=True)
             for script, directory in (("download-pdfjs.sh", "pdfjs"),
@@ -56,16 +55,16 @@ class VendoringAcrossTheMove(unittest.TestCase):
                                       ("download-model.sh", "models")):
                 with self.subTest(script=script):
                     (root / "static" / directory).mkdir(parents=True)
-                    done = subprocess.run(["bash", f"tools/{script}"], cwd=root, env=env,
+                    done = subprocess.run(["bash", f"engine/tools/{script}"], cwd=root, env=env,
                                           capture_output=True, text=True, timeout=30)
                     self.assertEqual(done.returncode, 1, done.stderr)
                     self.assertIn(f"static/{directory}: left from before the engine took it over",
                                   done.stderr)
                     self.assertFalse((root / "engine/static" / directory).exists())
-            # Before the move, the engine's static/ is the site's.
-            shutil.rmtree(root / "engine")
+            # Run in the engine's own checkout, its static/ is the site's.
+            (root / "engine/static/models").mkdir()
             done = subprocess.run(["bash", "-c", "source tools/site-paths.sh && no_site_copy models"],
-                                  cwd=root, env=env, capture_output=True, text=True, timeout=30)
+                                  cwd=root / "engine", env=env, capture_output=True, text=True, timeout=30)
             self.assertEqual(done.returncode, 0, done.stderr)
 
 

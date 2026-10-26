@@ -51,10 +51,10 @@ PY      := $(if $(wildcard $(VENV_PY)),$(VENV_PY),python3)
 LOCK_FILE := data/.site-build.lock
 WITH_LOCK  = $(call tool,with-lock.sh) $(LOCK_FILE)
 
-# An engine tool by name: under engine/tools/ since A6e, or in tools/
-# beside the site, the fallback A6f removes (as tools/sitelib.py's
-# engine_path). The site's own tools (cv-pdfs.py) are named directly.
-tool = $(firstword $(wildcard engine/tools/$(1)) tools/$(1))
+# An engine tool by name: engine/tools/<name>, as tools/sitelib.py's
+# engine_path has it. The site's own tools (cv-pdfs.py) are named
+# directly, from tools/.
+tool = engine/tools/$(1)
 
 # Flags handed to the post-build artifact gate (tools/check-site.py).
 #
@@ -638,15 +638,19 @@ clean:
 # ---------------------------------------------------------------------------
 # test / validate
 # ---------------------------------------------------------------------------
-# `make test` runs BOTH stdlib-unittest suites (B10):
+# `make test` runs every stdlib-unittest suite (B10):
 #
-#   tests/              site tooling — figures, imports, the artifact gate
+#   engine/tests/       the engine's — figures, imports, the artifact gate
+#   tests/              the site's own — content, ops, the identity records
 #   yaml-source/tests/  the CV/résumé variant resolver
 #
-# The second used to be invisible to `make test` (`discover -s tests` only
+# The last used to be invisible to `make test` (`discover -s tests` only
 # looks at the top-level directory), so 20 tests never ran here at all.
+# engine/ is on PYTHONPATH for the first two: tests/ has no __init__.py, so
+# `tests` is one namespace package over the site's and the engine's, and
+# `from tests._helpers import ...` finds the engine's helpers from either.
 #
-# -v is deliberate: several tests self-skip — tests/test_viz.py needs
+# -v is deliberate: several tests self-skip — engine/tests/test_viz.py needs
 # matplotlib and skips without .venv, and its built-page checks skip again
 # when _site/ is absent. A quiet run of 35 tests where 21 skipped printed
 # "OK" and looked like coverage. With -v every skip names itself.
@@ -659,12 +663,15 @@ test:
 	  PY="$(CURDIR)/.venv/bin/python3"; \
 	elif [ "$(REQUIRE_VENV)" = "1" ]; then \
 	  echo "test: REQUIRE_VENV=1 but .venv/ is absent — run 'uv sync'." >&2; \
-	  echo "      Without it tests/test_viz.py skips every figure check." >&2; \
+	  echo "      Without it engine/tests/test_viz.py skips every figure check." >&2; \
 	  exit 1; \
 	else \
 	  PY=python3; \
 	  echo "test: .venv/ absent — running with system python3; expect skips."; \
 	fi; \
+	export PYTHONPATH="$(CURDIR)/engine$${PYTHONPATH:+:$$PYTHONPATH}"; \
+	echo "== engine/tests/ =="; \
+	"$$PY" -m unittest discover -s engine/tests -v || exit 1; \
 	echo "== tests/ =="; \
 	"$$PY" -m unittest discover -s tests -v || exit 1; \
 	if [ -d yaml-source/tests ]; then \
@@ -681,7 +688,7 @@ test:
 test-clean:
 	@$(call tool,test-clean.sh)
 
-# The browser tests (tests/test_browser_*.py): Chromium and Firefox through
+# The browser tests (engine/tests/test_browser_*.py): Chromium and Firefox through
 # Playwright over the built site, served as the production vhost serves it
 # (tools/browser/serve.py), under the enforcing CSP. Opt-in: `make test`
 # skips them without RUN_BROWSER_TESTS=1. Run `make build` first; inputs
@@ -689,7 +696,7 @@ test-clean:
 # like `validate`, so no build or deploy rewrites _site underneath them.
 # Needs the network (popups, map tiles, transformers.js). `playwright
 # install` matches the browsers to the installed Playwright and is quick
-# when they already are. The modules share nothing, so tests/run_browser.py
+# when they already are. The modules share nothing, so engine/tests/run_browser.py
 # runs BROWSER_JOBS of them at once (default 3; BROWSER_JOBS=1 for one at a
 # time), longest first, each one's output whole; BROWSER_TIMINGS=1 adds the
 # report scripts' times.
@@ -700,7 +707,7 @@ test-browser-locked:
 	@test -x $(VENV_PY) || { echo "test-browser: .venv/ is absent — run 'uv sync'." >&2; exit 1; }
 	@.venv/bin/playwright install chromium firefox
 	@$(VENV_PY) $(call tool,browser/fetch_axe.py)
-	@$(VENV_PY) tests/run_browser.py
+	@$(VENV_PY) engine/tests/run_browser.py
 
 # The deployment contract, checked in one command: both test suites plus
 # the finished-artifact gate over _site/. `deploy` depends on this, so a

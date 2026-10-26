@@ -11,7 +11,8 @@ author's machine, and every deploy runs it.
 Chosen 2026-10-06 from `make test-clean`'s run: the modules with no skips
 there that use neither the generator nor ImageMagick, exiftool, Pagefind,
 brotli or Docker; plus the CV/résumé variant resolver's suite
-(yaml-source/tests). A module added to tests/ runs here only once listed.
+(yaml-source/tests). A module added to engine/tests/ or tests/ runs here only
+once listed.
 
 What they need from outside Python, all of which a test skips without:
 node, sha256sum, gpg and gpgconf, rsync, flock, and borg (the off-host
@@ -20,7 +21,7 @@ workflow installs (Ubuntu's 1.2.8 passes; checked locally). The first run
 showed why this list matters: that test checks for borg with
 `which('borg')`, a spelling the selection's scan did not look for.
 
-    python3 tests/ci.py
+    python3 engine/tests/ci.py
 """
 
 from __future__ import annotations
@@ -31,8 +32,9 @@ import unittest
 from pathlib import Path
 
 # The repository the suite runs in: $SITE_ROOT, else the working directory,
-# as for `make test` (tests/_helpers.py).
+# as for `make test` (tests/_helpers.py); and the engine these tests are in.
 SITE_ROOT = Path(os.environ.get("SITE_ROOT") or os.getcwd()).resolve()
+ENGINE = Path(__file__).resolve().parents[1]
 
 MODULES = [
     "test_annotations", "test_anubis_update", "test_archive_fetch", "test_archive_probe",
@@ -52,7 +54,9 @@ def run(suite: unittest.TestSuite) -> unittest.TestResult:
 
 
 def main() -> int:
-    sys.path.insert(0, str(SITE_ROOT))
+    # `tests` is one namespace package over the site's tests/ and the
+    # engine's, as `make test` has it (the Makefile's test target).
+    sys.path[:0] = [str(SITE_ROOT), str(ENGINE)]
     os.chdir(SITE_ROOT)
     results = [run(unittest.defaultTestLoader.loadTestsFromNames(
         [f"tests.{m}" for m in MODULES]))]

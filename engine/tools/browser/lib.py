@@ -2,13 +2,9 @@ import json, os, re, sys, time
 from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-# A6e moves sitelib before A6f moves this harness. Resolve the helper
-# from the code checkout, independently of SITE_ROOT and the working directory.
-_root = Path(__file__).resolve().parents[2]
-for _tools in (_root / "engine/tools", _root / "tools"):
-    if (_tools / "sitelib.py").is_file():
-        sys.path.insert(0, str(_tools))
-        break
+# sitelib, in the engine's tools/ above this harness, whatever SITE_ROOT
+# and the working directory are.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import sitelib  # noqa: E402
 # The site: $SITE_ROOT (tests/_browser.py sets it, running these scripts in
 # their own directory), else the working directory.
@@ -18,7 +14,7 @@ REPO = os.environ.get('SITE_ROOT') or os.getcwd()
 OUT = os.environ.get('BROWSER_OUT') or os.path.join(REPO, '.browser-runs')
 SHOTS = os.path.join(OUT, 'shots')
 # axe-core is vendored: beside the version it is checked against
-# (axe-version), wherever A6 has put them.
+# (axe-version).
 AXE = str(sitelib.engine_path('tools/browser/axe-version').parent / 'axe.min.js')
 os.makedirs(SHOTS, exist_ok=True)
 

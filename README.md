@@ -213,9 +213,11 @@ the Makefile does not pass it on from `.env`.
   `engine/templates/` holds the Hakyll/Pandoc HTML templates,
   `engine/static/` the CSS, JS, KaTeX, generic link icons and neutral
   defaults for the site's identity assets (the PDF.js, Leaflet and
-  search-model downloads land there too), and `engine/tools/` the build's
+  search-model downloads land there too), `engine/tools/` the build's
   Python and shell tooling (embeddings, importers, checks), which reads
-  the site's identity from `site.yaml`. A site file at the same path
+  the site's identity from `site.yaml`, with the browser test harness in
+  `engine/tools/browser/`, and `engine/tests/` the engine's test suite
+  and golden fixtures. A site file at the same path
   without `engine/` overrides the engine's when `overrides.yaml` declares it.
 - `content/` — authored Markdown (essays, poetry, fiction, music,
   photography, standalone pages).
@@ -227,8 +229,8 @@ the Makefile does not pass it on from `.env`.
 - `tools/` — the site's own tools: the VPS backup, update and status
   scripts, the Anubis and Forgejo helpers, `cv-pdfs.py`, and the font
   configuration that `engine/tools/subset-fonts.py` reads (`fonts.yaml`,
-  `font-sources.json`); and, until it moves into the engine, the browser
-  test harness (`tools/browser/`).
+  `font-sources.json`); and `tools/browser/prod_smoke.py`, a check of the
+  live site with the engine's browser harness.
 - `data/` — generated and source data (commonplace.yaml, annotations.json,
   bibliographies, similar-links.json).
 - `yaml-source/` — the CV and résumé sources: `engine/build/Vita.hs` renders
@@ -239,11 +241,13 @@ the Makefile does not pass it on from `.env`.
 - `code-refs/` — snapshots of linked GitHub code for the hover popups,
   written by `engine/tools/code-refs.py` during the build. Tracked: commit it when
   a build changes it, or `make deploy` refuses.
-- `tests/` — the Python `unittest` suite run by `make test` and
-  `make validate`; `make test-clean` runs it on HEAD in a fresh clone. The
-  badge above covers only the part a stock GitHub runner can run, the tests
-  listed in `tests/ci.py` (no Haskell generator, no built site), and fails
-  if any of them skips. The full suite runs locally, before every deploy.
+- `tests/` — the site's own tests (content, ops), the identity records
+  and the browser baselines; the engine's suite is `engine/tests/`. `make
+  test` and `make validate` run both, and `make test-clean` runs them on
+  HEAD in a fresh clone. The badge above covers only the part a stock
+  GitHub runner can run, the tests listed in `engine/tests/ci.py` (no
+  Haskell generator, no built site), and fails if any of them skips. The
+  full suite runs locally, before every deploy.
 - `systemd/` — units and timers for the VPS (backups, updates) and the
   laptop's `archive-check`; installed by hand, see `systemd/README.md`.
 - `forgejo/`, `couchdb/` — Docker Compose sources for the VPS's Forgejo

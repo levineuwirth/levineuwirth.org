@@ -166,7 +166,7 @@ content/photography/**/*.palette.yaml
 **/*.dims.yaml
 # ...except the golden fixture's: it is test input (the expected width and
 # height of plate.png), and a fresh checkout without it failed the golden test.
-!tests/golden/*.dims.yaml
+!engine/tests/golden/*.dims.yaml
 
 # Photography delivery images.
 #

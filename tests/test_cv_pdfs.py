@@ -7,7 +7,7 @@ from pathlib import Path
 from tests._helpers import load_tool
 
 ROOT = Path(__file__).resolve().parents[1]
-cv_pdfs = load_tool("cv-pdfs.py")
+cv_pdfs = load_tool("cv-pdfs.py", site=True)
 
 
 class CvPdfTests(unittest.TestCase):

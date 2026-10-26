@@ -22,40 +22,36 @@ from pathlib import Path
 from types import ModuleType
 
 # The site under test: $SITE_ROOT, else the working directory, from which
-# `make test` runs (the repository root throughout Phase A). The engine is
-# the one these tests belong to: ENGINE holds tests/, and the engine's other
-# files (tools, templates, static assets, build/, golden fixtures) come from
-# 'engine_path', as tools/sitelib.py resolves them.
+# `make test` runs. The engine is the one these tests belong to: ENGINE
+# holds tests/, beside the engine's other files (tools, templates, static
+# assets, build/), as tools/sitelib.py has it.
 SITE_ROOT = Path(os.environ.get("SITE_ROOT") or os.getcwd()).resolve()
 ENGINE = Path(__file__).resolve().parents[1]
 
 
 def engine_path(rel: str | Path) -> Path:
-    """An engine file or directory by its path in the engine: under engine/
-    once A6 has moved it there, beside these tests, or, while A6 has moved
-    these tests and not it, beside the site."""
-    for found in (ENGINE / "engine" / rel, ENGINE / rel, SITE_ROOT / rel):
-        if found.exists():
-            return found
+    """An engine file or directory by its path in the engine."""
     return ENGINE / rel
 
 
 def copy_engine_tree(rel: str, dest: Path, **copytree) -> Path:
     """Copy the directory `rel` (templates, tools) as a build sees it to
     `dest`: the engine's, then the site's over it, as the build's aliases
-    let a site file win. Until A6 they are one directory."""
+    let a site file win."""
     for source in dict.fromkeys((engine_path(rel), SITE_ROOT / rel)):
         if source.is_dir():
             shutil.copytree(source, dest, dirs_exist_ok=True, **copytree)
     return dest
 
 
-def load_tool(filename: str, name: str | None = None, *, register: bool = False) -> ModuleType:
-    """tools/<filename> as a module. The tools' names have hyphens, so they
-    cannot be imported by name. `register` puts the module in sys.modules
-    before running it, which a dataclass defined in the tool needs."""
+def load_tool(filename: str, name: str | None = None, *, register: bool = False,
+              site: bool = False) -> ModuleType:
+    """tools/<filename> as a module: the engine's, or with `site` the site's
+    own. The tools' names have hyphens, so they cannot be imported by name.
+    `register` puts the module in sys.modules before running it, which a
+    dataclass defined in the tool needs."""
     name = name or Path(filename).stem.replace("-", "_")
-    spec = importlib.util.spec_from_file_location(name, engine_path(f"tools/{filename}"))
+    spec = importlib.util.spec_from_file_location(name, (SITE_ROOT if site else ENGINE) / "tools" / filename)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     if register:

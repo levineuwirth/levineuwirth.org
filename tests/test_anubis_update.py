@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import patch
 from tests._helpers import load_tool
 
-update = load_tool("anubis-update.py")
+update = load_tool("anubis-update.py", site=True)
 OLD = update.REGISTRY + ':v1.27.0@sha256:' + 'a' * 64
 NEW = update.REGISTRY + ':v1.28.0@sha256:' + 'b' * 64
 

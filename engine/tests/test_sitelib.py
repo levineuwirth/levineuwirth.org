@@ -77,19 +77,16 @@ class AtomicPath(unittest.TestCase):
         self.assertTrue(sitelib.atomic_write_text(target, "{}"))
         self.assertNotEqual(target.stat().st_mtime, 1)
 
-    def test_engine_path_finds_a_file_wherever_a6_has_put_it(self):
-        repo, site = self.dir / "repo", self.dir / "site"
-        for rel in ("repo/engine/tools/pins.sha256", "repo/tools/sitelib.py", "site/build/Site.hs"):
+    def test_engine_path_is_the_engine_s_never_the_site_s(self):
+        # A site file at the same path overrides the engine's in the build
+        # (build/EngineFiles.hs); it is never the engine's own.
+        engine, site = self.dir / "engine", self.dir / "site"
+        for rel in ("engine/static/css/base.css", "site/static/css/base.css"):
             (self.dir / rel).parent.mkdir(parents=True, exist_ok=True)
             (self.dir / rel).write_text("")
-        with mock.patch.object(sitelib, "ENGINE", repo), mock.patch.object(sitelib, "SITE_ROOT", site):
-            # Moved, beside the code, beside the site, in that order.
-            self.assertEqual(sitelib.engine_path("tools/pins.sha256"), repo / "engine/tools/pins.sha256")
-            self.assertEqual(sitelib.engine_path("tools/sitelib.py"), repo / "tools/sitelib.py")
-            self.assertEqual(sitelib.engine_path("build/Site.hs"), site / "build/Site.hs")
-            # A directory is wherever anything of it has moved, so a file in
-            # it is found by its own path, not by the directory's.
-            self.assertEqual(sitelib.engine_path("tools"), repo / "engine/tools")
+        with mock.patch.object(sitelib, "ENGINE", engine), mock.patch.object(sitelib, "SITE_ROOT", site):
+            self.assertEqual(sitelib.engine_path("static/css/base.css"), engine / "static/css/base.css")
+            self.assertEqual(sitelib.engine_path("static/css/new.css"), engine / "static/css/new.css")
 
     def test_slugify(self):
         self.assertEqual(sitelib.slugify("Rilke's  Duino_Elegies — I"), "rilkes-duino-elegies-i")

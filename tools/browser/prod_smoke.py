@@ -1,5 +1,11 @@
+import sys
+from pathlib import Path
+
 from playwright.sync_api import sync_playwright
-from lib import *
+
+# The harness's helpers, in the engine.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "engine" / "tools" / "browser"))
+from lib import *  # noqa: E402
 with sync_playwright() as p:
     b = p.chromium.launch()
     ctx = b.new_context(viewport={'width': 1440, 'height': 1000})

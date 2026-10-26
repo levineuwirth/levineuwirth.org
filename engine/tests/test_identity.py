@@ -7,7 +7,7 @@ import unittest
 import json
 
 import yaml
-from tests._helpers import SITE_ROOT, load_tool, requires_cabal, site_binary
+from tests._helpers import ENGINE, SITE_ROOT, load_tool, requires_cabal, site_binary
 
 checker = load_tool("check-identity.py")
 
@@ -217,3 +217,15 @@ class IdentityTests(unittest.TestCase):
     def test_engine_identity_allowances(self):
         config = json.loads(subprocess.check_output([str(site_binary()), "config"], cwd=SITE_ROOT, text=True))
         checker.check(SITE_ROOT, config)
+
+    def test_every_engine_file_is_in_the_engine(self):
+        # Each file tests/engine-paths.txt names is in the engine, and none
+        # is left beside the site but a site file that overrides it
+        # (overrides.yaml) or, until A6g splits and moves them, the Makefile
+        # and the Python project.
+        until_a6g = {"Makefile", "pyproject.toml", "uv.lock", ".python-version"}
+        paths = [s for line in (SITE_ROOT / checker.PATHS).read_text().splitlines()
+                 if (s := line.strip()) and not s.startswith("#")]
+        beside = checker.overridden(SITE_ROOT) | until_a6g
+        self.assertEqual(sorted(p for p in paths if p not in until_a6g and not (ENGINE / p).is_file()), [])
+        self.assertEqual(sorted(p for p in paths if (SITE_ROOT / p).exists() and p not in beside), [])
