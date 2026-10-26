@@ -1,0 +1,17 @@
+# The site's share of the GitHub workflow's tests (engine/tests/ci.py, which
+# runs the engine's own beside them): modules of tests/ that need nothing but
+# Python, Node and stock tools, and none of whose tests may skip; and suites
+# elsewhere, each run as `make test` runs it, discovering <dir>/tests from
+# <dir>/.
+modules:
+- test_anubis_update
+- test_backup_pair
+- test_bibliography
+- test_couchdb_backup
+- test_couchdb_update
+- test_cv_pdfs
+- test_forgejo_backup_offhost
+- test_forgejo_update
+- test_vps_config_backup
+suites:
+- yaml-source

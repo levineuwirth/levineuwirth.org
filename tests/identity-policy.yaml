@@ -92,6 +92,7 @@ site-files:
 - tests/browser-baseline/budgets.json
 - tests/browser-baseline/outside.json
 - tests/browser-baseline/overflow.json
+- tests/ci.yaml
 - tests/identity-allowances.yaml
 - tests/identity-policy.yaml
 - tests/test_anubis.py
