@@ -51,9 +51,9 @@ pdfs:
 # deploy
 # ---------------------------------------------------------------------------
 # Every source input that is not content/ — the engine, templates/,
-# static/, data/, yaml-source/, tools/, nginx/, the Makefile (BUILD_INPUTS,
-# engine/engine.mk, with SITE_INPUTS above) — was
-# compiled into the site whether or not it was committed, and then
+# static/, data/, yaml-source/, tools/, nginx/, the Makefile: BUILD_INPUTS
+# in engine/engine.mk, with SITE_INPUTS above — was compiled into the
+# site whether or not it was committed, and then
 # `git push` advertised a source revision that does not describe the site
 # that was just published. The signatures on those pages assert
 # provenance, so they were asserting it about a revision nobody can fetch.
@@ -65,8 +65,7 @@ pdfs:
 # snapshots for newly linked code and pages) and both are published, so
 # deploy-preflight runs those fetchers first: a new snapshot then shows up
 # here as an untracked input, in seconds, instead of shipping uncommitted
-# (it did on 2026-10-01, audit X1). The root files are those published
-# verbatim under /source/ or compiled into the generator.
+# (it did on 2026-10-01, audit X1).
 
 # The build inputs under $(1) that differ from HEAD, one per line: tracked
 # modifications, plus untracked files everywhere but data/ (see below).

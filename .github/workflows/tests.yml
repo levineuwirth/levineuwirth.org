@@ -25,7 +25,7 @@ jobs:
       # The engine's Python project, synced into the site's .venv (`make
       # venv`); absolute, as uv resolves a relative path against engine/.
       - name: Python environment (engine/uv.lock)
-        run: uv sync --frozen --project engine
+        run: uv sync --locked --project engine
         env:
           UV_PROJECT_ENVIRONMENT: ${{ github.workspace }}/.venv
       - name: Tests

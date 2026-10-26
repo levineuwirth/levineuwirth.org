@@ -46,11 +46,14 @@ _cache-dev/
 *.swo
 
 # Python bytecode caches, and uv's environment (uv also writes its own
-# .gitignore inside it; this does not rely on that).
+# .gitignore inside it; this does not rely on that). The engine/ twin is
+# the one a bare `uv` against the engine's project makes, without
+# `make venv`'s UV_PROJECT_ENVIRONMENT.
 **/__pycache__/
 *.pyc
 *.pyo
 /.venv/
+/engine/.venv/
 /anubis/state/
 # Crawl aggregates pulled from the VPS for review; kept out of the repo.
 /anubis/observations/

@@ -171,6 +171,8 @@ do it.
   The Python project (`pyproject.toml`, `uv.lock`) is the engine's, and the
   environment is the site's own `.venv`, so a bare `uv` command needs both
   named: `UV_PROJECT_ENVIRONMENT="$PWD/.venv" uv run --frozen --project engine …`.
+  After editing `engine/pyproject.toml`, re-lock with `uv lock --project engine`;
+  `make venv` refuses a lock that no longer matches it.
 
   Without `.venv` the build skips embedding (and the photo sidecar and
   archive steps) with a notice and continues.
