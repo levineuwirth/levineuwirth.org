@@ -93,6 +93,7 @@ site-files:
 - tests/browser-baseline/outside.json
 - tests/browser-baseline/overflow.json
 - tests/ci.yaml
+- tests/routes.yaml
 - tests/identity-allowances.yaml
 - tests/identity-policy.yaml
 - tests/test_anubis.py

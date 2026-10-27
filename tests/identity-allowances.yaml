@@ -490,7 +490,7 @@ entries:
   string: https://git.levineuwirth.org/neuwirth/levineuwirth.org
 - id: I0103
   file: tests/test_browser_a11y.py
-  line: 43
+  line: 44
   column: 58
   string: lnUtils
 - id: I0104
@@ -525,12 +525,12 @@ entries:
   string: lnUtils
 - id: I0110
   file: tests/test_browser_layout.py
-  line: 49
+  line: 50
   column: 58
   string: lnUtils
 - id: I0111
   file: tests/test_browser_popups.py
-  line: 181
+  line: 182
   column: 24
   string: https://git.levineuwirth.org/neuwirth/levineuwirth.org
 - id: I0112
@@ -640,22 +640,22 @@ entries:
   string: levineuwirth.org
 - id: I0140
   file: tools/browser/csp_run.py
-  line: 134
+  line: 135
   column: 29
   string: git.levineuwirth.org
 - id: I0141
   file: tools/browser/popup_run.py
-  line: 16
+  line: 14
   column: 22
   string: levineuwirth
 - id: I0142
   file: tools/browser/popup_run.py
-  line: 33
+  line: 31
   column: 140
   string: lnIdx
 - id: I0143
   file: tools/browser/popup_run.py
-  line: 41
+  line: 39
   column: 30
   string: data-ln-idx
 - id: I0144

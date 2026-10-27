@@ -1,0 +1,98 @@
+# The site's pages the engine's browser tests and scripts visit
+# (engine/tests/test_browser_*.py, engine/tools/browser/), read through
+# engine/tools/browser/routes.py. An entry in a list or a role is a page's
+# name here or a path.
+
+# Every page the sweeps load (CSP, axe, overflow, no-JS), by a name of the
+# site's own; tests/browser-baseline/ records results by these names.
+pages:
+  home:              /
+  essay-r6:          /essays/eighty-witnesses-six-proofs/
+  essay-verified:    /essays/verified-inference/
+  essay-proofbroker: /essays/proof-broker/
+  essay-simd:        /essays/where-does-simd-help-post-quantum-cryptography/
+  essay-notes:       /essays/notes-from-underground.html
+  essay-grd:         /essays/growing-radius-domination.html
+  essay-scaling:     /essays/scaling_outage.html
+  essays-index:      /essays/
+  poetry-index:      /poetry/
+  poem:              /poetry/sonnet-60.html
+  fiction:           /fiction/
+  photo-index:       /photography/
+  photo-series:      /photography/denmark/
+  photo-single:      /photography/denmark/copenhagen-005/
+  photo-map:         /photography/map/
+  photo-contact:     /photography/contact-sheet/
+  photo-year:        /photography/by-year/2024/
+  music-index:       /music/
+  composition:       /music/bassoon-concerto/
+  score-reader:      /music/bassoon-concerto/score/
+  research:          /research/
+  tag-page:          /research/graph-theory/
+  pdfjs:             '/pdfjs/web/viewer.html?file=/cv.pdf'
+  search:            /search.html
+  current:           /current.html
+  cv-about:          /about.html
+  cv-projects:       /cv/projects/
+  me:                /me.html
+  links:             /links.html
+  colophon:          /colophon.html
+  bibliography:      /bibliography/
+  commonplace:       /commonplace.html
+  archive-index:     /archive/
+  archive-snapshot:  /archive/djb-aes-speed/
+  archive-pdf:       /archive/nist-fips-203/
+  library:           /library.html
+  work:              /work.html
+  new:               /new.html
+  memento:           /memento-mori.html
+  build:             /build/
+  stats:             /stats/
+  '404':             /does-not-exist
+
+# The pages each narrower run visits.
+keyboard: [home, essay-proofbroker, essay-r6, essay-grd, photo-index, photo-series, photo-single, search, composition, score-reader, links, library, commonplace, music-index, me, current]   # kbd_run.py: Tab stops
+motion: [home, essay-r6, essay-proofbroker, photo-index, photo-series, photo-map, music-index, composition, score-reader, search, colophon, library, memento, cv-about]   # motion_run.py
+perf: [home, essay-r6, essay-grd, essay-simd, photo-index, photo-series, photo-single, photo-contact, photo-year, photo-map, music-index, composition, score-reader, search, library, new, current, colophon, cv-about, stats, me]   # perf_run.py
+axe-skip: [pdfjs]   # axe_run.py leaves out: the vendored PDF.js viewer
+popup-sweep: [essay-grd, memento, essay-simd, /essays/near-critical-growing-radius-domination.html,
+              essay-proofbroker, links, work, essay-scaling, essay-verified, bibliography]   # popup_run.py
+footer: [home, essay-proofbroker, photo-series]   # footer_check.py
+layout-shift: [/404.html, me, links]   # cls_check.py
+
+# The CSP sweep's interactions and checks (csp_run.py, test_browser_csp.py),
+# each on the pages named.
+probes:
+  popups: [links, essay-grd, essay-scaling, essay-proofbroker, essay-simd, essay-r6, memento, work, essay-verified]
+  search: [search]
+  map: [photo-map]
+  slideshow: [photo-series]
+  lightbox: [photo-single, essay-simd]
+  score: [score-reader]
+  pdf-viewer: [pdfjs]
+  archive-snapshot: [archive-snapshot]   # an HTML snapshot, in a frame
+  archive-pdf: [archive-pdf]
+  pdf-links: [cv-about, work, cv-projects]
+  composition: [composition]
+  transclusion: [colophon]
+  commonplace: [commonplace]
+  math: [essay-grd]
+
+# Pages a browser module or script needs for one thing each.
+roles:
+  not-found: '404'                          # a path that is no page
+  essay: essay-proofbroker                  # long: collapsible sections, a TOC, sidenotes, internal links
+  essay-peer-reviewed: /essays/beyond-comorbidity-indices/   # its epistemic block has a peer-status
+  essay-gallery: essay-grd                  # display math that opens in the gallery overlay
+  essay-figure: essay-simd                  # a figure that opens in the lightbox
+  essay-sidenotes: essay-verified           # sidenotes in the margin at 1440px
+  essay-footnotes: essay-notes              # footnotes the layout sets as sidenotes
+  photo: photo-single
+  photo-series: photo-series
+  photo-series-slideshow: /photography/europa-2024/
+  list: new                                 # more cards than the first page of a list (25)
+  list-other: tag-page                      # a second list page
+  score: /music/bassoon-concerto/           # a work with score pages, timing and audio
+  score-other: /music/symphony-no-5/        # a second such work
+  score-silent: /music/liebe-ohne-zeit/     # score pages without audio
+  now: current                              # dates written by now.js
