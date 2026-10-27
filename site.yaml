@@ -13,6 +13,12 @@ forge-host: git.levineuwirth.org
 content-license: CC-BY-NC-SA-4.0
 code-license: MIT
 signing-fingerprint: C9A42A6F AD444FBE 566FD738 531BDC1C C2707066
+# The faces of the first screen, preloaded beside the stylesheets
+# (templates/partials/head.html; tools/fonts.yaml writes them).
+font-preloads:
+  - /fonts/spectral-regular.woff2
+  - /fonts/fira-sans-semibold.woff2
+  - /fonts/fira-sans-regular.woff2
 manifest:
   name: Levi Neuwirth
   short-name: ln
