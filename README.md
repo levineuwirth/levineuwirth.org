@@ -125,6 +125,20 @@ make room for new entries. Keep full Git history while these allowances exist.
 The initial population is permitted only on its recorded bootstrap parent;
 the first commit containing it freezes that population.
 
+## Overriding engine files
+
+A site file at an engine file's path replaces it once `overrides.yaml`
+declares it, with the Git blob id of the engine file it was last reviewed
+against. When the engine file changes, `make test` fails until the review is
+done: `make override-review` shows each change, and
+`engine/tools/override-review.py --accept <path>` records it once the
+override is brought along. A template override is also held to
+`engine/templates/contract.yaml`, which no review clears: the templates a
+site may override, the fields the engine renders each with, and the hooks its
+scripts and styles need in the result. `make test` renders each override with
+the contract's fixture context and looks for them
+(`override-review.py --check`).
+
 ## Requirements
 
 - GHC and `cabal` (`cabal run site` builds the generator on first use).
