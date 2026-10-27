@@ -133,11 +133,10 @@ against. When the engine file changes, `make test` fails until the review is
 done: `make override-review` shows each change, and
 `engine/tools/override-review.py --accept <path>` records it once the
 override is brought along. A template override is also held to
-`engine/templates/contract.yaml`, which no review clears: the templates a
-site may override, the fields the engine renders each with, and the hooks its
-scripts and styles need in the result. `make test` renders each override with
-the contract's fixture context and looks for them
-(`override-review.py --check`).
+`engine/contract.yaml`, which no review clears: the templates a site may
+override, the fields the engine renders each with, and the hooks its scripts
+and styles need in the result. `make test` renders each override with the
+contract's fixture context and looks for them (`override-review.py --check`).
 
 ## Requirements
 
