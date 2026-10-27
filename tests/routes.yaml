@@ -1,7 +1,8 @@
 # The site's pages the engine's browser tests and scripts visit
 # (engine/tests/test_browser_*.py, engine/tools/browser/), read through
-# engine/tools/browser/routes.py. An entry in a list or a role is a page's
-# name here or a path.
+# engine/tools/browser/routes.py. The sweeps record their results by page
+# name, so keyboard, motion, perf, axe-skip and the probes name pages here;
+# the manual scripts' lists and the roles may also give a path.
 
 # Every page the sweeps load (CSP, axe, overflow, no-JS), by a name of the
 # site's own; tests/browser-baseline/ records results by these names.
@@ -92,6 +93,7 @@ roles:
   photo-series-slideshow: /photography/europa-2024/
   list: new                                 # more cards than the first page of a list (25)
   list-other: tag-page                      # a second list page
+  # A work's page, ending in /: its score reader is at <page>score/.
   score: /music/bassoon-concerto/           # a work with score pages, timing and audio
   score-other: /music/symphony-no-5/        # a second such work
   score-silent: /music/liebe-ohne-zeit/     # score pages without audio
