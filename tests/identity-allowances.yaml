@@ -510,7 +510,7 @@ entries:
   string: ln:content-added
 - id: I0108
   file: tests/test_browser_copy.py
-  line: 98
+  line: 101
   column: 86
   string: ln:content-added
 - id: I0109
