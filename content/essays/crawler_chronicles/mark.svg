@@ -1,0 +1,36 @@
+<svg viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mark-title-crawler-chronicles">
+  <title id="mark-title-crawler-chronicles">A question mark whose dot is a spider, hanging from the thread that draws it.</title>
+  <desc>Frontmatter mark for the essay "Crawler Chronicles".</desc>
+
+  <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- Outer roundel -->
+    <circle cx="140" cy="140" r="128" stroke-width="0.6"/>
+
+    <!-- The question mark's hook and stem -->
+    <path d="M 104 92 C 104 64 121 46 142 46 C 164 46 179 62 179 83 C 179 103 163 112 153 120 C 145 126 140 134 140 150" stroke-width="1.4"/>
+
+    <!-- The thread, from the stem down to the spinnerets -->
+    <line x1="140" y1="150" x2="140" y2="177" stroke-width="0.5"/>
+
+    <!-- Eight legs -->
+    <g stroke-width="1.2">
+      <path d="M 144.06 212.525 L 157.4 217.6 L 161.75 237.9"/>
+      <path d="M 145.51 209.625 L 164.65 207.45 L 176.25 223.4"/>
+      <path d="M 145.51 205.275 L 164.65 192.95 L 177.7 197.3"/>
+      <path d="M 144.06 202.375 L 158.85 182.8 L 173.35 174.1"/>
+      <path d="M 135.94 212.525 L 122.6 217.6 L 118.25 237.9"/>
+      <path d="M 134.49 209.625 L 115.35 207.45 L 103.75 223.4"/>
+      <path d="M 134.49 205.275 L 115.35 192.95 L 102.3 197.3"/>
+      <path d="M 135.94 202.375 L 121.15 182.8 L 106.65 174.1"/>
+    </g>
+  </g>
+
+  <g fill="currentColor" stroke="none">
+    <!-- The hook's ball terminal -->
+    <circle cx="104" cy="92" r="2.6"/>
+    <!-- The spider: abdomen above (it hangs head down), then the head -->
+    <ellipse cx="140" cy="188.6" rx="10.15" ry="11.6"/>
+    <circle cx="140" cy="206.725" r="6.525"/>
+  </g>
+</svg>

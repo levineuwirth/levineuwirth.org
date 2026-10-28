@@ -1,18 +1,18 @@
 ---
 title: "Crawler Chronicles"
-date: 2026-10-14
-revised:
-  - date: "2026-10-19"
+date: 2026-10-20
 status: "Working model"
 description: "Computational strangers known and unknown wreak havoc (or, at least, attempt to do so) upon levineuwirth.org."
 abstract: >
   Computational strangers known and unknown wreak havoc (or, at least, attempt to do so) upon levineuwirth.org.
 tags: [meta, systems, tech]
 summary: |
-  Throughout the summer of 2026, traffic from crawlers and scraping of levineuwirth.org (especially the git.levineuwirth.org Forgejo instance) related to AI organizations rapidly increased. By October 2026, git.levineuwirth.org was receiving over 200,000 repository requests per day; over 50% came from crawlers directly attributed to Meta. On October 4th, Anubis was introduced; I also began logging automated requests to get some insight into how they operate.
+  Throughout the summer of 2026, traffic from crawlers and scraping of levineuwirth.org (especially the git.levineuwirth.org Forgejo instance) related to AI organizations rapidly increased. By October 2026, git.levineuwirth.org was receiving over 200,000 repository requests per day; over 50% came from crawlers directly attributed to Meta. On October 4th, Anubis was introduced; I also began logging automated requests to gain insight into how they operate.
+history:
+  - date: 2026-10-22
 ---
 
-The [Dead Internet theory](https://en.wikipedia.org/wiki/Dead_Internet_theory) posits that the demise internet *has* indeed already occurred, and that it is attributable to bots. The theory [as described in 2021](https://forum.agoraroad.com/index.php?threads/dead-internet-theory-most-of-the-internet-is-fake.3011/) was highly conspiratorial, with a sort of peculiarity that undoubtedly provided much of the initial intrigue. Would I, for instance, have accepted the sweeping claims of some coordinated and covert undertaking with advanced intelligences of the artificial sort creating different internets for phones and PCs? Would I have personally believed that [“[Zuckerberg and other tech guys were all on](https://mindseyemag.com/magazine/dead-internet-theory-mot-of-the-internet-is-fake/) [4chan](https://en.wikipedia.org/wiki/4chan) at some point?”]{.link-icons-end}^[Not that I actually had any knowledge then, nor now, of exactly *what* 4chan is or aspires to be, but I disgress. My broadest understanding of this matter is a meme that I saw on Reddit as a high schooler,  who avidly enjoyed r/ProgrammerHumor, in which allusions to the television show Spongebob Squarepants are used to facilitate understanding of the website's rather severe differences in severity.]
+The [Dead Internet theory](https://en.wikipedia.org/wiki/Dead_Internet_theory) posits that the demise of the internet *has* indeed already occurred, and that it is attributable to bots. The theory [as described in 2021](https://forum.agoraroad.com/index.php?threads/dead-internet-theory-most-of-the-internet-is-fake.3011/) was highly conspiratorial, with a sort of peculiarity that undoubtedly provided much of the initial intrigue. Would I, for instance, have accepted the sweeping claims of some coordinated and covert undertaking with advanced intelligences of the artificial sort creating different internets for phones and PCs? Would I have personally believed that [“[Zuckerberg and other tech guys were all on](https://mindseyemag.com/magazine/dead-internet-theory-mot-of-the-internet-is-fake/) [4chan](https://en.wikipedia.org/wiki/4chan) at some point?”]{.link-icons-end}^[Not that I actually had any knowledge then, nor now, of exactly *what* 4chan is or aspires to be, but I disgress. My broadest understanding of this matter is a meme that I saw on Reddit as a high schooler,  who avidly enjoyed r/ProgrammerHumor, in which allusions to the television show Spongebob Squarepants are used to facilitate understanding of the website's rather severe differences in severity.]
 
 While I severely doubt that I would have believed such egregious claims in the year 2021, and thus would have likely dismissed any theories of a "Dead Internet" as nonsense, perhaps the year 2026 has become destined as a time to reevaluate. I formally propose that [levineuwirth.org](/index.html), and more specifically [git.levineuwirth.org](https://git.levineuwirth.org), have unintentionally become a strong piece of evidence for this theory, perhaps even including the [Zuckerberg](https://en.wikipedia.org/wiki/Mark_Zuckerberg) part. Throughout the summer of 2026, automated requests from LLM-related crawlers on this website grew rapidly, surpassing 200,000 per day by October, with over 100,000 coming from addresses affiliated with [Meta](https://ai.meta.com/). This page will serve to capture the ongoing "Crawler Chronicles" as an essential piece of evidence in favor of dead internet speculation familiar and egregious.
 
@@ -48,12 +48,12 @@ The combination of the change and the context provided by the code old and new c
 These queued jobs never made past an unending backlog and were removed before the October upgrade to Forgejo `15.0.9`; downloads of source-archives were also permanently disabled. Unfortunately, any declaration of victory at this point would have been highly preemptive, as my intuition suggested while finishing the upgrade. This was merely the appetizer.
 
 ## Enter October
-From October 1-3, my Forgejo repositories received **367,972** HTTP 200 responses. [pmacs](https://git.levineuwirth.org/neuwirth/pmacs), my emacs-inspired IDE written in Rust, received 84% of this total. This number of responses encapsulates many actions that one might take on a Forgejo instance, including source views, raw files, history, etc. From our previous example, it can be inferred that many of these requests piled up from requests for files over many commits. We may speculate as to how efficient the crawlers are too; I, for one, believe that they are highly inefficient. I am not alone in this belief, as [recent](https://arxiv.org/pdf/2502.13347) [literature](https://yazhuozhang.com/assets/publication/socc25-rethinking-web-cache.pdf) treats this problem quite seriously. 
+From October 1-3, my Forgejo repositories received **367,972** HTTP 200 responses. [pmacs](https://git.levineuwirth.org/neuwirth/pmacs), my emacs-inspired IDE written in Rust, received 84% of this total. This number of responses encapsulates many actions that one might take on a Forgejo instance, including source views, raw files, history, etc. From our previous example, it can be inferred that many of these requests piled up from requests for files over many commits. We may speculate as to how efficient the crawlers are too; I, for one, believe that they are highly inefficient. I am not alone in this belief, as [recent](https://arxiv.org/pdf/2502.13347) [literature](https://yazhuozhang.com/assets/publication/socc25-rethinking-web-cache.pdf) treats this problem quite seriously.[@yu2025craw4llm; @zhang2025webcache]
 
 ### Meta
 Clients declaring themselves to be Meta crawlers were responsible for **137,249** of these requests (a little over 37%). The routing lookup for the sampled address I choose explicitly identified [AS32934](https://ipinfo.io/AS32934). Why was Meta so intent on this sort of work? 
 
-I postulate that Meta, most likely, are doing some variation of the exact process that I described above. If we look at the lineage of Meta model releases in 2026, one can see a trend of rapidly increasing performance on benchmarks, particularly technical benchmarks related to typical ["Software Engineering"](/essays/swe_vc.html) and lighter technical workflows.^[I address this with skepticism because many informal observations seem to suggest Meta is simply "benchmaxing" — aggressively optimizing training for higher quantitative benchmark scores above all else — and that when faced with deeper work, the benchmark scores do not indicate as much progress as recent models from, say, Anthropic or OpenAI have been making. [Benchrisk](https://arxiv.org/pdf/2510.21460) gives a more rigorous treatment of issues of safety, comparison, etc. with typical benchmarks.] A simple methodology which an aspiring AI lab might do is simply to scan for any subdomains that incorporate "git" or similar terms and aggressively index them for eventual RL purposes.^[Tough to speculate exactly how much human involvement is here. The "H" in RLHF seems to be substantially decreasing as automation begins to prevail.]
+I postulate that Meta, most likely, are doing some variation of the exact process that I described above. If we look at the lineage of Meta model releases in 2026, one can see a trend of rapidly increasing performance on benchmarks, particularly technical benchmarks related to typical ["Software Engineering"](/essays/swe_vc.html) and lighter technical workflows.^[I address this with skepticism because many informal observations seem to suggest Meta is simply "benchmaxing" — aggressively optimizing training for higher quantitative benchmark scores above all else — and that when faced with deeper work, the benchmark scores do not indicate as much progress as recent models from, say, Anthropic or OpenAI have been making. [Benchrisk](https://arxiv.org/pdf/2510.21460) gives a more rigorous treatment of issues of safety, comparison, etc. with typical benchmarks.[@mcgregor2025benchrisk]] A simple methodology which an aspiring AI lab might do is simply to scan for any subdomains that incorporate "git" or similar terms and aggressively index them for eventual RL purposes.^[Tough to speculate exactly how much human involvement is here. The "H" in RLHF seems to be substantially decreasing as automation begins to prevail.]
 
 By the evening of October 3 I had decided that enough was enough with these hooligans. What would I do in response?
 
@@ -72,7 +72,7 @@ Anubis' effect was immediately visible:
 | October 9 | 5,890 | 9,370 |
 | October 13 | 15,539 | 21,633 |
 
-I found the October 5th number compared to that of October 8th rather startling at first. Was Meta really that unwilling to put up a fight? My data was worth over 100,000 requests, but not worth a little effort on the crawler's part? That seems a bit hedonistic to me, in a way that seems to imply some sort of "quantity over quality" argument with potential inferred^[Or, perhaps, an internet pedant who generally dislikes and disagrees ideologically with Meta wants to taint it this way; the reading is yours.] opinions on the Forgejo instance's contents thereby indirectly dispersed. This was part of what prompted me to begin incorporating much more logging on requests to the Forgejo instance.  
+I found the October 3rd number compared to that of October 8th rather startling at first. Was Meta really that unwilling to put up a fight? My data was worth over 100,000 requests, but not worth a little effort on the crawler's part? That seems a bit hedonistic to me, in a way that seems to imply some sort of "quantity over quality" argument with potential inferred^[Or, perhaps, an internet pedant who generally dislikes and disagrees ideologically with Meta wants to taint it this way; the reading is yours.] opinions on the Forgejo instance's contents thereby indirectly dispersed. This was part of what prompted me to begin incorporating much more logging on requests to the Forgejo instance.  
 
 Perhaps I *was* in this instance too hasty to jump to conclusions, however, both in inferring what Meta may think and in assuming that, at long last, the battle was won, and I could return to research on [how to make the systems that necessitate these crawlers safer](/essays/verified-inference/index.html). Alas, I was wrong this time, far too confident in the initial data-derived suggestion that the labs would not put up any fight.
 
@@ -91,9 +91,9 @@ Less than a week passed from the 8th and something startling was occurring. The 
 What can we deduce? This is certainly a distributed and automated scraping effort targeted at levineuwirth.org. I do not know how deliberate it is — my intuition at first was that perhaps there *was* a human involved, but further investigation seems to loosely suggest that the choice of my Forgejo instance as a target did not require human intervention or approval — and I do not know *who* is behind the effort.
 
 ### The new swarm's addresses
-I was able to find by a similar analysis of the addresses to the one that pinpointed meta that busy groups within the distributed effort fell within allocations registered to hosting business such as EGIHosting. Curious; A quick search on LinkedIn showed nothing about this entity nor anyone associated with it. Another group fell to some entity called "AviationAI." There remain other sampled addresses that seem to originate with more familiar service providers. Coincidence? Frontier-lab backed botnet devastating the vulnerable machines of America? While the original Dead Internet theory authors may prefer the latter, I strongly believe the evidence suggests the former, [at least for now](https://incidentdatabase.ai/cite/1604/).
+I was able to find by a similar analysis of the addresses to the one that pinpointed Meta that busy groups within the distributed effort fell within allocations registered to hosting businesses such as EGIHosting. Curious; a quick search on LinkedIn showed nothing about this entity nor anyone associated with it. Another group fell to some entity called "AviationAI." There remain other sampled addresses that seem to originate with more familiar service providers. Coincidence? Frontier-lab backed botnet devastating the vulnerable machines of America? While the original Dead Internet theory authors may prefer the latter, I strongly believe the evidence suggests the former, [at least for now](https://incidentdatabase.ai/cite/1604/).
 
-There was one lead which was particularly useful: that of **UAB code200**. Registry records associated some of the sampled allocations with this mysterious oranization, and RIPE records linked to a network list published by its network operations account. I obtained a copy of that list and tried matching it against the previous day's requests. **3,788 successful repository responses came from 2,342 addresses in that published list.** They accounted for **24.5%** of the 15,492 successful responses in the dominant Chrome 155 group, which gives something of the infrastructure a name.
+There was one lead which was particularly useful: that of **UAB code200**. Registry records associated some of the sampled allocations with this mysterious organization, and RIPE records linked to a network list published by its network operations account. I obtained a copy of that list and tried matching it against the previous day's requests. **3,788 successful repository responses came from 2,342 addresses in that published list.** They accounted for **24.5%** of the 15,492 successful responses in the dominant Chrome 155 group, which gives something of the infrastructure a name.
 
 **Is it still Meta?** I am unsure, but [Occam's Razor](https://en.wikipedia.org/wiki/Occam%27s_razor) seems to suggest that the answer is yes. If Meta had by some logic previously singled out and initiated so many requests to git.levineuwirth.org that they accounted for over 100,000 in 3 days, then it seems that of all potential parties to launch such a distributed effort in such a short turnaround — recall that we went from 233 successful requests on October 8th to 15,539 on the 13th — the one who had prior foreknowledge of what the repository had and why it would be appealing, if at all, would be the most likely and simplest choice. I'm continuing to investigate and add more granularity to the logs to gain more information.
 
@@ -107,7 +107,7 @@ My first premonition was that the crawlers' traffic might be associated with com
 Could it be that this was *really* the case? I planned an experiment and some statistical analysis to find out.
 
 ### When does a commit become available?
-I knew that a commit's date wasn't the time that a crawler could see it, because I often make commits locally and then publish them concurrently in batches with a single push. Thus there is a reduction; ten commit creation dates may collapse into a singular moment of arrival on the server, at which point a crawler would be able to react. Forgejo had retained branch reflogs and push notifications; on the VPS, these reflogs record when a reference changes, and the notifications follow asynchronously (usually within a few seconds). We can recover the transaction history:
+I knew that a commit's date wasn't the time that a crawler could see it, because I often make commits locally and then publish them concurrently in batches with a single push. Thus there is a reduction; ten commit creation dates may collapse into a singular moment of arrival on the server, only at which point a crawler would be able to react. Forgejo had retained branch reflogs and push notifications; on the VPS, these reflogs record when a reference changes, and the notifications follow asynchronously (usually within a few seconds). We can recover the transaction history:
 
 ```bash
 # Run against the server's bare repository, not a local clone's reflog.
@@ -116,7 +116,7 @@ git --git-dir=/path/to/server/repository.git \
 ```
 ![Distribution of publication episodes for public-facing git.levineuwirth.org repositories.](figures/publication-timeline.png)
 
-By reconstructing which commits made each update reachable across all branches, I was able to determine that **48 publication episodes exposing 271 commits** occured on October 1 through October 13 on the Forgeo instance. There were also GitHub only pushes that had GitHub receive commits up to 17 hours before Forgejo in some instances.^[Obviously, I am not a GitHub administrator, and I cannot SSH into the servers of GitHub as `root`, and even if I could, these jocular musings would hardly be my priority — I'd probably do something about how awful [CI](https://en.wikipedia.org/wiki/Continuous_integration) is, or, perhaps, reveal to the world what exactly the *real* GitHub uptime is, since it certainly is **ludicrously** inflated by their calculations!]
+By reconstructing which commits made each update reachable across all branches, I was able to determine that **48 publication episodes exposing 271 commits** occurred on October 1 through October 13 on the Forgejo instance. There were also GitHub only pushes that had GitHub receive commits up to 17 hours before Forgejo in some instances.^[Obviously, I am not a GitHub administrator, and I cannot SSH into the servers of GitHub as `root`, and even if I could, these jocular musings would hardly be my priority — I'd probably do something about how awful [CI](https://en.wikipedia.org/wiki/Continuous_integration) is, or, perhaps, reveal to the world what exactly the *real* GitHub uptime is, since it certainly is **ludicrously** inflated by their calculations!]
 
 The next step was a simple comparison: counting successful GET requests of the website repository in the 30 minutes before and after each publication. The minute of any specific push was omitted.
 
@@ -162,7 +162,7 @@ So there were 829 requests after pushes, and 659 before. A raw difference of 4.2
 Resampling clusters of overlapping request windows gave an interval of **−1.47 to +7.75** for the adjusted excess, while resapmling entire dates widened it considerable to **-1.97 to +10.47**. So we'd need something else.
 
 ### What did the requests *actually* name?
-A route like `/neuwirth/levineuwirth.org/src/commit/<hash>/index.md` identifies a particular version, so after resolving hashes against the commit graph, we could compare the first Forgeo publication of some version with the request time. 
+A route like `/neuwirth/levineuwirth.org/src/commit/<hash>/index.md` identifies a particular version, so after resolving hashes against the commit graph, we could compare the first Forgejo publication of some version with the request time. 
 
 ![Request time versus first Forgejo publication of the commit.](data/commit-response/results/figures/request-vs-publication.svg)
 
@@ -194,7 +194,7 @@ This identifies a network lead, not the customer's identity or purpose, and does
 
 If feasible, would you forward this message to the relevant customer, with an invitation to consider whether it has perhaps acquired enough historical versions of my code, or could conduct its visits a little more gently? I am not requesting the customer's identity, account records, or any other identifying information, though if they wish to make themselves known, I will not decline.
 
-The Court of Unnecessary Computation, whose only recognized jurisdiction is the author's page margins, also requests compensation. No deadline is imposed. Silence will not be treated as an admission outright, but it will indubitably may fail to prevent a sequel.
+The Court of Unnecessary Computation, whose only recognized jurisdiction is the author's page margins, also requests compensation. No deadline is imposed. Silence will not be treated as an admission outright, but it will indubitably fail to prevent a sequel.
 
 Thank you for reading an unusually elaborate way of saying: please consider passing this along. I appreciate that the person tending the abuse mailbox is unlikely to be the person dispatching the crawler.
 
@@ -218,10 +218,146 @@ I additionally attached this PDF, which was created using `latex-atlas`, a side-
 
 </details>
 
-I shall update this page if and when I receive any substantive response from EGIHosting.
+### A response
+On October 22, I got the following response:
+
+<details class="correspondence">
+<summary>Read the reply from EGIHosting</summary>
+
+<div class="correspondence-body">
+
+Hello,
+
+Thanks for reaching out and reporting this issue to us.
+
+Please be informed that the specified target domain has been
+restricted from access for the related end-users. If the complainant
+sees more traffic in the upcoming days, we will re-evaluate.
+
+If you have any other questions, please let us know.
+ 
+Best wishes, 
+
+</div>
+
+</details>
+
+Intriguing. I didn't really ask a *question*, so to speak, and I find it curious that they use the plural for "end-users." It is also curious that while I can see the name of the person who handled forwarding the abuse notice along^[I've redacted this from the response here, for obvious reasons. You'll have to take my word that this did reach at least *one* human with EGIHosting, and note that I make no claim it reached a human *anywhere else*.], they did not fill in any entity name after "Best wishes," or, at a minimum, it was redacted when forwarded to me.^[I have reason to believe that isn't the case, as I am nearly positive the forwarding mechanism on the "complainant" (my) end is automated. (Aside, isn't "complainant" a hilarious word? I find it so!)] What does this mean for our theory and that of the Dead Internet at large?
+
+I currently postulate that there may be some [dummy corporation](https://en.wikipedia.org/wiki/Dummy_corporation) or otherwise that handles scraping of this sort distributed across VPS services to obfuscate the true identity of the scraper. In that regime, the VPS might not need to serve as anything more than a [VPN](https://en.wikipedia.org/wiki/Virtual_private_network). It might also be a true middle party that acts as a data broker, selling to further parties down the line. I think that the plural "end-users" is a subtle hint towards the latter, but of course, we cannot truly be sure.
 
 ## What Now?
 Traffic has died down significantly, but I am, of course knowing me, not done. Some further experiments are coming and I will update this page and continue to chronicle what happens. The tale has just begun.
+
+<figure class="centered">
+<svg viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg" width="200" height="200" role="img" aria-labelledby="crawler-spider-title">
+<title id="crawler-spider-title">A question mark whose dot is a spider, hanging from the thread that draws it.</title>
+<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+<circle cx="140" cy="140" r="128" stroke-width="0.6"/>
+<path d="M 104 92 C 104 64 121 46 142 46 C 164 46 179 62 179 83 C 179 103 163 112 153 120 C 145 126 140 134 140 150" stroke-width="1.4"/>
+<line x1="140" y1="150" x2="140" y2="177" stroke-width="0.5"/>
+<g stroke-width="1.2">
+<path d="M 144.06 212.525 L 157.4 217.6 L 161.75 237.9"/>
+<path d="M 145.51 209.625 L 164.65 207.45 L 176.25 223.4"/>
+<path d="M 145.51 205.275 L 164.65 192.95 L 177.7 197.3"/>
+<path d="M 144.06 202.375 L 158.85 182.8 L 173.35 174.1"/>
+<path d="M 135.94 212.525 L 122.6 217.6 L 118.25 237.9"/>
+<path d="M 134.49 209.625 L 115.35 207.45 L 103.75 223.4"/>
+<path d="M 134.49 205.275 L 115.35 192.95 L 102.3 197.3"/>
+<path d="M 135.94 202.375 L 121.15 182.8 L 106.65 174.1"/>
+</g>
+</g>
+<g fill="currentColor" stroke="none">
+<circle cx="104" cy="92" r="2.6"/>
+<ellipse cx="140" cy="188.6" rx="10.15" ry="11.6"/>
+<circle cx="140" cy="206.725" r="6.525"/>
+</g>
+</svg>
+<svg viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg" width="200" height="200" role="img" aria-labelledby="crawler-scales-title">
+<title id="crawler-scales-title">The scales of Anubis: a feather against a sinking pan heaped with crawler requests, more of the swarm drifting in, above a line of commits.</title>
+<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+<circle cx="140" cy="140" r="128" stroke-width="0.6"/>
+<path d="M 144.5 81 C 145.5 75 146 70 145 66 L 148 52 L 142 63.5 C 139 65 135 66 131.5 67.5 L 125 70.5 L 126.5 72.5 L 132 73 C 135 73.5 136.5 76 137 81" stroke-width="1.0"/>
+<path d="M 145 66 L 143.5 64.5" stroke-width="0.5"/>
+<line x1="135.5" y1="81.5" x2="146" y2="81.5" stroke-width="1.0"/>
+<line x1="140" y1="81.5" x2="140" y2="192" stroke-width="1.4"/>
+<circle cx="140" cy="92" r="3" stroke-width="1.0"/>
+<rect x="126" y="192" width="28" height="6" stroke-width="1.0"/>
+<rect x="114" y="198" width="52" height="6" stroke-width="1.0"/>
+<line x1="76.35" y1="85.31" x2="203.65" y2="98.69" stroke-width="1.4"/>
+<path d="M 52.35 141.31 L 76.35 85.31 L 100.35 141.31" stroke-width="0.5"/>
+<path d="M 50.35 141.31 Q 76.35 153.31 102.35 141.31" stroke-width="1.2"/>
+<path d="M 76.95 145.81 C 68.95 134.81 65.95 118.81 70.95 108.81 C 73.95 105.81 77.95 107.81 75.95 111.81 C 83.95 121.81 83.95 135.81 76.95 145.81 Z" stroke-width="0.8"/>
+<path d="M 76.95 145.81 C 75.95 133.81 73.95 121.81 71.95 112.81" stroke-width="0.5"/>
+<g stroke-width="0.3">
+<line x1="76.65" y1="140.73" x2="72.15" y2="136.73"/>
+<line x1="76.65" y1="140.73" x2="80.65" y2="136.23"/>
+<line x1="76.1" y1="135.66" x2="71.6" y2="131.66"/>
+<line x1="76.1" y1="135.66" x2="80.1" y2="131.16"/>
+<line x1="75.38" y1="130.58" x2="70.88" y2="126.58"/>
+<line x1="75.38" y1="130.58" x2="79.38" y2="126.08"/>
+<line x1="74.54" y1="125.5" x2="70.04" y2="121.5"/>
+<line x1="74.54" y1="125.5" x2="78.54" y2="121"/>
+<line x1="73.58" y1="120.43" x2="69.08" y2="116.43"/>
+<line x1="73.58" y1="120.43" x2="77.58" y2="115.93"/>
+</g>
+<path d="M 179.65 154.69 L 203.65 98.69 L 227.65 154.69" stroke-width="0.5"/>
+<path d="M 177.65 154.69 Q 203.65 166.69 229.65 154.69" stroke-width="1.2"/>
+<g stroke-width="0.8">
+<line x1="87.4" y1="226" x2="108.6" y2="226"/>
+<line x1="115.4" y1="226" x2="136.6" y2="226"/>
+<line x1="143.4" y1="226" x2="164.6" y2="226"/>
+<line x1="171.4" y1="226" x2="192.6" y2="226"/>
+<line x1="80.6" y1="226" x2="50" y2="226" stroke-width="0.5" stroke-dasharray="2 3"/>
+</g>
+<g stroke-width="1.0">
+<circle cx="84" cy="226" r="3.4"/>
+<circle cx="112" cy="226" r="3.4"/>
+<circle cx="140" cy="226" r="3.4"/>
+<circle cx="168" cy="226" r="3.4"/>
+</g>
+</g>
+<g fill="currentColor" stroke="none">
+<circle cx="138.4" cy="68.2" r="0.8"/>
+<circle cx="196" cy="226" r="3.4"/>
+<circle cx="192.15" cy="157.69" r="1.3"/>
+<circle cx="196.75" cy="157.69" r="1.3"/>
+<circle cx="201.35" cy="157.69" r="1.3"/>
+<circle cx="205.95" cy="157.69" r="1.3"/>
+<circle cx="210.55" cy="157.69" r="1.3"/>
+<circle cx="215.15" cy="157.69" r="1.3"/>
+<circle cx="194.45" cy="153.69" r="1.3"/>
+<circle cx="199.05" cy="153.69" r="1.3"/>
+<circle cx="203.65" cy="153.69" r="1.3"/>
+<circle cx="208.25" cy="153.69" r="1.3"/>
+<circle cx="212.85" cy="153.69" r="1.3"/>
+<circle cx="196.75" cy="149.69" r="1.3"/>
+<circle cx="201.35" cy="149.69" r="1.3"/>
+<circle cx="205.95" cy="149.69" r="1.3"/>
+<circle cx="210.55" cy="149.69" r="1.3"/>
+<circle cx="199.05" cy="145.69" r="1.3"/>
+<circle cx="203.65" cy="145.69" r="1.3"/>
+<circle cx="208.25" cy="145.69" r="1.3"/>
+<circle cx="201.35" cy="141.69" r="1.3"/>
+<circle cx="205.95" cy="141.69" r="1.3"/>
+<circle cx="203.65" cy="137.69" r="1.3"/>
+<circle cx="166" cy="50" r="0.8"/>
+<circle cx="181" cy="41" r="0.8"/>
+<circle cx="194" cy="56" r="1.0"/>
+<circle cx="208" cy="44" r="0.8"/>
+<circle cx="221" cy="58" r="1.0"/>
+<circle cx="186" cy="70" r="1.0"/>
+<circle cx="205" cy="72" r="1.2"/>
+<circle cx="234" cy="74" r="0.8"/>
+<circle cx="219" cy="84" r="1.2"/>
+<circle cx="233" cy="96" r="1.0"/>
+<circle cx="227" cy="112" r="1.2"/>
+<circle cx="176" cy="62" r="0.8"/>
+<circle cx="198" cy="34" r="0.8"/>
+<circle cx="240" cy="88" r="0.8"/>
+</g>
+</svg>
+</figure>
 
 ::: {.aftermatter #commit-response-appendix-material}
 
@@ -423,12 +559,12 @@ heuristic (X11 Linux x86_64 with Chrome 150 or 155), not a verified identity.
 - **p-value:** (1 + #{T* ≥ T}) / 10,001.
 
 **Validity under the stated null.** Block rotations form a group, so this
-p-value is valid under H0 (Hemerik & Goeman 2018; Phipson & Smyth 2010).
+p-value is valid under H0.[@hemerik2018permutations; @phipson2010permutations]
 The real push schedule was observational, not randomized; the exchangeability
 assumption is a condition of the interpretation, not a finding of the test.
 
-- **Hours with one episode.** This is exactly interval jitter with 60-minute windows
-  (Amarasingham et al. 2012).
+- **Hours with one episode.** This is exactly interval jitter with 60-minute
+  windows.[@amarasingham2012jitter]
 - **Hours with several episodes.** The common rotation preserves their spacing
   modulo 60. Validity still requires the stated block-rotation null; preserving
   spacing does not establish exchangeability of the actual push schedule.
@@ -970,18 +1106,14 @@ timeline cross-check are presentation additions outside that frozen bundle.
 
 ### Methods sources {#crawl-appendix-methods}
 
-- Amarasingham A, Harrison MT, Hatsopoulos NG, Geman S. Conditional modeling and the
-  jitter method of spike resampling. *J Neurophysiol* 107(2):517–531 (2012).
-  [doi:10.1152/jn.00633.2011](https://doi.org/10.1152/jn.00633.2011); [supplement](https://arxiv.org/abs/1111.4296).
-- Hemerik J, Goeman J. Exact testing with random permutations. *TEST* 27:811–825
-  (2018).
-- Phipson B, Smyth GK. Permutation p-values should never be zero. *Stat Appl Genet
-  Mol Biol* 9(1), Art. 39 (2010). [doi:10.2202/1544-6115.1585](https://doi.org/10.2202/1544-6115.1585).
-- Mittleman MA, Mostofsky E. Exchangeability in the case-crossover design.
-  *Int J Epidemiol* 43(5):1645–1655 (2014). [doi:10.1093/ije/dyu081](https://doi.org/10.1093/ije/dyu081). This source
-  supports the time-of-day referent design and its caution against treating several
-  outcomes of one exposure as independent.
-- Harris KD. A shift test for independence in generic time series. [arXiv:2012.06862](https://arxiv.org/abs/2012.06862)
-  (2020). Read for the failure modes of circular shifts.
+- Amarasingham and colleagues, *Conditional modeling and the jitter method of
+  spike resampling*, and its separately titled supplement.[@amarasingham2012jitter; @amarasingham2011jitterSupplement]
+- Hemerik and Goeman, *Exact testing with random permutations*.[@hemerik2018permutations]
+- Phipson and Smyth, *Permutation P-values Should Never Be Zero*.[@phipson2010permutations]
+- Mittleman and Mostofsky, *Exchangeability in the case-crossover design*.[@mittleman2014exchangeability]
+  This source supports the time-of-day referent design and its caution against
+  treating several outcomes of one exposure as independent.
+- Harris, *A shift test for independence in generic time series*.[@harris2020shift]
+  Read for the failure modes of circular shifts.
 
 :::
