@@ -110,3 +110,4 @@ switches:
   math: true
   code: true
   viz: true
+  pdf-viewer: true
