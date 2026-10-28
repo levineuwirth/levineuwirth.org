@@ -156,9 +156,11 @@ turn each remaining switch the other way, and checks each switch both ways.
 - GHC and `cabal` (`cabal run site` builds the generator on first use).
 - `pagefind` on `PATH`. Not optional: `make build` indexes `_site/` with it
   and fails without it.
-- `python3`, `git`, `curl`, `unzip` and `sha256sum`. The build vendors
-  PDF.js, Leaflet and the search model through `engine/tools/download-*.sh`, which
-  verify pinned SHA-256 sums (`unzip` is for PDF.js).
+- `python3` with PyYAML, `git`, `curl`, `unzip` and `sha256sum`. The build
+  vendors PDF.js, Leaflet and the search model through
+  `engine/tools/download-*.sh`, which verify pinned SHA-256 sums (`unzip` is
+  for PDF.js). Make reads the site's switches through PyYAML
+  (`engine/tools/sitelib.py`), with the system `python3` until `make venv`.
 - `flock` (util-linux); without it `engine/tools/with-lock.sh` warns and runs
   unlocked.
 - For `make deploy`: `gpg` with the signing subkey, `ssh` and `rsync`.
