@@ -28,11 +28,6 @@ entries:
   line: 7
   column: 21
   string: Levi Neuwirth
-- id: I0008
-  file: levineuwirth.cabal
-  line: 8
-  column: 21
-  string: levi@levineuwirth.org
 - id: I0009
   file: pyproject.toml
   line: 2
