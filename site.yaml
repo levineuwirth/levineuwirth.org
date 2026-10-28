@@ -107,3 +107,4 @@ standalone:
 switches:
   archive: true
   music: true
+  math: true
