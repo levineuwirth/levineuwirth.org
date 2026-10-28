@@ -106,3 +106,4 @@ standalone:
 # default and what it covers): everything on.
 switches:
   archive: true
+  music: true

@@ -96,6 +96,7 @@ site-files:
 - tests/routes.yaml
 - tests/identity-allowances.yaml
 - tests/identity-policy.yaml
+- tests/known-defects.yaml
 - tests/test_anubis.py
 - tests/test_anubis_observe.py
 - tests/test_anubis_update.py

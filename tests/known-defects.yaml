@@ -1,0 +1,12 @@
+# Defects in this site's content that the engine's tests know of. Each is
+# left out of the check it fails, and a test fails once it is gone: then
+# delete its entry.
+
+# engine/tests/test_music.py: bar boxes that run off their page.
+score-overflow:
+  - piece: bassoon-concerto
+    page: 68
+    why: >-
+      A system on page 68 is engraved below the foot of the page (staff
+      lines to y=13479 on a 13200 page; the contrabasses are cut off), so
+      five bar boxes run 2% past it. The fix belongs in the score.

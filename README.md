@@ -145,7 +145,9 @@ The engine's features beyond its core are switches, registered in
 sets the ones it wants in `site.yaml` under `switches:` (`name: true` or
 `false`); the generator resolves them over the registry's defaults and
 refuses a name the registry lacks, or a switch on without what it needs.
-This site turns every switch on. The tools and make targets read the same
+A switch may own a content section (`music` owns `music`), which `site.yaml`
+lists, and feeds, only with the switch on, and engine assets that are
+published only with it on. This site turns every switch on. The tools and make targets read the same
 resolution through `engine/tools/sitelib.py` (`sitelib.py switch NAME`),
 without the generator. `make test` builds the engine's fixture site under
 its two profiles (`engine/fixture-site/profiles.yaml`) and the variants that
