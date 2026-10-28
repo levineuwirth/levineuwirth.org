@@ -540,12 +540,12 @@ entries:
   string: levineuwirth
 - id: I0114
   file: tests/test_build_freshness.py
-  line: 186
+  line: 187
   column: 60
   string: Levi Neuwirth
 - id: I0115
   file: tests/test_config.py
-  line: 345
+  line: 397
   column: 27
   string: levineuwirth
 - id: I0116
@@ -655,7 +655,7 @@ entries:
   string: data-ln-idx
 - id: I0144
   file: tools/build-freshness.sh
-  line: 97
+  line: 99
   column: 25
   string: levineuwirth
 - id: I0145

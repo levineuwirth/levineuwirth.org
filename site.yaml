@@ -102,3 +102,7 @@ standalone:
   - {source: content/about.md, route: about.html, template: vita.html, context: vita}
   - {source: content/cv/projects.md, route: cv/projects/index.html, template: projects.html,
      context: projects}
+# The engine's switches this site sets (engine/switches.yaml has each one's
+# default and what it covers): everything on.
+switches:
+  archive: true

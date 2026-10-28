@@ -138,6 +138,19 @@ override, the fields the engine renders each with, and the hooks its scripts
 and styles need in the result. `make test` renders each override with the
 contract's fixture context and looks for them (`override-review.py --check`).
 
+## Switches
+
+The engine's features beyond its core are switches, registered in
+`engine/switches.yaml` with their kind, default and what each needs. A site
+sets the ones it wants in `site.yaml` under `switches:` (`name: true` or
+`false`); the generator resolves them over the registry's defaults and
+refuses a name the registry lacks, or a switch on without what it needs.
+This site turns every switch on. The tools and make targets read the same
+resolution through `engine/tools/sitelib.py` (`sitelib.py switch NAME`),
+without the generator. `make test` builds the engine's fixture site under
+its two profiles (`engine/fixture-site/profiles.yaml`) and the variants that
+turn each remaining switch the other way, and checks each switch both ways.
+
 ## Requirements
 
 - GHC and `cabal` (`cabal run site` builds the generator on first use).
