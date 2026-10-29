@@ -310,22 +310,22 @@ entries:
   string: lnUtils
 - id: I0068
   file: static/js/settings.js
-  line: 137
+  line: 170
   column: 35
   string: lnUtils
 - id: I0069
   file: static/js/settings.js
-  line: 143
+  line: 176
   column: 29
   string: lnUtils
 - id: I0070
   file: static/js/settings.js
-  line: 143
+  line: 176
   column: 47
   string: lnUtils
 - id: I0071
   file: static/js/settings.js
-  line: 144
+  line: 177
   column: 22
   string: lnUtils
 - id: I0072
@@ -545,7 +545,7 @@ entries:
   string: Levi Neuwirth
 - id: I0115
   file: tests/test_config.py
-  line: 345
+  line: 375
   column: 27
   string: levineuwirth
 - id: I0116
