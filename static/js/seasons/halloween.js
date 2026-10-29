@@ -40,11 +40,47 @@
        The moon
     ------------------------------------------------------------------ */
 
-    var MARIA = [   /* x, y, rx, ry, angle, in moon radii */
-        [-0.25, -0.30, 0.30, 0.22, 0.4], [0.20, -0.18, 0.22, 0.17, -0.3],
-        [0.05, 0.25, 0.26, 0.16, 0.2],   [-0.38, 0.18, 0.14, 0.12, 0],
-        [0.42, 0.30, 0.10, 0.08, 0]
-    ];
+    /* Its markings are the site's mark, the header's logo: the sprite's
+       ink paths less its cutouts, read once (the header has already
+       loaded it). Until they arrive, or if they never do, a bare disc. */
+    var mark = null, markWanted = false;
+    function loadMark(done) {
+        if (markWanted) return;
+        markWanted = true;
+        fetch('/logo-sprite.svg').then(function (r) {
+            return r.ok ? r.text() : Promise.reject(r.status);
+        }).then(function (text) {
+            var sym = new DOMParser().parseFromString(text, 'image/svg+xml').getElementById('logo-mark');
+            var box = sym.getAttribute('viewBox').split(/[\s,]+/).map(Number);
+            var paths = [].map.call(sym.querySelectorAll('path'), function (p) {
+                var m = new DOMMatrix();
+                for (var n = p.parentNode; n && n !== sym; n = n.parentNode) {
+                    var t = n.transform && n.transform.baseVal.consolidate();
+                    if (t) m = new DOMMatrix([t.matrix.a, t.matrix.b, t.matrix.c, t.matrix.d,
+                                              t.matrix.e, t.matrix.f]).multiply(m);
+                }
+                var path = new Path2D();
+                path.addPath(new Path2D(p.getAttribute('d')), m);
+                return { path: path, cut: /logo-bg/.test(p.getAttribute('fill')) };
+            });
+            mark = { w: box[2], h: box[3], paths: paths };
+            done();
+        }).catch(function () {});
+    }
+
+    /* The mark at a size, as a mask in one color. */
+    function markCanvas(side, dpr, color) {
+        var c = document.createElement('canvas'), k = side / Math.max(mark.w, mark.h);
+        c.width = c.height = Math.ceil(side * dpr);
+        var ctx = c.getContext('2d');
+        ctx.setTransform(k * dpr, 0, 0, k * dpr, 0, 0);
+        ctx.fillStyle = color;
+        mark.paths.forEach(function (p) {
+            ctx.globalCompositeOperation = p.cut ? 'destination-out' : 'source-over';
+            ctx.fill(p.path);
+        });
+        return c;
+    }
 
     var moon = {
         season: 'halloween',
@@ -56,6 +92,9 @@
             this.canvas.setAttribute('aria-hidden', 'true');
             this.ctx = this.canvas.getContext('2d');
             this.mode = null; this.size = 0; this.drawn = -1; this.top = null; this.opacity = null;
+            this.marks = null;
+            var self = this;
+            loadMark(function () { self.drawn = -1; stage.wake(); });
         },
         layout: function () {
             var room = geo.vw - geo.bodyR, slot = null, mode;
@@ -127,12 +166,21 @@
             disc.addColorStop(0, '#f3ead8'); disc.addColorStop(1, '#c4b398');
             ctx.fillStyle = disc;
             ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
-            ctx.fillStyle = 'rgba(110, 92, 74, 0.20)';
-            MARIA.forEach(function (m) {
-                ctx.beginPath();
-                ctx.ellipse(cx + m[0] * R, cy + m[1] * R, m[2] * R, m[3] * R, m[4], 0, Math.PI * 2);
-                ctx.fill();
-            });
+            /* The mark, faint, as if pressed into the disc: dark, over a
+               lighter copy a little below and right, its lit edge. */
+            if (mark) {
+                var side = R * 1.5, e = Math.max(0.5, R / 40);
+                if (!this.marks || this.marks.side !== side || this.marks.dpr !== this.dpr) {
+                    this.marks = { side: side, dpr: this.dpr,
+                                   dark: markCanvas(side, this.dpr, 'rgb(110, 92, 74)'),
+                                   lit:  markCanvas(side, this.dpr, 'rgb(255, 250, 238)') };
+                }
+                ctx.globalAlpha = 0.35;
+                ctx.drawImage(this.marks.lit, cx - side / 2 + e, cy - side / 2 + e, side, side);
+                ctx.globalAlpha = 0.26;
+                ctx.drawImage(this.marks.dark, cx - side / 2, cy - side / 2, side, side);
+                ctx.globalAlpha = 1;
+            }
 
             /* Earth's shadow, coming in from the left: the umbra touches the
                limb at the top of the page and covers the disc at its end. */
