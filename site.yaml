@@ -20,6 +20,17 @@ font-preloads:
   - /fonts/spectral-regular.woff2
   - /fonts/fira-sans-semibold.woff2
   - /fonts/fira-sans-regular.woff2
+# Seasonal dressings over a theme (engine: Config.Season). While a season's
+# window is open (month-day, inclusive), a reader with no stored theme wears
+# it and Settings offers it; afterwards, one who chose it gets its base.
+seasons:
+  - id: halloween
+    label: Blood Moon
+    base: dark
+    from: 10-29
+    to: 11-02
+    stylesheet: /css/seasons/halloween.css
+    script: /js/seasons/halloween.js
 manifest:
   name: Levi Neuwirth
   short-name: ln

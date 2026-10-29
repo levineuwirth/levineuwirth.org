@@ -1,0 +1,159 @@
+/* halloween.css — Blood Moon, the Halloween season (site.yaml): a dressing
+   over the dark theme. theme.js wears it as data-season="halloween" beside
+   data-theme="dark", so every dark-theme rule still applies and these
+   tokens win by specificity. Screen only (head.html); the decorations are
+   static/js/seasons/halloween.js's, in the stage's layer (stage.js).
+
+   Contrast on --bg: text 14.4:1, muted 8.1:1, faint 5.8:1, the ember
+   link underline 6.2:1. --blood (3.0:1) is for shapes, never for words. */
+
+[data-theme="dark"][data-season="halloween"] {
+    --bg:              #0e0b0b;
+    --bg-nav:          #150e0d;
+    --nav-logo-fg:     #e6dccb;
+    --bg-offset:       #1c1311;
+    --text:            #e6dccb;   /* bone */
+    --text-muted:      #b3a593;
+    --text-faint:      #978a7c;
+    --border:          #3a2420;
+    --border-muted:    #4a2c26;
+    --danger:          #ef8a7a;
+
+    --link:            #e6dccb;
+    --link-underline:  #d9772b;   /* ember */
+    --link-hover:      #ff9a4a;
+    --link-hover-underline: #ff9a4a;
+    --link-visited:    #c9b9a3;
+
+    --selection-bg:    #8a1c1f;   /* 7.7:1 under bone */
+    --selection-text:  #f4e9d8;
+
+    --bg-subtle:       var(--bg-offset);
+
+    /* The writing heatmap, as embers. */
+    --hm-0: #22150f;
+    --hm-1: #5a2414;
+    --hm-2: #9a3412;
+    --hm-3: #d9622b;
+    --hm-4: #ffb347;
+
+    --blood:           #b3262b;
+    --ember:           #d9772b;
+}
+
+[data-theme="dark"][data-season="halloween"] body.reading-mode {
+    --bg: #100c0b;
+}
+
+[data-season="halloween"] :focus-visible {
+    outline-color: var(--ember);
+}
+
+[data-season="halloween"] #markdownBody mark:not(.user-annotation) {
+    background: rgba(179, 38, 43, 0.35);
+    color: var(--text);
+}
+
+/* The header's foot, faintly lit from below. */
+[data-season="halloween"] body > header:not(.essay-frontmatter) {
+    border-bottom-color: #4a1d1a;
+    box-shadow: 0 1px 0 rgba(179, 38, 43, 0.25), 0 10px 30px -18px rgba(179, 38, 43, 0.5);
+}
+
+/* ============================================================
+   DECORATIONS (halloween.js), in the stage's layer
+   ============================================================ */
+
+.stage-layer canvas {
+    position: absolute;
+}
+
+.halloween-bats {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.halloween-moon {
+    transition: opacity 0.8s ease;
+}
+
+/* Where the margins have no room (phones, tablets) the moon sits small
+   in the header, behind its links and buttons, above its background. */
+.halloween-moon--header {
+    position: absolute;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 1.2s ease;
+}
+
+.halloween-moon--header.is-on {
+    opacity: 1;
+}
+
+/* Fog: two noise canvases, stretched (which softens them) and drifting
+   at different speeds, in front of the moon and behind the bats. The
+   outer element fades it upward and lifts it over the last stretch of
+   the page (--fog-depth), by transform, so nothing is redrawn; the inner
+   one thins it over the text column (--fog-body-l and -r). */
+.halloween-fog {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 42vh;
+    transform: translateY(calc((1 - var(--fog-depth, 0)) * 22vh));
+    opacity: calc(0.6 + 0.4 * var(--fog-depth, 0));
+    transition: transform 0.6s ease, opacity 0.6s ease;
+    will-change: transform;
+    -webkit-mask-image: linear-gradient(to top, #000 0%, #000 55%, transparent 100%);
+            mask-image: linear-gradient(to top, #000 0%, #000 55%, transparent 100%);
+}
+
+.halloween-fog-inner {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    --l: var(--fog-body-l, 30vw);
+    --r: var(--fog-body-r, 70vw);
+    -webkit-mask-image: linear-gradient(to right,
+        #000 0, #000 calc(var(--l) - 4rem),
+        rgba(0, 0, 0, 0.32) var(--l), rgba(0, 0, 0, 0.32) var(--r),
+        #000 calc(var(--r) + 4rem), #000 100%);
+            mask-image: linear-gradient(to right,
+        #000 0, #000 calc(var(--l) - 4rem),
+        rgba(0, 0, 0, 0.32) var(--l), rgba(0, 0, 0, 0.32) var(--r),
+        #000 calc(var(--r) + 4rem), #000 100%);
+}
+
+.halloween-fog-inner canvas {
+    top: 0;
+    left: 0;
+    width: 200%;
+    height: 100%;
+    will-change: transform;
+}
+
+.halloween-fog-inner canvas.near {
+    animation: halloween-fog-drift 95s linear infinite;
+    opacity: 0.6;
+}
+
+.halloween-fog-inner canvas.far {
+    animation: halloween-fog-drift 140s linear infinite reverse;
+    opacity: 0.45;
+    top: 25%;
+    height: 75%;
+}
+
+@keyframes halloween-fog-drift {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+}
+
+@media print {
+    .halloween-moon--header {
+        display: none !important;
+    }
+}

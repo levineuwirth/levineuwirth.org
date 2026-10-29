@@ -49,6 +49,7 @@ site-files:
 - paper/
 - site.yaml
 - static/apple-touch-icon.png
+- static/css/seasons/
 - static/cv.pdf
 - static/cv.thumb.png
 - static/favicon-96x96.png
@@ -74,6 +75,7 @@ site-files:
 - static/images/dingbats/tech.svg
 - static/images/dingbats/trefoil.svg
 - static/images/link-icons/internal.svg
+- static/js/seasons/
 - static/licenses/VerInf-MIT.txt
 - static/logo-sprite.svg
 - static/og-image.png
