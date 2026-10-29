@@ -520,7 +520,7 @@ entries:
   string: lnUtils
 - id: I0110
   file: tests/test_browser_layout.py
-  line: 50
+  line: 51
   column: 58
   string: lnUtils
 - id: I0111
