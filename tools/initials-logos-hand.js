@@ -115,18 +115,19 @@
             '<stop offset="1" style="stop-color:var(--initial-ink-hi, currentColor)"/></linearGradient></defs>' +
             '<g fill="none" stroke="url(#initial-ink)" stroke-linecap="round">' +
             grown.twigs.map(function (t) {
-                return '<path class="initial-cut" pathLength="1" style="--t:' + s(t.t) + ';--d:0.34s" stroke-width="' + n(t.w) + '" d="' + t.d + '"/>';
+                return '<path class="initial-cut initial-growth" pathLength="1" style="--t:' + s(t.t) + ';--d:0.34s" stroke-width="' + n(t.w) + '" d="' + t.d + '"/>';
             }).join('') + '</g>' +
             '<g fill="url(#initial-ink)">' +
             grown.blobs.map(function (b) {
                 return b.pts.map(function (p) {
-                    return '<circle class="initial-ink" style="--t:' + s(b.t) + ';--d:0.28s" cx="' + n(p[0]) + '" cy="' + n(p[1]) + '" r="' + n(p[2]) + '"/>';
+                    return '<circle class="initial-ink initial-growth" style="--t:' + s(b.t) + ';--d:0.28s" cx="' + n(p[0]) + '" cy="' + n(p[1]) + '" r="' + n(p[2]) + '"/>';
                 }).join('');
             }).join('') + '</g>' +
+            '<path class="initial-cut initial-outline" pathLength="1" style="--t:0s;--d:0.6s" transform="translate(' + n(room) + ' 0)" fill="none" stroke="url(#initial-ink)" stroke-width="0.7" vector-effect="non-scaling-stroke" d="' + g.d + '"/>' +
             '<path class="initial-ink" style="--t:0s;--d:0.45s" transform="translate(' + n(room) + ' 0)" fill="url(#initial-ink)" d="' + g.d + '"/>' +
             '<g fill="none" stroke="var(--bg)" stroke-width="' + n(H * 0.0065) + '" stroke-linecap="round" stroke-linejoin="round" opacity="0.92">' +
             vs.map(function (d, i) {
-                return '<path class="initial-cut" pathLength="1" style="--t:' + s(0.75 + i * 0.12) + ';--d:0.34s" d="' + d + '"/>';
+                return '<path class="initial-cut initial-growth" pathLength="1" style="--t:' + s(0.75 + i * 0.12) + ';--d:0.34s" d="' + d + '"/>';
             }).join('') + '</g>' +
             '</svg>\n';
         out[L] = { svg: svg, twigs: grown.twigs.length, blobs: grown.blobs.length, veins: vs.length };
