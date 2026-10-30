@@ -134,6 +134,8 @@ site-files:
 - tools/forgejo-reconcile.py
 - tools/forgejo-sync.sh
 - tools/forgejo-update.sh
+- tools/initials-logos-hand.js
+- tools/initials-logos-hand.py
 - tools/vps-config-backup.sh
 - tools/vps-offsite-verify.sh
 - tools/vps-status
