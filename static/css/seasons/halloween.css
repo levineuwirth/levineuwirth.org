@@ -39,6 +39,11 @@
 
     --blood:           #b3262b;
     --ember:           #d9772b;
+
+    /* A drawn initial glows red and is lit from the moon, low right. */
+    --initial-glow:    drop-shadow(0 0 0.3em rgba(179, 38, 43, 0.5));
+    --initial-ink-lo:  #8f7f70;
+    --initial-ink-hi:  #f6ecdb;
 }
 
 [data-theme="dark"][data-season="halloween"] body.reading-mode {
