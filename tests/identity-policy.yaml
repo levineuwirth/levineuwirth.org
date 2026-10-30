@@ -75,6 +75,7 @@ site-files:
 - static/images/dingbats/tech.svg
 - static/images/dingbats/trefoil.svg
 - static/images/link-icons/internal.svg
+- static/initials/
 - static/js/seasons/
 - static/licenses/VerInf-MIT.txt
 - static/logo-sprite.svg
