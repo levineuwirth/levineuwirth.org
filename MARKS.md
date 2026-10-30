@@ -170,6 +170,17 @@ whole. The theme sets `--initial-glow` and may shade the ink with
 initial's `.initial-cut` outlines are drawn once as the page opens, each at
 its own `--t`, and its `.initial-ink` then fills them; not under Reduce
 Motion. Print hides it and gives the letter back its own quiet dropcap.
+
+The page's `status:` is its initials' stage: the filter adds
+`initial--<status>` (`Working model` is `initial--working-model`), and
+`typography.css` shows a set's layers by it. A set's SVG marks them:
+`.initial-cut`, its outlines (hairlines at any size); `.initial-ink`, the
+ink; `.initial-shade`, an engraver's hairline below and right;
+`.initial-growth`, what grows from the letter (the logo's hand's sprigs,
+leaves and veins); `.initial-outline`, the letter's own outline where its
+cuts are not that. Refined, or no status, shows every layer; Durable drops
+the shade; a Working model is the drawing before the ink; a Draft only the
+letter, in pencil (`--text-faint`); Superseded and Deprecated fade.
 `tests/golden/initials.md` and `tests/test_browser_dropcaps.py` hold this
 to several initials on one page.
 
