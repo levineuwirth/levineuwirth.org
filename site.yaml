@@ -117,3 +117,4 @@ switches:
   source-refs: true
   code-refs: true
   epistemic: true
+  marks: true
