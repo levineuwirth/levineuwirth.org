@@ -1,4 +1,5 @@
 ---
+initials: /initials/logos-hand
 title: Colophon
 date: 2026-03-21
 status: "Durable"

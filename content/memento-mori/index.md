@@ -1,4 +1,5 @@
 ---
+initials: /initials/logos-hand
 title: Memento Mori
 date: 2026-03-17
 abstract: The power of vanitas through vanity, herein serving to emanate motivation and tranquility.
