@@ -142,23 +142,33 @@ they do not animate. The Display panel's "Focus Mode" hides them via
 
 ### 2.6 Drawn initials
 
-A page may carry a drawn initial beside it as it carries its mark:
-`content/foo.initial.svg` for `content/foo.md`, `initial.svg` for an
-`index.md`. `Marks.initialSvgField` inlines it as `$initialSvg$` (the
-same processing as a monogram, without the figure), and the template
-floats it before the opening paragraph in `<div class="initial"
-aria-hidden="true">`. Only `home.html` places it so far: the home page's
-F, from EB Garamond Initials (SIL OFL), is the first.
+A page may name a set of drawn initials in its frontmatter, `initials:`:
+a directory of SVGs, one per capital (`F.svg`), under the site's static
+directory when the path begins with `/` (`/initials/eb-garamond` is
+`static/initials/eb-garamond`), else beside the page. `Filters/Dropcaps.hs`
+then draws every dropcap the page has, as many as there are: the opening
+paragraph (the first `<p>` directly in `#markdownBody`, before any heading)
+and each paragraph in a `::: dropcap` block. The set's SVG for the letter
+goes at the head of the paragraph in `<span class="initial"
+aria-hidden="true">`, with the ids it declares (its gradient) made unique to
+that paragraph, and the paragraph's own letter goes in
+`<span class="initial-letter">`. A paragraph keeps the CSS dropcap when the
+set has no SVG for its letter, or when it opens with anything but a capital
+(a quotation mark, a digit). The home page names `/initials/eb-garamond`,
+EB Garamond Initials' ten letters (SIL OFL, its license beside them).
 
-`typography.css` sizes it in lines (three: from the capitals of the
+`typography.css` sizes an initial in lines (three: from the capitals of the
 first line to the baseline of the third) from Spectral's measured cap
-height and (ascent − descent)/2, and sets the paragraph's own first
-letter at no size, so copying, search and screen readers still have the
-word whole. The theme sets `--initial-glow` and may shade the ink with
+height and (ascent − descent)/2, and sets `.initial-letter` at no size,
+which takes any `::first-letter` dropcap on it to nothing too (each is
+measured in em), so copying, search and screen readers still have the word
+whole. The theme sets `--initial-glow` and may shade the ink with
 `--initial-ink-lo`/`-hi` (Blood Moon lights it from the moon). An
-initial's `.initial-cut` outlines are drawn once as the page opens, each
-at its own `--t`, and its `.initial-ink` then fills them; not under
-Reduce Motion. Print hides it and keeps the letter's own quiet dropcap.
+initial's `.initial-cut` outlines are drawn once as the page opens, each at
+its own `--t`, and its `.initial-ink` then fills them; not under Reduce
+Motion. Print hides it and gives the letter back its own quiet dropcap.
+`tests/golden/initials.md` and `tests/test_browser_dropcaps.py` hold this
+to several initials on one page.
 
 ---
 
