@@ -111,3 +111,4 @@ switches:
   code: true
   viz: true
   pdf-viewer: true
+  source-refs: true
