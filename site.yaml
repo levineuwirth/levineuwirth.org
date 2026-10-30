@@ -123,3 +123,5 @@ switches:
   now: true
   signing: true
   signature-link: true
+  stats-page: true
+  build-page: true
