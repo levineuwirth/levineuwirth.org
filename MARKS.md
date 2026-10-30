@@ -142,8 +142,9 @@ they do not animate. The Display panel's "Focus Mode" hides them via
 
 ### 2.6 Drawn initials
 
-A page may name a set of drawn initials in its frontmatter, `initials:`:
-a directory of SVGs, one per capital (`F.svg`), under the site's static
+A page may name a set of drawn initials in its frontmatter, `initials:`,
+or a list of them in order, each letter drawn from the first set that has
+it: a directory of SVGs, one per capital (`F.svg`), under the site's static
 directory when the path begins with `/` (`/initials/eb-garamond` is
 `static/initials/eb-garamond`), else beside the page. `Filters/Dropcaps.hs`
 then draws every dropcap the page has, as many as there are: the opening
@@ -152,10 +153,12 @@ and each paragraph in a `::: dropcap` block. The set's SVG for the letter
 goes at the head of the paragraph in `<span class="initial"
 aria-hidden="true">`, with the ids it declares (its gradient) made unique to
 that paragraph, and the paragraph's own letter goes in
-`<span class="initial-letter">`. A paragraph keeps the CSS dropcap when the
-set has no SVG for its letter, or when it opens with anything but a capital
-(a quotation mark, a digit). The home page names `/initials/eb-garamond`,
-EB Garamond Initials' ten letters (SIL OFL, its license beside them).
+`<span class="initial-letter">`. A paragraph keeps the CSS dropcap when no
+set has an SVG for its letter, or when it opens with anything but a capital
+(a quotation mark, a digit). Two sets ship: `/initials/eb-garamond`, EB
+Garamond Initials' ten letters, and `/initials/logos-hand`, all twenty-six
+of Spectral's capitals grown with the logo's sprigs and veins (each SIL OFL,
+its license beside it); the home page names the first.
 
 `typography.css` sizes an initial in lines (three: from the capitals of the
 first line to the baseline of the third) from Spectral's measured cap
