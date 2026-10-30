@@ -125,3 +125,4 @@ switches:
   signature-link: true
   stats-page: true
   build-page: true
+  footer-build-time: true
