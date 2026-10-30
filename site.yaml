@@ -102,6 +102,9 @@ standalone:
   - {source: content/about.md, route: about.html, template: vita.html, context: vita}
   - {source: content/cv/projects.md, route: cv/projects/index.html, template: projects.html,
      context: projects}
+# Where the site explains its epistemic profile: the footer's Epistemic
+# heading links there.
+epistemic-about: /colophon.html#living-documents
 # The engine's switches this site sets (engine/switches.yaml has each one's
 # default and what it covers): everything on.
 switches:
@@ -113,3 +116,4 @@ switches:
   pdf-viewer: true
   source-refs: true
   code-refs: true
+  epistemic: true
