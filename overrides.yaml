@@ -7,7 +7,7 @@
   note: the site's voice, and its search and library pages
 - site: templates/partials/footer.html
   engine: templates/partials/footer.html
-  reviewed: e75d3870c8b19577b468e6d674d84549acd10b43
+  reviewed: 781ada3d2e36fcf2b77efb1f470c7b59e0730dae
   note: identity, vita and projects, licenses, memento mori, build time and signature
 - site: templates/partials/ornament.html
   engine: templates/partials/ornament.html

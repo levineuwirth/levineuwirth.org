@@ -121,3 +121,5 @@ switches:
   vita: true
   commonplace: true
   now: true
+  signing: true
+  signature-link: true
