@@ -306,8 +306,12 @@
             this.lastDraw = 0;
         },
         layout: function () {
-            this.canvas.width = geo.vw * geo.dpr;
-            this.canvas.height = geo.vh * geo.dpr;
+            /* Shown at exactly its size, so nothing is resampled. */
+            var c = this.canvas;
+            c.width = Math.round(geo.vw * geo.dpr);
+            c.height = Math.round(geo.vh * geo.dpr);
+            c.style.width = c.width / geo.dpr + 'px';
+            c.style.height = c.height / geo.dpr + 'px';
             this.list.forEach(function (b) { b.box = null; });
             var spots = [], x;
             if (geo.margins) {
@@ -326,7 +330,12 @@
         },
         frame: function (dt, t, moved) {
             var flying = this.update(dt);
-            if (flying || moved || t - this.lastDraw > 0.12) {
+            /* When the last bat lands, the whole canvas is cleared once,
+               which also gives a browser that composites only the changed
+               boxes a whole copy again. */
+            if (this.flew && !flying) this.wipe = true;
+            this.flew = flying;
+            if (flying || moved || this.wipe || t - this.lastDraw > 0.12) {
                 this.draw(t);
                 this.lastDraw = t;
             }
@@ -458,14 +467,25 @@
             b.y = clamp(b.y, geo.top + 2, geo.vh - 8);
         },
 
-        /* Clears only where each bat was last drawn: clearing the whole
-           screen every frame was most of the cost on a laptop's GPU. */
+        /* Clears only where each bat was last drawn (clearing the whole
+           screen every frame was most of the cost on a laptop's GPU), in
+           whole device pixels, so no edge is left half cleared. */
         draw: function (t) {
-            var ctx = this.ctx, self = this;
-            ctx.setTransform(geo.dpr, 0, 0, geo.dpr, 0, 0);
-            this.list.forEach(function (b) {
-                if (b.box) ctx.clearRect(b.box[0], b.box[1], b.box[2], b.box[3]);
-            });
+            var ctx = this.ctx, self = this, k = geo.dpr, c = this.canvas;
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            if (this.wipe) {
+                ctx.clearRect(0, 0, c.width, c.height);
+                this.wipe = false;
+            } else {
+                this.list.forEach(function (b) {
+                    if (!b.box) return;
+                    var x0 = Math.floor(b.box[0] * k) - 1, y0 = Math.floor(b.box[1] * k) - 1,
+                        x1 = Math.ceil((b.box[0] + b.box[2]) * k) + 1,
+                        y1 = Math.ceil((b.box[1] + b.box[3]) * k) + 1;
+                    ctx.clearRect(x0, y0, x1 - x0, y1 - y0);
+                });
+            }
+            ctx.setTransform(k, 0, 0, k, 0, 0);
             this.list.forEach(function (b) {
                 var s = b.size;
                 if (b.state === 'roost') {
