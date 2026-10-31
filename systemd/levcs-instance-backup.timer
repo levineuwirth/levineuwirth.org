@@ -1,0 +1,16 @@
+# Nightly trigger for levcs-instance-backup.service. See that unit's header
+# for the install commands.
+
+[Unit]
+Description=Nightly LeVCS instance backup
+
+[Timer]
+# 04:15 UTC, after the configuration backup's 04:00. All five backups
+# upload to one borg repository; borg-offhost.sh waits for its lock rather
+# than failing. The instance is down for the seconds the archive takes.
+OnCalendar=*-*-* 04:15
+RandomizedDelaySec=10min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

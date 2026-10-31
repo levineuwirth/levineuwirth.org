@@ -18,7 +18,7 @@ log() { echo "vps-offsite-verify: $*"; }
 die() { echo "vps-offsite-verify: $*" >&2; exit 1; }
 [ -n "${BORG_REPO:-}" ] || die "BORG_REPO is unset"
 LOCK=(--lock-wait "${BORG_LOCK_WAIT:-1800}")   # the nightly jobs share the repository
-PREFIXES=${OFFSITE_PREFIXES:-forgejo anki couchdb config}
+PREFIXES=${OFFSITE_PREFIXES:-forgejo anki couchdb config levcs}
 MAX_AGE_H=${OFFSITE_MAX_AGE_HOURS:-48}
 BIN=${VERIFY_BIN_DIR:-/usr/local/bin}
 
@@ -46,6 +46,7 @@ for prefix in $PREFIXES; do
         anki)    "$BIN/anki-sync-backup.sh" --verify "$tarball" ;;
         couchdb) "$BIN/couchdb-backup.sh" --verify "$tarball" ;;
         config)  "$BIN/vps-config-backup.sh" --verify "$tarball" ;;
+        levcs)   "$BIN/levcs-instance-backup.sh" --verify "$tarball" ;;
         *)       die "$prefix: no verifier" ;;
     esac || die "$prefix: restore test failed"
     rm -rf "${tmp:?}"/*

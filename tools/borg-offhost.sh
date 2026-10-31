@@ -4,11 +4,12 @@
 #
 # Installed at /usr/local/lib/borg-offhost.sh and sourced by
 # forgejo-backup.sh (OFFHOST_TOOL=borg), anki-sync-backup.sh,
-# couchdb-backup.sh and vps-config-backup.sh. Source of truth is this file
-# in the repo. Not executable on its own.
+# couchdb-backup.sh, vps-config-backup.sh and levcs-instance-backup.sh.
+# Source of truth is this file in the repo. Not executable on its own.
 #
 # One borg repository on the storage box holds every set, told apart by
-# archive prefix: forgejo-<TS>, anki-<TS>, couchdb-<TS>, config-<TS>.
+# archive prefix: forgejo-<TS>, anki-<TS>, couchdb-<TS>, config-<TS>,
+# levcs-<TS>.
 # Each caller prunes only its own prefix, so a broken Anki run can never
 # thin the Forgejo history. The jobs' timer windows overlap, so every borg
 # call waits for the repository lock (BORG_LOCK_WAIT) instead of borg's
