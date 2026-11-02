@@ -73,12 +73,6 @@
     position: absolute;
 }
 
-.halloween-bats {
-    inset: 0;
-    width: 100%;
-    height: 100%;
-}
-
 .halloween-moon {
     transition: opacity 0.8s ease;
 }

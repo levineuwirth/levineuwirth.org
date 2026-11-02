@@ -288,16 +288,12 @@
         season: 'halloween',
         mount: function (ctx) {
             this.still = ctx.still;
-            this.canvas = document.createElement('canvas');
-            this.canvas.className = 'halloween-bats';
-            this.ctx = this.canvas.getContext('2d');
-            ctx.layer.appendChild(this.canvas);
             var n = window.innerWidth >= 1500 ? 6 : window.innerWidth >= 1000 ? 4 : 1;
             this.list = [];
             for (var i = 0; i < n; i++) {
                 this.list.push({
                     x: 0, y: 0, vx: 0, vy: 0, side: 0, rx: null,
-                    state: 'roost', timer: 0, wander: 0, box: null,
+                    state: 'roost', timer: 0, wander: 0, sprite: stage.sprite(ctx.layer),
                     phase: Math.random() * 6.28, flap: 22 + Math.random() * 10,
                     size: 34 + Math.random() * 14, seed: Math.random() * 100,
                     lapIn: 15 + Math.random() * 60
@@ -306,13 +302,6 @@
             this.lastDraw = 0;
         },
         layout: function () {
-            /* Shown at exactly its size, so nothing is resampled. */
-            var c = this.canvas;
-            c.width = Math.round(geo.vw * geo.dpr);
-            c.height = Math.round(geo.vh * geo.dpr);
-            c.style.width = c.width / geo.dpr + 'px';
-            c.style.height = c.height / geo.dpr + 'px';
-            this.list.forEach(function (b) { b.box = null; });
             var spots = [], x;
             if (geo.margins) {
                 for (x = 26; x < geo.bodyL - 30; x += 48) spots.push(x);
@@ -330,18 +319,13 @@
         },
         frame: function (dt, t, moved) {
             var flying = this.update(dt);
-            /* When the last bat lands, the whole canvas is cleared once,
-               which also gives a browser that composites only the changed
-               boxes a whole copy again. */
-            if (this.flew && !flying) this.wipe = true;
-            this.flew = flying;
-            if (flying || moved || this.wipe || t - this.lastDraw > 0.12) {
+            if (flying || moved || t - this.lastDraw > 0.12) {
                 this.draw(t);
                 this.lastDraw = t;
             }
             return this.still ? stage.REST : flying ? stage.BUSY : stage.IDLE;
         },
-        unmount: function () { this.canvas.remove(); },
+        unmount: function () { this.list.forEach(function (b) { b.sprite.remove(); }); },
 
         freeSpot: function (b, preferSide) {
             var mid = (geo.bodyL + geo.bodyR) / 2, taken = this.list, best = [];
@@ -467,34 +451,20 @@
             b.y = clamp(b.y, geo.top + 2, geo.vh - 8);
         },
 
-        /* Clears only where each bat was last drawn (clearing the whole
-           screen every frame was most of the cost on a laptop's GPU), in
-           whole device pixels, so no edge is left half cleared. */
+        /* Each bat is its own sprite, a small canvas cleared whole for each
+           drawing (a canvas the size of the screen, cleared where the bats
+           had been, kept specks in Chromium: stage.js, Sprites), so a
+           frame costs about what the bats' own patches of screen do. The
+           box is the same hanging or flying, 2 sizes square about the bat,
+           so a sprite is never resized as it takes off or lands. */
         draw: function (t) {
-            var ctx = this.ctx, self = this, k = geo.dpr, c = this.canvas;
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            if (this.wipe) {
-                ctx.clearRect(0, 0, c.width, c.height);
-                this.wipe = false;
-            } else {
-                this.list.forEach(function (b) {
-                    if (!b.box) return;
-                    var x0 = Math.floor(b.box[0] * k) - 1, y0 = Math.floor(b.box[1] * k) - 1,
-                        x1 = Math.ceil((b.box[0] + b.box[2]) * k) + 1,
-                        y1 = Math.ceil((b.box[1] + b.box[3]) * k) + 1;
-                    ctx.clearRect(x0, y0, x1 - x0, y1 - y0);
-                });
-            }
-            ctx.setTransform(k, 0, 0, k, 0, 0);
+            var self = this;
             this.list.forEach(function (b) {
                 var s = b.size;
-                if (b.state === 'roost') {
-                    self.drawHanging(ctx, b, t);
-                    b.box = [b.x - s, b.y - 4, 2 * s, 1.1 * s];
-                } else {
-                    self.drawFlying(ctx, b);
-                    b.box = [b.x - s, b.y - s, 2 * s, 2 * s];
-                }
+                b.sprite.draw(b.x - s, b.y - s, 2 * s, 2 * s, function (ctx) {
+                    if (b.state === 'roost') self.drawHanging(ctx, b, t);
+                    else self.drawFlying(ctx, b);
+                });
             });
         },
 
