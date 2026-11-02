@@ -137,3 +137,4 @@ switches:
   stats-page: true
   build-page: true
   footer-build-time: true
+  tag-pages: true
