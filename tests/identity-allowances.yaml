@@ -545,7 +545,7 @@ entries:
   string: Levi Neuwirth
 - id: I0115
   file: tests/test_config.py
-  line: 535
+  line: 553
   column: 27
   string: levineuwirth
 - id: I0116

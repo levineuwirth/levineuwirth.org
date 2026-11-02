@@ -139,3 +139,4 @@ switches:
   footer-build-time: true
   tag-pages: true
   new: true
+  authors: true
