@@ -1,0 +1,15 @@
+# Weekly trigger for levcs-instance-backup-verify.service. See that unit's
+# header for the reasoning and levcs-instance-backup.service for the
+# install commands.
+
+[Unit]
+Description=Weekly LeVCS instance backup verification
+
+[Timer]
+# Sunday 05:00 UTC, well after the nightly run's window (04:15 + 10 min).
+OnCalendar=Sun *-*-* 05:00
+RandomizedDelaySec=10min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

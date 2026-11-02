@@ -1,4 +1,5 @@
 ---
+initials: /initials/logos-hand
 title: Who is Levi Neuwirth?
 date: 2026-03-16
 abstract: An extensive introduction to who I am, what defines me, what I do, tools I use, etc. For a more concise synopsis, see the [Work](/work.html) page linked from the site index.

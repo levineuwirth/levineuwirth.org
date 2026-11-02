@@ -3,8 +3,8 @@
 # backup-pair.sh — the local half shared by the VPS backup scripts.
 #
 # Installed at /usr/local/lib/backup-pair.sh and sourced by forgejo-backup.sh,
-# couchdb-backup.sh, anki-sync-backup.sh and vps-config-backup.sh
-# (BACKUP_PAIR_LIB overrides the path, for tests). Source of truth is this
+# couchdb-backup.sh, anki-sync-backup.sh, vps-config-backup.sh and
+# levcs-instance-backup.sh (BACKUP_PAIR_LIB overrides the path, for tests). Source of truth is this
 # file in the repo. Not executable on its own; it logs through the caller's
 # `log` and `die`, as borg-offhost.sh does.
 #

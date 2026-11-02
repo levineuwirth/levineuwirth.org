@@ -97,6 +97,22 @@ and `engine/templates/site.webmanifest`; the template owns the icon routes and a
 shell settings. `signing-fingerprint` is the displayed signing subkey in the
 footer. Template identity is HTML-escaped; manifest values are JSON-encoded.
 
+`seasons` lists dressings over a theme, each an `id`, the Settings `label`,
+the `base` theme it dresses (`light`, `dark` or `cappuccino`), a window
+`from` and `to` (`MM-DD`, inclusive; a window that starts later than it ends
+runs through the new year), a `stylesheet` and, optionally, a `script`. While
+the window is open, a reader with no stored theme wears the season and
+Settings offers it; one who chose it gets its base theme once the window
+closes. A worn season is `data-season` on `<html>`, beside `data-theme`: its
+stylesheet scopes its tokens to that, for the screen only, and is loaded all
+year so that wearing it never flashes the plain theme. Its script is loaded
+only while it is worn, after `engine/static/js/stage.js`, and registers what
+it draws with the stage: a layer over the margins and header that takes no
+clicks, starts once the page has settled, and is gone in focus mode and
+print (the comment at the top of `stage.js` is its interface). The score
+reader wears the base theme only. Browser tests that expect the plain themes
+fix their clock outside every window (`tests/_browser.py`, `off_season`).
+
 Compilers load `site.yaml` as a Hakyll dependency. The freshness check also
 hashes it, so changing settings that alter routes forces a clean rebuild.
 The feed author uses `email`; `contact-email` is the separate contact

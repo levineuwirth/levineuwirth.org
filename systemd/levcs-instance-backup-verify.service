@@ -1,0 +1,24 @@
+# Weekly restore test of the newest LeVCS instance backup: levcs-restore
+# puts it in a scratch root, which it does only once every repository in it
+# passes `levcs verify` and holds the id it is named for. It reads only; it
+# never touches the live instance.
+#
+# The nightly run already restores each archive before it counts. This
+# checks the archive a week on, with the levcs installed by then, so an
+# update that can no longer read the backups shows up within the week.
+# A separate unit, for the reason forgejo-backup-verify.service gives.
+#
+# See levcs-instance-backup.service for the install commands.
+
+[Unit]
+Description=LeVCS instance backup verification (levcs-restore into a scratch root)
+Documentation=https://git.levineuwirth.org/neuwirth/levineuwirth.org
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/default/levcs-instance-backup
+ExecStart=/usr/local/bin/levcs-instance-backup.sh --verify
+Nice=15
+IOSchedulingClass=idle
+TimeoutStartSec=30min
+Environment=TMPDIR=/var/tmp

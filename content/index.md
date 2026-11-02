@@ -1,6 +1,7 @@
 ---
 title: Levi Neuwirth
 home: true
+initials: /initials/eb-garamond
 description: >-
   The working library of Levi Neuwirth: research papers and living essays,
   compositions and scores, poetry and prose, revised in public.

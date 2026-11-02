@@ -56,6 +56,7 @@ keyboard: [home, essay-proofbroker, essay-r6, essay-grd, photo-index, photo-seri
 motion: [home, essay-r6, essay-proofbroker, photo-index, photo-series, photo-map, music-index, composition, score-reader, search, colophon, library, memento, cv-about]   # motion_run.py
 perf: [home, essay-r6, essay-grd, essay-simd, photo-index, photo-series, photo-single, photo-contact, photo-year, photo-map, music-index, composition, score-reader, search, library, new, current, colophon, cv-about, stats, me]   # perf_run.py
 axe-skip: [pdfjs]   # axe_run.py leaves out: the vendored PDF.js viewer
+dropcaps: [home, me, colophon, memento]   # test_browser_dropcaps.py: pages with several dropcaps, plain and drawn
 popup-sweep: [essay-grd, memento, essay-simd, /essays/near-critical-growing-radius-domination.html,
               essay-proofbroker, links, work, essay-scaling, essay-verified, bibliography]   # popup_run.py
 footer: [home, essay-proofbroker, photo-series]   # footer_check.py

@@ -10,13 +10,16 @@ All times UTC. `+n` is the timer's `RandomizedDelaySec`.
 | Unit | When | Touches |
 |---|---|---|
 | `anki-sync.service` | always | the Anki sync server, 127.0.0.1:8080 (nginx `anki.`) |
+| `levcs-instance.service` | always | the LeVCS instance, 127.0.0.1:7117, reached only through an SSH tunnel; unit and binaries from LeVCS's `deploy/` |
 | `couchdb-backup` | daily 03:15 +10m | CouchDB dump → `/root/couchdb-backups`, borg `couchdb-*` |
 | `forgejo-backup` | daily 03:30 +20m | Forgejo snapshot + tarball → `/root/forgejo-backups`, borg `forgejo-*` |
 | `anki-sync-backup` | daily 03:45 +10m | stops the server, snapshots, restarts → `/root/anki-sync-backups`, borg `anki-*` |
 | `vps-config-backup` | daily 04:00 +10m | `/etc` (not `/etc/borg`), the compose directories without their data, `/usr/local`, update state, an inventory of packages, Docker networks and units → `/root/vps-config-backups`, borg `config-*` |
+| `levcs-instance-backup` | daily 04:15 +10m | stops the LeVCS instance, archives `/var/lib/levcs` with LeVCS's `levcs-backup`, restarts it, restores the archive into a scratch root with `levcs-restore` → `/root/levcs-backups`, borg `levcs-*` |
 | `anki-sync-upgrade` | daily 04:30 +15m | the server's venv (PyPI `anki`); restarts the server |
 | `forgejo-backup-verify` | Sun 04:30 +20m | restores the newest local Forgejo archive into a scratch container |
 | `couchdb-backup-verify` | Sun 04:45 +10m | restores the newest local CouchDB archive into a scratch container on 127.0.0.1:15984 |
+| `levcs-instance-backup-verify` | Sun 05:00 +10m | restores the newest local LeVCS archive into a scratch root with `levcs-restore`, every repository verified |
 | `forgejo-update` | daily 05:00 +15m | pulls `forgejo:15`; backs up, recreates, checks (state in `/var/lib/forgejo-update/`) |
 | `couchdb-update` | daily 05:30 +15m | pulls `couchdb:3`; backs up, copies `couchdb-data` cold, recreates, checks; puts data and image back on failure (state in `/var/lib/couchdb-update/`) |
 | `anubis-update` | daily 06:00 +15m | resolves the latest stable 1.x image to a digest; backs up, saves cold challenge state, replaces, checks stability and rolls back on failure (`anubis/README.md`); waits for `forgejo-update`, whose lock it shares |
@@ -29,7 +32,7 @@ Containers: `forgejo` (127.0.0.1:3000, and :2222 for git over ssh) and
 passes through `anubis` (127.0.0.1:8923); its private health/metrics listener
 is 127.0.0.1:9091.
 
-The four backups and the monthly verify share one borg repository on the
+The five backups and the monthly verify share one borg repository on the
 storage box; every borg call waits for its lock (`BORG_LOCK_WAIT`, default
 30 min) rather than failing the job that comes second. `anki-sync-backup`
 and `anki-sync-upgrade` share `/run/lock/anki-sync.lock`.
@@ -48,7 +51,8 @@ directories and `/usr/local` from it, reinstall the packages in
 `inventory/packages.txt`, recreate `proxy-net` before Forgejo's first start
 with the command in `forgejo/docker-compose.yml` (check the subnet against
 `inventory/docker-networks.json`), then restore each service's data from its
-own set (`couchdb/RESTORE.md`, `forgejo/UPGRADE.md`).
+own set (`couchdb/RESTORE.md`, `forgejo/UPGRADE.md`, and for LeVCS
+`levcs-restore`, as LeVCS's `deploy/README.md` says).
 
 The config set also holds `/root/anubis-server` including its signing key,
 but excludes the temporary `state/` database. Recreate `state/` as UID/GID
@@ -62,6 +66,33 @@ and restore their ownership before starting the timer. The agreement state
 protects against undoing intentional history rewrites; do not discard it to
 make a held job pass. Bare caches can be fetched again. These paths are in
 the encrypted `config-*` backup; deploy keys are deliberately repository scoped.
+
+## Installing the LeVCS instance backup (2026-10-31)
+
+The LeVCS instance had no scheduled backup: its one archive was taken by
+hand when it was accepted, on 2026-10-10. `levcs-instance-backup` stops it,
+archives `/var/lib/levcs` with LeVCS's own `levcs-backup`, starts it again,
+and counts the archive only once LeVCS's `levcs-restore` has restored it
+into a scratch root, every repository verified. It needs `levcs`,
+`levcs-backup` and `levcs-restore` in `/usr/local/bin`, where LeVCS's guide
+installs them. Its borg settings are copied from the Anki job's file, so
+they are the other sets' exactly:
+
+```bash
+scp tools/levcs-instance-backup.sh tools/vps-offsite-verify.sh root@vps:/usr/local/bin/
+scp tools/backup-pair.sh tools/borg-offhost.sh root@vps:/usr/local/lib/
+scp systemd/levcs-instance-backup{,-verify}.{service,timer} systemd/vps-offsite-verify.service root@vps:/etc/systemd/system/
+ssh root@vps 'umask 077; grep -E "^BORG_(REPO|PASSCOMMAND|RSH)=" /etc/default/anki-sync-backup > /etc/default/levcs-instance-backup'
+ssh root@vps 'chmod 755 /usr/local/bin/levcs-instance-backup.sh && chmod 644 /usr/local/lib/backup-pair.sh /usr/local/lib/borg-offhost.sh && systemctl daemon-reload'
+ssh root@vps 'systemctl start levcs-instance-backup.service && levcs-instance-backup.sh --verify && ls -l /root/levcs-backups/'
+ssh root@vps 'systemctl enable --now levcs-instance-backup.timer levcs-instance-backup-verify.timer'
+```
+
+The instance is down for the seconds the archive takes; the job's log has
+the stop and the start. `tools/vps-status` now lists the two jobs, the
+`levcs` set's stamps and the instance, and the monthly verify restores the
+`levcs` set from the storage box, so it fails from the first run after this
+install if no `levcs-*` archive has reached the box.
 
 ## Installing the configuration backup (audit Y13)
 

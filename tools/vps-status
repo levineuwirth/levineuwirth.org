@@ -6,8 +6,8 @@
 # result and time and whether its timer is enabled; the age of each
 # backup set's local and off-host stamps; the containers; a held or failed
 # Forgejo or CouchDB update; how long ago the OS was upgraded and whether a
-# reboot is pending; the sync server; disk use. The weekly pass copies it into Archivum
-# Diarium; nothing here counts or nags.
+# reboot is pending; the sync server and the LeVCS instance; disk use. The
+# weekly pass copies it into Archivum Diarium; nothing here counts or nags.
 #
 # Read the stamps, not just the results (audit Y01): a unit that never ran
 # reports Result=success, a failure clears itself the next night, and
@@ -30,7 +30,8 @@ age() {   # age <file>: hours since its mtime, or "none"
 failed=$(systemctl --failed --no-legend --plain 2>/dev/null | awk '{print $1}' | paste -sd, -)
 printf 'vps %s: failed=[%s]' "$(date -u +%F)" "${failed:-none}"
 for u in forgejo-backup anki-sync-backup couchdb-backup vps-config-backup forgejo-backup-verify \
-         couchdb-backup-verify vps-offsite-verify anki-sync-upgrade forgejo-update couchdb-update anubis-update anubis-observe forgejo-reconcile; do
+         couchdb-backup-verify vps-offsite-verify anki-sync-upgrade forgejo-update couchdb-update anubis-update anubis-observe forgejo-reconcile \
+         levcs-instance-backup levcs-instance-backup-verify; do
     r=$(systemctl show -p Result --value "$u.service" 2>/dev/null || true)
     t=$(systemctl show -p ExecMainExitTimestamp --value "$u.service" 2>/dev/null | awk '{print $2}')
     e=$(systemctl is-enabled "$u.timer" 2>/dev/null || true)
@@ -42,7 +43,7 @@ printf ' forge-sync:checked=%s,matched=%s,held=%s' \
     "$(age /var/lib/forgejo-reconcile/last-success.json)" \
     "$(jq -r '.held' /var/lib/forgejo-reconcile/report.json 2>/dev/null || echo unknown)"
 for set in forgejo:/root/forgejo-backups anki:/root/anki-sync-backups couchdb:/root/couchdb-backups \
-           config:/root/vps-config-backups; do
+           config:/root/vps-config-backups levcs:/root/levcs-backups; do
     n=${set%%:*} d=${set#*:}
     printf ' %s:local=%s,offhost=%s' "$n" "$(age "$d/last-success")" "$(age "$d/last-offhost-success")"
 done
@@ -70,7 +71,8 @@ if [ -r /var/log/pacman.log ]; then
     reboot=no; [ -n "$installed" ] && [ "$installed" != "$running" ] && reboot="yes($running->$installed)"
     printf ' os-upgrade=%s reboot=%s' "$up" "$reboot"
 fi
-printf ' anki-sync=%s disk=%s\n' "$(systemctl is-active anki-sync 2>/dev/null || true)" "$(df -h / | awk 'NR==2{print $5}')"
+printf ' anki-sync=%s levcs-instance=%s disk=%s\n' "$(systemctl is-active anki-sync 2>/dev/null || true)" \
+    "$(systemctl is-active levcs-instance 2>/dev/null || true)" "$(df -h / | awk 'NR==2{print $5}')"
 PROBE
 
 if [ "${1:-}" = --local ]; then

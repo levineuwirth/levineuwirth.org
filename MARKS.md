@@ -140,6 +140,50 @@ suppress). They are unaffected by `prefers-reduced-motion` because
 they do not animate. The Display panel's "Focus Mode" hides them via
 `.focus-mode .frontmatter-mark { display: none; }`.
 
+### 2.6 Drawn initials
+
+A page may name a set of drawn initials in its frontmatter, `initials:`,
+or a list of them in order, each letter drawn from the first set that has
+it: a directory of SVGs, one per capital (`F.svg`), under the site's static
+directory when the path begins with `/` (`/initials/eb-garamond` is
+`static/initials/eb-garamond`), else beside the page. `Filters/Dropcaps.hs`
+then draws every dropcap the page has, as many as there are: the opening
+paragraph (the first `<p>` directly in `#markdownBody`, before any heading)
+and each paragraph in a `::: dropcap` block. The set's SVG for the letter
+goes at the head of the paragraph in `<span class="initial"
+aria-hidden="true">`, with the ids it declares (its gradient) made unique to
+that paragraph, and the paragraph's own letter goes in
+`<span class="initial-letter">`. A paragraph keeps the CSS dropcap when no
+set has an SVG for its letter, or when it opens with anything but a capital
+(a quotation mark, a digit). Two sets ship: `/initials/eb-garamond`, EB
+Garamond Initials' ten letters, and `/initials/logos-hand`, all twenty-six
+of Spectral's capitals grown with the logo's sprigs and veins (each SIL OFL,
+its license beside it); the home page names the first.
+
+`typography.css` sizes an initial in lines (three: from the capitals of the
+first line to the baseline of the third) from Spectral's measured cap
+height and (ascent − descent)/2, and sets `.initial-letter` at no size,
+which takes any `::first-letter` dropcap on it to nothing too (each is
+measured in em), so copying, search and screen readers still have the word
+whole. The theme sets `--initial-glow` and may shade the ink with
+`--initial-ink-lo`/`-hi` (Blood Moon lights it from the moon). An
+initial's `.initial-cut` outlines are drawn once as the page opens, each at
+its own `--t`, and its `.initial-ink` then fills them; not under Reduce
+Motion. Print hides it and gives the letter back its own quiet dropcap.
+
+The page's `status:` is its initials' stage: the filter adds
+`initial--<status>` (`Working model` is `initial--working-model`), and
+`typography.css` shows a set's layers by it. A set's SVG marks them:
+`.initial-cut`, its outlines (hairlines at any size); `.initial-ink`, the
+ink; `.initial-shade`, an engraver's hairline below and right;
+`.initial-growth`, what grows from the letter (the logo's hand's sprigs,
+leaves and veins); `.initial-outline`, the letter's own outline where its
+cuts are not that. Refined, or no status, shows every layer; Durable drops
+the shade; a Working model is the drawing before the ink; a Draft only the
+letter, in pencil (`--text-faint`); Superseded and Deprecated fade.
+`tests/golden/initials.md` and `tests/test_browser_dropcaps.py` hold this
+to several initials on one page.
+
 ---
 
 ## 3. The epistemic figure

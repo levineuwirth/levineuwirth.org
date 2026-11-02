@@ -76,7 +76,8 @@ class BackupPairTests(unittest.TestCase):
 
     def test_every_backup_script_sources_the_library(self):
         tools = LIB.parent
-        for name in ("forgejo-backup.sh", "couchdb-backup.sh", "anki-sync-backup.sh", "vps-config-backup.sh"):
+        for name in ("forgejo-backup.sh", "couchdb-backup.sh", "anki-sync-backup.sh", "vps-config-backup.sh",
+                     "levcs-instance-backup.sh"):
             src = (tools / name).read_text()
             with self.subTest(script=name):
                 self.assertIn("backup-pair.sh", src)
