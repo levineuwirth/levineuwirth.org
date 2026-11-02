@@ -141,3 +141,4 @@ switches:
   new: true
   authors: true
   random: true
+  library: true
