@@ -142,3 +142,4 @@ switches:
   authors: true
   random: true
   library: true
+  bibliography-index: true
