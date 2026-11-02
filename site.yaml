@@ -140,3 +140,4 @@ switches:
   tag-pages: true
   new: true
   authors: true
+  random: true
