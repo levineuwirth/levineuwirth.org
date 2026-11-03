@@ -145,3 +145,4 @@ switches:
   bibliography-index: true
   selection-toolbar: true
   annotations: true
+  popups: true
