@@ -143,3 +143,4 @@ switches:
   random: true
   library: true
   bibliography-index: true
+  selection-toolbar: true

@@ -490,17 +490,17 @@ entries:
   string: lnUtils
 - id: I0104
   file: tests/test_browser_annotations.py
-  line: 43
+  line: 44
   column: 70
   string: Levi Neuwirth
 - id: I0105
   file: tests/test_browser_annotations.py
-  line: 270
+  line: 272
   column: 59
   string: ln:content-added
 - id: I0106
   file: tests/test_browser_annotations.py
-  line: 489
+  line: 491
   column: 45
   string: Neuwirth, Levi
 - id: I0107
