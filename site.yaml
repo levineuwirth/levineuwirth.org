@@ -148,3 +148,4 @@ switches:
   popups: true
   search-filters: true
   semantic-search: true
+  reading-progress: true
