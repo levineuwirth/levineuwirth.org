@@ -146,3 +146,4 @@ switches:
   selection-toolbar: true
   annotations: true
   popups: true
+  search-filters: true
