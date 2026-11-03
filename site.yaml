@@ -147,3 +147,4 @@ switches:
   annotations: true
   popups: true
   search-filters: true
+  semantic-search: true
