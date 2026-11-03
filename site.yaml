@@ -144,3 +144,4 @@ switches:
   library: true
   bibliography-index: true
   selection-toolbar: true
+  annotations: true

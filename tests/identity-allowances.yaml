@@ -495,12 +495,12 @@ entries:
   string: Levi Neuwirth
 - id: I0105
   file: tests/test_browser_annotations.py
-  line: 272
+  line: 277
   column: 59
   string: ln:content-added
 - id: I0106
   file: tests/test_browser_annotations.py
-  line: 491
+  line: 499
   column: 45
   string: Neuwirth, Levi
 - id: I0107
