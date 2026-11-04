@@ -1,0 +1,23 @@
+{
+ "sha": "6cd97537eb39ce2eb09b78e835dd9ee82232c290",
+ "message": "repo: count only authored code in the language bar: R6 records vendored, review repairs kept",
+ "author": "Levi Neuwirth",
+ "date": "2026-11-04T17:41:58Z",
+ "parents": [
+  "48ae8c4ab5c5f74661b13d8efa77de65ebbd9abd"
+ ],
+ "stats": {
+  "total": 7,
+  "additions": 6,
+  "deletions": 1
+ },
+ "files_total": 1,
+ "files": [
+  {
+   "filename": ".gitattributes",
+   "status": "modified",
+   "additions": 6,
+   "deletions": 1
+  }
+ ]
+}
