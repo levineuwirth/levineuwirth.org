@@ -151,4 +151,5 @@ switches:
   search-filters: true
   semantic-search: true
   similar-links: true
+  transclusion: true
   reading-progress: true
