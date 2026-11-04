@@ -6,8 +6,13 @@ description: The scope of the site's code and prose licenses, public-domain cred
 ## Code and original prose
 
 Levi Neuwirth's website code and its software documentation are licensed
-under the [MIT license](/licenses/MIT.txt). This includes the generator,
-scripts, stylesheets, templates, tests, and build and server configuration.
+under the [GNU General Public License, version 2 or any later version](/licenses/GPL-2.0-or-later.txt),
+with an additional permission that leaves the websites it generates outside
+that license. This includes the generator, scripts, stylesheets, templates,
+tests, and build and server configuration. The engine's own notice is at
+[/licenses/Ozymandias.txt](/licenses/Ozymandias.txt). Versions through commit
+`0ff8792` were released under the [MIT license](/licenses/MIT-through-0ff8792.txt),
+which still applies to copies of them.
 
 Levi Neuwirth's original prose and textual content data are licensed under
 [CC BY-NC-SA 4.0](/licenses/CC-BY-NC-SA-4.0.txt), unless a more specific
@@ -39,7 +44,7 @@ identifies the status of these works; it is not a new license grant.
 
 ## Archived material
 
-The archive preserves works by their original authors. The site's MIT and
+The archive preserves works by their original authors. The site's GPL and
 CC BY-NC-SA licenses do not apply to the preserved works or their extracted
 text. Each wrapper links to the original and records the capture's provenance.
 

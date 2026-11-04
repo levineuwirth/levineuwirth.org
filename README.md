@@ -395,7 +395,9 @@ Normal website builds do not require the research checkout or a TeX toolchain.
 
 ## License
 
-The website code and its software documentation are [MIT-licensed](LICENSE).
+The website code and its software documentation are licensed under
+[GPL-2.0-or-later](LICENSE), with an additional permission for the websites it
+generates. Versions through commit `0ff8792` were MIT-licensed.
 Levi Neuwirth's original prose and textual content data are licensed under
 [CC BY-NC-SA 4.0](LICENSE-CONTENT), unless a page says otherwise. These grants
 do not relicense third-party material or public-domain works, and do not

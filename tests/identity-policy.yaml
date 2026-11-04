@@ -6,7 +6,8 @@
 # site-files, or is inside a directory named there (an entry ending in /). The
 # site keeps its prose (README, design docs, licenses, THIRD-PARTY), ops,
 # content tests, baselines and identity overrides; the engine writes its own
-# documents and notices at extraction (A10, Q3). vendored-files are the
+# documents at extraction (A10, Q3), and its LICENSE, which names its holder,
+# is the one file of its own the check leaves out. vendored-files are the
 # engine's third-party code, by its path in the engine: unscanned, and need
 # not be present when they are downloaded.
 #
@@ -77,6 +78,7 @@ site-files:
 - static/images/link-icons/internal.svg
 - static/initials/
 - static/js/seasons/
+- static/licenses/MIT-through-0ff8792.txt
 - static/licenses/VerInf-MIT.txt
 - static/logo-sprite.svg
 - static/og-image.png

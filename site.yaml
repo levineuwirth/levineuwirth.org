@@ -11,7 +11,7 @@ source-repo: https://git.levineuwirth.org/neuwirth/levineuwirth.org
 source-branch: main
 forge-host: git.levineuwirth.org
 content-license: CC-BY-NC-SA-4.0
-code-license: MIT
+code-license: GPL-2.0-or-later
 signing-fingerprint: C9A42A6F AD444FBE 566FD738 531BDC1C C2707066
 # The faces of the first screen, preloaded beside the stylesheets
 # (templates/partials/head.html): subsets engine/tools/subset-fonts.py

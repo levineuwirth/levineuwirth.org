@@ -28,7 +28,7 @@ class PublishedLicenseTests(unittest.TestCase):
     def test_original_prose_keeps_its_license(self):
         footer = self.page("memento-mori.html").select_one(".footer-license")
         self.assertIsNotNone(footer.find("a", href=CC))
-        self.assertEqual(" ".join(footer.get_text().split()), "CC BY-NC-SA 4.0 · MIT · MM")
+        self.assertEqual(" ".join(footer.get_text().split()), "CC BY-NC-SA 4.0 · GPL-2.0-or-later · MM")
 
     def test_dore_credit_applies_to_the_figure(self):
         img = self.page("memento-mori.html").find("img", src=lambda s: s and "canto31.jpg" in s)
@@ -48,7 +48,9 @@ class PublishedLicenseTests(unittest.TestCase):
         links = [urlsplit(urljoin("https://levineuwirth.org/licenses.html", a["href"]))
                  for a in page.select("#markdownBody a[href]")]
         local = [u.path for u in links if u.netloc == "levineuwirth.org"]
-        self.assertIn("/licenses/MIT.txt", local)
+        self.assertIn("/licenses/GPL-2.0-or-later.txt", local)
+        self.assertIn("/licenses/Ozymandias.txt", local)
+        self.assertIn("/licenses/MIT-through-0ff8792.txt", local)
         self.assertIn("/licenses/CC-BY-NC-SA-4.0.txt", local)
         for path in local:
             with self.subTest(path=path):
@@ -57,8 +59,29 @@ class PublishedLicenseTests(unittest.TestCase):
                     target /= "index.html"
                 self.assertTrue(target.is_file())
 
+    def test_the_site_and_the_engine_give_the_same_terms(self):
+        # The grant and the permission for generated websites, then the FSF's
+        # text; each notice differs only in what it says of itself.
+        rule = "\n" + "-" * 72 + "\n\n"
+        ours, engine = ((path).read_text(encoding="utf-8") for path in (SITE_ROOT / "LICENSE", engine_path("LICENSE")))
+        self.assertEqual(ours.split(rule)[1], engine.split(rule)[1])
+
+        def terms(notice: str) -> str:
+            head = notice.split(rule)[0]
+            return head[head.index("Copyright (C)"):head.index("Earlier versions")]
+
+        self.assertEqual(terms(ours), terms(engine))
+        self.assertIn("Copyright (C) 2026 Levi Neuwirth", terms(ours))
+
+    def test_the_earlier_grant_stays_published_as_it_was(self):
+        earlier = (SITE_ROOT / "static/licenses/MIT-through-0ff8792.txt").read_text(encoding="utf-8")
+        self.assertTrue(earlier.startswith("Scope: this MIT licence applies"))
+        self.assertIn("MIT License\n\nCopyright (c) 2026 Levi Neuwirth\n", earlier)
+        self.assertIn("MIT-through-0ff8792.txt", (SITE_ROOT / "LICENSE").read_text(encoding="utf-8"))
+
     def test_distributed_notices_match_the_repository(self):
-        pairs = [(SITE_ROOT / "LICENSE", SITE / "licenses/MIT.txt"),
+        pairs = [(SITE_ROOT / "LICENSE", SITE / "licenses/GPL-2.0-or-later.txt"),
+                 (engine_path("LICENSE"), SITE / "licenses/Ozymandias.txt"),
                  (SITE_ROOT / "LICENSE-CONTENT", SITE / "licenses/CC-BY-NC-SA-4.0.txt")]
         # The engine's notices and the site's.
         for static in dict.fromkeys((engine_path("static"), SITE_ROOT / "static")):
