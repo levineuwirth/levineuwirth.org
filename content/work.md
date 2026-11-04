@@ -3,6 +3,8 @@ title: Work
 work: true
 description: Research engineer working on technical AI assurance — verifiable inference, model evaluations, systems and cryptography.
 history:
+  - date: "2026-11-04"
+    note: "Anthropic's citation of VerInf as prior work."
   - date: "2026-10-13"
   - date: "2026-10-08"
   - date: "2026-09-24"
@@ -56,7 +58,10 @@ settle it are written by the party under suspicion.
 [VerInf](https://github.com/JamesPetrie/VerInf), a Future of Life Institute project led by James Petrie,
 aims to prove LLM inference in zero knowledge with no trusted setup by bounding the
 *unexplained information* in an output stream rather than re-running the
-computation. I built the dry-run profiler (manifest contract, cost model,
+computation. Anthropic cites VerInf as prior work in its November 2026
+[research on provable inference](https://www.anthropic.com/research/provable-inference).
+
+I built the dry-run profiler (manifest contract, cost model,
 execution DAG, partition scorecard) and validated it against an archived
 full-scale Llama 4 Maverick run and live B200 calibration; the measurements also
 corrected my own cross-shard communication model, from roughly 950 GB to

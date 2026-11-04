@@ -20,6 +20,8 @@ scope: broad
 novelty: moderate
 practicality: moderate
 history:
+  - date: "2026-11-04"
+    note: "Anthropic cites VerInf as prior work in its FlashProve research."
   - date: "2026-10-08"
     note: "Merged pull requests 21–25, constraint-review qualifications, and the model-binding finding in draft pull request 31."
   - date: "2026-10-01"
@@ -31,6 +33,8 @@ history:
   - date: "2026-08-30"
   - date: "2026-08-29"
 revised:
+  - date: "2026-11-04"
+    note: "Added Anthropic's prior-work citation; engineering status remains as checked on 8 October."
   - date: "2026-10-08"
     note: "Upstream merge status and the limits of archived Maverick proofs: constraint repairs and incomplete model binding."
   - date: "2026-09-24"
@@ -45,7 +49,16 @@ Consider an agreement between two mutually distrustful states concerning permitt
 
 [VerInf](https://github.com/JamesPetrie/VerInf), led by James Petrie at the Future of Life Institute, takes this mutual distrust as a design requirement. Hardware attestation would introduce a hardware root of trust; the intended arrangement here requires no trust in the other party's hardware, including the hardware that generates the proof. Each party runs an independent verifier on its own cluster and checks the proof produced on the other's. The proving cluster is outside the verifier's trusted base. The aim is to make a computational claim checkable across that boundary without requiring either party to disclose its private data. I work on it through the [MARS V fellowship](https://caish.org/mars). My responsibility began with the profiler and the path to multi-GPU proving, and has grown to include hardware measurement, prover optimization, and the integration and hardening of new proof mechanisms.
 
-Work on VerInf remains ongoing. Our current results have produced a weight-splitting decomposition and measured improvements on individual-GPU workflows, and work on a multi-device executor is well underway. The engineering questions at the heart of the system have evolved just as the system has.
+On 2 November 2026, Anthropic cited VerInf as prior work in its
+[FlashProve research on provable inference](https://www.anthropic.com/research/provable-inference),
+including the earlier Llama 4 Maverick run in its performance comparison.
+The engineering status and qualifications below remain those checked on
+8 October; the citation does not change what the archived proofs establish.
+
+At that checkpoint, our results had produced a weight-splitting decomposition
+and measured improvements on individual-GPU workflows, with work on a
+multi-device executor underway. The engineering questions at the heart of the
+system have evolved just as the system has.
 
 ## What the proof certifies
 

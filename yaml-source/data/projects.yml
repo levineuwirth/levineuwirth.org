@@ -16,6 +16,32 @@
 # the web (\textbf, \textit, \texttt, \href, $\times$, --, ~, {,}).
 
 projects:
+  - id: verinf
+    name: VerInf — Verifiable LLM Inference
+    group: Technical AI Assurance
+    essay: /essays/verified-inference/
+    start: July 2026
+    end: Present
+    description: >-
+      Contributions to James Petrie's VerInf project through the MARS V fellowship:
+      workload profiling, cost modeling, verifier-transparent weight splitting,
+      and integration and hardening of a collaborator's expert-weight bridge.
+      Anthropic cites VerInf as prior work in its November 2026 research on
+      provable inference. Partitioned proofs matched the ordinary path byte for
+      byte and passed the Rust verifier on one GPU; multi-device speedup has not
+      been measured. Archived Maverick proofs lack complete model binding;
+      the technical account records the limitations and proposed repairs.
+    links:
+      - label: Source
+        href: https://github.com/JamesPetrie/VerInf
+      - label: Contributions
+        href: https://github.com/JamesPetrie/VerInf/pulls?q=is%3Apr+author%3Alevineuwirth
+      - label: Anthropic citation
+        href: https://www.anthropic.com/research/provable-inference
+    cv_visible: false # already covered under the MARS V experience entry
+    resume_visible: false
+    web_visible: true
+
   - id: specification-dilemma
     name: The Specification Dilemma
     group: AI Evaluation

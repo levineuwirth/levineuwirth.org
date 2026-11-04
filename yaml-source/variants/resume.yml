@@ -3,11 +3,11 @@ extends: ats-application
 abstract: false
 description: Canonical public one-page résumé for AI-safety research engineering.
 output: resume.pdf
-document_title: Research Engineer — Frontier AI Evaluation \& Assurance
+document_title: Research Engineer — Technical AI Assurance
 summary: >-
-  Research engineer designing frontier-model evaluations and reproducible Python
-  pipelines. Combines evaluator calibration and agent failure analysis with
-  systems engineering and rigorous validation of automated verifiers.
+  Research engineer working on verifiable inference and frontier-model evaluations.
+  Combines cryptographic verifier hardening and GPU workload profiling with
+  evaluator calibration, agent failure analysis and reproducible experiments.
 
 # Use the same canonical evidence sets as the public CV. The content-free
 # ATS base keeps one-page selections independent of the CV's longer projects.
@@ -62,7 +62,10 @@ overrides:
       bullets: []
   experience:
     mars-v:
-      description: 'VerInf: zero-knowledge LLM inference research with James Petrie (Future of Life Institute).'
+      description: >-
+        VerInf: zero-knowledge LLM inference research with James Petrie (Future of
+        Life Institute). Cited as prior work by
+        \href{https://www.anthropic.com/research/provable-inference}{Anthropic (November 2026)}.
       # Ten cases describes the suite, not ten independently confirmed verdicts.
       # PR 31's corrected harness refuses silent/crashed verifier invocations.
       bullets:

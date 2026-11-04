@@ -48,7 +48,17 @@ experience:
     resume_visible: true
     bullets:
       - "Selected for MARS V, a competitive part-time AI-safety research fellowship, working under James Petrie (Future of Life Institute)."
-      - "Research on zero-knowledge proofs for large language models, toward cryptographic verification of claims about model training, inference, and deployment."
+      - >-
+        Contribute to VerInf, James Petrie's project on cryptographic verification
+        of LLM inference, cited as prior work in Anthropic's November 2026
+        \href{https://www.anthropic.com/research/provable-inference}{research on provable inference}.
+      - >-
+        Built and upstreamed the workload profiler, cost model and weight
+        splitting; integrated a collaborator's expert-weight bridge and
+        hardened enrollment binding, Merkle-index checks and sumcheck-round
+        enforcement. Multi-device speedup has not been measured; the
+        \href{https://levineuwirth.org/essays/verified-inference/}{technical account}
+        records the limits of archived proofs and the scope of the review.
     presentation_sets:
       ai-infra-assurance:
         bullets:

@@ -3,13 +3,13 @@ extends: application-cv
 abstract: false
 description: Canonical public CV for AI-safety research engineering and technical assurance.
 output: cv.pdf
-document_title: Research Engineer — Frontier AI Evaluation \& Assurance
+document_title: Research Engineer — Technical AI Assurance
 summary: >-
-  Research engineer designing frontier-model evaluations and reproducible Python
-  pipelines. Combines evaluator calibration and agent failure analysis with
-  systems engineering and rigorous validation of automated verifiers.
+  Research engineer working on verifiable inference and frontier-model evaluations.
+  Combines cryptographic verifier hardening and GPU workload profiling with
+  evaluator calibration, agent failure analysis and reproducible experiments.
 
-# Apollo's evaluation-first structure, using public, employer-neutral evidence.
+# Public technical-assurance profile, using employer-neutral evidence.
 # The formal record remains on Vita; this is the public research-engineering CV.
 header:
   links: [github, linkedin]
@@ -114,7 +114,10 @@ overrides:
         optimized portable C, with statistical analysis and a reproducible artifact.
   experience:
     mars-v:
-      description: 'VerInf: zero-knowledge LLM inference research with James Petrie (Future of Life Institute).'
+      description: >-
+        VerInf: zero-knowledge LLM inference research with James Petrie (Future of
+        Life Institute). Cited as prior work by
+        \href{https://www.anthropic.com/research/provable-inference}{Anthropic (November 2026)}.
       # Merged PRs 21--23; the expert-weight bridge is a collaborator's work.
       # The October 6 session-10 archive qualifies the negative-test verdicts:
       # older harnesses treated missing ACCEPT as REJECT. Count the test suite,

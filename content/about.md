@@ -5,6 +5,8 @@ description: >-
   The formal record: curriculum vitae and résumé, research interests,
   publications, presentations, grants, affiliations, and projects.
 history:
+  - date: "2026-11-04"
+    note: "VerInf contributions and Anthropic's prior-work citation in the research record."
   - date: "2026-09-03"
   - date: "2026-08-11"
   - date: "2026-08-10"

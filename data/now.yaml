@@ -16,7 +16,7 @@
 #                and locked in for publication or presentation.
 #   - updated  : YYYY-MM-DD when this entry last moved (NOT page-stamp)
 #   - link     : optional URL (artifact, preprint, repo, etc.)
-#   - note     : optional one-sentence what's-happening-now line
+#   - note     : optional short summary: purpose, recent development, next step or limit
 #   - priority : optional integer (default 0). Manual override on the sort
 #                order: positive floats up, negative sinks down. Use sparingly
 #                — the status ladder already captures most of the signal;
@@ -36,110 +36,141 @@
 # Sorted newest-first at render time. Curate by hand — items don't
 # auto-prune. Move things off the list when they stop earning the slot.
 
-last-updated: 2026-10-08
+last-updated: 2026-11-04
+
+# Dates below follow the cited development, not this page's editorial refresh.
+# Source checks, 2026-11-04:
+# - VerInf: Anthropic's 2026-11-02 FlashProve article; upstream PR 31 remains
+#   an open draft (updated 2026-10-21), with GPU validation and re-proof pending.
+# - Proof Broker: paper/README.md in the local manuscript working tree (unreleased);
+#   public R6-016 at 2eed25306, recorded 2026-10-02. November's language-bar
+#   maintenance is not a new research milestone.
+# - Graph theory: meyniel/HANDOFF.md, "Penalty series read (October 6)";
+#   manuscripts and release assets remain unchanged by those experiments.
+# - ICD: local cleanup branch 8f96452, 2026-09-25; the author confirmed on
+#   2026-11-04 that the manuscript remains under review at JAMIA.
+# - Pmacs: public main ebf46e7e7; E10o merged as 5cf359b1b on 2026-11-04.
+# - Epiphany: public PR 14, merged 2026-11-03 as 3ed66d60b; its README's
+#   engraver limitations predate this work.
+# - Arcana: public main d1b582d2a, committed 2026-10-14; sampled-world search
+#   at 767499b84 and the README's explicitly frozen RL line.
+# - Levshell: local main de24183, 2026-09-30; uncommitted work is not a release.
+# - Levo: local main 8b2f384, 2026-09-13, and review/programs/stackvm/README.md.
 
 entries:
-  - title: "VerInf: Verified Inference and Scale-Out (MARS V)"
+  - title: "VerInf: Verifiable LLM Inference (MARS V)"
     section: research
     status: building
-    updated: 2026-10-08
+    updated: 2026-11-02
     priority: 2
     link: /essays/verified-inference/
-    note: "I own profiling and scale-out for VerInf, which develops proofs of language-model inference that mutually distrustful parties can check on their own hardware. The profiler, weight split, caches, bridge integration, and subsequent constraint repairs are merged upstream (pull requests 21–25). Archived Maverick proofs lack complete model binding; draft pull request 31 proposes a repair, with its GPU gate, new enrollment, and re-proof still outstanding. Weight splitting has passed proof-byte equivalence and independent Rust verification on one GPU; multi-device execution remains in progress. The experimental weight bridge's intended privacy protection and its profiler cost model remain unfinished. I work on this as a MARS V fellow, mentored by James Petrie (FLI)."
+    note: >-
+      I work on profiling, prover optimization, and verifier hardening for
+      James Petrie's VerInf project through MARS V. Anthropic cited VerInf as
+      prior work in its 2 November FlashProve research. The model-binding
+      repair remains an open draft awaiting GPU validation, new enrollment,
+      and re-proof; archived Maverick proofs lack complete model binding,
+      and multi-device speedup has not been measured.
 
   - title: "Proof Broker"
     section: research
-    status: building
-    updated: 2026-10-01
+    status: drafting
+    updated: 2026-10-02
     priority: 1
     link: /essays/proof-broker/
-    note: "Proof Broker routes Lean 4 and Rocq goals to untrusted solvers and LLMs, checking evidence before kernel-verified closure. R4 closed 19/19 targeted VerInf obligations; R5 consolidated spec v1.1. R6, an audited live-model evaluation on 15 VerInf obligations, is closed: all 80 certificate-feasible slots returned a verified witness, and proofs covered 6 of 15 obligations (48 of 88 slots), unchanged across eight draws and two more than the deterministic baseline. Posing goals and turning certificates into proofs, not finding them, was the constraint. The evaluation ran under two post-collection amendments, both published with it."
+    note: >-
+      Proof Broker connects Lean and Rocq to untrusted solvers and model-generated
+      certificates, with independent checks and kernel-checked proofs.
+      I am preparing a manuscript on certificate attribution: whether the
+      returned evidence actually justifies the accepted proof. The draft and
+      its retrospective binding audit remain unreleased; the published R6
+      experiments and subsequent replay provide the evidence base.
 
-  - title: "Timed Guarding in Degree-Reduction Clouds"
+  - title: "Graph theory: pursuit and initial placement"
     section: research
-    status: revising
-    updated: 2026-09-09
+    status: building
+    updated: 2026-10-06
     link: /essays/timed-guarding-in-degree-reduction-clouds.html
-    note: "Mathematics preprint proving a square-root cop bound for actual stopping-rule degree-reduction towers over bases satisfying fixed multistage expansion and accessibility hypotheses. Port placement and synchronized guarding remove the cloud-order factor. The follow-up gives an explicit whole-tower lower-transfer proof and an exact criterion for guarding adjacent-cloud unions. The remaining full-ball Hall requirement still blocks the proposed shrinking-base route to Meyniel's conjecture."
+    note: >-
+      Studying how initial cop placement and travel time constrain pursuit
+      strategies, alongside the public preprints on conditional pursuit bounds
+      and growing-radius domination. Recent optimization experiments measure
+      the cost of one placement serving several possible robber starting
+      positions, with certificates checked in exact arithmetic. Extending
+      these finite results to general pursuit guarantees remains open.
 
-  - title: "Branch-Tube Persistence and Static Coverage in Tree-Ball Geometry"
-    section: research
-    status: revising
-    updated: 2026-09-05
-    link: /essays/branch-based-local-capture-in-tree-balls/
-    note: "Mathematics preprint on path-tube persistence, exhaustive static coverage, conditional sampling thresholds, and information loss in d-regular tree-balls. Audit corrections landed 5 September 2026: the root-degree statement corrected, admissible-root coverage clarified with a counterexample to residual domination."
-
-  - title: "The Annealed Critical Window for Growing-Radius Domination in Random Regular Graphs"
-    section: research
-    status: revising
-    updated: 2026-09-09
-    link: /essays/near-critical-growing-radius-domination.html
-    note: "Mathematics preprint determining the bounded annealed critical window for growing-radius domination in random regular graphs — its universal scaling function and a scalar coupon-root asymptotic expansion. A bounded literature pass closed 5 September 2026, with the Duckworth–Mans attribution corrected and the relative overlap estimate completed. Typical existence in the growing-radius window remains open. A separate timed cloud-guarding paper now resolves the cloud-order loss in the conditional multistage pursuit transfer."
-
-  - title: "Order-Invariant ICD-10-CM Embedding (JAMIA submission)"
+  - title: "Order-Invariant ICD-10-CM Embedding"
     section: research
     status: in-review
-    updated: 2026-07-10
+    updated: 2026-09-25
     link: /essays/beyond-comorbidity-indices/
-    note: "Under review at JAMIA (Journal of the American Medical Informatics Association), after moving from JAMA Network Open. Calculator deployed at levineuwirth.github.io/icd_embeddings."
-
-  - title: "SIMD / PQC, Phase 2 & 3"
-    section: research
-    status: paused
-    updated: 2026-08-10
-    link: /essays/where-does-simd-help-post-quantum-cryptography/
-    note: "Compute is available at DTU for the duration of my enrollment; paused because it is not a current priority rather than for want of hardware."
-
-  - title: "Magic: The Gathering reinforcement learning"
-    section: research
-    status: building
-    updated: 2026-08-10
-    link: https://github.com/levineuwirth/arcana
-    note: "Reinforcement-learning agent under active development on top of arcana, a Rust rules engine built as the substrate for it; expected late 2026."
-
-  - title: "Levshell"
-    section: engineering
-    status: building
-    updated: 2026-09-03
-    note: "Wayland-targeted productivity and research shell, in daily use as my main environment, with project resume as the hero verb. Recent work adds a reading-library surface — paper records filled from OpenAlex, PDFs opened in place — and a live window over the daemon's state."
+    note: >-
+      Research on predicting readmission and mortality from diagnosis-code
+      sets. September calculator work added code-level explanations using
+      Integrated Gradients. The manuscript remains under review at JAMIA.
 
   - title: "Pmacs"
     section: engineering
     status: building
-    updated: 2026-09-05
+    updated: 2026-11-04
     link: https://github.com/levineuwirth/pmacs
-    note: "v1.1.0 shipped with prebuilt binaries; 4476 tests across 120 suites since. Rust core and embedded Lua VM, split into a long-lived instance and thin TUI and GPU frontends that attach over a typed protocol and edit CRDT-backed buffers concurrently. An audit on 5 September 2026 put it a few dozen small changes short of a daily driver on both frontends."
+    note: >-
+      A Rust-cored, Lua-scripted editor with terminal and GPU frontends sharing
+      a persistent instance. Recent work improves typing in large buffers,
+      theme configuration, and undo across concurrent frontend edits.
+      Development continues on everyday editing and frontend reliability.
 
   - title: "Epiphany"
     section: engineering
     status: building
-    updated: 2026-08-12
+    updated: 2026-11-03
     link: https://github.com/levineuwirth/epiphany
-    note: "FOSS music-notation platform: a deterministic, CRDT-based score model whose LaTeX specification suite is the source of truth. Spec and editor tracks advancing in parallel."
+    note: >-
+      An open-source music-notation platform with a deterministic score model,
+      persistent documents, and an engraver tested against real MusicXML scores.
+      Recent work adds expression text, pedal lines, ottavas, and grace notes.
+      Engraving coverage is still growing; unsupported notation is reported
+      explicitly, and editor integration remains in development.
+
+  - title: "Arcana"
+    section: engineering
+    status: building
+    updated: 2026-10-14
+    link: https://github.com/levineuwirth/arcana
+    note: >-
+      A Magic: The Gathering rules engine and playable browser client.
+      October work improves the interface and makes bot search and suggestions
+      use sampled hidden-information states instead of the actual hidden state.
+      The earlier reinforcement-learning experiments remain frozen.
+
+  - title: "Levshell"
+    section: engineering
+    status: building
+    updated: 2026-09-30
+    note: >-
+      My Wayland research shell, built around returning to a project's working
+      context. Recent work adds audio-output selection alongside the paper
+      library and live views of the daemon's state. Desktop controls and
+      research workflows continue to develop in daily use.
 
   - title: "Levo"
     section: engineering
-    status: building
-    updated: 2026-09-05
-    note: "A Python-successor language designed adversarially: statically inferred without annotations, no GIL, no MRO. Spec, reference machine, language server, and debugger exist, .levo files run, and 1061 tests across 182 suites hold the line — but with no I/O and no standard library it is still a conformance machine, not a runtime."
+    status: early-stage
+    updated: 2026-09-13
+    note: >-
+      An experimental language with inferred types, structured concurrency,
+      and an executable reference machine. A completed stack-machine case
+      study exercises parsing, execution, host integration, and refactoring,
+      including 200 differential programs checked against an independent oracle.
+      The implementation remains a research prototype with limited libraries
+      and runtime capabilities.
 
 shipped:
-  - title: "Proof Broker R6"
-    completed: 2026-09-29
-    link: /essays/eighty-witnesses-six-proofs/
-    note: "An audited live-model evaluation behind the fixed acceptance boundary: 80 of 80 certificate-feasible slots verified, and 6 of 15 obligations proved (48 of 88 slots); posing goals and turning certificates into proofs, not finding them, was the constraint."
-
-  - title: "Proof Broker R4"
-    completed: 2026-09-05
-    link: /essays/proof-broker/
-    note: "First downstream demonstration: 19 of 19 targeted obligations close through the broker in an unmodified VerInf Lean file, with generated evidence and a signed release."
-
-  - title: "CHASE 2026 conference presentation"
-    completed: 2026-08-03
-    link: /essays/beyond-comorbidity-indices/
-    note: "Order-invariant ICD-10-CM embedding work presented at the IEEE/ACM Conference on Connected Health (CHASE)."
-
-  - title: "Where Does SIMD Help Post-Quantum Cryptography?"
-    completed: 2026-04-15
-    link: /essays/where-does-simd-help-post-quantum-cryptography/
-    note: "Phase 1 technical report and reproducible artifact. Brown CS Department."
+  - title: "Proof Broker: R6 audited replay"
+    completed: 2026-10-02
+    link: https://github.com/levineuwirth/proof-broker/blob/2eed25306046dbe24331763654b450fca74a3e7a/experiments/r6/R6-016.md
+    note: >-
+      A separate offline replay turned all 36 retained certificates at four
+      obligations into kernel-checked proofs with no added axioms, meeting
+      the replay's frozen acceptance checks. This follows the live R6
+      evaluation and is reported separately from its results.
