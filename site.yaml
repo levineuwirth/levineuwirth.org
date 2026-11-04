@@ -152,4 +152,5 @@ switches:
   semantic-search: true
   similar-links: true
   transclusion: true
+  dingbats: true
   reading-progress: true
