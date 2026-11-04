@@ -150,4 +150,5 @@ switches:
   popups: true
   search-filters: true
   semantic-search: true
+  similar-links: true
   reading-progress: true

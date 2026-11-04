@@ -545,7 +545,7 @@ entries:
   string: Levi Neuwirth
 - id: I0115
   file: tests/test_config.py
-  line: 601
+  line: 602
   column: 27
   string: levineuwirth
 - id: I0116
@@ -600,7 +600,7 @@ entries:
   string: lnEnhance
 - id: I0126
   file: tests/test_embed_extract.py
-  line: 23
+  line: 24
   column: 31
   string: Levi Neuwirth
 - id: I0127
