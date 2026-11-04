@@ -49,7 +49,41 @@ pages:
   memento:           /memento-mori.html
   build:             /build/
   stats:             /stats/
+  author:            /authors/levi-neuwirth/
+  photo-years:       /photography/by-year/
   '404':             /does-not-exist
+
+# One of the pages above of each kind the site has (routes.py's KINDS).
+kinds:
+  home: home
+  essay: essay-r6
+  page: links
+  section-index: essays-index
+  poem: poem
+  search: search
+  not-found: '404'
+  new: new
+  tag: tag-page
+  author: author
+  library: library
+  bibliography: bibliography
+  photo-index: photo-index
+  photo-series: photo-series
+  photo-single: photo-single
+  photo-map: photo-map
+  photo-contact: photo-contact
+  photo-years: photo-years
+  photo-year: photo-year
+  music-index: music-index
+  composition: composition
+  score-reader: score-reader
+  archive-index: archive-index
+  archive-entry: archive-snapshot
+  commonplace: commonplace
+  now: current
+  vita: cv-about
+  stats: stats
+  build: build
 
 # The pages each narrower run visits.
 keyboard: [home, essay-proofbroker, essay-r6, essay-grd, photo-index, photo-series, photo-single, search, composition, score-reader, links, library, commonplace, music-index, me, current]   # kbd_run.py: Tab stops
