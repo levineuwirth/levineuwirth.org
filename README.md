@@ -60,12 +60,13 @@ to the feed title and controls the label of its HTML discovery link. Only feeds
 with `advertise: true` appear in the head. Photography uses a
 separate image-bearing feed context and cannot be mixed with text sections.
 A feed with no entries yet is still valid: its `<updated>` is the build time.
-Feature switches are not configured here yet.
+Feature switches are their own section below.
 
 `sections` lists the content directories (`dir`), the label their pages carry
 on the New page (`kind`) and their default ornament (`dingbat`, optional);
-each section has a landing at `/<dir>/`. The current engine requires all six
-section declarations: essays, blog, poetry, fiction, music and photography.
+each section has a landing at `/<dir>/`. The current engine requires four
+section declarations (essays, blog, poetry, fiction), and music and photography
+with their switches on, and refuses them with their switches off.
 Labels, ornaments and ordering are configurable; adding or omitting a section
 is rejected until the engine supports changing those routes. Ordinary page
 collections do not need section declarations.
@@ -161,7 +162,7 @@ The engine's features beyond its core are switches, registered in
 sets the ones it wants in `site.yaml` under `switches:` (`name: true` or
 `false`); the generator resolves them over the registry's defaults and
 refuses a name the registry lacks, or a switch on without what it needs.
-A switch may own a content section (`music` owns `music`), which `site.yaml`
+A switch may own a content section (`music` owns `music`, `photography` `photography`), which `site.yaml`
 lists, and feeds, only with the switch on, and engine assets that are
 published only with it on. This site turns every switch on. The tools and make targets read the same
 resolution through `engine/tools/sitelib.py` (`sitelib.py switch NAME`),

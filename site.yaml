@@ -121,6 +121,7 @@ epistemic-about: /colophon.html#living-documents
 switches:
   archive: true
   music: true
+  photography: true
   math: true
   code: true
   viz: true
