@@ -478,11 +478,6 @@ entries:
   line: 11
   column: 13
   string: lnUtils
-- id: I0102
-  file: tests/golden/essay.html
-  line: 21
-  column: 34
-  string: https://git.levineuwirth.org/neuwirth/levineuwirth.org
 - id: I0103
   file: tests/test_browser_a11y.py
   line: 44
