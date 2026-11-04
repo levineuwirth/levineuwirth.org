@@ -153,7 +153,7 @@ by omission. The Content Security Policy prevents any script not explicitly whit
 from executing. The whitelist is short.] The Hetzner VPS that provides this content runs
 only open source software, and my machines use *almost exclusively*^[It is nearly impossible to run an entirely free system, but in approximation, it is actually wonderfully easy.] the same. The code is licensed under MIT and hosted
 on a [self-hosted Forgejo instance](https://git.levineuwirth.org/neuwirth/levineuwirth.org) at this domain, with a [GitHub mirror](https://github.com/levineuwirth/levineuwirth.org); you are welcome
-to inspect it, fork it, or, more broadly, do whatever you please with it.
+to inspect it, fork it, or build on it under the terms of [its license](/licenses.html).
 
 ### Living Documents
 

@@ -7,7 +7,7 @@ abstract: >
   wikilinks, a swipeable score reader, a semantic search pipeline, and more — configurable from a single YAML file
   and deployable with a single make command.
 tags: [meta, projects, releases]
-status: "Working model"
+status: "Superseded"
 confidence: 80
 importance: 2
 evidence: 3
