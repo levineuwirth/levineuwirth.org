@@ -143,6 +143,7 @@ switches:
   authors: true
   random: true
   library: true
+  bibliography: true
   bibliography-index: true
   selection-toolbar: true
   annotations: true
