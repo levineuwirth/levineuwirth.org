@@ -151,7 +151,7 @@ The site has no analytics, no visit counters, no fingerprinting, and no third-pa
 scripts.^[This is enforced at the nginx level via [CSP]{.smallcaps} headers, not just
 by omission. The Content Security Policy prevents any script not explicitly whitelisted
 from executing. The whitelist is short.] The Hetzner VPS that provides this content runs
-only open source software, and my machines use *almost exclusively*^[It is nearly impossible to run an entirely free system, but in approximation, it is actually wonderfully easy.] the same. The code is licensed under MIT and hosted
+only open source software, and my machines use *almost exclusively*^[It is nearly impossible to run an entirely free system, but in approximation, it is actually wonderfully easy.] the same. The code is licensed under the GPL and hosted
 on a [self-hosted Forgejo instance](https://git.levineuwirth.org/neuwirth/levineuwirth.org) at this domain, with a [GitHub mirror](https://github.com/levineuwirth/levineuwirth.org); you are welcome
 to inspect it, fork it, or build on it under the terms of [its license](/licenses.html).
 
