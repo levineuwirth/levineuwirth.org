@@ -305,7 +305,8 @@ the Makefile does not pass it on from `.env`.
   test` and `make validate` run both, and `make test-clean` runs them on
   HEAD in a fresh clone. The badge above covers only the part a stock
   GitHub runner can run, the tests listed in `engine/tests/ci.py` (no
-  Haskell generator, no built site), and fails if any of them skips. The
+  Haskell generator, no built site), and fails if any of them skips, and
+  `make test-clean` runs that selection the same way. The
   full suite runs locally, before every deploy.
 - `systemd/` — units and timers for the VPS (backups, updates) and the
   laptop's `archive-check`; installed by hand, see `systemd/README.md`.
