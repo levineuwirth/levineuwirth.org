@@ -275,22 +275,22 @@ entries:
   string: lnUtils
 - id: I0068
   file: static/js/settings.js
-  line: 170
+  line: 172
   column: 35
   string: lnUtils
 - id: I0069
   file: static/js/settings.js
-  line: 176
+  line: 178
   column: 29
   string: lnUtils
 - id: I0070
   file: static/js/settings.js
-  line: 176
+  line: 178
   column: 47
   string: lnUtils
 - id: I0071
   file: static/js/settings.js
-  line: 177
+  line: 179
   column: 22
   string: lnUtils
 - id: I0072
@@ -360,12 +360,12 @@ entries:
   string: lnEnhanced
 - id: I0085
   file: static/js/transclude.js
-  line: 393
+  line: 397
   column: 12
   string: lnHighlightCode
 - id: I0086
   file: static/js/transclude.js
-  line: 409
+  line: 413
   column: 12
   string: lnEnhance
 - id: I0087
@@ -440,7 +440,7 @@ entries:
   string: lnUtils
 - id: I0101
   file: templates/score-reader-default.html
-  line: 11
+  line: 12
   column: 13
   string: lnUtils
 - id: I0103
@@ -485,27 +485,27 @@ entries:
   string: https://git.levineuwirth.org/neuwirth/levineuwirth.org
 - id: I0121
   file: tests/test_dynamic_assets.py
-  line: 50
+  line: 51
   column: 15
   string: lnHighlightCode
 - id: I0122
   file: tests/test_dynamic_assets.py
-  line: 50
+  line: 51
   column: 44
   string: lnHighlightCode
 - id: I0123
   file: tests/test_dynamic_assets.py
-  line: 61
+  line: 62
   column: 1
   string: lnEnhance
 - id: I0124
   file: tests/test_dynamic_assets.py
-  line: 64
+  line: 65
   column: 1
   string: lnEnhance
 - id: I0125
   file: tests/test_dynamic_assets.py
-  line: 72
+  line: 73
   column: 1
   string: lnEnhance
 - id: I0127

@@ -72,6 +72,8 @@ curl -s -o /dev/null -w '%{http_code}\n' https://levineuwirth.org/404.html      
 curl -s -o /dev/null -w '%{http_code}\n' https://levineuwirth.org/about                        # 200
 curl -sI https://levineuwirth.org/ https://levineuwirth.org/x-missing https://levineuwirth.org/archive/ \
   | grep -ci '^cache-control: no-cache'                                                          # 3: pages revalidate
+v=$(curl -s https://levineuwirth.org/ | grep -o '/assets/[0-9a-f]*' | head -1)
+curl -sI "https://levineuwirth.org$v/css/base.css" | grep -i '^cache-control'                    # a version's files: public, max-age=31536000, immutable
 curl -sI https://levineuwirth.org/ | grep -ci '^content-security-policy:'                        # 2: the policy and framing survive
 curl -sI https://levineuwirth.org/ | grep -ci '^content-security-policy-report-only'            # 1: the narrow policy, measured
 curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' https://levineuwirth.org/essays/proof-broker   # 301 …/proof-broker/

@@ -87,6 +87,8 @@ class NginxLogging(unittest.TestCase):
         (cls.tmp / 'site/archive/kept/index.html').write_text('snapshot\n')
         (cls.tmp / 'site/fonts').mkdir()
         (cls.tmp / 'site/fonts/fast.woff2').write_text('font\n')
+        (cls.tmp / 'site/assets/abc123/js').mkdir(parents=True)
+        (cls.tmp / 'site/assets/abc123/js/a.js').write_text('script\n')
         site = cls.tmp / 'sites-enabled/levineuwirth.conf'
         text = site.read_text().replace('location / {', '''location = /slow.css {
             limit_rate 512;
@@ -160,6 +162,13 @@ class NginxLogging(unittest.TestCase):
         self.assertEqual(h.get('cache-control'), ['public, max-age=3600, must-revalidate'])
         self.assertEqual(len(h.get('content-security-policy', [])), 2)
         self.assertEqual(len(h.get('content-security-policy-report-only', [])), 1)
+        # A version's files never change.
+        code, h = self.headers('/assets/abc123/js/a.js')
+        self.assertEqual(code, '200')
+        self.assertEqual(h.get('cache-control'), ['public, max-age=31536000, immutable'])
+        self.assertEqual(len(h.get('content-security-policy', [])), 2)
+        self.assertEqual(len(h.get('content-security-policy-report-only', [])), 1)
+        self.assertEqual(h.get('x-frame-options'), ['DENY'])
 
     def records(self, file):
         # USR1 flushes buffered logs, just as rotation does.
