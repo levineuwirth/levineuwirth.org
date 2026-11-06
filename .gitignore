@@ -91,6 +91,8 @@ data/semantic-meta.json
 # catches interrupted-write debris (.tmp / .tmp.npz)
 data/embed-cache-*
 data/sign-manifest.txt
+data/deployed-assets.json
+data/deploy-filter.txt
 # What the last finished build was built from (tools/build-inputs.py).
 data/build-inputs.json
 data/build-inputs.json.tmp

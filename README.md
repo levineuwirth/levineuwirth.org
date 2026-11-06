@@ -341,6 +341,14 @@ are worth knowing before the first deploy of the day:
   `engine/tools/check-site.py`, the provenance check, the build, the
   clean-tree checks, the signature and the recheck all still run. It is an
   escape hatch for a known-irrelevant change, not a faster `make deploy`.
+- **Earlier asset versions.** First-party JS and CSS are published under
+  `/assets/<hash>/`, a hash of all of them, so a page only ever loads the
+  version it was built with. A reader may hold such a page long after the next
+  deploy, so each deploy leaves the earlier versions on the server, for 90 days
+  from the day each was replaced, and the paths they had before versions for 90
+  days from the first deploy that recorded one. The record is
+  `data/deployed-assets.json`, local to the machine that deploys: lost, the
+  earlier versions go at the next deploy (`engine/tools/asset-versions.py`).
 - **Branch check.** `make deploy` refuses to run on any branch but `main`,
   since it pushes `main` while the site would be built from that branch.
 - **Clean-tree check.** `make deploy` refuses to publish when build inputs

@@ -204,14 +204,21 @@ deploy-locked: deploy-preflight build-locked validate sign
 
 # The default publication path, unchanged: rsync straight into the live
 # document root. Not atomic — for the ~30 seconds rsync runs, a visitor can
-# get new HTML with old JS, or a page whose signature has not landed yet.
+# get a page whose signature has not landed yet, or, in the moment before
+# assets/ lands, one naming a version of the JS still on its way.
 #
 # The dry run first refuses a destination that is not the live site (no
 # index.html there) or a transfer that would delete more than
 # DEPLOY_MAX_DELETE files — see tools/deploy-guard.sh for the overrides.
+#
+# Earlier versions of the first-party JS and CSS stay on the server for readers
+# holding pages from before this deploy (tools/asset-versions.py, which also
+# says why recording comes first).
 deploy-rsync-inplace: deploy-guard
-	@$(call tool,deploy-guard.sh) target _site "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$(VPS_DOCROOT)/"
-	rsync -avz --delete _site/ "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$(VPS_DOCROOT)/"
+	@python3 $(call tool,asset-versions.py) record _site
+	@python3 $(call tool,asset-versions.py) filter _site > data/deploy-filter.txt
+	@$(call tool,deploy-guard.sh) target _site "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$(VPS_DOCROOT)/" data/deploy-filter.txt
+	rsync -avz --delete --filter="merge data/deploy-filter.txt" _site/ "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$(VPS_DOCROOT)/"
 
 # ---------------------------------------------------------------------------
 # ATOMIC_DEPLOY=1 — opt-in release directories  (B06)
@@ -241,7 +248,10 @@ deploy-rsync-inplace: deploy-guard
 #     ssh user@host 'ln -sfn "$P.releases/<older>" "$P.tmp" && mv -Tf "$P.tmp" "$P"'
 #
 # --link-dest hard-links unchanged files against the previous release, so a
-# retained release costs only what actually changed.
+# retained release costs only what actually changed. Earlier versions of the
+# first-party JS and CSS (tools/asset-versions.py) are hard-linked from it too,
+# so each release has them. What runs on the server goes to sh on its standard
+# input, whatever the login shell there is.
 ATOMIC_KEEP ?= 3
 
 deploy-rsync-atomic: deploy-guard
@@ -249,18 +259,24 @@ deploy-rsync-atomic: deploy-guard
 	 rel="$(VPS_DOCROOT).releases"; \
 	 ts=$$(date -u +%Y%m%dT%H%M%SZ); \
 	 echo "deploy: atomic release $$ts under $$rel"; \
-	 ssh "$(strip $(VPS_USER))@$(strip $(VPS_HOST))" "test -L '$(VPS_DOCROOT)' || { \
-	     echo 'deploy: $(VPS_DOCROOT) is not a symlink — run the one-time server step in the Makefile' >&2; exit 1; }; \
-	   mkdir -p '$$rel'"; \
-	 prev=$$(ssh "$(strip $(VPS_USER))@$(strip $(VPS_HOST))" "readlink -f '$(VPS_DOCROOT)' 2>/dev/null || true"); \
+	 python3 $(call tool,asset-versions.py) record _site; \
+	 keep=$$(python3 $(call tool,asset-versions.py) retained _site); \
+	 printf '%s\n' "test -L '$(VPS_DOCROOT)' || { \
+	     echo 'deploy: $(VPS_DOCROOT) is not a symlink — run the one-time server step in the Makefile' >&2; exit 1; }" \
+	   "mkdir -p '$$rel'" | ssh "$(strip $(VPS_USER))@$(strip $(VPS_HOST))" sh -s; \
+	 prev=$$(echo "readlink -f '$(VPS_DOCROOT)' 2>/dev/null || true" | ssh "$(strip $(VPS_USER))@$(strip $(VPS_HOST))" sh -s); \
 	 linkdest=""; \
 	 if [ -n "$$prev" ]; then linkdest="--link-dest=$$prev"; fi; \
 	 rsync -avz --delete $$linkdest _site/ "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$$rel/$$ts/"; \
-	 ssh "$(strip $(VPS_USER))@$(strip $(VPS_HOST))" "set -e; \
-	   test -s '$$rel/$$ts/index.html'; \
-	   ln -sfn '$$rel/$$ts' '$(VPS_DOCROOT).new'; \
-	   mv -Tf '$(VPS_DOCROOT).new' '$(VPS_DOCROOT)'; \
-	   ls -1dt '$$rel'/*/ 2>/dev/null | tail -n +$$(( $(ATOMIC_KEEP) + 1 )) | xargs -r rm -rf"; \
+	 { echo 'set -e'; \
+	   if [ -n "$$prev" ]; then for kept in $$keep; do \
+	     echo "if [ -e '$$prev/$$kept' ]; then mkdir -p '$$rel/$$ts/$$(dirname "$$kept")'; cp -al '$$prev/$$kept' '$$rel/$$ts/$$kept'; fi"; \
+	   done; fi; \
+	   echo "test -s '$$rel/$$ts/index.html'"; \
+	   echo "ln -sfn '$$rel/$$ts' '$(VPS_DOCROOT).new'"; \
+	   echo "mv -Tf '$(VPS_DOCROOT).new' '$(VPS_DOCROOT)'"; \
+	   echo "ls -1dt '$$rel'/*/ 2>/dev/null | tail -n +$$(( $(ATOMIC_KEEP) + 1 )) | xargs -r rm -rf"; \
+	 } | ssh "$(strip $(VPS_USER))@$(strip $(VPS_HOST))" sh -s; \
 	 echo "deploy: $(VPS_DOCROOT) now points at $$rel/$$ts (keeping $(ATOMIC_KEEP) releases)"
 
 # Escape hatch: the old behaviour — full rebuild, then deploy. The
