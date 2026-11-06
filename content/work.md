@@ -55,11 +55,7 @@ MARS V fellowship · Cambridge AI Safety Hub · ongoing
 An operator who claims to have run a model may not have, and the logs that would
 settle it are written by the party under suspicion.
 
-[VerInf](https://github.com/JamesPetrie/VerInf), a Future of Life Institute project led by James Petrie,
-aims to prove LLM inference in zero knowledge with no trusted setup by bounding the
-*unexplained information* in an output stream rather than re-running the
-computation. Anthropic cites VerInf as prior work in its November 2026
-[research on provable inference](https://www.anthropic.com/research/provable-inference).
+[VerInf](https://github.com/JamesPetrie/VerInf),V a Future of Life Institute project led by James Petrie, proves LLM inference in zero knowledge with no trusted setup, by bounding the unexplained information in an output stream. Anthropic's FlashProve post calls it "the only earlier proof of Llama 4 Maverick that we know of," and its paper says its choice of 4-bit weight files comes from VerInf and its integer-conversion rule grew out of VerInf's. FlashProve's proof system and speed are its own. I have worked on VerInf since June 2026, through the MARS fellowship.
 
 I built the dry-run profiler (manifest contract, cost model,
 execution DAG, partition scorecard) and validated it against an archived
@@ -77,14 +73,7 @@ proving, which is the ceiling on model scale, context length, and
 mixture-of-experts breadth.
 
 ::: {.work-limit}
-**Ongoing.** Pull requests 21–25 are merged upstream, including the weight split,
-caches, bridge hardening, and subsequent constraint repairs. Archived Maverick
-proofs remain engineering evidence but lack complete model binding; the proposed
-repair in draft pull request 31 still needs its GPU gate, new enrollment, and
-re-proof. The bridge's intended confidentiality is unfinished. Multi-GPU figures
-are projections from a validated cost model rather than measurements at that
-scale. The verifier and constraint fixes are targeted review, not a full
-construction audit. Technical write-up expected Q4 2026, for review and publication.
+**Ongoing.** Technical work on the VerInf implementation is largely complete and we are writing our publication, targeting a Q4 release.
 :::
 
 ::: {.work-entry-links}

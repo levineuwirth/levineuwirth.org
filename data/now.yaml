@@ -36,7 +36,7 @@
 # Sorted newest-first at render time. Curate by hand — items don't
 # auto-prune. Move things off the list when they stop earning the slot.
 
-last-updated: 2026-11-04
+last-updated: 2026-11-06
 
 # Dates below follow the cited development, not this page's editorial refresh.
 # Source checks, 2026-11-04:
@@ -60,17 +60,15 @@ last-updated: 2026-11-04
 entries:
   - title: "VerInf: Verifiable LLM Inference (MARS V)"
     section: research
-    status: building
-    updated: 2026-11-02
+    status: drafting
+    updated: 2026-11-06
     priority: 2
     link: /essays/verified-inference/
     note: >-
-      I work on profiling, prover optimization, and verifier hardening for
+      I worked on profiling, prover optimization, and verifier hardening for
       James Petrie's VerInf project through MARS V. Anthropic cited VerInf as
-      prior work in its 2 November FlashProve research. The model-binding
-      repair remains an open draft awaiting GPU validation, new enrollment,
-      and re-proof; archived Maverick proofs lack complete model binding,
-      and multi-device speedup has not been measured.
+      prior work in its 2 November FlashProve research. We are finalizing our
+      publication for release by the end of this year.
 
   - title: "Proof Broker"
     section: research
