@@ -73,7 +73,7 @@ proving, which is the ceiling on model scale, context length, and
 mixture-of-experts breadth.
 
 ::: {.work-limit}
-**Ongoing.** Technical work on the VerInf implementation is largely complete and we are writing our publication, targeting a Q4 release.
+**Ongoing.** Technical work on the VerInf implementation is largely complete and we are writing our publication. Paper expected Q4 2026.
 :::
 
 ::: {.work-entry-links}
