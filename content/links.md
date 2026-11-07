@@ -11,10 +11,7 @@ history:
 
 ---
 
-A directory of where else I exist on the internet. Most of it falls into one
-of these four shelves; the unsorted overflow lives at the bottom. Brand icons
-beside each link are stamped automatically by the build's link classifier
-(`build/Filters/Links.hs`) — drop a known domain in and the icon appears.
+A non-exhaustive directory of where else I exist on the internet.
 
 <section class="links-section">
 
