@@ -202,10 +202,11 @@ deploy-locked: deploy-preflight build-locked validate sign
 	  $(MAKE) --no-print-directory deploy-rsync-inplace; \
 	fi
 
-# The default publication path, unchanged: rsync straight into the live
-# document root. Not atomic — for the ~30 seconds rsync runs, a visitor can
-# get a page whose signature has not landed yet, or, in the moment before
-# assets/ lands, one naming a version of the JS still on its way.
+# The default publication path: rsync straight into the live document root. Not
+# atomic — for the ~30 seconds rsync runs, a visitor can get a page whose
+# signature has not landed yet. The first-party JS and CSS of this build go first,
+# and the pages only once all of it has arrived, so however far the transfer gets,
+# no page on the server names a version that is not there.
 #
 # The dry run first refuses a destination that is not the live site (no
 # index.html there) or a transfer that would delete more than
@@ -218,6 +219,7 @@ deploy-rsync-inplace: deploy-guard
 	@python3 $(call tool,asset-versions.py) filter _site > data/deploy-filter.txt
 	@$(call tool,deploy-guard.sh) target _site "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$(VPS_DOCROOT)/" data/deploy-filter.txt
 	@python3 $(call tool,asset-versions.py) attempt _site
+	rsync -avzR "_site/./assets/$$(python3 $(call tool,asset-versions.py) current _site)/" "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$(VPS_DOCROOT)/"
 	rsync -avz --delete --filter="merge data/deploy-filter.txt" _site/ "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$(VPS_DOCROOT)/"
 	@python3 $(call tool,asset-versions.py) deployed _site
 

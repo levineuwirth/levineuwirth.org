@@ -161,6 +161,76 @@ class DeployKeepsVersions(unittest.TestCase):
         done = self.make("deploy-rsync-inplace", docroot)
         self.assertIn("deletes 1 file(s)", done.stdout)
 
+    def names(self, docroot: Path) -> str:
+        return (docroot / "index.html").read_text()
+
+    def test_the_new_version_arrives_before_any_page_names_it(self):
+        docroot = self.root / "www/example/site"
+        self.seed(docroot)
+        self.build("aaa")
+        self.make("deploy-rsync-inplace", docroot)
+        self.build("bbb")
+        self.make_fails("deploy-rsync-inplace", docroot, 1)
+        self.assertEqual((docroot / "assets/bbb/js/a.js").read_text(), "bbb")
+        self.assertIn('content="/assets/aaa"', self.names(docroot))
+        self.make("deploy-rsync-inplace", docroot)
+        self.assertIn('content="/assets/bbb"', self.names(docroot))
+
+    @unittest.skipIf(os.geteuid() == 0, "root can read an unreadable file")
+    def test_an_asset_transfer_that_stops_partway_leaves_the_pages_alone(self):
+        # Real rsync, failing on one file and carrying on with the rest. In one
+        # pass, this is what puts a page on the server without its scripts.
+        docroot = self.root / "www/example/site"
+        self.seed(docroot)
+        self.build("aaa")
+        self.make("deploy-rsync-inplace", docroot)
+        self.build("bbb")
+        unreadable = self.repo / "_site/assets/bbb/js/a.js"
+        unreadable.chmod(0)
+        self.addCleanup(unreadable.chmod, 0o644)
+        self.make_fails("deploy-rsync-inplace", docroot)
+        self.assertFalse((docroot / "assets/bbb/js/a.js").exists())
+        self.assertIn('content="/assets/aaa"', self.names(docroot))
+        self.assertEqual(self.ledger()["live"], "aaa")
+
+    @unittest.skipIf(os.geteuid() == 0, "root can read an unreadable file")
+    def test_a_page_transfer_that_stops_partway_leaves_both_versions(self):
+        # The home page arrives and another does not: pages of either.
+        docroot = self.root / "www/example/site"
+        self.seed(docroot)
+        self.build("aaa")
+        self.make("deploy-rsync-inplace", docroot)
+        self.build("bbb")
+        unreadable = self.repo / "_site/another.html"
+        unreadable.write_text("bbb")
+        unreadable.chmod(0)
+        self.make_fails("deploy-rsync-inplace", docroot)
+        self.assertIn('content="/assets/bbb"', self.names(docroot))
+        self.assertFalse((docroot / "another.html").exists())
+        for version in ("aaa", "bbb"):
+            self.assertEqual((docroot / f"assets/{version}/js/a.js").read_text(), version)
+        self.assertEqual(self.ledger(), {**self.ledger(), "live": "aaa", "attempted": ["bbb"]})
+        self.build("ccc")
+        self.make("deploy-rsync-inplace", docroot)
+        for version in ("aaa", "bbb", "ccc"):
+            self.assertEqual((docroot / f"assets/{version}/js/a.js").read_text(), version)
+
+    def test_the_asset_transfer_removes_nothing(self):
+        docroot = self.root / "www/example/site"
+        self.seed(docroot)
+        self.build("aaa")
+        self.make_fails("deploy-rsync-inplace", docroot, 1)
+        self.assertEqual((docroot / "stale.txt").read_text(), "before")
+        self.assertEqual((docroot / "index.html").read_text(), "before")
+
+    def test_a_deliberate_first_deploy_into_a_new_directory(self):
+        docroot = self.root / "www/example/site"
+        docroot.parent.mkdir(parents=True)
+        self.build("aaa")
+        self.make("deploy-rsync-inplace", docroot, "DEPLOY_NEW_DOCROOT=1")
+        self.assertEqual((docroot / "assets/aaa/js/a.js").read_text(), "aaa")
+        self.assertIn('content="/assets/aaa"', self.names(docroot))
+
     def test_a_deploy_the_guard_refuses_leaves_no_trace(self):
         docroot = self.root / "www/example/site"
         docroot.mkdir(parents=True)
