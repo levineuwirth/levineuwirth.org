@@ -346,9 +346,10 @@ are worth knowing before the first deploy of the day:
   version it was built with. A reader may hold such a page long after the next
   deploy, so each deploy leaves the earlier versions on the server, for 90 days
   from the day each was replaced, and the paths they had before versions for 90
-  days from the first deploy that recorded one. The record is
-  `data/deployed-assets.json`, local to the machine that deploys: lost, the
-  earlier versions go at the next deploy (`engine/tools/asset-versions.py`).
+  days from the first deploy to finish. A deploy that fails starts no clock: what
+  it was replacing, and whatever it left behind, stay until one finishes. The
+  record is `data/deployed-assets.json`, local to the machine that deploys: lost,
+  the earlier versions go at the next deploy (`engine/tools/asset-versions.py`).
 - **Branch check.** `make deploy` refuses to run on any branch but `main`,
   since it pushes `main` while the site would be built from that branch.
 - **Clean-tree check.** `make deploy` refuses to publish when build inputs
