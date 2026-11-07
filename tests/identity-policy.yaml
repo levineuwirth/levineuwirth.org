@@ -109,6 +109,7 @@ site-files:
 - tests/test_bibliography.py
 - tests/test_couchdb_backup.py
 - tests/test_couchdb_update.py
+- tests/test_credit.py
 - tests/test_cv_pdfs.py
 - tests/test_deploy_assets.py
 - tests/test_forgejo_backup_offhost.py

@@ -5,7 +5,7 @@
         <span class="footer-nav"> · <a href="/about.html">vita</a> · <a href="/cv/projects/">projects</a></span>
     </div>
     <div class="footer-center">
-        <span class="footer-license"><a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license">CC&nbsp;BY-NC-SA&nbsp;4.0</a> · <a href="$site-source-repo$">$site-code-license$</a> · <a href="/memento-mori.html" class="footer-mm">MM</a></span>
+        <span class="footer-license">$if(license)$$if(license-url-resolved)$<a href="$license-url-resolved$" rel="license">$license$</a>$else$$license$$endif$$else$<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license">CC&nbsp;BY-NC-SA&nbsp;4.0</a>$endif$ · <a href="$site-source-repo$">$site-code-license$</a> · <a href="/memento-mori.html" class="footer-mm">MM</a></span>
     </div>
     <div class="footer-right">
         $if(switch-build-page)$<a href="/build/" class="footer-build-link" aria-label="Build telemetry">build</a>$endif$$if(switch-footer-build-time)$ <span class="footer-build-time" data-build-time></span>$endif$

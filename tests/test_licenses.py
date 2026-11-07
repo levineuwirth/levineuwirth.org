@@ -30,6 +30,14 @@ class PublishedLicenseTests(unittest.TestCase):
         self.assertIsNotNone(footer.find("a", href=CC))
         self.assertEqual(" ".join(footer.get_text().split()), "CC BY-NC-SA 4.0 · GPL-2.0-or-later · MM")
 
+    def test_a_public_domain_poem_says_so_in_its_footer(self):
+        for slug in ("sonnet-60", "ozymandias"):
+            with self.subTest(poem=slug):
+                footer = self.page(f"poetry/{slug}.html").select_one(".footer-license")
+                self.assertIsNotNone(footer.find("a", href=PD, rel="license"))
+                self.assertIsNone(footer.find("a", href=CC))
+                self.assertEqual(" ".join(footer.get_text().split()), "Public domain · GPL-2.0-or-later · MM")
+
     def test_dore_credit_applies_to_the_figure(self):
         img = self.page("memento-mori.html").find("img", src=lambda s: s and "canto31.jpg" in s)
         figure = img.find_parent("figure")

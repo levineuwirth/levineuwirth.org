@@ -415,7 +415,7 @@ entries:
   string: lnUtils
 - id: I0105
   file: tests/test_browser_annotations.py
-  line: 299
+  line: 306
   column: 59
   string: ln:content-added
 - id: I0107
