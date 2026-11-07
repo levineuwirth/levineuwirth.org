@@ -116,6 +116,10 @@ standalone:
 # Where the site explains its epistemic profile: the footer's Epistemic
 # heading links there.
 epistemic-about: /colophon.html#living-documents
+epistemic-about-label: Colophon
+# Link previews from other sites: all that popups.js has. nginx/ allows and
+# proxies each of them.
+popup-providers: [wikipedia, arxiv, doi, github, openlibrary, biorxiv, medrxiv, youtube, archive, pubmed]
 # The engine's switches this site sets (engine/switches.yaml has each one's
 # default and what it covers): everything on.
 switches:

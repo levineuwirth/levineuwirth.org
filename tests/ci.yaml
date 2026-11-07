@@ -14,6 +14,7 @@ modules:
 - test_forgejo_backup_offhost
 - test_forgejo_update
 - test_levcs_instance_backup
+- test_site_yaml
 - test_vps_config_backup
 suites:
 - yaml-source

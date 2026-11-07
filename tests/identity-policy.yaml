@@ -119,6 +119,7 @@ site-files:
 - tests/test_licenses.py
 - tests/test_nginx_logging.py
 - tests/test_sections.py
+- tests/test_site_yaml.py
 - tests/test_vps_config_backup.py
 - tools/anki-sync-backup.sh
 - tools/anki-sync-hash

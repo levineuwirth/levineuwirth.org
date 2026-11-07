@@ -164,7 +164,9 @@ sets the ones it wants in `site.yaml` under `switches:` (`name: true` or
 refuses a name the registry lacks, or a switch on without what it needs.
 A switch may own a content section (`music` owns `music`, `photography` `photography`), which `site.yaml`
 lists, and feeds, only with the switch on, and engine assets that are
-published only with it on. This site turns every switch on. The tools and make targets read the same
+published only with it on. This site turns every switch on. `popup-providers` in `site.yaml`
+lists which other sites link previews may ask, none by default (the names are under
+`popups` in the registry); this site lists them all. The tools and make targets read the same
 resolution through `engine/tools/sitelib.py` (`sitelib.py switch NAME`),
 without the generator. `make test` builds the engine's fixture site under
 its two profiles (`engine/fixture-site/profiles.yaml`) and the variants that

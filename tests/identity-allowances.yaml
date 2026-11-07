@@ -3,11 +3,6 @@
 bootstrap-parent: 07e71c98c90b2a65149113fe4693b335d0f1ccfd
 initial-count: 159
 entries:
-- id: I0011
-  file: static/css/item-card.css
-  line: 299
-  column: 10
-  string: levineuwirth
 - id: I0012
   file: static/js/annotations.js
   line: 30
@@ -113,34 +108,24 @@ entries:
   line: 51
   column: 24
   string: lnUtils
-- id: I0036
-  file: static/js/popups.js
-  line: 136
-  column: 12
-  string: git.levineuwirth.org
-- id: I0037
-  file: static/js/popups.js
-  line: 562
-  column: 44
-  string: levineuwirth.org
 - id: I0038
   file: static/js/popups.js
-  line: 1206
+  line: 1214
   column: 35
   string: lnHighlightCode
 - id: I0039
   file: static/js/popups.js
-  line: 1207
+  line: 1215
   column: 27
   string: lnHighlightCode
 - id: I0040
   file: static/js/popups.js
-  line: 1537
+  line: 1545
   column: 37
   string: lnUtils
 - id: I0041
   file: static/js/popups.js
-  line: 1538
+  line: 1554
   column: 30
   string: lnUtils
 - id: I0042
@@ -150,7 +135,7 @@ entries:
   string: lnUtils
 - id: I0043
   file: static/js/popups.js
-  line: 1640
+  line: 1648
   column: 23
   string: lnUtils
 - id: I0044
@@ -163,11 +148,6 @@ entries:
   line: 34
   column: 44
   string: lnUtils
-- id: I0046
-  file: static/js/score-follow.js
-  line: 504
-  column: 26
-  string: Levi Neuwirth
 - id: I0047
   file: static/js/search-filters.js
   line: 19
@@ -180,24 +160,9 @@ entries:
   string: lnSemanticSearch
 - id: I0049
   file: static/js/selection-popup.js
-  line: 325
+  line: 326
   column: 23
   string: lnUtils
-- id: I0050
-  file: static/js/selection-popup.js
-  line: 377
-  column: 9
-  string: Levi Neuwirth
-- id: I0051
-  file: static/js/selection-popup.js
-  line: 377
-  column: 27
-  string: Neuwirth, Levi
-- id: I0052
-  file: static/js/selection-popup.js
-  line: 397
-  column: 16
-  string: Neuwirth, Levi
 - id: I0053
   file: static/js/semantic-search.js
   line: 32
@@ -385,62 +350,62 @@ entries:
   string: lnUtils
 - id: I0090
   file: static/js/utils.js
-  line: 19
+  line: 38
   column: 5
   string: lnUtils
 - id: I0091
   file: static/js/utils.js
-  line: 32
+  line: 51
   column: 5
   string: lnUtils
 - id: I0092
   file: static/js/utils.js
-  line: 52
+  line: 71
   column: 5
   string: lnUtils
 - id: I0093
   file: static/js/utils.js
-  line: 54
+  line: 73
   column: 5
   string: lnUtils
 - id: I0094
   file: static/js/utils.js
-  line: 55
+  line: 74
   column: 19
   string: lnUtils
 - id: I0095
   file: static/js/utils.js
-  line: 56
+  line: 75
   column: 19
   string: lnUtils
 - id: I0096
   file: static/js/utils.js
-  line: 81
+  line: 100
   column: 5
   string: lnUtils
 - id: I0097
   file: static/js/utils.js
-  line: 111
+  line: 130
   column: 5
   string: lnUtils
 - id: I0098
   file: static/js/utils.js
-  line: 123
+  line: 142
   column: 5
   string: lnUtils
 - id: I0099
   file: static/js/utils.js
-  line: 128
+  line: 147
   column: 12
   string: lnUtils
 - id: I0100
   file: static/js/utils.js
-  line: 128
+  line: 147
   column: 22
   string: lnUtils
 - id: I0101
   file: templates/score-reader-default.html
-  line: 12
+  line: 13
   column: 13
   string: lnUtils
 - id: I0103
@@ -450,14 +415,9 @@ entries:
   string: lnUtils
 - id: I0105
   file: tests/test_browser_annotations.py
-  line: 277
+  line: 299
   column: 59
   string: ln:content-added
-- id: I0106
-  file: tests/test_browser_annotations.py
-  line: 499
-  column: 45
-  string: Neuwirth, Levi
 - id: I0107
   file: tests/test_browser_copy.py
   line: 5
@@ -478,11 +438,6 @@ entries:
   line: 51
   column: 58
   string: lnUtils
-- id: I0111
-  file: tests/test_browser_popups.py
-  line: 182
-  column: 24
-  string: https://git.levineuwirth.org/neuwirth/levineuwirth.org
 - id: I0121
   file: tests/test_dynamic_assets.py
   line: 51
