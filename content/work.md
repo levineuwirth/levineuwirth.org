@@ -191,9 +191,6 @@ party that ran it. Evaluations work from above, measuring what a model actually
 does under conditions you control. Formal methods supply the machinery for
 checking a claim without trusting its author.
 
-The clinical study is a separate research-engineering line, built and tested at
-population scale.
-
 The question underneath all of it: how do you establish trustworthy claims about
 an AI system when the system, the operator, and the evaluator may each be
 untrusted?
