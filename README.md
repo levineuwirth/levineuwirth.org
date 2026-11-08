@@ -2,409 +2,70 @@
 
 [![tests](https://github.com/levineuwirth/levineuwirth.org/actions/workflows/tests.yml/badge.svg)](https://github.com/levineuwirth/levineuwirth.org/actions/workflows/tests.yml)
 
-Personal site of Levi Neuwirth — essays, poetry, fiction, music, photography,
-and a CV.
-Built with [Hakyll](https://jaspervdj.be/hakyll/) and [Pandoc](https://pandoc.org/),
-with a custom build system in `engine/build/` and a Haskell + JS + Python toolchain.
+The personal site of Levi Neuwirth: essays, poetry, fiction, music,
+photography and a CV. It is built with Ozymandias, a static site engine on
+[Hakyll](https://jaspervdj.be/hakyll/) and [Pandoc](https://pandoc.org/),
+which lives in `engine/` until it moves to its own repository. The rest
+is the site's own: its writing, its configuration and overrides of the
+engine, and the operations of the server it runs on.
 
-## Quickstart
+## Building
 
 ```sh
-make build              # one-shot production build into _site/
-make dev                # dev build (drafts visible) + local server on :8000
-make watch              # Hakyll live-reload dev server (drafts visible)
-make clean              # cabal run site -- clean
-make deploy             # preflight → build (incremental) → validate → sign
-                        #   → recheck → push → rsync to VPS
-make deploy-clean       # force a full rebuild, then deploy
+make venv          # once: the Python tools' environment, in .venv
+make dev           # drafts visible, served on http://localhost:8000
+make build         # the production build, into _site/
+make test          # the site's and the engine's tests
+make test-clean    # the same, on HEAD, in a fresh clone
+make deploy        # build, validate, sign, push, and publish to the server
 ```
 
-`make build` is incremental by default; `engine/tools/build-freshness.sh` forces a
-full rebuild automatically when one is required for correctness (the Hakyll
-rules under `engine/build/` or the cabal metadata changed, content was deleted or
-renamed, route-defining frontmatter such as `tags:` changed, or the last full
-rebuild is over 7 days old — compile-time values like stability labels drift
-otherwise). `make deploy-clean` forces one manually.
-For day-to-day work, prefer `make dev` (which serves the site on
-`http://localhost:8000`) or `make watch` (Hakyll's live-reload preview server,
-which rebuilds on save and serves the site locally).
+`make build` is incremental, and rebuilds from scratch on its own when it
+must. It also commits `content/` (`SKIP_SNAPSHOT=1` skips that). Run it
+after adding images or PDFs: `make dev` skips their WebP companions and
+thumbnails.
 
-`build`, `deploy`, `watch` and `dev` each hold an exclusive lock on
-`data/.site-build.lock` (`engine/tools/with-lock.sh`, via `flock`), as do the
-targets that write `_site/`, `_cache/` or `static/` (`clean`, `sign`,
-`compress-assets`, `convert-images`, `thumbnails`, `pdf-thumbs`) and
-`validate`. A second one fails at once instead of interleaving writes;
-`LOCK_TIMEOUT=<seconds>` makes it wait. `watch` and `dev` hold the lock for
-as long as their server runs. The lock is re-entrant, so the targets a locked
-build or deploy runs in turn pass straight through.
+The build needs GHC and `cabal`, `pagefind`, and `python3` with PyYAML;
+`cwebp`, `pdftoppm` and `uv` are optional, and `make pdfs` (the CV) needs
+XeLaTeX. A deploy needs `gpg` with the signing subkey, `ssh` and `rsync`,
+and the server's address in `.env` (copy `.env.example`; never commit it).
 
-**Run `make build` any time you add or replace binary assets** (JPEG/PNG
-figures, PDFs, music assets). `make dev` and `make watch` skip the
-`convert-images.sh` / `pdf-thumbs` preprocessing steps, so a fresh JPEG
-will have no `.webp` companion and a fresh PDF will have no thumbnail
-until a full `make build` regenerates them. Once the companions exist
-they survive subsequent `make dev` runs.
+## Layout
 
-## Site configuration
+- `site.yaml`: the site's identity, sections, feeds, navigation and the
+  engine's switches, all of them on here.
+- `content/`: the writing. `WRITING.md` covers front matter and every
+  authoring feature. Everything in an essay's directory is published, so
+  keep scratch files out of it, or give a private note a `.local.md` name.
+- `templates/`, `static/`: the site's templates (the CV pages, and its
+  footer, ornament and not-found page) and assets (fonts, images, papers,
+  icons), which override the engine's where `overrides.yaml` says so.
+- `data/`, `yaml-source/`, `archive/`, `code-refs/`: annotations,
+  bibliographies and similar links; the CV's sources; preserved copies of
+  cited works (`ARCHIVE.md`); snapshots of linked code.
+- `tests/`: the site's own tests, its identity records and the browser
+  baselines.
+- `tools/`: the site's own tools: the server's backup, update and status
+  scripts, `cv-pdfs.py`, and the font configuration the engine's subsetter
+  reads.
+- `nginx/`, `systemd/`, `forgejo/`, `couchdb/`, `anki-sync/`, `anubis/`:
+  the server's configuration and services, each with its README or
+  runbook.
+- `paper/`: a pointer to the graph-theory research, kept in its own
+  repository (`meyniel`).
 
-`site.yaml` owns the build and template identity, web-app manifest, Atom feed
-settings, taxonomy and navigation.
-`cabal run -v0 site -- config` prints the validated configuration as JSON;
-`cabal run -v0 site -- config --make` prints an includable GNU make fragment
-with `SITE_*` variables and `SITE_CONFIG_JSON`. The latter contains literal
-make values, so quote them appropriately if passing them to a shell.
+## Deploying
 
-Each feed declares its output `path`, `title`, `description`, `sections`,
-`advertise`, and `limit` (`null` means all entries). `advertise-title` defaults
-to the feed title and controls the label of its HTML discovery link. Only feeds
-with `advertise: true` appear in the head. Photography uses a
-separate image-bearing feed context and cannot be mixed with text sections.
-A feed with no entries yet is still valid: its `<updated>` is the build time.
-Feature switches are their own section below.
+`make deploy` runs only on `main`, with a clean tree, and stops if anything
+changes while it builds. It pushes to Forgejo and GitHub, then sends the
+new scripts and stylesheets before any page that names them, keeping
+earlier versions for 90 days for tabs left open. An rsync dry run refuses a
+destination without an `index.html`, or a transfer deleting too much.
+`make deploy SKIP_TESTS=1` is for a change the tests can say nothing
+about, such as a typo.
 
-`sections` lists the content directories (`dir`), the label their pages carry
-on the New page (`kind`) and their default ornament (`dingbat`, optional);
-each section has a landing at `/<dir>/`. The current engine requires four
-section declarations (essays, blog, poetry, fiction), and music and photography
-with their switches on, and refuses them with their switches off.
-Labels, ornaments and ordering are configurable; adding or omitting a section
-is rejected until the engine supports changing those routes. Ordinary page
-collections do not need section declarations.
-`portals` are the home page's top-level tags in order (`name`, `tag`); the
-library shelves follow that order and the navigation lists them
-alphabetically. `nav-primary` is the first navigation row (`label`, `href`),
-and `library` holds the shelf sizes (`shelf-cap`, raised by a portal's
-`featured:` list up to `shelf-max`), the page's `description` and its
-`see-also` links. The build derives the rest: the content directories a page
-collection may not use, the tags that may not have a tag page, and the
-wikilink slugs whose page is a directory (`site shared-rules`).
-
-`standalone` lists the one-off pages: each `source` (`content/<page>.md` or
-`content/<dir>/<page>.md`), its `route`, its `template` under `templates/`
-and the `context` it is compiled with: `essay` (the essay pipeline, whose
-citations reach `/bibliography/`), `page`, `now` (`data/now.yaml`), `vita` or
-`projects` (`yaml-source/data`). `scores: true` copies and tracks the score
-fragments in `content/<dir>/scores/`; `dingbat` is the page's default
-ornament, ahead of a section's when the route is inside one; each of `flags`
-is a template boolean. Every standalone page is in the sitemap and the
-backlink graph, and one routed to `<slug>/index.html` is linked there
-(`[[Studio]]` → `/studio/`). A source's directory is the page's own: a
-Markdown file there without an entry stops the build. Top-level pages that
-need no special handling (`content/<page>.md` → `/<page>.html`) need no entry.
-
-`manifest` contains `name`, `short-name`, `description`, `theme-color` and
-`background-color`. The build generates `/site.webmanifest` from these values
-and `engine/templates/site.webmanifest`; the template owns the icon routes and app
-shell settings. `signing-fingerprint` is the displayed signing subkey in the
-footer. Template identity is HTML-escaped; manifest values are JSON-encoded.
-
-`seasons` lists dressings over a theme, each an `id`, the Settings `label`,
-the `base` theme it dresses (`light`, `dark` or `cappuccino`), a window
-`from` and `to` (`MM-DD`, inclusive; a window that starts later than it ends
-runs through the new year), a `stylesheet` and, optionally, a `script`. While
-the window is open, a reader with no stored theme wears the season and
-Settings offers it; one who chose it gets its base theme once the window
-closes. A worn season is `data-season` on `<html>`, beside `data-theme`: its
-stylesheet scopes its tokens to that, for the screen only, and is loaded all
-year so that wearing it never flashes the plain theme. Its script is loaded
-only while it is worn, after `engine/static/js/stage.js`, and registers what
-it draws with the stage: a layer over the margins and header that takes no
-clicks, starts once the page has settled, and is gone in focus mode and
-print (the comment at the top of `stage.js` is its interface). The score
-reader wears the base theme only. Browser tests that expect the plain themes
-fix their clock outside every window (`tests/_browser.py`, `off_season`).
-
-Compilers load `site.yaml` as a Hakyll dependency. The freshness check also
-hashes it, so changing settings that alter routes forces a clean rebuild.
-The feed author uses `email`; `contact-email` is the separate contact
-address. `url`'s hostname must be `host`, with or without a leading `www.`;
-links to the host in either form count as the site's own. Feed titles,
-descriptions and the author are escaped for the feed's XML.
-
-## Engine identity check
-
-`make test` checks the engine's files, everything under `engine/` but its
-vendored code, against the identity returned by `site config`.
-`tests/identity-policy.yaml` records the site's files and directories, the
-engine's vendored files, legacy names, and case-sensitive patterns for the
-`ln` namespace. Every file Git sees (tracked, or untracked and not ignored)
-must have exactly one owner: under `engine/`, the engine; elsewhere, the site,
-by a policy entry, so a new site file is classified before it is committed. A
-site file at an engine file's path must be declared in `overrides.yaml`.
-Downloaded vendor files need not be present to run this check.
-
-`tests/identity-allowances.yaml` is a frozen migration inventory. Each stable
-ID covers exactly one string at a file, line and column. Delete an entry when
-its occurrence is removed; update only its location for a reviewed move or
-nearby edit. Do not regenerate the list or reuse a removed ID. The test checks
-committed history as well as the working copy, so shrinking the list cannot
-make room for new entries. Keep full Git history while these allowances exist.
-The initial population is permitted only on its recorded bootstrap parent;
-the first commit containing it freezes that population.
-
-## Overriding engine files
-
-A site file at an engine file's path replaces it once `overrides.yaml`
-declares it, with the Git blob id of the engine file it was last reviewed
-against. When the engine file changes, `make test` fails until the review is
-done: `make override-review` shows each change, and
-`engine/tools/override-review.py --accept <path>` records it once the
-override is brought along. A template override is also held to
-`engine/contract.yaml`, which no review clears: the templates a site may
-override, the fields the engine renders each with, and the hooks its scripts
-and styles need in the result. `make test` renders each override with the
-contract's fixture context and looks for them (`override-review.py --check`).
-
-## Switches
-
-The engine's features beyond its core are switches, registered in
-`engine/switches.yaml` with their kind, default and what each needs. A site
-sets the ones it wants in `site.yaml` under `switches:` (`name: true` or
-`false`); the generator resolves them over the registry's defaults and
-refuses a name the registry lacks, or a switch on without what it needs.
-A switch may own a content section (`music` owns `music`, `photography` `photography`), which `site.yaml`
-lists, and feeds, only with the switch on, and engine assets that are
-published only with it on. This site turns every switch on. `popup-providers` in `site.yaml`
-lists which other sites link previews may ask, none by default (the names are under
-`popups` in the registry); this site lists them all. The tools and make targets read the same
-resolution through `engine/tools/sitelib.py` (`sitelib.py switch NAME`),
-without the generator. `make test` builds the engine's fixture site under
-its two profiles (`engine/fixture-site/profiles.yaml`) and the variants that
-turn each remaining switch the other way, and checks each switch both ways.
-
-## Requirements
-
-- GHC and `cabal` (`cabal run site` builds the generator on first use).
-- `pagefind` on `PATH`. Not optional: `make build` indexes `_site/` with it
-  and fails without it.
-- `python3` with PyYAML, `git`, `curl`, `unzip` and `sha256sum`. The build
-  vendors PDF.js, Leaflet and the search model through
-  `engine/tools/download-*.sh`, which verify pinned SHA-256 sums (`unzip` is
-  for PDF.js). Make reads the site's switches through PyYAML
-  (`engine/tools/sitelib.py`), with the system `python3` until `make venv`.
-- `flock` (util-linux); without it `engine/tools/with-lock.sh` warns and runs
-  unlocked.
-- For `make deploy`: `gpg` with the signing subkey, `ssh` and `rsync`.
-- Optional: `uv`, `cwebp` and `pdftoppm` — see below.
-
-## What ends up in `_site/`
-
-Essay directories are copied **recursively**: everything under
-`content/essays/<slug>/` that is not itself a page source is published as-is
-(`engine/build/Site.hs`, the `content/essays/**` match). That rule is deliberately
-broad so figures, data files, and scripts sit next to the prose that uses
-them — but it means a stray artifact dropped into an essay directory
-(a scratch CSV) becomes a public URL, whether or not Git ignores
-it. Git-ignoring a file does not keep it out of the build. A stray `.md`
-there (say `notes.md` beside `index.md`) is compiled as an essay.
-
-Two checks stand in the way, and both go by file name only.
-`neverPublish` in `engine/build/Site.hs` keeps private-looking names out of the
-build: `*.local.md`, `*.draft.md`, key and credential files, `.env`, editor
-backups, swap and `.pyc` files, `*.tmp`, `*.part`, `*.partial`, `*.log`, `__pycache__/`.
-`engine/tools/check-site.py`, the post-build artifact gate, fails the build when a
-name on its own list (`PRIVATE_FILE_GLOBS`) reaches `_site/` anyway,
-compressed and signed copies included. `make build` runs it automatically
-and `make validate` runs the same gate by hand. Neither can tell what an
-ordinary file is for: a CSV or a `notes.md` passes both, so keep
-those out of essay directories, or give a private note a `.local.md` name.
-To exclude a new kind of file, add it to both lists; `.gitignore` will not
-do it.
-
-## Optional features
-
-- **Similar-links and embeddings.** `engine/tools/embed.py` precomputes
-  page-level embeddings for the "Related" block. To enable:
-
-  ```sh
-  make venv               # creates .venv with sentence-transformers, faiss-cpu
-  ```
-
-  The Python project (`pyproject.toml`, `uv.lock`) is the engine's, and the
-  environment is the site's own `.venv`, so a bare `uv` command needs both
-  named: `UV_PROJECT_ENVIRONMENT="$PWD/.venv" uv run --frozen --project engine …`.
-  After editing `engine/pyproject.toml`, re-lock with `uv lock --project engine`;
-  `make venv` refuses a lock that no longer matches it.
-
-  Without `.venv` the build skips embedding (and the photo sidecar and
-  archive steps) with a notice and continues.
-
-- **Client-side semantic search.** Downloads a quantized ONNX model
-  used by `engine/static/js/semantic-search.js` (run once; files are gitignored):
-
-  ```sh
-  make download-model
-  ```
-
-- **Image conversion.** `make build` calls `engine/tools/convert-images.sh` to
-  produce `.webp` companions next to every JPEG/PNG. Requires `cwebp`
-  (`libwebp-utils` on Arch — *not* `libwebp`, which ships only the
-  library and no `cwebp` binary; `webp` on Debian/Ubuntu). Without it the
-  build still succeeds and warns; images without companions fall back to
-  JPEG/PNG. Photo variants get WebP directly from Pillow. `make deploy`
-  requires a companion for every JPEG/PNG, as does
-  `make validate REQUIRE_WEBP=1`; `make deploy REQUIRE_WEBP=` overrides it.
-
-- **PDF thumbnails.** `make pdf-thumbs` (also run by `make build`)
-  generates first-page thumbnails for every PDF under the site's `static/`,
-  using `pdftoppm` (`poppler` on Arch,
-  `poppler-utils` on Debian/Ubuntu). Without it the target prints a notice
-  and skips.
-
-## Configuration
-
-`.env` (gitignored, copy from `.env.example`) holds the VPS rsync target
-(`VPS_USER`, `VPS_HOST`, `VPS_PATH`) consumed by `make deploy`. Never commit
-it. `git push` uses your own git credentials (credential helper), not
-anything in `.env`.
-
-`GITHUB_TOKEN` is read only by `engine/tools/code-refs.py`, from the environment, to
-raise the GitHub API rate limit for code snapshots. Export it in your shell:
-the Makefile does not pass it on from `.env`.
-
-## Repository layout
-
-- `engine/` — the engine, kept apart from the site: `engine/build/` is the
-  Haskell build system (Hakyll rules, Pandoc filters, contexts), with the
-  cabal file beside it; see `engine/build/Filters/` for the Pandoc AST
-  transforms (sidenotes, wikilinks, transclusion, score embedding, viz, …).
-  `engine/templates/` holds the Hakyll/Pandoc HTML templates,
-  `engine/static/` the CSS, JS, KaTeX, generic link icons and neutral
-  defaults for the site's identity assets (the PDF.js, Leaflet and
-  search-model downloads land there too), `engine/tools/` the build's
-  Python and shell tooling (embeddings, importers, checks), which reads
-  the site's identity from `site.yaml`, with the browser test harness in
-  `engine/tools/browser/`, and `engine/tests/` the engine's test suite
-  and golden fixtures. `engine/engine.mk` holds the build, test and report
-  targets, which the site's `Makefile` includes beside its own (the CV
-  PDFs, the deploy), and `engine/pyproject.toml` the tools' Python project,
-  synced into the site's `.venv` by `make venv`. A site file at the same path
-  without `engine/` overrides the engine's when `overrides.yaml` declares it.
-- `content/` — authored Markdown (essays, poetry, fiction, music,
-  photography, standalone pages).
-- `templates/` — the site's own templates: the CV pages, and the footer,
-  ornament and not-found page that override the engine's.
-- `static/` — the site's fonts, images, papers and CV, and its identity
-  assets (icons, logo, preview card, ornaments), which override the
-  engine's defaults.
-- `tools/` — the site's own tools: the VPS backup, update and status
-  scripts, the Anubis and Forgejo helpers, `cv-pdfs.py`, and the font
-  configuration that `engine/tools/subset-fonts.py` reads (`fonts.yaml`,
-  `font-sources.json`); and `tools/browser/prod_smoke.py`, a check of the
-  live site with the engine's browser harness.
-- `data/` — generated and source data (commonplace.yaml, annotations.json,
-  bibliographies, similar-links.json).
-- `yaml-source/` — the CV and résumé sources: `engine/build/Vita.hs` renders
-  `/about.html` from `yaml-source/data/`, and `make pdfs` typesets
-  `static/cv.pdf` and `static/resume.pdf` (needs XeLaTeX).
-- `archive/` — preserved copies of cited external works, listed in
-  `archive/manifest.yaml`; see `ARCHIVE.md`.
-- `code-refs/` — snapshots of linked GitHub code for the hover popups,
-  written by `engine/tools/code-refs.py` during the build. Tracked: commit it when
-  a build changes it, or `make deploy` refuses.
-- `tests/` — the site's own tests (content, ops), the identity records
-  and the browser baselines; the engine's suite is `engine/tests/`. `make
-  test` and `make validate` run both, and `make test-clean` runs them on
-  HEAD in a fresh clone. The badge above covers only the part a stock
-  GitHub runner can run, the tests listed in `engine/tests/ci.py` (no
-  Haskell generator, no built site), and fails if any of them skips, and
-  `make test-clean` runs that selection the same way. The
-  full suite runs locally, before every deploy.
-- `systemd/` — units and timers for the VPS (backups, updates) and the
-  laptop's `archive-check`; installed by hand, see `systemd/README.md`.
-- `forgejo/`, `couchdb/` — Docker Compose sources for the VPS's Forgejo
-  and Obsidian LiveSync CouchDB, with upgrade and restore runbooks.
-- `anki-sync/` — environment templates and roadmap for the VPS's Anki
-  sync server.
-- `paper/` — pointer to the separate graph-theory research repository.
-- `nginx/` — every nginx file on the VPS: `nginx.conf`, the server blocks
-  (`levineuwirth.conf`, `forgejo.conf`, the two sync servers, a default
-  server), the site's snippets and their `conf.d` companions.
-  `nginx/README.md` maps each to its path and has the install steps.
-  Nothing here is deployed by `make deploy` — see "Deployment safety"
-  below.
-
-## Deployment safety
-
-`make deploy` builds, validates, signs, pushes, and rsyncs `_site/` to the
-VPS. `git push -u origin main` goes to both Forgejo and GitHub (`origin`
-has two push URLs), and the rsync is preceded by a dry run that refuses a
-destination without an `index.html` or a transfer that would delete more
-than `DEPLOY_MAX_DELETE` files (see `engine/tools/deploy-guard.sh`). These guards
-are worth knowing before the first deploy of the day:
-
-- **`make validate`** runs the test suite and then `engine/tools/check-site.py`
-  against `_site/` — the same artifact gate `make build` runs — so the
-  output tree can be checked without deploying anything. Run it after any
-  change to the build rules.
-- **`SKIP_TESTS=1`** skips both suites inside that validate, for a deploy
-  the suites cannot say anything about — a one-word typo fixed in
-  `content/`, say: `make deploy SKIP_TESTS=1`. The skip prints a banner;
-  `engine/tools/check-site.py`, the provenance check, the build, the
-  clean-tree checks, the signature and the recheck all still run. It is an
-  escape hatch for a known-irrelevant change, not a faster `make deploy`.
-- **Earlier asset versions.** First-party JS and CSS are published under
-  `/assets/<hash>/`, a hash of all of them, so a page only ever loads the
-  version it was built with. A reader may hold such a page long after the next
-  deploy, so each deploy leaves the earlier versions on the server, for 90 days
-  from the day each was replaced, and the paths they had before versions for 90
-  days from the first deploy to finish. A deploy sends the new version first and
-  the pages only once all of it has arrived, so no page on the server names a
-  version that is not there. A deploy that fails starts no clock: what it was
-  replacing, and whatever it left behind, stay until one finishes. The record is `data/deployed-assets.json`, local to the machine that deploys: lost,
-  the earlier versions go at the next deploy (`engine/tools/asset-versions.py`).
-- **Branch check.** `make deploy` refuses to run on any branch but `main`,
-  since it pushes `main` while the site would be built from that branch.
-- **Clean-tree check.** `make deploy` refuses to publish when build inputs
-  differ from `HEAD` (tracked changes, or untracked files outside `data/`),
-  because the revision it pushes would not describe the site it uploads.
-  It runs the code-ref and archive fetchers first, so a snapshot the build
-  would add counts too. Commit the changes, or set
-  `ALLOW_DIRTY_DEPLOY=1` to publish anyway — that records the exact dirty
-  list in `data/last-deploy-dirty.txt`, which stays local and is never
-  shipped.
-- **Recheck.** After the build, validate and sign, and before the push,
-  `deploy-recheck` repeats that check (now including `content/` and
-  `tests/`), and the deploy confirms `HEAD` is still the commit that was
-  built. An edit made while the build ran stops the deploy with nothing
-  pushed or published.
-- **Score pages.** The score pages are gitignored, so `deploy-preflight`
-  runs `engine/tools/music-import.py check` and refuses when pages are missing or
-  incomplete, rather than letting a fresh checkout delete the published
-  scores.
-- **`SKIP_SNAPSHOT=1`** skips `make build`'s automatic `git add content/` +
-  auto-commit. Use it when building someone else's checkout, or to verify a
-  build without touching history. The build is otherwise identical; only the
-  stability labels of just-edited pieces can differ.
-
-### nginx snippets are not deployed
-
-`make deploy` only rsyncs `_site/`. Nothing under `nginx/` reaches the server
-by itself. The files there are the configuration the VPS runs, and each takes
-effect only when copied to its own path (snippets, `conf.d`, server blocks
-and `nginx.conf` all differ); `nginx/README.md` has the table and the steps.
-
-Always `nginx -t` before the reload: a snippet that fails to parse takes the
-whole server down on a restart, and several snippets depend on directives
-that live in `http { }` (`proxy_cache_path`, `limit_req_zone`, the
-`csp_report` log format), in the `conf.d` files beside them.
-
-## Architecture pointers
-
-- `engine/build/Site.hs` is the Hakyll rules entry point.
-- `engine/build/Patterns.hs` defines canonical content patterns shared by
-  Backlinks, Authors, Tags, and Site.
-- `engine/build/Compilers.hs` wires the Pandoc filter chain into Hakyll.
-- `engine/build/Filters/Images.hs` does WebP `<picture>` wrapping; requires
-  the `.webp` companions produced by `engine/tools/convert-images.sh`.
-
-## Graph-theory research
-
-The graph-theory manuscript sources and experiments are maintained in a
-separate research repository, `meyniel`; its `HANDOFF.md` is the entry point
-for further mathematical work. The website retains public articles and released graph-paper
-assets. See [paper/README.md](paper/README.md) for the explicit export workflow.
-Normal website builds do not require the research checkout or a TeX toolchain.
+Nothing under `nginx/` is deployed. Copy each file to its place on the
+server as `nginx/README.md` says, and run `nginx -t` before reloading.
 
 ## License
 
