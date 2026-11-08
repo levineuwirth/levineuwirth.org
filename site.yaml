@@ -10,6 +10,34 @@ host: levineuwirth.org
 source-repo: https://git.levineuwirth.org/neuwirth/levineuwirth.org
 source-branch: main
 forge-host: git.levineuwirth.org
+# The engine's repository: prose naming one of its files links there.
+engine-repo: https://git.levineuwirth.org/neuwirth/ozymandias
+# What /source/ publishes of this site's own files, for the source-refs
+# switch's popups, as globs over its paths. checklist.md stays out of it:
+# .gitignore calls it a local planning document (audit S01). The JSON under
+# data/ is named file by file, since data/ also holds build state.
+source-preview:
+  - static/js/**
+  - static/css/**
+  - templates/**
+  - tools/**.sh
+  - tools/**.py
+  - content/essays/crawler_chronicles/data/*.py
+  - content/essays/crawler_chronicles/data/commit-response/source/*.py
+  - content/essays/crawler_chronicles/data/commit-response/source/*.sh
+  - nginx/**.conf
+  - data/*.yaml
+  - data/*.md
+  - data/*.bib
+  - data/annotations.json
+  - data/similar-links.json
+  - cabal.project
+  - cabal.project.freeze
+  - Makefile
+  - LICENSE
+  - WRITING.md
+  - PHOTOGRAPHY.md
+  - README.md
 content-license: CC-BY-NC-SA-4.0
 code-license: GPL-2.0-or-later
 signing-fingerprint: C9A42A6F AD444FBE 566FD738 531BDC1C C2707066
