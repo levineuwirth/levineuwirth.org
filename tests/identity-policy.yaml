@@ -100,6 +100,7 @@ site-files:
 - tests/browser-baseline/overflow.json
 - tests/ci.yaml
 - tests/routes.yaml
+- tests/test_engine_link.py
 - tests/identity-allowances.yaml
 - tests/identity-policy.yaml
 - tests/known-defects.yaml

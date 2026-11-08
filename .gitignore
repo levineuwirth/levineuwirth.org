@@ -72,6 +72,7 @@ data/last-build-seconds.txt
 data/rules-hash.txt
 data/unpublished-hash.txt
 data/last-build-commit.txt
+data/engine-changed.stamp
 data/last-full-rebuild.txt
 data/.full-rebuild-pending
 # Build mutex (tools/with-lock.sh) — a flock file that exists only while a

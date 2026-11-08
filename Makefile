@@ -18,6 +18,20 @@ SITE_INPUTS := yaml-source nginx LICENSE LICENSE-CONTENT THIRD-PARTY.md README.m
 # The CV and résumé variant resolver's own suite.
 SITE_TEST_DIRS := yaml-source
 
+# The engine: Ozymandias, checked out beside this site as ../ozymandias and
+# linked here as engine, which Git ignores; the link is made on first use.
+# Until the engine leaves this repository (A10b) engine/ is a directory.
+ifeq ($(wildcard engine/engine.mk),)
+# A directory, or a link to one, that is no engine is left for you to look
+# at; a link to nothing is made again.
+ifneq ($(shell [ -e engine ] && echo here),)
+$(error engine holds no engine.mk: it should be a checkout of Ozymandias, or a link to one)
+endif
+ifeq ($(wildcard ../ozymandias/engine.mk),)
+$(error No engine: clone Ozymandias beside this site, as ../ozymandias (git clone https://git.levineuwirth.org/neuwirth/ozymandias ../ozymandias); make then links it as engine)
+endif
+$(shell ln -sfn ../ozymandias engine)
+endif
 include engine/engine.mk
 
 # Rebuild the CV + website résumé from yaml-source/ and refresh static/.
