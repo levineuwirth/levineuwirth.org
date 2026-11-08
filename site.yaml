@@ -32,7 +32,6 @@ source-preview:
   - data/annotations.json
   - data/similar-links.json
   - cabal.project
-  - cabal.project.freeze
   - Makefile
   - LICENSE
   - WRITING.md
