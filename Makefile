@@ -1,7 +1,7 @@
 # This site's make targets: the engine's (engine/engine.mk: the build and
 # its steps, the tests, the reports) and its own, the CV PDFs and the deploy.
 
-.PHONY: pdfs deploy deploy-locked deploy-guard deploy-preflight deploy-recheck deploy-rsync-inplace deploy-rsync-atomic deploy-clean
+.PHONY: pdfs deploy deploy-locked deploy-guard deploy-preflight deploy-engine-check deploy-engine-built deploy-push-engine deploy-recheck deploy-rsync-inplace deploy-rsync-atomic deploy-clean
 
 # Source .env for the deploy target if it exists.
 # .env format: KEY=value (one per line, no `export` prefix, no quotes needed).
@@ -138,12 +138,68 @@ deploy-preflight:
 	   rm -f data/last-deploy-dirty.txt; \
 	   echo "deploy: build inputs are clean at $$(git rev-parse --short HEAD)"; \
 	 fi
+	@$(MAKE) --no-print-directory deploy-engine-check
 	# Score pages are ignored by git: a fresh checkout builds without them,
 	# but deploying it would remove the published scores.
 	@$(PY) $(call tool,music-import.py) check
 
+# The engine, once it is a repository of its own (A10b): the site's status
+# no longer sees it, so its own uncommitted changes refuse the deploy the
+# same way, and since this deploy pushes the engine's main (the author,
+# 2026-11-08), the engine must be on it. Inside the site it is the site's.
+deploy-engine-check:
+	@if $(engine_separate); then \
+	   branch=$$(git -C engine symbolic-ref -q --short HEAD || echo "a detached HEAD"); \
+	   if [ "$$branch" != "main" ]; then \
+	     echo "deploy: the engine is on $$branch, not main — refusing: the deploy pushes the engine's main." >&2; \
+	     exit 1; \
+	   fi; \
+	   dirty=$$($(engine_dirty)); \
+	   if [ -z "$$dirty" ]; then \
+	     echo "deploy: the engine is clean at $$(git -C engine rev-parse --short HEAD)"; \
+	   elif [ "$(ALLOW_DIRTY_DEPLOY)" = "1" ]; then \
+	     echo "deploy: ALLOW_DIRTY_DEPLOY=1 — publishing an engine that differs from its HEAD:"; \
+	     printf '%s\n' "$$dirty" | sed 's/^/    /'; \
+	     mkdir -p data; \
+	     { echo "# engine HEAD: $$(git -C engine rev-parse HEAD)"; printf '%s\n' "$$dirty"; } >> data/last-deploy-dirty.txt; \
+	   else \
+	     echo "deploy: the engine has uncommitted changes — the pushed engine would not" >&2; \
+	     echo "        describe the site being published. Refusing." >&2; \
+	     printf '%s\n' "$$dirty" | sed 's/^/    /' >&2; \
+	     exit 1; \
+	   fi; \
+	 fi
+
+# The engine the site was built from (tools/build-freshness.sh records it),
+# against the engine about to be pushed: the same commit, and committed.
+deploy-engine-built:
+	@test -f data/last-build-engine.txt || { echo "deploy: no data/last-build-engine.txt — run 'make build' first" >&2; exit 1; }
+	@built=$$(sed -n 1p data/last-build-engine.txt); head=$$(git -C engine rev-parse HEAD); \
+	 if [ "$$built" != "$$head" ]; then \
+	   echo "deploy: the engine's HEAD ($$(echo $$head | cut -c1-12)) is not the commit the site was built from ($$(echo $$built | cut -c1-12)). Re-run 'make deploy'." >&2; \
+	   exit 1; \
+	 fi; \
+	 if grep -qx dirty data/last-build-engine.txt && [ "$(ALLOW_DIRTY_DEPLOY)" != "1" ]; then \
+	   echo "deploy: the site was built from an engine with uncommitted changes (ENGINE_DEV=1)." >&2; \
+	   echo "        Commit them and re-run 'make deploy', or set ALLOW_DIRTY_DEPLOY=1." >&2; \
+	   exit 1; \
+	 fi
+
+# Push the engine's main before the site's, once it is a repository of its
+# own: the site says which engine it was built from, and that engine must be
+# one anyone can fetch. A site that doesn't push its engine runs engine.mk's
+# engine-published instead.
+deploy-push-engine:
+	@if $(engine_separate); then \
+	   git -C engine push origin main || { echo "deploy: the engine's push failed — nothing of the site was pushed or published." >&2; exit 1; }; \
+	   if [ "$$(git -C engine rev-parse HEAD)" != "$$(git -C engine rev-parse origin/main)" ]; then \
+	     echo "deploy: the engine's origin/main is not its HEAD after the push — nothing of the site was pushed or published." >&2; \
+	     exit 1; \
+	   fi; \
+	 fi
+
 deploy-recheck:
-	@dirty=$$($(call dirty_inputs,$(RECHECK_PATHS))); \
+	@dirty=$$({ $(call dirty_inputs,$(RECHECK_PATHS)); if $(engine_separate); then $(engine_dirty); fi; }); \
 	 if [ -z "$$dirty" ]; then \
 	   echo "deploy: build inputs still match $$(git rev-parse --short HEAD)"; \
 	 elif [ "$(ALLOW_DIRTY_DEPLOY)" = "1" ]; then \
@@ -203,12 +259,16 @@ deploy-locked: deploy-preflight build-locked validate sign
 	   echo "        Something committed between the build and the deploy. Re-run 'make deploy'." >&2; \
 	   exit 1; \
 	 fi
+	@$(MAKE) --no-print-directory deploy-engine-built
 	@$(MAKE) --no-print-directory deploy-recheck
 	@command -v notify-send >/dev/null 2>&1 && notify-send "make deploy" "Ready to push & rsync — waiting for auth" || true
 	# Push first: a successful push is cheap to roll back, while a
 	# half-completed rsync is harder to recover from. If the push
 	# fails (auth, branch protection, network), abort before touching
 	# the VPS so the public source repo and the live site stay in sync.
+	# The engine's main goes first, so the site never names an engine commit
+	# that isn't published.
+	@$(MAKE) --no-print-directory deploy-push-engine
 	git push -u origin main
 	@if [ "$(ATOMIC_DEPLOY)" = "1" ]; then \
 	  $(MAKE) --no-print-directory deploy-rsync-atomic; \

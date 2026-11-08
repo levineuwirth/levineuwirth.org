@@ -72,6 +72,7 @@ data/last-build-seconds.txt
 data/rules-hash.txt
 data/unpublished-hash.txt
 data/last-build-commit.txt
+data/last-build-engine.txt
 data/engine-changed.stamp
 data/last-full-rebuild.txt
 data/.full-rebuild-pending
