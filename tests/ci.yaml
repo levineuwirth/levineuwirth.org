@@ -13,6 +13,7 @@ modules:
 - test_deploy_assets
 - test_forgejo_backup_offhost
 - test_forgejo_update
+- test_identity_policy
 - test_levcs_instance_backup
 - test_site_yaml
 - test_vps_config_backup

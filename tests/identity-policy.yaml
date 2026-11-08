@@ -13,8 +13,9 @@
 #
 # fixed-strings match case-insensitively, as the identity from `site config`
 # and the font names from tools/fonts.yaml do. fixed-patterns are
-# case-sensitive regular expressions for the ln namespace, renamed in A9;
-# they catch new names in it as well as old ones.
+# case-sensitive regular expressions for the ln namespace, renamed to ozy in
+# A9e. With no allowance left, they are what keeps its names, old or new, out of
+# the engine (tests/test_identity_policy.py).
 fixed-strings:
 - 619844703EC398E70B0045D7150F08179CFEEFE3   # the signing subkey's keygrip
 fixed-patterns:
@@ -116,6 +117,7 @@ site-files:
 - tests/test_forgejo_reconcile.py
 - tests/test_forgejo_update.py
 - tests/test_frontmatter.py
+- tests/test_identity_policy.py
 - tests/test_levcs_instance_backup.py
 - tests/test_licenses.py
 - tests/test_nginx_logging.py
