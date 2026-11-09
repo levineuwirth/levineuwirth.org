@@ -15,6 +15,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          path: site
+      # The engine, Ozymandias, beside the site as the Makefile expects it
+      # (engine -> ../ozymandias): its main, which a site builds from.
+      - uses: actions/checkout@v4
+        with:
+          repository: levineuwirth/ozymandias
+          path: ozymandias
+      - name: The engine, linked
+        run: ln -s ../ozymandias site/engine
       # Everything else engine/tests/ci.py needs (node, gpg, rsync, flock, coreutils)
       # ships with the runner; borg does not. Ubuntu's 1.2.8 passes the test.
       - name: borg
@@ -22,11 +32,14 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
+          cache-dependency-glob: ozymandias/uv.lock
       # The engine's Python project, synced into the site's .venv (`make
       # venv`); absolute, as uv resolves a relative path against engine/.
-      - name: Python environment (engine/uv.lock)
+      - name: Python environment (the engine's uv.lock)
+        working-directory: site
         run: uv sync --locked --project engine
         env:
-          UV_PROJECT_ENVIRONMENT: ${{ github.workspace }}/.venv
+          UV_PROJECT_ENVIRONMENT: ${{ github.workspace }}/site/.venv
       - name: Tests
+        working-directory: site
         run: .venv/bin/python engine/tests/ci.py

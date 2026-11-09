@@ -5,19 +5,24 @@
 The personal site of Levi Neuwirth: essays, poetry, fiction, music,
 photography and a CV. It is built with Ozymandias, a static site engine on
 [Hakyll](https://jaspervdj.be/hakyll/) and [Pandoc](https://pandoc.org/),
-which lives in `engine/` until it moves to its own repository. The rest
-is the site's own: its writing, its configuration and overrides of the
-engine, and the operations of the server it runs on.
+whose repository, [Ozymandias](https://git.levineuwirth.org/neuwirth/ozymandias),
+is checked out beside this one. Everything here is the site's own: its
+writing, its configuration and overrides of the engine, and the
+operations of the server it runs on.
 
 ## Building
+
+Clone Ozymandias beside this repository, as `../ozymandias`; the Makefile
+links it here as `engine`, which Git ignores. A site builds from the
+engine's latest commit: there are no pins.
 
 ```sh
 make venv          # once: the Python tools' environment, in .venv
 make dev           # drafts visible, served on http://localhost:8000
 make build         # the production build, into _site/
 make test          # the site's and the engine's tests
-make test-clean    # the same, on HEAD, in a fresh clone
-make deploy        # build, validate, sign, push, and publish to the server
+make test-clean    # the same, on HEAD, in fresh clones of both
+make deploy        # build, validate, sign, push both, and publish to the server
 ```
 
 `make build` is incremental, and rebuilds from scratch on its own when it
@@ -56,8 +61,9 @@ and the server's address in `.env` (copy `.env.example`; never commit it).
 
 ## Deploying
 
-`make deploy` runs only on `main`, with a clean tree, and stops if anything
-changes while it builds. It pushes to Forgejo and GitHub, then sends the
+`make deploy` runs only on `main`, with a clean tree and a clean engine on
+its `main`, and stops if either changes while it builds. It pushes the
+engine's `main`, then the site's, to Forgejo and GitHub, then sends the
 new scripts and stylesheets before any page that names them, keeping
 earlier versions for 90 days for tabs left open. An rsync dry run refuses a
 destination without an `index.html`, or a transfer deleting too much.

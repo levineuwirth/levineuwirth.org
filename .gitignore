@@ -45,9 +45,13 @@ _cache-dev/
 *.swp
 *.swo
 
+# The engine, Ozymandias: its own repository, checked out beside this one as
+# ../ozymandias and linked here by the Makefile.
+/engine
+
 # Python bytecode caches, and uv's environment (uv also writes its own
 # .gitignore inside it; this does not rely on that). What the engine
-# writes inside engine/ is ignored by engine/.gitignore.
+# writes inside engine/ is ignored by the engine's own .gitignore.
 **/__pycache__/
 *.pyc
 *.pyo
