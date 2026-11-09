@@ -9,6 +9,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import time
 import unittest
@@ -57,9 +58,16 @@ class DeployKeepsVersions(unittest.TestCase):
         self.env = {key: value for key, value in os.environ.items()
                     if not key.startswith(("DEPLOY_", "RSYNC_", "MAKE", "VPS_"))}
         self.env["PATH"] = f"{bin_dir}:{self.env['PATH']}"
+        for args in (("init", "-q"), ("add", "Makefile", "engine"), ("commit", "-qm", "fixture")):
+            subprocess.run(["git", "-c", "user.name=Fixture", "-c", "user.email=test@example.org",
+                            "-c", "commit.gpgsign=false", *args], cwd=self.repo,
+                           check=True, capture_output=True)
         self.built = 1_000_000
 
     def build(self, version: str) -> None:
+        provenance = self.repo / "engine/tools/build-provenance.py"
+        subprocess.run([sys.executable, str(provenance), "begin"], cwd=self.repo,
+                       check=True, capture_output=True)
         site = self.repo / "_site"
         shutil.rmtree(site, ignore_errors=True)
         (site / f"assets/{version}/js").mkdir(parents=True)
@@ -69,6 +77,8 @@ class DeployKeepsVersions(unittest.TestCase):
         self.built += 100
         os.utime(home, (self.built, self.built))
         (site / f"assets/{version}/js/a.js").write_text(version)
+        subprocess.run([sys.executable, str(provenance), "stamp"], cwd=self.repo,
+                       check=True, capture_output=True)
 
     def seed(self, docroot: Path) -> None:
         """A live site as it was before versions."""

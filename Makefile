@@ -199,6 +199,7 @@ deploy-push-engine:
 	 fi
 
 deploy-recheck:
+	@python3 $(call tool,build-provenance.py) check
 	@dirty=$$({ $(call dirty_inputs,$(RECHECK_PATHS)); if $(engine_separate); then $(engine_dirty); fi; }); \
 	 if [ -z "$$dirty" ]; then \
 	   echo "deploy: build inputs still match $$(git rev-parse --short HEAD)"; \
@@ -223,6 +224,7 @@ VPS_DOCROOT = $(patsubst %/,%,$(strip $(VPS_PATH)))
 # targets depend on it too, so it holds when one is re-run by hand after a
 # failed transfer (audit D04).
 deploy-guard:
+	@python3 $(call tool,build-provenance.py) check
 	@test -n "$(strip $(VPS_USER))" || { echo "deploy: VPS_USER not set in .env" >&2; exit 1; }
 	@test -n "$(strip $(VPS_HOST))" || { echo "deploy: VPS_HOST not set in .env" >&2; exit 1; }
 	@$(call tool,deploy-guard.sh) docroot "$(VPS_PATH)" >/dev/null
@@ -293,7 +295,9 @@ deploy-rsync-inplace: deploy-guard
 	@python3 $(call tool,asset-versions.py) filter _site > data/deploy-filter.txt
 	@$(call tool,deploy-guard.sh) target _site "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$(VPS_DOCROOT)/" data/deploy-filter.txt
 	@python3 $(call tool,asset-versions.py) attempt _site
+	@python3 $(call tool,build-provenance.py) check
 	rsync -avzR "_site/./assets/$$(python3 $(call tool,asset-versions.py) current _site)/" "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$(VPS_DOCROOT)/"
+	@python3 $(call tool,build-provenance.py) check
 	rsync -avz --delete --filter="merge data/deploy-filter.txt" _site/ "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$(VPS_DOCROOT)/"
 	@python3 $(call tool,asset-versions.py) deployed _site
 
@@ -344,7 +348,9 @@ deploy-rsync-atomic: deploy-guard
 	 linkdest=""; \
 	 if [ -n "$$prev" ]; then linkdest="--link-dest=$$prev"; fi; \
 	 python3 $(call tool,asset-versions.py) attempt _site; \
+	 python3 $(call tool,build-provenance.py) check; \
 	 rsync -avz --delete $$linkdest _site/ "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$$rel/$$ts/"; \
+	 python3 $(call tool,build-provenance.py) check; \
 	 { echo 'set -e'; \
 	   if [ -n "$$prev" ]; then for kept in $$keep; do \
 	     echo "if [ -e '$$prev/$$kept' ]; then mkdir -p '$$rel/$$ts/$$(dirname "$$kept")'; cp -al '$$prev/$$kept' '$$rel/$$ts/$$kept'; fi"; \

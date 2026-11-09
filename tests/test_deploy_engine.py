@@ -134,6 +134,25 @@ class DeployEngine(unittest.TestCase):
         self.assertIn("the engine has uncommitted changes", done.stderr)
         self.assertEqual(self.make("engine-committed", ENGINE_DEV="1").returncode, 0)
 
+    def test_recheck_refuses_a_clean_engine_move_after_the_build(self):
+        # Use the real recheck recipe: a clean move is invisible to status.
+        (self.engine / "tools").mkdir()
+        shutil.copy2(engine_path("tools/build-provenance.py"), self.engine / "tools/build-provenance.py")
+        git(self.engine, "add", ".")
+        git(self.engine, "commit", "-qm", "provenance tool")
+        git(self.site, "add", ".")
+        git(self.site, "commit", "-qm", "site")
+        for command in ("begin", "stamp"):
+            subprocess.run(["python3", str(self.engine / "tools/build-provenance.py"), command],
+                           cwd=self.site, check=True, capture_output=True)
+        self.commit("moved after build\n")
+        git(self.engine, "push", "-q", "origin", "main")
+        for target in ("deploy-recheck", "deploy-guard"):
+            with self.subTest(target=target):
+                done = self.make(target)
+                self.assertNotEqual(done.returncode, 0)
+                self.assertIn("changed since the build began", done.stderr)
+
     def test_an_engine_inside_the_site_is_the_site_s(self):
         # Before A10b: the site's own checks cover engine/, and its push
         # carries it; none of these has anything to do.
