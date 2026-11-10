@@ -573,6 +573,8 @@ the content host.
 | Domain | Icon |
 |--------|------|
 | `wikipedia.org` | Wikipedia |
+| `mtg.wiki` | Magic book |
+| `scryfall.com` | Scryfall |
 | `arxiv.org` | arXiv |
 | `doi.org` | DOI |
 | `worldcat.org` | WorldCat |
@@ -623,6 +625,8 @@ markup needed.
 | Internal page | Title, abstract, authors, tags, word count, reading time |
 | Citation marker (`[1]`) | Full bibliography reference (multi-cite groups supported) |
 | Wikipedia | Lead section extract via MediaWiki API |
+| MTG Wiki (`mtg.wiki/page/…`) | Article introduction via MediaWiki API |
+| Scryfall (`scryfall.com/card/…`) | Card image, type, Oracle text and printing; both faces’ text for double-faced cards |
 | arXiv | Title, authors, abstract via Atom API |
 | DOI / CrossRef | Title, authors, journal, year, abstract |
 | GitHub code link (`blob` / `tree` / `commit`) | File contents, directory listing, or commit summary, from a build-time snapshot |

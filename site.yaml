@@ -146,7 +146,7 @@ epistemic-about: /colophon.html#living-documents
 epistemic-about-label: Colophon
 # Link previews from other sites: all that popups.js has. nginx/ allows and
 # proxies each of them.
-popup-providers: [wikipedia, arxiv, doi, github, openlibrary, biorxiv, medrxiv, youtube, archive, pubmed]
+popup-providers: [wikipedia, arxiv, doi, github, openlibrary, biorxiv, medrxiv, youtube, archive, pubmed, mtgwiki, scryfall]
 # The engine's switches this site sets (engine/switches.yaml has each one's
 # default and what it covers): everything on.
 switches:
