@@ -19,6 +19,7 @@ evidence: 4
 scope: broad
 novelty: moderate
 practicality: moderate
+repository: "https://github.com/JamesPetrie/VerInf"
 history:
   - date: "2026-11-04"
     note: "Anthropic cites VerInf as prior work in its FlashProve research."
