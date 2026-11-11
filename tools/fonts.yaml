@@ -85,7 +85,7 @@ families:
 # Monospace has none: JetBrains Mono and Courier both advance 0.6 em, and
 # code is seldom above the fold.
 fallbacks:
-  css: static/css/base.css
+  css: static/css/fonts.css
   begin: "/* BEGIN fallback faces — written by tools/subset-fonts.py */"
   end: "/* END fallback faces */"
   # The web faces a set stands in for: style, CSS weight and style, subset.

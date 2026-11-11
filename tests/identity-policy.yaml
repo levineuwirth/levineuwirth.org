@@ -51,6 +51,13 @@ site-files:
 - paper/
 - site.yaml
 - static/apple-touch-icon.png
+- static/css/fonts.css
+- static/css/home.css
+- static/css/links.css
+- static/css/memento-mori.css
+- static/css/theme.css
+- static/css/site.css
+- static/css/work.css
 - static/css/seasons/
 - static/cv.pdf
 - static/cv.thumb.png
@@ -101,6 +108,7 @@ site-files:
 - tests/ci.yaml
 - tests/routes.yaml
 - tests/test_deploy_engine.py
+- tests/test_site_css_layers.py
 - tests/test_engine_link.py
 - tests/identity-allowances.yaml
 - tests/identity-policy.yaml

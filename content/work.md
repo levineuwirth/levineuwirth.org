@@ -1,6 +1,7 @@
 ---
 title: Work
 work: true
+stylesheets: [work]
 description: Research engineer working on technical AI assurance — verifiable inference, model evaluations, systems and cryptography.
 history:
   - date: "2026-11-04"

@@ -1,0 +1,199 @@
+@layer site {
+/* --- Typographic ornaments ------------------------------------------ */
+
+/* asterism — ⁂ typographic asterism */
+body[data-dingbat="asterism"] #markdownBody hr::after {
+    content: "⁂";
+    letter-spacing: 0.5em;
+    padding-left: 0.5em;
+}
+
+/* asterisks — classic spaced asterisks used in print fiction */
+body[data-dingbat="asterisks"] #markdownBody hr::after {
+    content: "* * *";
+    letter-spacing: 0.4em;
+    padding-left: 0;
+    font-size: 1.3em;
+}
+
+/* --- SVG ornaments -------------------------------------------------- */
+/* Shared mask/sizing for every SVG-driven variant. The per-variant rules
+   below only supply the mask-image URL. */
+body[data-dingbat="fleuron"]  #markdownBody hr::after,
+body[data-dingbat="trefoil"]  #markdownBody hr::after,
+body[data-dingbat="lozenge"]  #markdownBody hr::after,
+body[data-dingbat="clef"]     #markdownBody hr::after,
+body[data-dingbat="memento"]  #markdownBody hr::after,
+body[data-dingbat="tech"]     #markdownBody hr::after,
+body[data-dingbat="ai"]       #markdownBody hr::after {
+    content: "";
+    width: 1.6em;
+    height: 1.6em;
+    font-size: 1em; /* override the 1.5em from the base rule */
+    vertical-align: middle;
+    letter-spacing: 0;
+    padding-left: 0;
+    background-color: currentColor;
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+}
+
+body[data-dingbat="fleuron"] #markdownBody hr::after {
+    mask-image: url('/images/dingbats/fleuron.svg');
+    -webkit-mask-image: url('/images/dingbats/fleuron.svg');
+}
+
+body[data-dingbat="trefoil"] #markdownBody hr::after {
+    mask-image: url('/images/dingbats/trefoil.svg');
+    -webkit-mask-image: url('/images/dingbats/trefoil.svg');
+}
+
+body[data-dingbat="lozenge"] #markdownBody hr::after {
+    mask-image: url('/images/dingbats/lozenge.svg');
+    -webkit-mask-image: url('/images/dingbats/lozenge.svg');
+}
+
+body[data-dingbat="clef"] #markdownBody hr::after {
+    mask-image: url('/images/dingbats/clef.svg');
+    -webkit-mask-image: url('/images/dingbats/clef.svg');
+}
+
+body[data-dingbat="memento"] #markdownBody hr::after {
+    mask-image: url('/images/dingbats/memento.svg');
+    -webkit-mask-image: url('/images/dingbats/memento.svg');
+}
+
+body[data-dingbat="tech"] #markdownBody hr::after {
+    mask-image: url('/images/dingbats/tech.svg');
+    -webkit-mask-image: url('/images/dingbats/tech.svg');
+}
+
+body[data-dingbat="ai"] #markdownBody hr::after {
+    mask-image: url('/images/dingbats/ai.svg');
+    -webkit-mask-image: url('/images/dingbats/ai.svg');
+}
+
+
+
+a[data-link-icon="wikipedia"]::after {
+    mask-image: url('/images/link-icons/wikipedia.svg');
+    -webkit-mask-image: url('/images/link-icons/wikipedia.svg');
+}
+a[data-link-icon="mtgwiki"]::after {
+    mask-image: url('/images/link-icons/mtgwiki.svg');
+    -webkit-mask-image: url('/images/link-icons/mtgwiki.svg');
+}
+a[data-link-icon="scryfall"]::after {
+    mask-image: url('/images/link-icons/scryfall.svg');
+    -webkit-mask-image: url('/images/link-icons/scryfall.svg');
+}
+
+a[data-link-icon="arxiv"]::after {
+    mask-image: url('/images/link-icons/arxiv.svg');
+    -webkit-mask-image: url('/images/link-icons/arxiv.svg');
+}
+
+a[data-link-icon="doi"]::after {
+    mask-image: url('/images/link-icons/doi.svg');
+    -webkit-mask-image: url('/images/link-icons/doi.svg');
+}
+
+a[data-link-icon="github"]::after {
+    mask-image: url('/images/link-icons/github.svg');
+    -webkit-mask-image: url('/images/link-icons/github.svg');
+}
+
+a[data-link-icon="forgejo"]::after {
+    mask-image: url('/images/link-icons/forgejo.svg');
+    -webkit-mask-image: url('/images/link-icons/forgejo.svg');
+}
+
+a[data-link-icon="worldcat"]::after {
+    mask-image: url('/images/link-icons/worldcat.svg');
+    -webkit-mask-image: url('/images/link-icons/worldcat.svg');
+}
+
+a[data-link-icon="orcid"]::after {
+    mask-image: url('/images/link-icons/orcid.svg');
+    -webkit-mask-image: url('/images/link-icons/orcid.svg');
+}
+
+a[data-link-icon="internet-archive"]::after {
+    mask-image: url('/images/link-icons/internet-archive.svg');
+    -webkit-mask-image: url('/images/link-icons/internet-archive.svg');
+}
+
+a[data-link-icon="tensorflow"]::after {
+    mask-image: url('/images/link-icons/tensorflow.svg');
+    -webkit-mask-image: url('/images/link-icons/tensorflow.svg');
+}
+
+a[data-link-icon="anthropic"]::after {
+    mask-image: url('/images/link-icons/anthropic.svg');
+    -webkit-mask-image: url('/images/link-icons/anthropic.svg');
+}
+
+a[data-link-icon="openai"]::after {
+    mask-image: url('/images/link-icons/openai.svg');
+    -webkit-mask-image: url('/images/link-icons/openai.svg');
+}
+
+a[data-link-icon="twitter"]::after {
+    mask-image: url('/images/link-icons/twitter.svg');
+    -webkit-mask-image: url('/images/link-icons/twitter.svg');
+}
+
+a[data-link-icon="reddit"]::after {
+    mask-image: url('/images/link-icons/reddit.svg');
+    -webkit-mask-image: url('/images/link-icons/reddit.svg');
+}
+
+a[data-link-icon="youtube"]::after {
+    mask-image: url('/images/link-icons/youtube.svg');
+    -webkit-mask-image: url('/images/link-icons/youtube.svg');
+}
+
+a[data-link-icon="tiktok"]::after {
+    mask-image: url('/images/link-icons/tiktok.svg');
+    -webkit-mask-image: url('/images/link-icons/tiktok.svg');
+}
+
+a[data-link-icon="substack"]::after {
+    mask-image: url('/images/link-icons/substack.svg');
+    -webkit-mask-image: url('/images/link-icons/substack.svg');
+}
+
+a[data-link-icon="hacker-news"]::after {
+    mask-image: url('/images/link-icons/hacker-news.svg');
+    -webkit-mask-image: url('/images/link-icons/hacker-news.svg');
+}
+
+a[data-link-icon="lesswrong"]::after {
+    mask-image: url('/images/link-icons/lesswrong.svg');
+    -webkit-mask-image: url('/images/link-icons/lesswrong.svg');
+}
+
+a[data-link-icon="new-york-times"]::after {
+    mask-image: url('/images/link-icons/new-york-times.svg');
+    -webkit-mask-image: url('/images/link-icons/new-york-times.svg');
+}
+
+a[data-link-icon="nasa"]::after {
+    mask-image: url('/images/link-icons/nasa.svg');
+    -webkit-mask-image: url('/images/link-icons/nasa.svg');
+}
+
+a[data-link-icon="apple"]::after {
+    mask-image: url('/images/link-icons/apple.svg');
+    -webkit-mask-image: url('/images/link-icons/apple.svg');
+}
+
+a[data-link-icon="internal"]::after {
+    mask-image: url('/images/link-icons/internal.svg');
+    -webkit-mask-image: url('/images/link-icons/internal.svg');
+}
+}

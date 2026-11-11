@@ -109,3 +109,15 @@
   engine: static/web-app-manifest-512x512.png
   reviewed: 0883ebdc35ae091f5cc2d0881c2c9af9d9807ec3
   note: the rooted-L mark
+- site: static/css/theme.css
+  engine: static/css/theme.css
+  reviewed: 9d83a3bc68df71f6aa51c8e549338728535be73f
+  note: the site's theme stylesheet, in the site layer
+- site: static/css/fonts.css
+  engine: static/css/fonts.css
+  reviewed: 9d83a3bc68df71f6aa51c8e549338728535be73f
+  note: the site's fonts stylesheet, in the site layer
+- site: static/css/site.css
+  engine: static/css/site.css
+  reviewed: 9d83a3bc68df71f6aa51c8e549338728535be73f
+  note: the site's site stylesheet, in the site layer

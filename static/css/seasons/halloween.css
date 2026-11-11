@@ -1,3 +1,6 @@
+/* In the site's layer, after its own styles, as it came after them before
+   the layers: an unlayered sheet would win over every layered rule. */
+@layer site {
 /* halloween.css — Blood Moon, the Halloween season (site.yaml): a dressing
    over the dark theme. theme.js wears it as data-season="halloween" beside
    data-theme="dark", so every dark-theme rule still applies and these
@@ -155,4 +158,5 @@
     .halloween-moon--header {
         display: none !important;
     }
+}
 }

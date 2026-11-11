@@ -1,0 +1,132 @@
+/* the links page's own styles, which only it loads (its front matter's
+   stylesheets: [links]), in the site's layer. */
+@layer site {
+/* links */
+
+:root:where(html:has(.links-section)) {
+    --links-accent:        #524638;
+    --links-accent-muted:  #726758;
+    --links-intro-ink:     var(--text);
+}
+
+[data-theme="dark"]:where(html:has(.links-section)) {
+    --links-accent:        #b5a890;
+    --links-accent-muted:  #8d8373;
+}
+
+[data-theme="cappuccino"]:where(html:has(.links-section)) {
+    --links-accent:        #d0b888;
+    --links-accent-muted:  #c5a880;
+}
+
+
+@media (prefers-color-scheme: dark) {
+:root:not([data-theme]):where(html:has(.links-section)) {
+        --links-accent:        #b5a890;
+        --links-accent-muted:  #8d8373;
+    }}
+
+:where(html:has(.links-section)) #markdownBody > p:first-of-type {
+    max-width: 32rem;
+    margin: 1.5rem 0 2.75rem;
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--links-intro-ink);
+}
+
+:where(html:has(.links-section)) #markdownBody > p:first-of-type::first-letter,
+:where(html:has(.links-section)) #markdownBody > p:first-of-type::first-line {
+    color: var(--links-intro-ink);
+}
+
+:where(html:has(.links-section)) .links-section {
+    margin-bottom: 3rem;
+}
+
+:where(html:has(.links-section)) #markdownBody .links-section h2 {
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
+    font-variant: all-small-caps;
+    font-feature-settings: "smcp" 1;
+    letter-spacing: 0.09em;
+    color: var(--links-accent);
+    text-transform: none;
+    font-weight: 400;
+    margin: 0 0 0.9rem 0;
+}
+
+:where(html:has(.links-section)) .links-section-ornament {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    margin-right: 0.5em;
+    background-color: currentColor;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+    vertical-align: -0.12em;
+}
+
+:where(html:has(.links-section)) .links-section-ornament[data-ornament="academic"] {
+    mask-image: url('/images/dingbats/academic.svg');
+    -webkit-mask-image: url('/images/dingbats/academic.svg');
+}
+
+:where(html:has(.links-section)) .links-section-ornament[data-ornament="artistic"] {
+    mask-image: url('/images/dingbats/artistic.svg');
+    -webkit-mask-image: url('/images/dingbats/artistic.svg');
+}
+
+:where(html:has(.links-section)) .links-section-ornament[data-ornament="code"] {
+    mask-image: url('/images/dingbats/tech.svg');
+    -webkit-mask-image: url('/images/dingbats/tech.svg');
+}
+
+:where(html:has(.links-section)) .links-section-ornament[data-ornament="miscellaneous"] {
+    mask-image: url('/images/dingbats/trefoil.svg');
+    -webkit-mask-image: url('/images/dingbats/trefoil.svg');
+}
+
+:where(html:has(.links-section)) .links-section-ornament[data-ornament="professional"] {
+    mask-image: url('/images/dingbats/professional.svg');
+    -webkit-mask-image: url('/images/dingbats/professional.svg');
+}
+
+:where(html:has(.links-section)) .links-section + .links-section::before {
+    content: "";
+    display: block;
+    width: 240px;
+    max-width: 60%;
+    height: 24px;
+    margin: 2.5rem auto;
+    color: var(--links-accent-muted);
+    background-color: currentColor;
+    mask-image: url('/images/dingbats/library-divider.svg');
+    -webkit-mask-image: url('/images/dingbats/library-divider.svg');
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+}
+
+:where(html:has(.links-section)) #markdownBody .links-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.3rem;
+}
+
+:where(html:has(.links-section)) #markdownBody .links-section li {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+}
+}

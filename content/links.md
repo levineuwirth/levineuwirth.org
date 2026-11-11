@@ -1,6 +1,7 @@
 ---
 title: Links
 links: true
+stylesheets: [links]
 description: >-
   A directory of where else I exist on the internet, sorted into academic,
   artistic, code, professional, and miscellaneous shelves.
