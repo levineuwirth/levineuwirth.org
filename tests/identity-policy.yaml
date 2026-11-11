@@ -109,6 +109,7 @@ site-files:
 - tests/routes.yaml
 - tests/test_deploy_engine.py
 - tests/test_site_css_layers.py
+- tests/test_site_css_tokens.py
 - tests/test_engine_link.py
 - tests/identity-allowances.yaml
 - tests/identity-policy.yaml
