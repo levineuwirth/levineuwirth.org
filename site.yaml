@@ -143,6 +143,10 @@ standalone:
 # heading links there.
 epistemic-about: /colophon.html#living-documents
 epistemic-about-label: Colophon
+# What stands at the head of a page with an epistemic profile: its mark as a
+# seal (the profile lettered around it) or a dial, in place of the mark and
+# the radar side by side (radar, the engine's default).
+epistemic-figure: seal
 # Link previews from other sites: all that popups.js has. nginx/ allows and
 # proxies each of them.
 popup-providers: [wikipedia, arxiv, doi, github, openlibrary, biorxiv, medrxiv, youtube, archive, pubmed, mtgwiki, scryfall]
