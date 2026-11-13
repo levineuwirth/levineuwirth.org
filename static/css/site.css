@@ -314,4 +314,25 @@ body > header:not(.essay-frontmatter) {
     color: var(--text);
     font-weight: var(--weight-regular);
 }
+
+/* Labels the engine keeps on one line are wider in the text face than in
+   the sans they were measured in: at a phone's width they may wrap rather
+   than push the page sideways at the largest text size. */
+@media (max-width: 540px) {
+    .archive-list-meta,
+    .vita-chip {
+        max-width: 100%;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .vita-chip {
+        line-height: 1.2;
+    }
+
+    /* A hostname in the summary is one word, and longer than the line. */
+    .essay-summary {
+        overflow-wrap: break-word;
+    }
+}
 }
