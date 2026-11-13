@@ -196,4 +196,122 @@ a[data-link-icon="internal"]::after {
     mask-image: url('/images/link-icons/internal.svg');
     -webkit-mask-image: url('/images/link-icons/internal.svg');
 }
+
+/* ============================================================
+   SKIN
+   What the plain themes look like beyond their tokens (theme.css):
+   the ground, the title, tables. Rules only; no markup goes with them.
+   ============================================================ */
+
+/* Ground. A fine grain over the theme's --bg, as paper has. --ground is
+   what a reader's setting will turn (none is the plain ground). The
+   header wears it too, or the page would go flat under it. Paper has
+   its own. */
+:root {
+    --ground-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='.33 .33 .33 0 0 .33 .33 .33 0 0 .33 .33 .33 0 0 0 0 0 0 1'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='1.3' intercept='-.15'/%3E%3CfeFuncG type='linear' slope='1.3' intercept='-.15'/%3E%3CfeFuncB type='linear' slope='1.3' intercept='-.15'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    --ground: var(--ground-grain);
+}
+
+@media print {
+    :root {
+        --ground: none;
+    }
+}
+
+html,
+body,
+body > header:not(.essay-frontmatter) {
+    background-image: var(--ground);
+    background-blend-mode: overlay;
+}
+
+/* The title is set in the text's face (--font-sans names it now), at
+   its regular weight: at this size the letters carry it. */
+.page-title {
+    font-weight: var(--weight-regular);
+}
+
+/* The narrow header (the engine's 32rem container): its links one step
+   smaller and a little closer, so that eight still make two rows of
+   four on a phone, as they did in the narrower sans. */
+@container site-nav (width <= 32rem) {
+    .nav-primary {
+        font-size: var(--step--4);
+        letter-spacing: calc(0.04em * var(--tracking-scale));
+    }
+
+    .nav-primary a {
+        padding-inline: 0.45rem;
+    }
+}
+
+/* A list row's date and its "revised": a step smaller, the size they
+   had on the old scale, so a long title beside them keeps to two lines. */
+.item-card-date,
+.item-card-revised {
+    font-size: var(--step--4);
+}
+
+/* Tables are ruled across and not down: a line under the head, a
+   hairline under each row. */
+#markdownBody th,
+#markdownBody td {
+    border-width: 0 0 1px;
+    padding-left: 0;
+}
+
+#markdownBody th {
+    background-color: transparent;
+    border-bottom-color: var(--rule);
+    color: var(--text-faint);
+    font-size: var(--step--3);
+    font-variant-caps: all-small-caps;
+    letter-spacing: calc(0.06em * var(--tracking-scale));
+    vertical-align: bottom;
+}
+
+/* Links are underlined with a hairline, not a stroke. Print keeps its
+   own. */
+@media screen {
+    a {
+        text-decoration-thickness: 0.07em;
+        text-underline-offset: 0.18em;
+    }
+}
+
+/* One control style. A choice among a few (the commonplace's two views,
+   how many a list shows, the library's filters) is a run of small
+   capitals with the one in force underlined: no boxes. */
+.cp-view-toggle,
+.list-controls-options {
+    flex-wrap: wrap;
+    gap: 0.2rem 1rem;
+}
+
+:is(.cp-toggle-btn, .list-count-btn, .filter-btn) {
+    min-width: 24px;
+    min-height: 24px;
+    padding: 0.15rem 0.05rem;
+    border: 0;
+    border-bottom: 1px solid transparent;
+    border-radius: 0;
+    background: none;
+    color: var(--text-faint);
+    font-size: var(--step--2);
+    font-variant-caps: all-small-caps;
+    font-variant-numeric: lining-nums;
+    letter-spacing: calc(0.06em * var(--tracking-scale));
+    white-space: nowrap;
+}
+
+:is(.cp-toggle-btn, .list-count-btn, .filter-btn):hover {
+    border-bottom-color: transparent;
+    color: var(--text);
+}
+
+:is(.cp-toggle-btn, .list-count-btn, .filter-btn).is-active {
+    border-bottom-color: var(--text);
+    color: var(--text);
+    font-weight: var(--weight-regular);
+}
 }

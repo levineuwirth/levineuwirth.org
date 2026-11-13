@@ -89,7 +89,7 @@ build-fail level — violations warn but do not break the build.
 | # | Constraint | Rationale |
 |---|---|---|
 | M1 | `viewBox="0 0 280 280"` (or proportional, square) | Renders at 130–280 px equally. |
-| M2 | All strokes use `stroke="currentColor"`; all fills use `fill="none"` except small filled point-marks which use `fill="currentColor"` | Inverts cleanly under Light, Dark, Cappuccino without per-theme assets. The score-fragment filter already does this substitution; monograms must be authored this way from the start. |
+| M2 | All strokes use `stroke="currentColor"`; all fills use `fill="none"` except small filled point-marks which use `fill="currentColor"` | Inverts cleanly under Light and Dark without per-theme assets. The score-fragment filter already does this substitution; monograms must be authored this way from the start. |
 | M3 | Outer roundel: `<circle cx="140" cy="140" r="128" stroke-width="0.6"/>` | The unifying frame. Without it, marks read as illustrations, not as a system. |
 | M4 | Stroke widths within {0.3, 0.5, 0.6, 0.8, 1.0, 1.2, 1.4} | Limits visual rhythm to a small palette. |
 | M5 | `stroke-linecap="round"` and `stroke-linejoin="round"` everywhere | Spectral-compatible terminals. |

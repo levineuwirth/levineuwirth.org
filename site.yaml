@@ -45,8 +45,7 @@ signing-fingerprint: C9A42A6F AD444FBE 566FD738 531BDC1C C2707066
 # makes from tools/fonts.yaml's families.
 font-preloads:
   - /fonts/spectral-regular.woff2
-  - /fonts/fira-sans-semibold.woff2
-  - /fonts/fira-sans-regular.woff2
+  - /fonts/spectral-semibold.woff2
 # Seasonal dressings over a theme (engine: Config.Season). While a season's
 # window is open (month-day, inclusive), a reader with no stored theme wears
 # it and Settings offers it; afterwards, one who chose it gets its base.

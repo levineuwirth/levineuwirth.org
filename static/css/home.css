@@ -83,7 +83,7 @@
     color: var(--text);
     text-decoration: underline;
     text-decoration-color: var(--border-muted);
-    text-decoration-thickness: 0.15em;
+    text-decoration-thickness: 0.07em;
     text-underline-offset: 0.2em;
     text-decoration-skip-ink: auto;
     transition: text-decoration-color var(--transition-fast), color var(--transition-fast);
