@@ -335,4 +335,146 @@ body > header:not(.essay-frontmatter) {
         overflow-wrap: break-word;
     }
 }
+
+/* ============================================================
+   MASTHEAD (redesign, step 3)
+   There is no bar. The header scrolls away with the page: across the
+   top where the window is narrow, and at the head of the left column
+   where there is room beside the text (1280px: 800 of text, two
+   margins of 240, and the masthead in one of them). nav.js sees that
+   the header no longer sticks and stops reserving its height.
+   ============================================================ */
+
+:root {
+    /* The head's left column (frontmatter.css), or the margin beside a
+       page that has only the text column, whichever is less. */
+    --masthead-width: min(clamp(170px, 17vw, 280px),
+                          calc((100vw - var(--body-max-width)) / 2 - var(--page-padding) - 1.5rem));
+}
+
+/* The site's header, not a score reader's bar. */
+body > header:has(> .site-nav) {
+    position: static;
+}
+
+/* Not on the pages that use the whole width (photography, the music
+   shelf, a composition): there the header stays across the top. */
+@media (min-width: 1280px) {
+    body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) > header:has(> .site-nav) {
+        position: absolute;
+        top: 2rem;
+        left: var(--page-padding);
+        width: var(--masthead-width);
+        border-bottom: 0;
+        background: none;
+    }
+
+    body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) .nav-row-primary {
+        display: block;
+        padding: 0;
+    }
+
+    body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) .nav-logo {
+        display: flex;
+        position: static;
+        width: 3.6rem;
+        max-width: none;
+        margin-left: -0.3rem;
+        background: none;
+        --logo-bg: var(--bg);
+    }
+
+    body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) .nav-primary {
+        display: grid;
+        /* Two columns, or one where two do not fit (a narrow window, a
+           large text size): 3.9rem holds the longest label. */
+        grid-template-columns: repeat(auto-fill, minmax(max(3.9rem, 50% - 0.5rem), 1fr));
+        gap: 0.05rem 1rem;
+        margin-top: 0.9rem;
+        padding-top: 0.8rem;
+        border-top: 1px solid var(--border);
+        font-size: var(--step--3);
+    }
+
+    body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) .nav-primary a,
+    body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) .nav-primary a + a {
+        margin: 0;
+        padding: 0.2rem 0;
+        border: 0;
+    }
+
+    body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) .nav-controls {
+        position: static;
+        width: auto;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 0.2rem 1.5rem;
+        margin: 0.35rem 0 0;
+        padding: 0;
+        border: 0;
+    }
+
+    body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) .nav-portal-toggle {
+        padding: 0.2rem 0;
+    }
+
+    /* The panel opens from the gear, over the text. Not in focus mode,
+       where the engine pins the gear to the window's corner. */
+    :root:not([data-focus-mode]) body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) .settings-wrap {
+        position: relative;
+    }
+
+    :root:not([data-focus-mode]) body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) .settings-panel {
+        left: 0;
+        right: auto;
+        width: max-content;
+        max-width: 22rem;
+        margin: 0;
+    }
+
+    /* In focus mode the panel hangs from the pinned gear: the narrow
+       container's centering is for a phone's row of controls. */
+    [data-focus-mode] body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) .settings-panel {
+        left: auto;
+        margin-inline: 0;
+    }
+
+    body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) .nav-portals {
+        font-size: var(--step--3);
+        justify-content: flex-start;
+        gap: 0 1rem;
+        margin-top: 0.5rem;
+        padding: 0.5rem 0 0;
+    }
+
+    body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) .nav-portals a,
+    body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) .nav-portals a + a {
+        padding: 0.15rem 0;
+        border: 0;
+    }
+
+    /* The rule under the head is the text column's, not the page's: it
+       would run through the masthead's column. */
+    /* The contents column starts under the head, in the masthead's
+       column: the head is at least tall enough to keep it below the
+       masthead, Portals open or shut. The 5rem is the masthead's 2rem
+       from the top, less the 8.1rem the head's rule always takes, with
+       1rem to spare. */
+    body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))):has(#toc) .essay-frontmatter {
+        min-height: calc(var(--nav-box-height) - 5rem);
+        align-content: start;
+    }
+
+    body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) .content-divider--frontmatter {
+        width: min(var(--body-max-width), 100% - 2 * var(--page-padding));
+        margin-inline: auto;
+        padding-inline: 0;
+    }
+
+    /* A dial is the masthead's counterpart across the page. */
+    .essay-frontmatter .frontmatter-mark.frontmatter-mark--dial {
+        width: var(--masthead-width);
+        height: var(--masthead-width);
+    }
+}
 }
