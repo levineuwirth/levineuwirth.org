@@ -1701,6 +1701,15 @@ the build continues normally.
 The footer defaults to CC BY-NC-SA 4.0 for Levi Neuwirth's original prose.
 Use `license: Public domain` for a public-domain work, or another license
 name with an optional `license-url:`. Known CC licenses resolve to their
-canonical URLs; an unfamiliar name without a URL appears as plain text.
+canonical URLs; an unfamiliar name without a URL appears as plain text, and
+the build reports it (`[license] ...`), since a misspelled name looks the
+same. `All rights reserved` is known and has no URL.
+
+A page whose license is not the site's is marked wherever a reader meets it:
+the license among the links at its head, a Rights entry in the record at its
+foot (the page's year and credit, the license, and `license-note:` if the
+page gives a sentence more), a mark where it is listed, and in `<head>` and
+the feed for machines. The copyright line is left off a public-domain work.
+Restating the site's license marks nothing.
 Credit an individual illustration or quotation beside that work instead of
 changing the license of the entire page. See `THIRD-PARTY.md` for scope.
