@@ -6,7 +6,7 @@
   "region": 2
  },
  "colophon": {
-  "region": 4
+  "region": 6
  },
  "composition": {
   "heading-order": 1,
@@ -14,30 +14,29 @@
  },
  "essay-grd": {
   "empty-table-header": 4,
-  "region": 4
+  "region": 6
  },
  "essay-notes": {
   "heading-order": 1,
   "region": 3
  },
  "essay-proofbroker": {
-  "region": 4,
-  "target-size": 1
+  "region": 6
  },
  "essay-r6": {
-  "region": 4
+  "region": 7
  },
  "essay-scaling": {
-  "region": 4
+  "region": 6
  },
  "essay-simd": {
   "region": 4
  },
  "essay-verified": {
-  "region": 4
+  "region": 6
  },
  "me": {
-  "region": 4
+  "region": 6
  },
  "memento": {
   "region": 3
