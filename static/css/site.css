@@ -393,6 +393,7 @@ body > header:has(> .site-nav) {
         width: var(--masthead-width);
         border-bottom: 0;
         background: none;
+        box-shadow: none;       /* a season may light the bar's foot; this has none */
     }
 
     body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) .nav-row-primary {
