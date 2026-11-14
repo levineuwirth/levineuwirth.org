@@ -147,6 +147,13 @@ epistemic-about-label: Colophon
 # seal (the profile lettered around it) or a dial, in place of the mark and
 # the radar side by side (radar, the engine's default).
 epistemic-figure: seal
+# What a reader may change in Settings besides the engine's own. The first
+# option is the default. Ground: the page's surface (static/css/site.css).
+# The margin is empty; what might stand there would be a second entry here.
+reader-settings:
+  - id: ground
+    label: Ground
+    options: [grain, plain, lamp]
 # Link previews from other sites: all that popups.js has. nginx/ allows and
 # proxies each of them.
 popup-providers: [wikipedia, arxiv, doi, github, openlibrary, biorxiv, medrxiv, youtube, archive, pubmed, mtgwiki, scryfall]

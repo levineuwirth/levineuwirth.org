@@ -5,6 +5,8 @@
 
 :root {
     --bg:              #f7f3e9;
+    /* How far the lamp ground dims the window's foot (site.css). */
+    --ground-vignette: 0.07;
     --bg-nav:          #f7f3e9;
     --nav-logo-fg:     #1f1b16;
     --bg-offset:       #ede7d8;
@@ -49,6 +51,7 @@
 /* Explicit dark mode */
 [data-theme="dark"] {
     --bg:              #121212;
+    --ground-vignette: 0.6;
     --bg-nav:          #121212;
     --nav-logo-fg:     #d4d0c8;
     --bg-offset:       #1a1a1a;
