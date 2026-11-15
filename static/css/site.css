@@ -395,6 +395,28 @@ body > header:not(.essay-frontmatter) {
     }
 }
 
+/* On a phone the title is two steps smaller, which takes a line or
+   two off a title of three or four words and still stands clear of the
+   text's first heading; and the seal goes without its lettering, which
+   the strip under the abstract spells out there: the mark alone, at
+   the size it had before the seal (the lettering's ring is 13% of the
+   figure on each side). */
+@media (max-width: 540px) {
+    .page-title {
+        font-size: var(--step-6);
+    }
+
+    .essay-frontmatter .frontmatter-mark.frontmatter-mark--seal {
+        width: 176px;
+        height: 176px;
+        margin: -23px;
+    }
+
+    .frontmatter-mark--seal .seal-legend {
+        display: none;
+    }
+}
+
 /* ============================================================
    MASTHEAD (redesign, step 3)
    There is no bar. The header scrolls away with the page: across the
