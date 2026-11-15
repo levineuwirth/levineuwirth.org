@@ -363,6 +363,39 @@ body > header:not(.essay-frontmatter) {
 }
 
 /* ============================================================
+   HEAD SPACING
+   The head runs into the text without the engine's stacked margins.
+   From the date line to the first line of text the engine leaves
+   10.5rem (the metadata's foot, the mark's two margins, the content's
+   padding); this leaves 5.1rem: 1.5rem, the mark, 2rem.
+   ============================================================ */
+
+.essay-frontmatter:not(.photo-series-frontmatter) .metadata-header {
+    margin-bottom: 0.5rem;
+}
+
+.essay-tailmatter > .metadata-tail {
+    margin-bottom: 0;           /* a summary below brings its own 1.5rem */
+}
+
+.essay-tailmatter + .content-divider--frontmatter {
+    margin-block: 1.5rem 2rem;
+}
+
+.essay-tailmatter + .content-divider--frontmatter + #content {
+    padding-top: 0;
+}
+
+/* A seal or dial is taller than a short title block. It hangs beside
+   the tags and the date line instead of holding them down; the mark
+   below takes more room than the 3rem, so it never reaches the text. */
+@media (min-width: 901px) {
+    :root:not([data-focus-mode]) .essay-frontmatter[data-standing]:has(+ .essay-tailmatter) .frontmatter-mark-slot--right {
+        margin-bottom: -3rem;
+    }
+}
+
+/* ============================================================
    MASTHEAD (redesign, step 3)
    There is no bar. The header scrolls away with the page: across the
    top where the window is narrow, and at the head of the left column
@@ -484,12 +517,26 @@ body > header:has(> .site-nav) {
        would run through the masthead's column. */
     /* The contents column starts under the head, in the masthead's
        column: the head is at least tall enough to keep it below the
-       masthead, Portals open or shut. The 5rem is the masthead's 2rem
-       from the top, less the 8.1rem the head's rule always takes, with
-       1rem to spare. */
+       masthead, Portals open or shut. The 2rem is what always stands
+       between the head and the text (HEAD SPACING's 5.1rem), less the
+       masthead's 2rem from the top and 1rem to spare; the date line,
+       the tags and a summary, where a page has them, stand there too
+       (a summary is never less than the 4rem counted for it). */
     body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))):has(#toc) .essay-frontmatter {
-        min-height: calc(var(--nav-box-height) - 5rem);
+        min-height: calc(var(--nav-box-height) - 2rem - var(--tail-links, 0rem) - var(--tail-tags, 0rem) - var(--tail-summary, 0rem));
         align-content: start;
+    }
+
+    body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))):has(.essay-tailmatter .meta-pagelinks > *) .essay-frontmatter {
+        --tail-links: 1.25rem;
+    }
+
+    body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))):has(.essay-tailmatter .meta-tags > *) .essay-frontmatter {
+        --tail-tags: 1.75rem;
+    }
+
+    body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))):has(.essay-tailmatter > .essay-summary) .essay-frontmatter {
+        --tail-summary: 4rem;
     }
 
     body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) .content-divider--frontmatter {
