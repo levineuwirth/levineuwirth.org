@@ -418,6 +418,71 @@ body > header:not(.essay-frontmatter) {
 }
 
 /* ============================================================
+   THE GEAR
+   The settings are not in the header, which scrolls away: the gear is
+   pinned to the window's lower right corner on every page, in focus
+   mode too, and its panel opens upward from it. It is there at the
+   top of a page and whenever the reader scrolls back up, moves a
+   pointer toward the corner, or reaches it with the keyboard; while
+   they read on down it is not (settings.js marks the wrap). Where
+   nothing hovers, a faded gear takes no taps either, so that it never
+   takes one meant for the text under it.
+   ============================================================ */
+
+.settings-wrap {
+    position: fixed;
+    inset: auto 1.1rem 0.9rem auto;
+    z-index: 1000;
+    visibility: visible;
+}
+
+.settings-toggle {
+    padding: 0.35rem;
+    font-size: var(--step-0);
+    transition: opacity 0.25s ease, color var(--transition-fast);
+}
+
+.settings-panel {
+    position: fixed;
+    inset: auto 1.1rem 3.3rem auto;
+    width: max-content;
+    max-width: min(22rem, 100vw - 2.2rem);
+    max-height: calc(100dvh - 4.6rem);
+    margin: 0;
+    overflow-y: auto;
+}
+
+.settings-wrap[data-away]:not([data-near], :focus-within, :has(.settings-toggle[aria-expanded="true"])) .settings-toggle {
+    opacity: 0;
+}
+
+@media (hover: none) {
+    .settings-wrap[data-away]:not(:focus-within, :has(.settings-toggle[aria-expanded="true"])) .settings-toggle {
+        pointer-events: none;
+    }
+}
+
+/* On the phone's Contents bar, at its right end. */
+@media (max-width: 900px) {
+    .settings-wrap {
+        inset: auto 0.6rem 0.3rem auto;
+    }
+
+    .settings-panel {
+        inset: auto 0.6rem 2.9rem auto;
+    }
+}
+
+/* At the foot of a page the gear stands at the end of the footer's row,
+   which stops short of it: the signature's link was under it. (Stacked,
+   at 680px and under, the footer is centered and clear of the corner.) */
+@media (min-width: 681px) {
+    .page-shell > footer {
+        padding-right: 3.4rem;
+    }
+}
+
+/* ============================================================
    MASTHEAD (redesign, step 3)
    There is no bar. The header scrolls away with the page: across the
    top where the window is narrow, and at the head of the left column
@@ -498,27 +563,6 @@ body > header:has(> .site-nav) {
 
     body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) .nav-portal-toggle {
         padding: 0.2rem 0;
-    }
-
-    /* The panel opens from the gear, over the text. Not in focus mode,
-       where the engine pins the gear to the window's corner. */
-    :root:not([data-focus-mode]) body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) .settings-wrap {
-        position: relative;
-    }
-
-    :root:not([data-focus-mode]) body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) .settings-panel {
-        left: 0;
-        right: auto;
-        width: max-content;
-        max-width: 22rem;
-        margin: 0;
-    }
-
-    /* In focus mode the panel hangs from the pinned gear: the narrow
-       container's centering is for a phone's row of controls. */
-    [data-focus-mode] body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) .settings-panel {
-        left: auto;
-        margin-inline: 0;
     }
 
     body:not([data-page-type="photography"], :has(> .page-shell > :is(.music-index, .composition))) .nav-portals {
