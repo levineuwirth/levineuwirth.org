@@ -119,6 +119,7 @@ site-files:
 - tests/test_anubis_update.py
 - tests/test_backup_pair.py
 - tests/test_bibliography.py
+- tests/test_browser_gear.py
 - tests/test_couchdb_backup.py
 - tests/test_couchdb_update.py
 - tests/test_credit.py

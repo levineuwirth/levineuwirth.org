@@ -458,12 +458,16 @@ body > header:not(.essay-frontmatter) {
     overflow-y: auto;
 }
 
-.settings-wrap[data-away]:not([data-near], :focus-within, :has(.settings-toggle[aria-expanded="true"])) .settings-toggle {
+/* Keep a keyboard stop visible; focus left by a pointer must not
+   prevent the gear from fading when the reader continues down. */
+.settings-wrap[data-away]:not([data-near], :has(:focus-visible, .settings-toggle[aria-expanded="true"])) .settings-toggle {
     opacity: 0;
 }
 
 @media (hover: none) {
-    .settings-wrap[data-away]:not(:focus-within, :has(.settings-toggle[aria-expanded="true"])) .settings-toggle {
+    /* The wrapper also covers the page: disabling only the button
+       leaves an invisible rectangle that still takes touches. */
+    .settings-wrap[data-away]:not([data-near], :has(:focus-visible, .settings-toggle[aria-expanded="true"])) {
         pointer-events: none;
     }
 }
