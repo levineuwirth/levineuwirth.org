@@ -406,6 +406,12 @@ body > header:not(.essay-frontmatter) {
         font-size: var(--step-6);
     }
 
+    /* The engine holds a photography title, often one long word, to the
+       window (12vw); this layer's rule above would undo that. */
+    .photography-header .page-title {
+        font-size: min(var(--step-6), 12vw);
+    }
+
     .essay-frontmatter .frontmatter-mark.frontmatter-mark--seal {
         width: 176px;
         height: 176px;
