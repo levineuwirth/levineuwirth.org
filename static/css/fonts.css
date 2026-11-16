@@ -64,27 +64,27 @@
 }
 
 @font-face {
-    font-family: "JetBrains Mono";
-    src: url("/fonts/jetbrains-mono-regular.woff2") format("woff2");
+    font-family: "IBM Plex Mono";
+    src: url("/fonts/ibm-plex-mono-regular.woff2") format("woff2");
     font-weight: 400;
     font-style: normal;
     font-display: swap;
 }
 @font-face {
-    font-family: "JetBrains Mono";
-    src: url("/fonts/jetbrains-mono-italic.woff2") format("woff2");
-    font-weight: 400;
-    font-style: italic;
+    font-family: "IBM Plex Mono";
+    src: url("/fonts/ibm-plex-mono-bold.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal;
     font-display: swap;
 }
 
 /* Fallback faces. Before a web font arrives, and wherever it never
    does, the reader sees a system font; unadjusted, its lines run longer
-   or shorter and the page reflows when Spectral or Fira Sans swaps in
+   or shorter and the page reflows when a web font swaps in
    (audit A19, CLS 0.10–0.17). Each face below names a common system font
    with local() and scales it to set the site's prose to the web font's
    width, with the web font's ascent and descent. They sit second in the
-   stacks (--font-serif, --font-sans), so the first one this system has
+   stacks (--font-serif, --font-fira, --font-mono), so the first one this system has
    is the one used; a system with none falls through to the old stack.
    Measured, not tuned: tools/subset-fonts.py writes them from the subsets
    it builds, so regenerate there rather than editing here. */
@@ -94,9 +94,9 @@
     src: local("Georgia"), local("Gelasio Regular"), local("Gelasio-Regular");
     font-weight: 400;
     font-style: normal;
-    size-adjust: 100.2%;
-    ascent-override: 105.7%;
-    descent-override: 46.2%;
+    size-adjust: 100.1%;
+    ascent-override: 105.8%;
+    descent-override: 46.3%;
     line-gap-override: 0.0%;
 }
 @font-face {
@@ -115,8 +115,8 @@
     font-weight: 600 700;
     font-style: normal;
     size-adjust: 88.1%;
-    ascent-override: 120.2%;
-    descent-override: 52.5%;
+    ascent-override: 120.3%;
+    descent-override: 52.6%;
     line-gap-override: 0.0%;
 }
 @font-face {
@@ -124,8 +124,8 @@
     src: local("Georgia Bold Italic"), local("Georgia-BoldItalic"), local("Gelasio Bold Italic"), local("Gelasio-BoldItalic");
     font-weight: 600 700;
     font-style: italic;
-    size-adjust: 80.1%;
-    ascent-override: 132.2%;
+    size-adjust: 80.2%;
+    ascent-override: 132.1%;
     descent-override: 57.8%;
     line-gap-override: 0.0%;
 }
@@ -134,9 +134,9 @@
     src: local("Times New Roman"), local("TimesNewRomanPSMT"), local("Liberation Serif"), local("LiberationSerif"), local("Tinos"), local("Tinos-Regular");
     font-weight: 400;
     font-style: normal;
-    size-adjust: 109.9%;
-    ascent-override: 96.4%;
-    descent-override: 42.1%;
+    size-adjust: 109.8%;
+    ascent-override: 96.5%;
+    descent-override: 42.2%;
     line-gap-override: 0.0%;
 }
 @font-face {
@@ -145,8 +145,8 @@
     font-weight: 400;
     font-style: italic;
     size-adjust: 100.3%;
-    ascent-override: 105.5%;
-    descent-override: 46.1%;
+    ascent-override: 105.6%;
+    descent-override: 46.2%;
     line-gap-override: 0.0%;
 }
 @font-face {
@@ -165,8 +165,8 @@
     font-weight: 600 700;
     font-style: italic;
     size-adjust: 101.2%;
-    ascent-override: 104.7%;
-    descent-override: 45.8%;
+    ascent-override: 104.6%;
+    descent-override: 45.7%;
     line-gap-override: 0.0%;
 }
 @font-face {
@@ -175,7 +175,7 @@
     font-weight: 400;
     font-style: normal;
     size-adjust: 92.8%;
-    ascent-override: 114.1%;
+    ascent-override: 114.2%;
     descent-override: 49.9%;
     line-gap-override: 0.0%;
 }
@@ -196,7 +196,7 @@
     font-style: normal;
     size-adjust: 89.3%;
     ascent-override: 118.6%;
-    descent-override: 51.9%;
+    descent-override: 51.8%;
     line-gap-override: 0.0%;
 }
 @font-face {
@@ -204,8 +204,8 @@
     src: local("Noto Serif Bold Italic"), local("NotoSerif-BoldItalic");
     font-weight: 600 700;
     font-style: italic;
-    size-adjust: 81.9%;
-    ascent-override: 129.3%;
+    size-adjust: 82.0%;
+    ascent-override: 129.2%;
     descent-override: 56.5%;
     line-gap-override: 0.0%;
 }
@@ -214,9 +214,9 @@
     src: local("Arial"), local("ArialMT"), local("Liberation Sans"), local("LiberationSans"), local("Arimo"), local("Arimo-Regular");
     font-weight: 400;
     font-style: normal;
-    size-adjust: 102.6%;
-    ascent-override: 91.1%;
-    descent-override: 25.8%;
+    size-adjust: 102.5%;
+    ascent-override: 91.3%;
+    descent-override: 25.9%;
     line-gap-override: 0.0%;
 }
 @font-face {
@@ -224,8 +224,8 @@
     src: local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"), local("LiberationSans-Bold"), local("Arimo Bold"), local("Arimo-Bold");
     font-weight: 600 700;
     font-style: normal;
-    size-adjust: 95.6%;
-    ascent-override: 97.8%;
+    size-adjust: 95.5%;
+    ascent-override: 97.9%;
     descent-override: 27.7%;
     line-gap-override: 0.0%;
 }
@@ -234,8 +234,8 @@
     src: local("Roboto"), local("Roboto-Regular");
     font-weight: 400;
     font-style: normal;
-    size-adjust: 102.7%;
-    ascent-override: 91.0%;
+    size-adjust: 102.6%;
+    ascent-override: 91.1%;
     descent-override: 25.8%;
     line-gap-override: 0.0%;
 }
@@ -244,9 +244,49 @@
     src: local("Roboto Bold"), local("Roboto-Bold");
     font-weight: 600 700;
     font-style: normal;
-    size-adjust: 101.4%;
-    ascent-override: 92.2%;
-    descent-override: 26.1%;
+    size-adjust: 101.3%;
+    ascent-override: 92.3%;
+    descent-override: 26.2%;
+    line-gap-override: 0.0%;
+}
+@font-face {
+    font-family: "IBM Plex Mono on Courier";
+    src: local("Courier New"), local("CourierNewPSMT"), local("Liberation Mono"), local("LiberationMono"), local("Cousine"), local("Cousine-Regular");
+    font-weight: 400;
+    font-style: normal;
+    size-adjust: 100.0%;
+    ascent-override: 102.5%;
+    descent-override: 27.5%;
+    line-gap-override: 0.0%;
+}
+@font-face {
+    font-family: "IBM Plex Mono on Courier";
+    src: local("Courier New Bold"), local("CourierNewPS-BoldMT"), local("Liberation Mono Bold"), local("LiberationMono-Bold"), local("Cousine Bold"), local("Cousine-Bold");
+    font-weight: 600 700;
+    font-style: normal;
+    size-adjust: 100.0%;
+    ascent-override: 102.5%;
+    descent-override: 27.5%;
+    line-gap-override: 0.0%;
+}
+@font-face {
+    font-family: "IBM Plex Mono on Noto";
+    src: local("Noto Sans Mono"), local("NotoSansMono-Regular");
+    font-weight: 400;
+    font-style: normal;
+    size-adjust: 100.0%;
+    ascent-override: 102.5%;
+    descent-override: 27.5%;
+    line-gap-override: 0.0%;
+}
+@font-face {
+    font-family: "IBM Plex Mono on Noto";
+    src: local("Noto Sans Mono Bold"), local("NotoSansMono-Bold");
+    font-weight: 600 700;
+    font-style: normal;
+    size-adjust: 100.0%;
+    ascent-override: 102.5%;
+    descent-override: 27.5%;
     line-gap-override: 0.0%;
 }
 /* END fallback faces */

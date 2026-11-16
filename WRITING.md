@@ -678,7 +678,7 @@ elements.
 
 ## Code
 
-Fenced code blocks with a language identifier get syntax highlighting (JetBrains
+Fenced code blocks with a language identifier get syntax highlighting (IBM Plex
 Mono). The language annotation also enables the selection popup's docs-search
 feature (maps to MDN, Hoogle, docs.python.org, etc.).
 

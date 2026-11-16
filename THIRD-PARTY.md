@@ -83,13 +83,15 @@ The following font software is distributed under the SIL Open Font License
   The notice retains the reserved name “Fira”, so the modified subsets are
   named “LN Sans” in their own name tables; the stylesheets still call the
   family “Fira Sans”.
-- JetBrains Mono, the JetBrains Mono Project Authors:
-  [OFL-JetBrainsMono.txt](/fonts/OFL-JetBrainsMono.txt).
+- IBM Plex Mono, IBM Corp.: [OFL-IBMPlexMono.txt](/fonts/OFL-IBMPlexMono.txt).
+  The notice retains the reserved name “Plex”, so the modified subsets are
+  named “LN Mono” in their own name tables; the stylesheets still call the
+  family “IBM Plex Mono”.
 - Tempo Notes is a modified font containing glyphs from MuseScore's Leland
   Text, renamed for this site: [OFL-Leland.txt](/fonts/OFL-Leland.txt).
   The upstream notice retains the reserved name “Leland”.
 
-Spectral, Fira Sans and JetBrains Mono are subset for web delivery by
+Spectral, Fira Sans and IBM Plex Mono are subset for web delivery by
 `tools/subset-fonts.py`, which keeps each font's copyright, license and URL
 records. These font files remain under the OFL, independently of the
 documents using them.

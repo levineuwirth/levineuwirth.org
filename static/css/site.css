@@ -424,6 +424,24 @@ body > header:not(.essay-frontmatter) {
 }
 
 /* ============================================================
+   CODE BLOCKS
+   A block holds 60 characters at the engine's size, and half the
+   site's blocks run 61 to 73: they scrolled sideways. Every block
+   takes the size that holds 73 in the full column, one size for
+   all. Exact letter widths: Chromium on Linux otherwise rounds each
+   to a whole pixel, and a 73-character line is a pixel too long.
+   Below the full column nothing this size would fit either, and the
+   engine's size stays.
+   ============================================================ */
+
+@media (min-width: 901px) {
+    #markdownBody pre {
+        font-size: 0.715em;
+        text-rendering: geometricPrecision;
+    }
+}
+
+/* ============================================================
    THE GEAR
    The settings are not in the header, which scrolls away: the gear is
    pinned to the window's lower right corner on every page, in focus

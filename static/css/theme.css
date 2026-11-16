@@ -31,7 +31,7 @@
        it, so its files are not fetched. */
     --font-sans:       var(--font-serif);
     --font-fira:       "Fira Sans", "Fira Sans on Arial", "Fira Sans on Roboto", "Helvetica Neue", "Arial", sans-serif;
-    --font-mono:       "JetBrains Mono", "Consolas", "Menlo", monospace;
+    --font-mono:       "IBM Plex Mono", "IBM Plex Mono on Courier", "IBM Plex Mono on Noto", "Menlo", "DejaVu Sans Mono", "Consolas", monospace;
     /* A gentler scale than the engine's major second: the title and the
        headings come down, the small labels come up. */
     --type-ratio:      1.09;

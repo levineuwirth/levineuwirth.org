@@ -4,7 +4,7 @@
 #     UV_PROJECT_ENVIRONMENT="$PWD/.venv" uv run --frozen --project engine \
 #         --with fonttools --with brotli engine/tools/subset-fonts.py
 #
-# Spectral and JetBrains Mono come from the Google Fonts repository
+# Spectral and IBM Plex Mono come from the Google Fonts repository
 # (github.com/google/fonts), Fira Sans 4.301 from bBox Type's
 # (github.com/bBoxType/FiraSans). A source is `<upstream>:<path>`, the path
 # under that upstream's pinned revision; tools/font-sources.json pins each
@@ -15,7 +15,7 @@
 # What the subsets keep, and why (audit V08):
 #   - Latin Extended-A in full (ł in "Prałat–Wormald", 11 pages), ← → ↑ ↓,
 #     ● ○ (the epistemic dots, 21 pages), ≤ ≥ ≈, □ in Spectral; box drawing
-#     in JetBrains Mono (the levcs diagram); Fira Sans gains c2sc, tnum and
+#     in IBM Plex Mono (the levcs diagram); Fira Sans gains c2sc, tnum and
 #     lnum, which the all-small-caps labels and tabular figures ask for.
 #   - Fira Sans 4.301 reserves the name "Fira" in its name table (bBox's
 #     OFL.txt omits it; the notice written beside the fonts follows the
@@ -66,15 +66,19 @@ families:
     faces:
       - ["bbox:Fira_Sans_4_3/Fonts/Fira_Sans_TTF_4301/Normal/Roman/FiraSans-Regular.ttf", fira-sans-regular.woff2]
       - ["bbox:Fira_Sans_4_3/Fonts/Fira_Sans_TTF_4301/Normal/Roman/FiraSans-SemiBold.ttf", fira-sans-semibold.woff2]
-  jetbrainsmono:
-    features: liga,kern,calt
+  # The code face. It reserves "Plex", as Fira reserves its name, so its
+  # subsets are named "LN Mono" and the stylesheets still call it "IBM
+  # Plex Mono". No italic: no page sets code in italic. The bold is for
+  # code inside a heading or a bold phrase (four pages).
+  ibmplexmono:
+    features: ccmp
     unicodes: U+2500-257F
-    must-cover: ─│┌┐└┘├┤┬┴┼
-    license: [OFL-JetBrainsMono.txt, "google:jetbrainsmono/OFL.txt"]
-    weight: 400
+    must-cover: ─│┌┐└┘├┤┬┴┼→
+    license: [OFL-IBMPlexMono.txt, "google:ibmplexmono/OFL.txt"]
+    rename: {from: IBM Plex Mono, to: LN Mono, reserved: Plex}
     faces:
-      - ["google:jetbrainsmono/JetBrainsMono[wght].ttf", jetbrains-mono-regular.woff2]
-      - ["google:jetbrainsmono/JetBrainsMono-Italic[wght].ttf", jetbrains-mono-italic.woff2]
+      - ["google:ibmplexmono/IBMPlexMono-Regular.ttf", ibm-plex-mono-regular.woff2]
+      - ["google:ibmplexmono/IBMPlexMono-Bold.ttf", ibm-plex-mono-bold.woff2]
 
 # Fallback faces, written between the markers in `css` (site file first,
 # then the engine's). Each set stands in for one web family on the systems
@@ -82,8 +86,10 @@ families:
 # full name ("Tinos Bold Italic") and the PostScript name
 # ("Tinos-BoldItalic"), which is what local() matches. A weight range
 # takes the semibold's measure: headings and labels are 600, 700 is rarer.
-# Monospace has none: JetBrains Mono and Courier both advance 0.6 em, and
-# code is seldom above the fold.
+# Monospace has two, though every reference advances 0.6 em as IBM Plex
+# Mono does: they put a 0.6 em system face ahead of Consolas (0.55 em) in
+# the stack, and code does sit above the fold (the growing-radius essay's
+# first paragraph moved when the web face arrived, CLS 0.13).
 fallbacks:
   css: static/css/fonts.css
   begin: "/* BEGIN fallback faces — written by tools/subset-fonts.py */"
@@ -98,6 +104,9 @@ fallbacks:
     sans:
       - [Regular, "400", normal, fira-sans-regular.woff2]
       - [Bold, "600 700", normal, fira-sans-semibold.woff2]
+    mono:
+      - [Regular, "400", normal, ibm-plex-mono-regular.woff2]
+      - [Bold, "600 700", normal, ibm-plex-mono-bold.woff2]
   # Each set's local() names, by the tool's naming schemes (full, ps, ms;
   # a third item replaces the scheme's suffix for Regular), and its
   # reference font: one file, with {style} for a static family, or a roman
@@ -130,4 +139,14 @@ fallbacks:
       faces: sans
       local: [[full, Roboto], [ps, Roboto]]
       reference: "google:roboto/Roboto[wdth,wght].ttf"
+      instance: true
+    - family: IBM Plex Mono on Courier
+      faces: mono
+      local: [[full, Courier New], [ms, CourierNewPS], [full, Liberation Mono], [ps, LiberationMono, ""],
+              [full, Cousine], [ps, Cousine]]
+      reference: "google:cousine/Cousine-{style}.ttf"
+    - family: IBM Plex Mono on Noto
+      faces: mono
+      local: [[full, Noto Sans Mono], [ps, NotoSansMono]]
+      reference: "google:notosansmono/NotoSansMono[wdth,wght].ttf"
       instance: true
