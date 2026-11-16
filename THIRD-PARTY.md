@@ -110,8 +110,18 @@ documents using them.
   and the notices in its release bundle.
 - The semantic-search model, [Xenova/all-MiniLM-L6-v2](https://huggingface.co/Xenova/all-MiniLM-L6-v2),
   retains its upstream [Apache 2.0 terms](/licenses/Apache-2.0.txt).
-  Other libraries loaded from a CDN
-  retain their package licenses; this site's licenses do not replace them.
+- [transformers.js 2.17.2](https://github.com/xenova/transformers.js/tree/2.17.2):
+  Apache 2.0, the Hugging Face transformers.js authors.
+  [Full license](/licenses/Apache-2.0.txt). Self-hosted under `/transformers/`
+  with the WebAssembly builds of the ONNX Runtime 1.14.0 it carries.
+- [ONNX Runtime](https://github.com/microsoft/onnxruntime/tree/v1.14.0): MIT,
+  copyright Microsoft Corporation. [Full notice](/licenses/onnxruntime-MIT.txt).
+- [Vega 5.33.1](https://github.com/vega/vega/tree/v5.33.1),
+  [Vega-Lite 5.23.0](https://github.com/vega/vega-lite/tree/v5.23.0) and
+  [Vega-Embed 6.29.0](https://github.com/vega/vega-embed/tree/v6.29.0):
+  BSD 3-Clause, copyright 2015–2023 University of Washington Interactive
+  Data Lab. [Full notice](/licenses/Vega-BSD-3-Clause.txt). Self-hosted under
+  `/vega/`, for pages with interactive figures.
 
 ## Build tools
 
