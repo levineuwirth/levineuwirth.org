@@ -78,6 +78,16 @@
     font-display: swap;
 }
 
+/* The math face: MathML is drawn in it (--font-math). Fetched only by a
+   page with math, as a <math> element first asks for it. */
+@font-face {
+    font-family: "Latin Modern Math";
+    src: url("/fonts/latin-modern-math.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
 /* Fallback faces. Before a web font arrives, and wherever it never
    does, the reader sees a system font; unadjusted, its lines run longer
    or shorter and the page reflows when a web font swaps in

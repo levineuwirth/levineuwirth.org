@@ -31,6 +31,11 @@
        it, so its files are not fetched. */
     --font-sans:       var(--font-serif);
     --font-fira:       "Fira Sans", "Fira Sans on Arial", "Fira Sans on Roboto", "Helvetica Neue", "Arial", sans-serif;
+    /* Maths: Latin Modern Math, closest to the KaTeX the site drew with
+       until MathML, at KaTeX's size (its x-height 0.535 of the text's
+       size, from Latin Modern's 0.431). */
+    --font-math:       "Latin Modern Math", math;
+    --math-size:       1.24em;
     --font-mono:       "IBM Plex Mono", "IBM Plex Mono on Courier", "IBM Plex Mono on Noto", "Menlo", "DejaVu Sans Mono", "Consolas", monospace;
     /* A gentler scale than the engine's major second: the title and the
        headings come down, the small labels come up. */

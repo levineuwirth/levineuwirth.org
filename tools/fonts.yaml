@@ -31,6 +31,9 @@
 upstreams:
   google: https://raw.githubusercontent.com/google/fonts/9710da1eacb3be272583c3224dcb70f9da6eadbb/ofl
   bbox: https://raw.githubusercontent.com/bBoxType/FiraSans/f54eeb3124c63fe9b5bcd36d09d1cd46788cd15e
+  # CTAN has no revision in its paths; the pins make a changed file fail
+  # the download, not slip in. Latin Modern Math 1.959 (2014).
+  ctan: https://mirrors.ctan.org/fonts/lm-math
 
 # The subsets and each family's OFL notice go here.
 output: static/fonts
@@ -79,6 +82,25 @@ families:
     faces:
       - ["google:ibmplexmono/IBMPlexMono-Regular.ttf", ibm-plex-mono-regular.woff2]
       - ["google:ibmplexmono/IBMPlexMono-Bold.ttf", ibm-plex-mono-bold.woff2]
+  # The math face (--font-math), in which the browser draws the MathML the
+  # generator writes; loaded only by a page with math. Whole, it is 391 KB;
+  # this subset keeps the italic alphabets (a single-letter <mi> is drawn
+  # from Mathematical Italic), the operator and arrow blocks, bold, script
+  # and double-struck capitals, and every character the site's maths used
+  # when it was cut (2026-11-16), 179 KB. The MATH table's size variants
+  # and assembly parts follow the characters they belong to. The GUST Font
+  # License asks that a modified font be renamed: "LN Math" in its own
+  # tables, "Latin Modern Math" in the stylesheets, as Fira's and Plex's.
+  # A character the maths gains that is missing here falls back to another
+  # face: tests/test_math_font.py fails, naming it; add it below and rerun.
+  latinmodernmath:
+    features: "*"
+    unicodes: U+0391-03A9,U+03B1-03C9,U+03D1,U+03D5,U+03F5,U+210E,U+1D434-1D467,U+1D6E2-1D71B,U+2190-21FF,U+2200-22FF,U+27E8-27E9,U+2308-230B,U+1D400-1D433,U+1D49C-1D4B5,U+1D538-1D551,U+2102,U+2115,U+211A,U+211D,U+2124,U+00AF,U+00B1,U+00D7,U+0302,U+0303,U+0394,U+0398,U+039B,U+03A0,U+03A6,U+03A8,U+03A9,U+03B1,U+03B2,U+03B3,U+03B4,U+03B5,U+03B7,U+03B8,U+03B9,U+03BA,U+03BB,U+03BC,U+03BE,U+03C0,U+03C1,U+03C3,U+03C4,U+03C7,U+03C9,U+03D5,U+03F5,U+2016,U+2026,U+2032,U+2033,U+203E,U+210B,U+2112,U+2113,U+211B,U+2124,U+2131,U+2191,U+2192,U+2193,U+21A6,U+21D2,U+2202,U+2208,U+2209,U+220F,U+2211,U+2212,U+221D,U+221E,U+2223,U+2229,U+222A,U+222B,U+223C,U+2248,U+224D,U+2260,U+2264,U+2265,U+226A,U+226B,U+2286,U+22C3,U+22C5,U+22EF,U+2300,U+2308,U+2309,U+230A,U+230B,U+23DF,U+25AB,U+266F,U+2A06,U+1D400,U+1D41C,U+1D427,U+1D49C,U+1D49E,U+1D49F,U+1D4A2,U+1D4AB,U+1D4AF,U+1D53C,U+1D5BC,U+1D7CF
+    must-cover: ∑∫√∞≤≥⊆∈ℝ𝑥𝛼
+    license: [GUST-FONT-LICENSE-LatinModernMath.txt, "ctan:doc/GUST-FONT-LICENSE.txt"]
+    rename: {from: Latin Modern Math, to: LN Math, reserved: Latin Modern}
+    faces:
+      - ["ctan:opentype/latinmodern-math.otf", latin-modern-math.woff2]
 
 # Fallback faces, written between the markers in `css` (site file first,
 # then the engine's). Each set stands in for one web family on the systems

@@ -532,14 +532,14 @@ in the `webViewerLoad` callback, or add a thin CSS rule to `viewer.css`:
 
 ## Math
 
-Pandoc parses LaTeX math and wraps it in `class="math inline"` / `class="math display"`
-spans. KaTeX CSS is loaded conditionally on pages that contain math — this styles the
-pre-rendered output. Client-side KaTeX JS rendering is not yet loaded; complex math
-will appear as LaTeX source. Build-time server-side rendering is planned but not yet
-implemented. Simple math currently renders through Pandoc's built-in KaTeX span output.
-
-`math: true` is auto-set for all essays and blog posts. Standalone pages that use
-math must set it explicitly in frontmatter to load the KaTeX CSS.
+Pandoc reads LaTeX math, and the build writes each formula as MathML
+(the engine's `Filters.Math`, through Pandoc's own texmath) in a
+`class="math inline"` / `class="math display"` span. The browser draws it in
+Latin Modern Math (`--font-math`), at KaTeX's old size; no script typesets it
+and no page needs a flag for it. A formula texmath cannot read stays as its
+LaTeX: plain TeX's `{\rm …}` is rewritten to `\mathrm{…}`, but write the
+modern forms. A display formula too wide for the column scrolls, and
+`math.js`, on pages with math, gives it a tab stop.
 
 | Syntax | Usage |
 |--------|-------|

@@ -87,6 +87,12 @@ The following font software is distributed under the SIL Open Font License
   The notice retains the reserved name “Plex”, so the modified subsets are
   named “LN Mono” in their own name tables; the stylesheets still call the
   family “IBM Plex Mono”.
+- Latin Modern Math 1.959, B. Jackowski, P. Strzelczyk and P. Pianowski for
+  the TeX users groups: the GUST Font License, a form of the LaTeX Project
+  Public License 1.3c ([GUST-FONT-LICENSE-LatinModernMath.txt](/fonts/GUST-FONT-LICENSE-LatinModernMath.txt)).
+  Cut down to the characters the site's maths uses, and so, as the license
+  asks of a modified font, named “LN Math” in its own name tables; the
+  stylesheets still call it “Latin Modern Math”.
 - Tempo Notes is a modified font containing glyphs from MuseScore's Leland
   Text, renamed for this site: [OFL-Leland.txt](/fonts/OFL-Leland.txt).
   The upstream notice retains the reserved name “Leland”.
@@ -103,9 +109,6 @@ documents using them.
   [Full notice](/licenses/Leaflet-BSD-2-Clause.txt).
 - [Leaflet.markercluster 1.5.3](https://github.com/Leaflet/Leaflet.markercluster/tree/v1.5.3):
   MIT, copyright 2012 David Leaver. [Full notice](/licenses/Leaflet.markercluster-MIT.txt).
-- [KaTeX 0.16.11](https://github.com/KaTeX/KaTeX/tree/v0.16.11): MIT, copyright
-  2013–2020 Khan Academy and other contributors. [Full notice](/licenses/KaTeX-MIT.txt).
-  Self-hosted under `/katex/`; its fonts are under the same license.
 - Mozilla PDF.js retains its distributed [Apache 2.0 license and notices](/pdfjs/LICENSE)
   and the notices in its release bundle.
 - The semantic-search model, [Xenova/all-MiniLM-L6-v2](https://huggingface.co/Xenova/all-MiniLM-L6-v2),

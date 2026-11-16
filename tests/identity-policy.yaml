@@ -132,6 +132,7 @@ site-files:
 - tests/test_identity_policy.py
 - tests/test_levcs_instance_backup.py
 - tests/test_licenses.py
+- tests/test_math_font.py
 - tests/test_nginx_logging.py
 - tests/test_sections.py
 - tests/test_site_yaml.py
@@ -164,6 +165,5 @@ site-files:
 - yaml-source/
 vendored-files:
 - static/js/prism.min.js
-- static/katex/
 - tools/bin/monolith
 - tools/browser/axe.min.js
