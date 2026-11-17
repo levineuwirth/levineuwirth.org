@@ -2,6 +2,14 @@
 title: "The Natural Order Hypothesis for LLMs"
 date: 2026-11-17
 status: "Draft"
+confidence: 60
+importance: 4
+evidence: 3
+scope: broad
+novelty: moderate
+practicality: moderate
+peer-status: unreviewed
+result-shape: mixed
 authors:
   - "Levi Neuwirth | /me.html"
 abstract: >
