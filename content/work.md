@@ -57,7 +57,7 @@ MARS V fellowship · Cambridge AI Safety Hub · ongoing
 An operator who claims to have run a model may not have, and the logs that would
 settle it are written by the party under suspicion.
 
-[VerInf](https://github.com/JamesPetrie/VerInf),V a Future of Life Institute project led by James Petrie, proves LLM inference in zero knowledge with no trusted setup, by bounding the unexplained information in an output stream. Anthropic's FlashProve post calls it "the only earlier proof of Llama 4 Maverick that we know of," and its paper says its choice of 4-bit weight files comes from VerInf and its integer-conversion rule grew out of VerInf's. FlashProve's proof system and speed are its own. I have worked on VerInf since June 2026, through the MARS fellowship.
+[VerInf](https://github.com/JamesPetrie/VerInf), a Future of Life Institute project led by James Petrie, proves LLM inference in zero knowledge with no trusted setup, by bounding the unexplained information in an output stream. Anthropic's FlashProve post calls it "the only earlier proof of Llama 4 Maverick that we know of," and its paper says its choice of 4-bit weight files comes from VerInf and its integer-conversion rule grew out of VerInf's. FlashProve's proof system and speed are its own. I have worked on VerInf since June 2026, through the MARS fellowship.
 
 I built the dry-run profiler (manifest contract, cost model,
 execution DAG, partition scorecard) and validated it against an archived
