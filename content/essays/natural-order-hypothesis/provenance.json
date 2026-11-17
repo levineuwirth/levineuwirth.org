@@ -1,0 +1,160 @@
+{
+  "source_directory": "natural-order/drafts/arxiv-prep-2026-11-13/paper",
+  "source_pdf": "main.pdf",
+  "imported": "2026-11-13",
+  "text": "LaTeX sources converted with pandoc by scripts/site_port.py, cross-references from main.aux, checked against main.pdf; source path references are preserved as inline code.",
+  "figures": "Original figure PDFs converted to SVG with pdftocairo, retaining the white paper canvas.",
+  "tables": [
+    {
+      "id": "tab:forms",
+      "number": "1",
+      "rows": 9,
+      "columns": 4
+    },
+    {
+      "id": "tab:timeline",
+      "number": "2",
+      "rows": 5,
+      "columns": 3
+    },
+    {
+      "id": "tab:open-problems",
+      "number": "3",
+      "rows": 9,
+      "columns": 6
+    },
+    {
+      "id": "tab:oeis-decomposition",
+      "number": "4",
+      "rows": 6,
+      "columns": 6
+    },
+    {
+      "id": "tab:datasets",
+      "number": "5",
+      "rows": 10,
+      "columns": 3
+    },
+    {
+      "id": "tab:predictions",
+      "number": "6",
+      "rows": 4,
+      "columns": 3
+    },
+    {
+      "id": "tab:outcomes",
+      "number": "7",
+      "rows": 4,
+      "columns": 3
+    },
+    {
+      "id": "tab:ladder",
+      "number": "8",
+      "rows": 12,
+      "columns": 3
+    },
+    {
+      "id": "tab:eth-ledger",
+      "number": "9",
+      "rows": 13,
+      "columns": 2
+    },
+    {
+      "id": "tab:doubles",
+      "number": "10",
+      "rows": 5,
+      "columns": 4
+    },
+    {
+      "id": "tab:compute",
+      "number": "11",
+      "rows": 3,
+      "columns": 3
+    },
+    {
+      "id": "tab:leela-runs",
+      "number": "12",
+      "rows": 12,
+      "columns": 6
+    },
+    {
+      "id": "tab:leela-results",
+      "number": "13",
+      "rows": 15,
+      "columns": 3
+    },
+    {
+      "id": "tab:leela-acquisition-decomposition",
+      "number": "14",
+      "rows": 7,
+      "columns": 6
+    }
+  ],
+  "figure_inventory": [
+    {
+      "id": "fig:oeis-order",
+      "number": "1",
+      "source": "figures/oeis-order.pdf",
+      "asset": "figures/oeis-order.svg"
+    },
+    {
+      "id": "fig:chess-chronology",
+      "number": "2",
+      "source": "figures/chess-chronology.pdf",
+      "asset": "figures/chess-chronology.svg"
+    },
+    {
+      "id": "fig:chess-reversals",
+      "number": "3",
+      "source": "figures/chess-reversals.pdf",
+      "asset": "figures/chess-reversals.svg"
+    }
+  ],
+  "reference_count": 108,
+  "source_sha256": {
+    "main.tex": "5503d9c1d7a7e5683acfa131ad240a44c46b7391aa221f03d6780ce66519aa39",
+    "preamble.tex": "8b600354702d058c4a03187ca06c535f70d40137fb9cb340a3361141d0acfc24",
+    "main.pdf": "e641e7fa7135cf62226125905601e28098fb83060a718f72f8fdb00451a4741c",
+    "main.aux": "c81f3113f2558c62b784f486012630067fda8e56dee0135b47d3a27440537998",
+    "main.bbl": "eea10535fbd5d5ba3a08e1db3d02b5baa5f636144894f3a20058d67c3ce08081",
+    "references.bib": "605c3d66a14a4d6b072775436576c5113b9311084a74963d24b1f17a6f87f6e2",
+    "sections/01-introduction.tex": "d8200badae03d793862a7fe5d6a4c12b3bbb56b3d6b48873bee01dc0f479a30e",
+    "sections/02-hypothesis.tex": "1132d137e0ecadd5a2b4c4ec423dd9bfdc73cac7d98d618f0c65e9c0ea7b142a",
+    "sections/03-background.tex": "be2cebf8abec8cb62b5afe34cd41a7c296ceb21d6a82d3e1d267cda78f74e264",
+    "sections/04-machine-multiples.tex": "6950cbb9f88053a4a59225cffb23122524b9cce3aa4fd76838efab4b22138754",
+    "sections/05-language-models.tex": "27acc3e15dde6e1cd0bcfeea9ddef6d6bf3bf970ac452164b7351425135643ab",
+    "sections/06-chess-precedent.tex": "1cc8f135526c4e928f3755b78bbf2888ebe9beed969b178cdf699af7d7a77cc1",
+    "sections/07-rival-explanations.tex": "990f263a1ade640e6cb52990a0d5cf6d19434c784b7af9806d3656c4938b1887",
+    "sections/08-predictions.tex": "7c962f628f2291b9148225401db851fccce47085f1e34b97fde88203dadbaf59",
+    "sections/09-discussion.tex": "96e8015b581eed7170542f80db12482afd99fa73055c14d3d90874cd5c2ea0d7",
+    "sections/10-limitations-disclosure.tex": "5fd9b8bd044dfbeee5b544f620a54c82468ea813141732500378b032bf516ddd",
+    "sections/appendix-a-eth-ledger.tex": "0dfd510735625f8d45449b1212dd1a7df0662962b594b824514aa658a4962950",
+    "sections/appendix-b-plans.tex": "fa59af44cb6e7688149a7f4c7686f96317e134f5b8964e8576649c2ee321595d",
+    "sections/appendix-c-chess.tex": "543e4b795208a28082acec0197ca77d14deca765aa32fc9ee17f035da39e6f72",
+    "tables/forms.tex": "5b71cffc9b77ddabb82567cea6b8b2faa9c9ad870c60d604423e1359bb35c288",
+    "tables/timeline.tex": "b9d7bb1ed990fc8b465f71ac99c80aabb375da73b7252eefd95dffaaaf52a443",
+    "tables/open-problems.tex": "8d2e90452392516a8ce73f3aefdb179041b93d710f5f5eb9c58ea05ac5952ebe",
+    "tables/oeis-decomposition.tex": "df80349b96c41cf2b8b3e957aa882fe8b832bea3ee1c6dc937e18d3c78a78739",
+    "tables/datasets.tex": "6af01b852bb7c96ad1b8d7d2c4f920c168dcf31d90238983dd7482b1da51bbe7",
+    "tables/predictions.tex": "0e3a7bbe5621a2c239568a9a28ecdfc6c13e103f1301240073f408905422389c",
+    "tables/outcomes.tex": "a273b69920580dff0c9ba057a96e141452d153456ed6c4223cf9785631de635c",
+    "tables/ladder.tex": "9693995a98e10b4acf40ee4e123c516ca8982bbac9ca25c1dbfd125204b54634",
+    "tables/eth-ledger.tex": "91e12fd736c13635a4abd05687b82ed7f28b0664c602d2ce2426e91d0dc50122",
+    "tables/doubles.tex": "2d386050cb5d6747d8856840ade0d9f395a34d6f987c519af5f3f239d9bd8b09",
+    "tables/compute.tex": "5164e6f99041c6f8d41cc4c620c5e7839f335acffc1a0de5a633a2a1848b9a39",
+    "tables/leela-runs.tex": "796f5150b4f5d6a20de44b6a68c8588c330dc00294edf65ade55c43ea1cd619f",
+    "tables/leela-results.tex": "e8dd515213b1836f1ec6fafc33b9ba05dbd1f7a3961ff7339f1b8249581996ce",
+    "tables/leela-acquisition-decomposition.tex": "09817fa09e1bd9ec3594636a365f7ea2aa17f2571839281c99d01cffc2a50ea5",
+    "figures/oeis-order.pdf": "4e31221b9926d186dce8f04c950c7fea70bb6dcc60c3bab2f3cbd46d9aa9a990",
+    "figures/chess-chronology.pdf": "06fd027db75f37acc7b648bc2b5258358a8426447b91d6d006c832a7e42d64f7",
+    "figures/chess-reversals.pdf": "ab77e1c7ea19012864890ce165eb6e7a0191d297003ff84188c2453ce512abfc",
+    "figures/oeis-order.tex": "c035e6d41e70b54c1b0813789866474df40b71cbb922eaa32e8b54a8c4cfd755",
+    "figures/chess-chronology.tex": "57de8d55aa74000db88051ba713a97faf5e72c9e3291417ba037e0e55d06d0bb",
+    "figures/chess-reversals.tex": "8021f13e289a392ddb3b6e8aa296d4fce7518c96479ef0a9055d21aa51954238"
+  },
+  "website_formatting": {
+    "citations": "Native Pandoc citations, rendered as the site’s numbered superscripts; narrative author names remain in the prose.",
+    "bibliography": "Generated from the co-located references.bib in the standard website footer.",
+    "appendices": "Appendices A–C use the standard aftermatter container, preserving their anchors and numbered cross-references."
+  }
+}
