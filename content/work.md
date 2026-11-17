@@ -4,6 +4,7 @@ work: true
 stylesheets: [work]
 description: Research engineer working on technical AI assurance — verifiable inference, model evaluations, systems and cryptography.
 history:
+  - date: "2026-11-17"
   - date: "2026-11-04"
     note: "Anthropic's citation of VerInf as prior work."
   - date: "2026-10-13"
@@ -27,8 +28,8 @@ model actually did, when the operator, the evaluator, or the model itself may
 not be trusted. That question spans cryptography, systems, evaluations, and
 mathematics, which is roughly the shape of my background.
 
-I am a MARS V fellow with the [Cambridge AI Safety Hub](https://caish.org/mars),
-mentored by James Petrie (Future of Life Institute). I previously studied
+I was a MARS V fellow with the [Cambridge AI Safety Hub](https://caish.org/mars),
+mentored by James Petrie (Future of Life Institute). Before that, I studied
 computer science and mathematics at Brown.
 
 **Open to full-time research and research-engineering positions worldwide.**
