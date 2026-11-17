@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" role="img" aria-labelledby="mark-title-natural-order-hypothesis">
+  <title id="mark-title-natural-order-hypothesis">Four rows of seven dots; in each row the dots are filled from the left, a few more in each row down, so the filled dots make a staircase, and one dot beyond the staircase is filled too</title>
+  <desc>A frontispiece mark for "The Natural Order Hypothesis for LLMs." The columns are the same problems in the order models come to solve them; each row is a model. Each model has solved a prefix of that order, more or less of it, so the solved sets are nested and form a staircase: the same order at different reach. One problem is solved ahead of its turn: the order is approximate.</desc>
+
+  <circle cx="140" cy="140" r="128" stroke="currentColor" stroke-width="0.6" fill="none"/>
+
+  <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- Each model's solved prefix of the one order: nested, a staircase. -->
+    <path d="M49 88H101V114H127V140H153V166H205V192H49Z" stroke-width="1.0"/>
+
+    <!-- Models (rows) over the same problems (columns), in their natural order. -->
+    <circle cx="62" cy="101" r="4.6" fill="currentColor" stroke="none"/>
+    <circle cx="88" cy="101" r="4.6" fill="currentColor" stroke="none"/>
+    <circle cx="114" cy="101" r="4.6" stroke-width="0.8"/>
+    <circle cx="140" cy="101" r="4.6" stroke-width="0.8"/>
+    <circle cx="166" cy="101" r="4.6" stroke-width="0.8"/>
+    <circle cx="192" cy="101" r="4.6" stroke-width="0.8"/>
+    <circle cx="218" cy="101" r="4.6" stroke-width="0.8"/>
+    <circle cx="62" cy="127" r="4.6" fill="currentColor" stroke="none"/>
+    <circle cx="88" cy="127" r="4.6" fill="currentColor" stroke="none"/>
+    <circle cx="114" cy="127" r="4.6" fill="currentColor" stroke="none"/>
+    <circle cx="140" cy="127" r="4.6" stroke-width="0.8"/>
+    <circle cx="166" cy="127" r="4.6" stroke-width="0.8"/>
+    <circle cx="192" cy="127" r="4.6" stroke-width="0.8"/>
+    <circle cx="218" cy="127" r="4.6" stroke-width="0.8"/>
+    <circle cx="62" cy="153" r="4.6" fill="currentColor" stroke="none"/>
+    <circle cx="88" cy="153" r="4.6" fill="currentColor" stroke="none"/>
+    <circle cx="114" cy="153" r="4.6" fill="currentColor" stroke="none"/>
+    <circle cx="140" cy="153" r="4.6" fill="currentColor" stroke="none"/>
+    <circle cx="166" cy="153" r="4.6" stroke-width="0.8"/>
+    <circle cx="192" cy="153" r="4.6" fill="currentColor" stroke="none"/>
+    <circle cx="218" cy="153" r="4.6" stroke-width="0.8"/>
+    <circle cx="62" cy="179" r="4.6" fill="currentColor" stroke="none"/>
+    <circle cx="88" cy="179" r="4.6" fill="currentColor" stroke="none"/>
+    <circle cx="114" cy="179" r="4.6" fill="currentColor" stroke="none"/>
+    <circle cx="140" cy="179" r="4.6" fill="currentColor" stroke="none"/>
+    <circle cx="166" cy="179" r="4.6" fill="currentColor" stroke="none"/>
+    <circle cx="192" cy="179" r="4.6" fill="currentColor" stroke="none"/>
+    <circle cx="218" cy="179" r="4.6" stroke-width="0.8"/>
+
+  </g>
+</svg>
