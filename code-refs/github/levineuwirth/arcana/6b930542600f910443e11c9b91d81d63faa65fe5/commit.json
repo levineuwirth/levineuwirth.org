@@ -1,0 +1,29 @@
+{
+ "sha": "6b930542600f910443e11c9b91d81d63faa65fe5",
+ "message": "ai: field observation bounds a game's battlefield, and the cluster wrapper keeps every row\n\nThe first full run at ebb52566 lost nine shards to LSF's 2-hour limit. In every case the culprit was a game with Liliana, the Last Hope's emblem, whose Zombies at least double at each of its controller's end steps, while one engine step costs roughly the square of the board. One fuzz game took 6,329 s; one step at 1,814 Zombies took 8.6 s, and the next 42 s. The rules handling is correct; the cost is the engine's, and is logged separately.\n\nfield_observe:\n- OBS_MAX_PERMANENTS=<n> ends a game whose battlefield passes n after a step as board_cap, in both the occurrence and the fuzz loop. The check runs before a policy chooses again, so no policy searches a board past the bound.\n- board_cap is its own ending with a fail row carrying the size, steps and turn.\n- Unset, there is no bound, and the games are the ones ebb52566 played.\n- Game and fuzz rows gain a last column, the game's peak battlefield size, and the config rows record the bound.\n\nobserve.lsf:\n- The filter keeps the card,index,name rows. At ebb52566 it dropped them, and the index was recovered from TRACKED's order.\n- grep is line-buffered. A killed task had lost up to 4 KB of rows, about 100 fuzz games, and ended on a cut row.\n\nThe new unit test plays a Forest and Grizzly Bears mirror in both loops. Unbounded, it ends by the rules past six permanents. With a bound of six, the same game ends as board_cap at seven, sooner. It fails with the two checks removed.\n\nChecks with the release binary under taskset, through the wrapper's filter:\n- The unbounded fuzz pilot (64 games) is identical to ebb52566's, game for game.\n- The shard 20 runaway game at seed 20261116 ends as board_cap at 576 permanents on turn 48, in 0.16 s.\n- An occurrence pilot pair keeps all 37 card rows, a clean first line, and both games unchanged.\n\narcana-ai's tests pass, 114 passed, 0 failed, 31 ignored, and Clippy finds nothing in the file. The engine is still 4265da60's.",
+ "author": "Levi Neuwirth",
+ "date": "2026-11-10T11:42:48Z",
+ "parents": [
+  "ebb52566f76c9baa735af10deda44a51b9a46c91"
+ ],
+ "stats": {
+  "total": 148,
+  "additions": 115,
+  "deletions": 33
+ },
+ "files_total": 2,
+ "files": [
+  {
+   "filename": "arcana-ai/scripts/dtu/observe.lsf",
+   "status": "modified",
+   "additions": 7,
+   "deletions": 1
+  },
+  {
+   "filename": "arcana-ai/src/field_observe.rs",
+   "status": "modified",
+   "additions": 108,
+   "deletions": 32
+  }
+ ]
+}
