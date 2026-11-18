@@ -21,9 +21,9 @@ sections:
     label: Selected Engineering Projects
     entries:
       - projects:levcs
+      - projects:pmacs
       - projects:weenix
       - projects:networking-stack
-      - projects:pqc-avx2
 
   - id: education
     label: Education
@@ -45,10 +45,10 @@ presentation_sets:
     frontier-ai-contracting: software-engineering-systems
     shu-lab-undergrad: software-engineering-systems
   projects:
-    levcs: ai-infra-assurance
+    levcs: software-engineering-systems
+    pmacs: software-engineering-systems
     weenix: software-engineering-systems
     networking-stack: software-engineering-systems
-    pqc-avx2: software-engineering-systems
 
 overrides:
   skills:

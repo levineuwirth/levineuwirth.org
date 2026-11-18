@@ -40,7 +40,7 @@ experience:
     role: MARS V Fellow
     location: Oxford, United Kingdom
     start: July 2026
-    end: Present
+    end: November 2026
     cv_section: research
     cv_order: 1
     resume_order: 1
@@ -173,18 +173,17 @@ experience:
       software-engineering-systems:
         bullets:
           - >-
-            Built and upstreamed VerInf's dry-run workload profiler,
-            workload-manifest extraction, per-claim proving-cost model,
-            execution DAG, and partition scorecard for a zero-knowledge LLM
-            inference system; validated them against an archived full-scale
-            Llama-4 Maverick proof and live NVIDIA B200 hardware.
+            Built and upstreamed VerInf's dry-run profiler for LLM inference
+            proofs. It extracts a workload manifest and execution DAG to
+            estimate proving costs and compare partition plans. Calibrated the
+            model on an NVIDIA B200 and checked workload counts against an
+            archived Llama 4 Maverick run.
           - >-
-            Investigated measurement/model disagreement and corrected a faulty
-            cross-shard communication abstraction, revising its estimate from
-            roughly 950 GB to 2.4--2.8 GB per sweep. Current review-branch work
-            implements verifier-transparent enrolled-weight sharding whose proof
-            bytes match the single-device path and pass the unmodified Rust
-            verifier; multi-GPU timing remains model-based.
+            Corrected the model to account for local reductions, revising
+            estimated cross-shard traffic from roughly 950 GB to 2.4--2.8 GB
+            per sweep. Upstreamed weight sharding after two- and three-way
+            splits on one GPU reproduced the unsharded proof byte for byte
+            with fixed randomness and passed the existing Rust verifier.
       agent-platform-systems:
         bullets:
           - >-
@@ -384,8 +383,9 @@ experience:
             and Rust-backed analysis platform across four externally funded
             sub-projects.
           - >-
-            Co-led Deep Sets outcome models trained on 113M+ hospitalizations
-            and deployed their public readmission and mortality calculator.
+            Co-developed Deep Sets models for readmission and mortality and
+            built the FastAPI backend for their public calculator. The
+            readmission training set contained 17.2M discharges.
       agent-platform-systems:
         preamble: null
         bullets:

@@ -51,6 +51,7 @@ presentation_sets:
     shu-lab-undergrad: agent-platform-systems
   projects:
     levcs: agent-platform-systems
+    pmacs: null
     levshell: agent-platform-systems
     proof-broker: agent-platform-systems
     weenix: null

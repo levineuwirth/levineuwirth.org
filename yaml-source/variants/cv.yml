@@ -58,7 +58,7 @@ presentation_sets:
     mars-v: empirical-assurance
     shu-lab-undergrad: empirical-research-engineering
   projects:
-    levcs: agent-platform-systems
+    levcs: software-engineering-systems
     weenix: software-engineering-systems
     pqc-avx2: software-engineering-systems
 
@@ -70,7 +70,7 @@ overrides:
         Award (UTRA), Summer 2024.
   projects:
     proof-broker:
-      label: '\href{https://github.com/levineuwirth/proof-broker}{Proof Broker — Independent Research}'
+      label: '\href{https://levineuwirth.org/essays/proof-broker/}{Proof Broker — Independent Research}'
       description: >-
         Built an OCaml broker connecting Lean 4 and Rocq to untrusted solvers
         and model-generated search through versioned evidence schemas,
@@ -81,9 +81,9 @@ overrides:
       # Workshop-paper draft remains unpublished and is not listed as a paper.
       bullets:
         - >-
-          Built reproducible Python evaluation workflows with pinned tasks,
-          deterministic baselines, negative controls and replayable records;
-          evaluated live-model certificate proposals on 15 fixed obligations.
+          Built a Python evaluation harness with a deterministic baseline and
+          negative controls. The live-model workflow proved 6 of 15 fixed
+          obligations, with the same coverage across eight draws.
         - >-
           Audited context dependencies in kernel-accepted proofs; repaired
           integer-goal reconstruction, the final normalizer and audit parameter
@@ -95,10 +95,6 @@ overrides:
       label: '\href{https://github.com/levineuwirth/specification-dilemma}{The Specification Dilemma}'
     levcs:
       label: '\href{https://levineuwirth.org/essays/levcs.html}{LeVCS}'
-      description: >-
-        Built a federated version control system in Rust with signed authority
-        chains and three storage modes. Implemented journaled transactions,
-        group commit, committed snapshots, idempotent retries and crash recovery.
     pmacs:
       label: '\href{https://github.com/levineuwirth/pmacs}{Pmacs}'
       description: >-
@@ -108,10 +104,10 @@ overrides:
     pqc-avx2:
       label: '\href{https://levineuwirth.org/essays/where-does-simd-help-post-quantum-cryptography/}{Post-Quantum Cryptography / SIMD}'
       description: >-
-        Benchmarked four ML-KEM / Kyber build variants on x86-64 AVX2,
-        separating compiler optimization, auto-vectorization and hand-written
-        SIMD. Measured 35--56× core NTT and 5.4--7.1× end-to-end speedups over
-        optimized portable C, with statistical analysis and a reproducible artifact.
+        Benchmarked portable C and hand-written AVX2 implementations of ML-KEM.
+        Traced the original speedup estimates to measurements pooled across seven
+        nodes. Reworked the benchmark to record hardware counters and compare
+        independent runs on the same node.
   experience:
     mars-v:
       description: >-
@@ -129,9 +125,10 @@ overrides:
           execution DAGs and cost models; validated workload accounting against
           an archived Llama-4 Maverick run and calibrated on NVIDIA B200 hardware.
         - >-
-          Implemented verifier-transparent weight splitting: partitioned proofs
-          matched the ordinary path byte for byte and passed the Rust verifier
-          on one GPU. Multi-device speedup has not been measured.
+          Corrected estimated cross-shard traffic from roughly 950 GB to
+          2.4--2.8 GB per sweep by accounting for local reductions. Implemented
+          weight sharding and tested it on one GPU. With randomness fixed, the
+          proof matched the unsharded output byte for byte and passed the Rust verifier.
         - >-
           Integrated a collaborator's expert-weight bridge; fixed enrollment-identity
           binding, Merkle-index checks and sumcheck-round enforcement in Python

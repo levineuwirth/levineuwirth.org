@@ -46,14 +46,14 @@ overrides:
         Award (UTRA), Summer 2024.
   projects:
     proof-broker:
-      label: '\href{https://github.com/levineuwirth/proof-broker}{Proof Broker — Independent Research}'
+      label: '\href{https://levineuwirth.org/essays/proof-broker/}{Proof Broker — Independent Research}'
       description: >-
         Built an OCaml broker connecting Lean 4 and Rocq to untrusted solvers
         and model-generated search through versioned evidence schemas,
         independent certificate checks and kernel-checked proof terms.
         \par
-        Built reproducible Python workflows with pinned tasks, deterministic
-        baselines and negative controls.
+        Built a Python evaluation harness with a deterministic baseline and
+        negative controls. The live-model workflow proved 6 of 15 fixed obligations.
         \par
         Audited context dependencies in proofs; repaired integer-goal
         reconstruction and the final normalizer. Offline replay produced
