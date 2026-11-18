@@ -64,7 +64,7 @@ This is totally egregious! Considering that a player begins with 20 life in Magi
 
 ![Eight land drops with two Wardens and both doublers, compared with eight resolutions of Liliana’s emblem. Each gridline marks a tenfold increase.](figures/scute-and-life.svg){#fig-scute-growth}
 
-The Scute curve is something we can work out on paper. The version of Arcana I tested didn’t implement Scute Swarm, and every one of the 64 tournament decklists in the experiment predates the card’s release. It was the purple curve that got me into trouble.
+The Scute curve is something we can work out on paper, but Arcana doesn't yet support scute swarm (deliberately, I might add). It was the purple curve that got me into trouble.
 
 Now, who is this **Liliana** in the above plot?
 
