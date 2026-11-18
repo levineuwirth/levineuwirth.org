@@ -1,0 +1,44 @@
+Battlefield screenshots for Exponential Magic
+
+The frames record the defending seat immediately before the attacking seat
+chooses a declaration. Each .json.gz is a compressed Arcana /state response.
+The manifest records the decision step and attack-menu counts from the same
+engine state. These board-only snapshots omit the event history. The duel UI
+groups visible tokens by name, tapped state, and current power and toughness.
+The images include both boards and both life totals.
+
+Rendering the saved states
+
+Set ESSAY to the absolute path of this essay directory. From an Arcana
+checkout, extract the historical UI and use Python with Playwright and its
+Chromium browser installed (python -m playwright install chromium).
+
+    git worktree add --detach ../arcana-liliana ebb52566f76c9baa735af10deda44a51b9a46c91
+    cd ../arcana-liliana
+    python "$ESSAY/code/capture-battlefield.py" --ui arcana-web/static \
+        --frames "$ESSAY/data/battlefield" --out screenshots \
+        --art-map "$ESSAY/data/battlefield/art-map.tsv" --cache art-cache
+
+The renderer supplies each recorded response to the unmodified duel page.
+The TSV pins the normal and cropped Scryfall art URLs used by Arcana.
+Downloaded images are cached for subsequent runs. The crop extends from the
+board header through the defending player's life total.
+
+Replaying the game from the decks
+
+From that same historical checkout, set DECK_ZIP to the original Kaggle
+archive. Its SHA-256 is
+25c49afce58d8b4a4948311b6dbe50deb58d5169bdb21461e134456727958572.
+
+    git apply "$ESSAY/code/replay-capture.patch"
+    python3 arcana-ai/scripts/kaggle_to_decklists.py --zip "$DECK_ZIP" \
+        --out decks --formats PI --cap 800
+    cargo run --release --locked -p arcana-web --example capture_liliana \
+        -- decks/PI frames
+
+Run the rendering command above with --frames frames to use the new snapshots.
+The capture uses the historical random-play harness and observes decisions
+before the policy consumes a random choice. It stops at the second capture.
+Seat 0 is Sultai Control [23834_365725] and seat 1 is Sultai Control
+[23589_363393]. Their indices and converted decklist checksums are recorded
+in docs/a2-field/manifest-PI.csv in the historical checkout.

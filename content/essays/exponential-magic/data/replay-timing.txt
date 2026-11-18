@@ -1,0 +1,64 @@
+
+running 1 test
+seat0 18 = Sultai Control [23834_365725]; seat1 1 = Sultai Control [23589_363393]
+turn 2 begins at step 26: 120 objects, 1 on the battlefield
+turn 3 begins at step 50: 120 objects, 1 on the battlefield
+turn 4 begins at step 75: 120 objects, 2 on the battlefield
+turn 5 begins at step 105: 120 objects, 3 on the battlefield
+turn 6 begins at step 135: 120 objects, 3 on the battlefield
+turn 7 begins at step 160: 120 objects, 3 on the battlefield
+turn 8 begins at step 188: 120 objects, 4 on the battlefield
+turn 9 begins at step 217: 120 objects, 4 on the battlefield
+turn 10 begins at step 242: 120 objects, 4 on the battlefield
+turn 11 begins at step 271: 120 objects, 4 on the battlefield
+turn 12 begins at step 298: 120 objects, 5 on the battlefield
+turn 13 begins at step 327: 120 objects, 5 on the battlefield
+turn 14 begins at step 353: 120 objects, 5 on the battlefield
+turn 15 begins at step 380: 120 objects, 6 on the battlefield
+turn 16 begins at step 414: 120 objects, 7 on the battlefield
+turn 17 begins at step 452: 122 objects, 11 on the battlefield
+turn 18 begins at step 482: 122 objects, 11 on the battlefield
+turn 19 begins at step 519: 121 objects, 10 on the battlefield
+turn 20 begins at step 553: 121 objects, 11 on the battlefield
+turn 21 begins at step 588: 120 objects, 10 on the battlefield
+turn 22 begins at step 624: 120 objects, 11 on the battlefield
+turn 23 begins at step 665: 120 objects, 12 on the battlefield
+turn 24 begins at step 699: 120 objects, 12 on the battlefield
+turn 25 begins at step 728: 120 objects, 12 on the battlefield
+turn 26 begins at step 760: 120 objects, 13 on the battlefield
+turn 27 begins at step 798: 120 objects, 15 on the battlefield
+turn 28 begins at step 828: 120 objects, 16 on the battlefield
+turn 29 begins at step 871: 120 objects, 17 on the battlefield
+turn 30 begins at step 911: 120 objects, 17 on the battlefield
+turn 31 begins at step 947: 120 objects, 16 on the battlefield
+turn 32 begins at step 985: 120 objects, 17 on the battlefield
+turn 33 begins at step 1033: 121 objects, 20 on the battlefield
+turn 34 begins at step 1069: 121 objects, 20 on the battlefield
+turn 35 begins at step 1118: 123 objects, 21 on the battlefield
+turn 36 begins at step 1157: 124 objects, 22 on the battlefield
+turn 37 begins at step 1201: 129 objects, 27 on the battlefield
+turn 38 begins at step 1246: 130 objects, 29 on the battlefield
+turn 39 begins at step 1291: 137 objects, 37 on the battlefield
+turn 40 begins at step 1338: 135 objects, 36 on the battlefield
+turn 41 begins at step 1386: 150 objects, 51 on the battlefield
+turn 42 begins at step 1435: 150 objects, 52 on the battlefield
+turn 43 begins at step 1485: 177 objects, 78 on the battlefield
+turn 44 begins at step 1528: 178 objects, 80 on the battlefield
+turn 45 begins at step 1581: 236 objects, 139 on the battlefield
+turn 46 begins at step 1629: 238 objects, 143 on the battlefield
+turn 47 begins at step 1690: 352 objects, 257 on the battlefield
+turn 48 begins at step 1746: 350 objects, 254 on the battlefield
+turn 49 begins at step 1792: 579 objects, 482 on the battlefield
+turn 50 begins at step 1850: 578 objects, 483 on the battlefield
+turn 51 begins at step 1901: 1033 objects, 937 on the battlefield
+turn 52 begins at step 1961: 1030 objects, 936 on the battlefield
+step 2010 took 1.92s: PassPriority
+turn 53 begins at step 2012: 1937 objects, 1843 on the battlefield
+turn 54 begins at step 2074: 1938 objects, 1845 on the battlefield
+step 2122 took 8.63s: PassPriority
+turn 55 begins at step 2124: 3752 objects, 3661 on the battlefield
+turn 56 begins at step 2186: 3749 objects, 3655 on the battlefield
+step 2232 took 42.23s: PassPriority
+turn 57 begins at step 2234: 7377 objects, 7283 on the battlefield
+test replay_hang has been running for over 60 seconds
+turn 58 begins at step 2282: 7377 objects, 7284 on the battlefield

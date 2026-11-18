@@ -1,0 +1,10 @@
+events,liliana_zombies,scutes,scutes_one_token_doubler,life_gain_two_wardens,life_gain_two_wardens_one_life_doubler
+0,0,1,1,0,0
+1,2,2,3,4,8
+2,6,4,9,16,32
+3,14,8,27,52,104
+4,30,16,81,160,320
+5,62,32,243,484,968
+6,126,64,729,1456,2912
+7,254,128,2187,4372,8744
+8,510,256,6561,13120,26240

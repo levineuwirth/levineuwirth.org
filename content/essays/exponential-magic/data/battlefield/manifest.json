@@ -1,0 +1,39 @@
+{
+  "base_seed": 20261156,
+  "engine_revision": "4265da606717b58b983b77d1c3621acf979f223f",
+  "engine_seed": "10106226429815492818",
+  "frames": [
+    {
+      "active": 1,
+      "creatures": 58,
+      "decision_step": 1565,
+      "declarations": 229,
+      "defender_life": 24,
+      "file": "turn-44.json.gz",
+      "largest_attack": 56,
+      "multi_attacks": 4,
+      "perspective": 0,
+      "turn": 44,
+      "zombies": 56
+    },
+    {
+      "active": 1,
+      "creatures": 7258,
+      "decision_step": 2311,
+      "declarations": 1024,
+      "defender_life": 31,
+      "file": "turn-58.json.gz",
+      "largest_attack": 1,
+      "multi_attacks": 0,
+      "perspective": 0,
+      "turn": 58,
+      "zombies": 7256
+    }
+  ],
+  "harness_and_ui_revision": "ebb52566f76c9baa735af10deda44a51b9a46c91",
+  "policy_seed": "10106226429815533117",
+  "seat_deck_indices": [
+    18,
+    1
+  ]
+}

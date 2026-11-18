@@ -1,0 +1,134 @@
+
+running 1 test
+seat0 18 = Sultai Control [23834_365725]; seat1 1 = Sultai Control [23589_363393]
+turn 2 begins at step 26: 120 objects, 1 on the battlefield; Zombies [0, 0]; life [20, 20]
+turn 3 begins at step 50: 120 objects, 1 on the battlefield; Zombies [0, 0]; life [20, 20]
+turn 4 begins at step 75: 120 objects, 2 on the battlefield; Zombies [0, 0]; life [20, 20]
+turn 5 begins at step 105: 120 objects, 3 on the battlefield; Zombies [0, 0]; life [20, 20]
+turn 6 begins at step 135: 120 objects, 3 on the battlefield; Zombies [0, 0]; life [20, 20]
+turn 7 begins at step 160: 120 objects, 3 on the battlefield; Zombies [0, 0]; life [20, 20]
+turn 8 begins at step 188: 120 objects, 4 on the battlefield; Zombies [0, 0]; life [20, 20]
+turn 9 begins at step 217: 120 objects, 4 on the battlefield; Zombies [0, 0]; life [20, 20]
+turn 10 begins at step 242: 120 objects, 4 on the battlefield; Zombies [0, 0]; life [20, 20]
+turn 11 begins at step 271: 120 objects, 4 on the battlefield; Zombies [0, 0]; life [20, 18]
+turn 12 begins at step 298: 120 objects, 5 on the battlefield; Zombies [0, 0]; life [20, 18]
+turn 13 begins at step 327: 120 objects, 5 on the battlefield; Zombies [0, 0]; life [20, 16]
+turn 14 begins at step 353: 120 objects, 5 on the battlefield; Zombies [0, 0]; life [20, 16]
+turn 15 begins at step 380: 120 objects, 6 on the battlefield; Zombies [0, 0]; life [20, 16]
+turn 16 begins at step 414: 120 objects, 7 on the battlefield; Zombies [0, 0]; life [20, 16]
+turn 17 begins at step 452: 122 objects, 11 on the battlefield; Zombies [0, 0]; life [20, 16]
+turn 18 begins at step 482: 122 objects, 11 on the battlefield; Zombies [0, 0]; life [20, 16]
+turn 19 begins at step 519: 121 objects, 10 on the battlefield; Zombies [0, 0]; life [20, 16]
+turn 20 begins at step 553: 121 objects, 11 on the battlefield; Zombies [0, 0]; life [16, 16]
+turn 21 begins at step 588: 120 objects, 10 on the battlefield; Zombies [0, 0]; life [16, 14]
+turn 22 begins at step 624: 120 objects, 11 on the battlefield; Zombies [0, 0]; life [19, 14]
+turn 23 begins at step 665: 120 objects, 12 on the battlefield; Zombies [0, 0]; life [19, 17]
+turn 24 begins at step 699: 120 objects, 12 on the battlefield; Zombies [0, 0]; life [17, 17]
+turn 25 begins at step 728: 120 objects, 12 on the battlefield; Zombies [0, 0]; life [17, 17]
+turn 26 begins at step 760: 120 objects, 13 on the battlefield; Zombies [0, 0]; life [17, 17]
+Liliana, the Last Hope ability 0 at turn 26 by 1 (loyalty {Loyalty: 3})
+turn 27 begins at step 798: 120 objects, 15 on the battlefield; Zombies [0, 0]; life [17, 17]
+turn 28 begins at step 828: 120 objects, 16 on the battlefield; Zombies [0, 0]; life [17, 17]
+Liliana, the Last Hope ability 0 at turn 28 by 1 (loyalty {Loyalty: 4})
+turn 29 begins at step 871: 120 objects, 17 on the battlefield; Zombies [0, 0]; life [17, 17]
+Liliana, Dreadhorde General ability 1 at turn 29 by 0 (loyalty {Loyalty: 6})
+Liliana, the Last Hope ability 0 at turn 29 by 0 (loyalty {Loyalty: 3})
+turn 30 begins at step 911: 120 objects, 17 on the battlefield; Zombies [0, 0]; life [17, 17]
+Liliana, the Last Hope ability 0 at turn 30 by 1 (loyalty {Loyalty: 5})
+turn 31 begins at step 947: 120 objects, 16 on the battlefield; Zombies [0, 0]; life [17, 17]
+turn 32 begins at step 985: 120 objects, 17 on the battlefield; Zombies [0, 0]; life [20, 17]
+Liliana, the Last Hope ability 0 at turn 32 by 1 (loyalty {Loyalty: 6})
+turn 33 begins at step 1033: 121 objects, 20 on the battlefield; Zombies [0, 0]; life [20, 17]
+turn 34 begins at step 1069: 121 objects, 20 on the battlefield; Zombies [0, 0]; life [23, 17]
+Liliana, the Last Hope ability 2 at turn 34 by 1 (loyalty {Loyalty: 7})
+EMBLEM at step 1086, turn 34, after PassPriority
+turn 35 begins at step 1118: 123 objects, 21 on the battlefield; Zombies [0, 2]; life [23, 20]
+Liliana, Dreadhorde General ability 0 at turn 35 by 0 (loyalty {Loyalty: 2})
+turn 36 begins at step 1157: 124 objects, 22 on the battlefield; Zombies [1, 2]; life [26, 20]
+turn 37 begins at step 1201: 129 objects, 27 on the battlefield; Zombies [1, 6]; life [24, 23]
+Liliana, Dreadhorde General ability 0 at turn 37 by 0 (loyalty {Loyalty: 3})
+turn 38 begins at step 1246: 130 objects, 29 on the battlefield; Zombies [2, 6]; life [27, 23]
+turn 39 begins at step 1291: 137 objects, 37 on the battlefield; Zombies [2, 14]; life [27, 26]
+Liliana, the Last Hope ability 0 at turn 39 by 0 (loyalty {Loyalty: 3})
+turn 40 begins at step 1338: 135 objects, 36 on the battlefield; Zombies [1, 13]; life [25, 23]
+turn 41 begins at step 1386: 150 objects, 51 on the battlefield; Zombies [1, 28]; life [25, 29]
+Liliana, the Last Hope ability 0 at turn 41 by 0 (loyalty {Loyalty: 4})
+turn 42 begins at step 1435: 150 objects, 52 on the battlefield; Zombies [1, 28]; life [26, 29]
+turn 43 begins at step 1485: 177 objects, 78 on the battlefield; Zombies [0, 56]; life [26, 29]
+Liliana, the Last Hope ability 0 at turn 43 by 0 (loyalty {Loyalty: 5})
+Liliana, Dreadhorde General ability 0 at turn 43 by 0 (loyalty {Loyalty: 1})
+turn 44 begins at step 1528: 178 objects, 80 on the battlefield; Zombies [1, 56]; life [24, 29]
+attack decision turn 44 active 1: 58 creatures, 229 declarations, largest has 56 attackers, 4 with more than one
+turn 45 begins at step 1581: 236 objects, 139 on the battlefield; Zombies [1, 114]; life [24, 35]
+Liliana, the Last Hope ability 0 at turn 45 by 0 (loyalty {Loyalty: 4})
+Liliana, Dreadhorde General ability 0 at turn 45 by 0 (loyalty {Loyalty: 2})
+turn 46 begins at step 1629: 238 objects, 143 on the battlefield; Zombies [2, 114]; life [24, 35]
+attack decision turn 46 active 1: 116 creatures, 461 declarations, largest has 114 attackers, 4 with more than one
+turn 47 begins at step 1690: 352 objects, 257 on the battlefield; Zombies [2, 228]; life [24, 38]
+Liliana, the Last Hope ability 0 at turn 47 by 0 (loyalty {Loyalty: 5})
+Liliana, Dreadhorde General ability 0 at turn 47 by 0 (loyalty {Loyalty: 3})
+turn 48 begins at step 1746: 350 objects, 254 on the battlefield; Zombies [2, 227]; life [24, 38]
+attack decision turn 48 active 1: 229 creatures, 913 declarations, largest has 227 attackers, 4 with more than one
+turn 49 begins at step 1792: 579 objects, 482 on the battlefield; Zombies [2, 456]; life [24, 38]
+Liliana, the Last Hope ability 0 at turn 49 by 0 (loyalty {Loyalty: 6})
+Liliana, Dreadhorde General ability 0 at turn 49 by 0 (loyalty {Loyalty: 2})
+turn 50 begins at step 1850: 578 objects, 483 on the battlefield; Zombies [2, 455]; life [22, 38]
+attack decision turn 50 active 1: 457 creatures, 1024 declarations, largest has 1 attackers, 0 with more than one
+turn 51 begins at step 1901: 1033 objects, 937 on the battlefield; Zombies [2, 910]; life [22, 44]
+Liliana, the Last Hope ability 0 at turn 51 by 0 (loyalty {Loyalty: 7})
+turn 52 begins at step 1961: 1030 objects, 936 on the battlefield; Zombies [1, 908]; life [25, 44]
+attack decision turn 52 active 1: 910 creatures, 1024 declarations, largest has 1 attackers, 0 with more than one
+step 2010 took 1.72s: PassPriority
+turn 53 begins at step 2012: 1937 objects, 1843 on the battlefield; Zombies [0, 1816]; life [25, 50]
+Liliana, the Last Hope ability 0 at turn 53 by 0 (loyalty {Loyalty: 8})
+Liliana, Dreadhorde General ability 0 at turn 53 by 0 (loyalty {Loyalty: 3})
+turn 54 begins at step 2074: 1938 objects, 1845 on the battlefield; Zombies [1, 1815]; life [28, 50]
+attack decision turn 54 active 1: 1818 creatures, 1024 declarations, largest has 1 attackers, 0 with more than one
+step 2122 took 7.78s: PassPriority
+turn 55 begins at step 2124: 3752 objects, 3661 on the battlefield; Zombies [0, 3630]; life [28, 50]
+Liliana, the Last Hope ability 0 at turn 55 by 0 (loyalty {Loyalty: 9})
+Liliana, Dreadhorde General ability 1 at turn 55 by 0 (loyalty {Loyalty: 4})
+turn 56 begins at step 2186: 3749 objects, 3655 on the battlefield; Zombies [0, 3628]; life [31, 50]
+attack decision turn 56 active 1: 3630 creatures, 1024 declarations, largest has 1 attackers, 0 with more than one
+step 2232 took 35.15s: PassPriority
+turn 57 begins at step 2234: 7377 objects, 7283 on the battlefield; Zombies [0, 7256]; life [31, 51]
+Liliana, the Last Hope ability 0 at turn 57 by 0 (loyalty {Loyalty: 10})
+turn 58 begins at step 2282: 7377 objects, 7284 on the battlefield; Zombies [0, 7256]; life [31, 51]
+attack decision turn 58 active 1: 7258 creatures, 1024 declarations, largest has 1 attackers, 0 with more than one
+test replay_hang has been running for over 60 seconds
+HANG at step 2325 (> 60s): PassPriority
+turn 58 active 1 Ending/End; life [31, 54]; stack 1; queued triggers 0; events 18156; objects 7377
+  p0 battlefield: {"1219 [1219]": 1, "16162 [16162]": 1, "16165 [16165]": 2, "16452 [16452]": 1, "19760 [19760]": 1, "4 [4]": 2, "5 [5]": 2, "7 [7]": 1, "7255 [7255]": 2, "8720 [8720]": 1, "8722 [8722]": 1}
+  p0 hand: 8720, 2047
+  p1 battlefield: {"1219 [1219]": 1, "16162 [16162]": 1, "16165 [16165]": 2, "17839 [17839]": 1, "4 [4]": 2, "5 [5]": 1, "7 [7]": 1, "7869 [7869]": 1, "8720 [8720]": 2, "8722 [8722]": 2, "card 0 [158]": 7256}
+  p1 hand: 
+  objects by zone: {"Battlefield": 7285, "Command": 1, "Exile": 3, "Graveyard(0)": 30, "Graveyard(1)": 25, "Hand(0)": 2, "Library(0)": 12, "Library(1)": 19}
+  stack source 301 = card 0
+  stack: StackEntry { id: 7896, source: 301, controller: 1, kind: TriggeredAbility { trigger_id: 4026531841, trigger_event: StepBegins { step: End }, text: "", resolved_effect: None }, targets: TargetSelection { targets: [] }, modes: [], x_value: None, storm_count_at_cast: 0, target_requirements: [], cast_modifier: None, enters_with: [], delve_count: 0, kicked: false, pre_adventure_characteristics: None, pre_split_characteristics: None, colors_spent: ColorSet(0), mana_spent: 0, cast_from_zone: Stack, affected: None }
+  pending choice: None
+
+  prior 2300: PassPriority
+  prior 2301: PassPriority
+  prior 2302: PassPriority
+  prior 2303: ActivateAbility { source: 285, ability_index: 1, targets: TargetSelection { targets: [Object(4327)] }, mana_payment: ManaPaymentPlan { assignments: [], convoke_creatures: [], delve_cards: [], phyrexian_life_payments: [] }, additional_costs: [AddCounters { source: 285, kind: Loyalty, count: 1 }] }
+  prior 2304: PassPriority
+  prior 2305: PassPriority
+  prior 2306: PlayLand { object_id: 7893, mdfc_back: false }
+  prior 2307: PassPriority
+  prior 2308: PassPriority
+  prior 2309: PassPriority
+  prior 2310: PassPriority
+  prior 2311: DeclareAttackers { attackers: [AttackerDeclaration { attacker: 738, defending: Planeswalker(686) }] }
+  prior 2312: PassPriority
+  prior 2313: PassPriority
+  prior 2314: PassPriority
+  prior 2315: DeclareBlockers { blockers: [] }
+  prior 2316: PassPriority
+  prior 2317: PassPriority
+  prior 2318: PassPriority
+  prior 2319: PassPriority
+  prior 2320: PassPriority
+  prior 2321: PassPriority
+  prior 2322: PassPriority
+  prior 2323: PassPriority
+  prior 2324: PassPriority

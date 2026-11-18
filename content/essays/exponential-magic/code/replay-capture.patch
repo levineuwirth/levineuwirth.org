@@ -1,0 +1,151 @@
+diff --git a/arcana-ai/src/field_observe.rs b/arcana-ai/src/field_observe.rs
+--- a/arcana-ai/src/field_observe.rs
++++ b/arcana-ai/src/field_observe.rs
+@@ -314,6 +314,15 @@
+     policy_seed: u64,
+     max_actions: u32,
+ ) -> FuzzOutcome {
++    fuzz_until(seat_decks, registry, engine_seed, policy_seed, max_actions, |_, _, _| false)
++}
++
++/// Stop at a selected decision, before consuming its random choice.
++pub fn fuzz_until(
++    seat_decks: Vec<Vec<CardId>>, registry: &CardRegistry,
++    engine_seed: u64, policy_seed: u64, max_actions: u32,
++    mut capture: impl FnMut(u32, &GameState, &EngineYield) -> bool,
++) -> FuzzOutcome {
+     let mut rng = ChaCha8Rng::seed_from_u64(policy_seed);
+     let started = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| new_game(seat_decks, registry, engine_seed)));
+     let (mut state, mut yld) = match started {
+@@ -322,6 +331,9 @@
+     };
+     let mut steps = 0u32;
+     loop {
++        if capture(steps, &state, &yld) {
++            return FuzzOutcome { ending: "captured".into(), steps, detail: String::new() };
++        }
+         match &yld {
+             EngineYield::GameOver(r) => {
+                 return FuzzOutcome { ending: Ending::Rule(r.clone()).label(), steps, detail: String::new() };
+diff --git a/arcana-ai/src/deckeval_runner.rs b/arcana-ai/src/deckeval_runner.rs
+--- a/arcana-ai/src/deckeval_runner.rs
++++ b/arcana-ai/src/deckeval_runner.rs
+@@ -704,7 +704,7 @@
+ }
+ 
+ /// SplitMix64-style deterministic mix of four `u64`s (gauntlet seed derivation).
+-pub(crate) fn mix4(a: u64, b: u64, c: u64, d: u64) -> u64 {
++pub fn mix4(a: u64, b: u64, c: u64, d: u64) -> u64 {
+     let mut x = a.wrapping_add(0x9E37_79B9_7F4A_7C15);
+     for v in [b, c, d] {
+         x ^= v.wrapping_add(0x9E37_79B9_7F4A_7C15);
+diff --git a/arcana-web/src/lib.rs b/arcana-web/src/lib.rs
+--- a/arcana-web/src/lib.rs
++++ b/arcana-web/src/lib.rs
+@@ -2164,3 +2164,14 @@
+         }
+     }
+ }
++
++/// A board-only replay frame for the seat waiting on the attacker's decision.
++pub fn waiting_frame(state: &GameState, reg: &CardRegistry, seat: PlayerId) -> StateResponse {
++    let projected = project(state, seat);
++    StateResponse {
++        view: view_state(&projected.state, reg, seat, &[]),
++        recent: vec![], events: vec![], combat: None, bottom: None,
++        eval: eval_for(state, seat), library: library_stats(state, reg, seat),
++        card_power: card_power_for(state, seat),
++    }
++}
+diff --git a/arcana-web/examples/capture_liliana.rs b/arcana-web/examples/capture_liliana.rs
+new file mode 100644
+--- /dev/null
++++ b/arcana-web/examples/capture_liliana.rs
+@@ -0,0 +1,87 @@
++use arcana_ai::{
++    deck_corpus::{decks_from_dir, field_manifest_mismatch, playable_decks},
++    deckeval_runner::mix4,
++    field_observe::fuzz_until,
++};
++use arcana_core::{actions::Action, engine::EngineYield};
++use serde_json::json;
++use std::{env, fs, path::PathBuf};
++
++fn main() {
++    let mut args = env::args_os().skip(1);
++    let decks_dir = PathBuf::from(args.next().expect("supply converted PI deck directory"));
++    let output = PathBuf::from(args.next().expect("supply output directory"));
++    fs::create_dir_all(&output).unwrap();
++    let reg = arcana_cards::build_catalog();
++    let decks = playable_decks(&decks_from_dir(&decks_dir, "PI", &reg).unwrap(), 60, 60);
++    assert_eq!(
++        field_manifest_mismatch(&decks, include_str!("../../docs/a2-field/manifest-PI.csv")),
++        None
++    );
++    let seed = 20261156;
++    let engine_seed = mix4(seed, 1, 18, 0);
++    let mut frames = vec![];
++    let outcome = fuzz_until(
++        vec![decks[18].cards.clone(), decks[1].cards.clone()],
++        &reg,
++        engine_seed,
++        engine_seed ^ 0xBEEF,
++        20_000,
++        |step, state, yld| {
++            let turn = state.turn.turn_number;
++            if !matches!(turn, 44 | 58) {
++                return false;
++            }
++            let EngineYield::PendingDecision {
++                player: 1,
++                legal_actions,
++                ..
++            } = yld
++            else {
++                return false;
++            };
++            let sizes: Vec<_> = legal_actions
++                .iter()
++                .filter_map(|a| match a {
++                    Action::DeclareAttackers { attackers } => Some(attackers.len()),
++                    _ => None,
++                })
++                .collect();
++            if sizes.is_empty() {
++                return false;
++            }
++            let response = arcana_web::waiting_frame(state, &reg, 0);
++            let army = &response.view.players[1].battlefield;
++            let creatures = army.iter().filter(|c| c.power.is_some()).count();
++            let zombies = army.iter().filter(|card| card.name == "Zombie").count();
++            let defender_life = response.view.players[0].life;
++            let largest = *sizes.iter().max().unwrap();
++            let multi = sizes.iter().filter(|&&n| n > 1).count();
++            assert_eq!(
++                (creatures, sizes.len(), largest, multi),
++                if turn == 44 {
++                    (58, 229, 56, 4)
++                } else {
++                    (7258, 1024, 1, 0)
++                }
++            );
++            assert_eq!(zombies, if turn == 44 { 56 } else { 7256 });
++            let name = format!("turn-{turn}.json");
++            fs::write(output.join(&name), serde_json::to_vec(&response).unwrap()).unwrap();
++            frames.push(json!({"turn":turn,"decision_step":step,"perspective":0,"active":1,"file":name,
++            "zombies":zombies,"defender_life":defender_life,"creatures":creatures,"declarations":sizes.len(),"largest_attack":largest,"multi_attacks":multi}));
++            eprintln!("Captured turn {turn}, step {step}: {creatures} creatures, largest attack {largest}");
++            turn == 58
++        },
++    );
++    assert_eq!(outcome.ending, "captured");
++    assert_eq!(frames.len(), 2);
++    let manifest = json!({"base_seed":seed,"seat_deck_indices":[18,1],"engine_seed":engine_seed.to_string(),
++        "policy_seed":(engine_seed ^ 0xBEEF).to_string(),"engine_revision":"4265da606717b58b983b77d1c3621acf979f223f",
++        "harness_and_ui_revision":"ebb52566f76c9baa735af10deda44a51b9a46c91","frames":frames});
++    fs::write(
++        output.join("manifest.json"),
++        serde_json::to_vec_pretty(&manifest).unwrap(),
++    )
++    .unwrap();
++}

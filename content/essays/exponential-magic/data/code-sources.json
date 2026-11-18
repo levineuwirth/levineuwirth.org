@@ -1,0 +1,62 @@
+[
+  {
+    "file": "code/liliana-emblem.rs",
+    "commit": "4265da606717b58b983b77d1c3621acf979f223f",
+    "source": "arcana-cards/src/s2x2/liliana_the_last_hope.rs",
+    "first_line": 182,
+    "last_line": 215,
+    "url": "https://github.com/levineuwirth/arcana/blob/4265da606717b58b983b77d1c3621acf979f223f/arcana-cards/src/s2x2/liliana_the_last_hope.rs#L182-L215",
+    "source_sha256": "d7d177df5d917da700a6c5377783aa60fa6aaf57609050dacf9663b697798df6",
+    "excerpt_sha256": "dfc2bcd68fbf66c9a8c5696e84577a9d7c241d98bfed8475dc84053c0299e6be"
+  },
+  {
+    "file": "code/evolve-scan.rs",
+    "commit": "4265da606717b58b983b77d1c3621acf979f223f",
+    "source": "arcana-core/src/engine.rs",
+    "first_line": 3000,
+    "last_line": 3033,
+    "url": "https://github.com/levineuwirth/arcana/blob/4265da606717b58b983b77d1c3621acf979f223f/arcana-core/src/engine.rs#L3000-L3033",
+    "source_sha256": "e31ed874b0fc705ea5b4669714a9a0b819583d8be98d66c6abfcea38d7b33a0e",
+    "excerpt_sha256": "8c344d13b88d2b0c6bcef2cf7db4ea197da9fbe659077f2596d7cd96003819d6"
+  },
+  {
+    "file": "code/attack-list-cap.rs",
+    "commit": "4265da606717b58b983b77d1c3621acf979f223f",
+    "source": "arcana-core/src/legal_actions.rs",
+    "first_line": 1019,
+    "last_line": 1043,
+    "url": "https://github.com/levineuwirth/arcana/blob/4265da606717b58b983b77d1c3621acf979f223f/arcana-core/src/legal_actions.rs#L1019-L1043",
+    "source_sha256": "77ea45a0a59c7e09a7599adc405e7042ee1b21b7c2d7f516ff5efd87abdf816b",
+    "excerpt_sha256": "1daabfbe107d3e5f178fbd799f45153853456c44ca5659164947df2a4e939044"
+  },
+  {
+    "file": "code/loop-detection.rs",
+    "commit": "4265da606717b58b983b77d1c3621acf979f223f",
+    "source": "arcana-core/src/engine.rs",
+    "first_line": 152,
+    "last_line": 165,
+    "url": "https://github.com/levineuwirth/arcana/blob/4265da606717b58b983b77d1c3621acf979f223f/arcana-core/src/engine.rs#L152-L165",
+    "source_sha256": "e31ed874b0fc705ea5b4669714a9a0b819583d8be98d66c6abfcea38d7b33a0e",
+    "excerpt_sha256": "1ac835e779b66202b728a25da1d99895fbe8647091b85724376af633afdb057f"
+  },
+  {
+    "file": "code/counter-addition.rs",
+    "commit": "4265da606717b58b983b77d1c3621acf979f223f",
+    "source": "arcana-core/src/objects.rs",
+    "first_line": 383,
+    "last_line": 387,
+    "url": "https://github.com/levineuwirth/arcana/blob/4265da606717b58b983b77d1c3621acf979f223f/arcana-core/src/objects.rs#L383-L387",
+    "source_sha256": "8b058d7d10194d6256a2cba33be74272bf3538fce8008c3df62b796b701b2446",
+    "excerpt_sha256": "b4713d7281803fa9a119a941acafed9ff4a0164f336263140b43c083eb011875"
+  },
+  {
+    "file": "code/counter-to-power.rs",
+    "commit": "4265da606717b58b983b77d1c3621acf979f223f",
+    "source": "arcana-core/src/layers.rs",
+    "first_line": 1931,
+    "last_line": 1940,
+    "url": "https://github.com/levineuwirth/arcana/blob/4265da606717b58b983b77d1c3621acf979f223f/arcana-core/src/layers.rs#L1931-L1940",
+    "source_sha256": "f15b9d9300e65b259577a4f283278e08d6603e84179bc9a7ac0873355493fc8b",
+    "excerpt_sha256": "2487b2ad433340d9d23cea7b081402393c859ed94cf50642b3351e2ec0573926"
+  }
+]

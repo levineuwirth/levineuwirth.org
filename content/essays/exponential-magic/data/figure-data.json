@@ -1,0 +1,518 @@
+{
+  "provenance": {
+    "observation_commit": "ebb52566",
+    "engine_commit": "4265da60",
+    "seed": 20261156,
+    "seat0_deck": 18,
+    "seat1_deck": 1,
+    "policy": "uniform random",
+    "action_cap": 20000,
+    "timing_context": "Two existing laptop release replays under load; not a new benchmark.",
+    "logs": {
+      "data/replay-growth.txt": "130f151d7823329441f33568c8bd0ec6e03fd9e2247958503549346e149381c2",
+      "data/replay-timing.txt": "17d300396753a6d0150f0d009e42a8d6018b32a8866cec1ab53ff1698bd44142"
+    },
+    "field_dates_source": {
+      "manifest": "docs/a2-field/manifest-PI.csv",
+      "event_table": "df_events_v2.csv inside kaggle.zip",
+      "archive_sha256": "25c49afce58d8b4a4948311b6dbe50deb58d5169bdb21461e134456727958572",
+      "join": "source prefix before underscore = event__id; event_date parsed as day/month/year"
+    }
+  },
+  "growth_at_start_of_controllers_turn": [
+    {
+      "turn": 36,
+      "step": 1157,
+      "zombies": 2
+    },
+    {
+      "turn": 38,
+      "step": 1246,
+      "zombies": 6
+    },
+    {
+      "turn": 40,
+      "step": 1338,
+      "zombies": 13
+    },
+    {
+      "turn": 42,
+      "step": 1435,
+      "zombies": 28
+    },
+    {
+      "turn": 44,
+      "step": 1528,
+      "zombies": 56
+    },
+    {
+      "turn": 46,
+      "step": 1629,
+      "zombies": 114
+    },
+    {
+      "turn": 48,
+      "step": 1746,
+      "zombies": 227
+    },
+    {
+      "turn": 50,
+      "step": 1850,
+      "zombies": 455
+    },
+    {
+      "turn": 52,
+      "step": 1961,
+      "zombies": 908
+    },
+    {
+      "turn": 54,
+      "step": 2074,
+      "zombies": 1815
+    },
+    {
+      "turn": 56,
+      "step": 2186,
+      "zombies": 3628
+    },
+    {
+      "turn": 58,
+      "step": 2282,
+      "zombies": 7256
+    }
+  ],
+  "attack_choices": [
+    {
+      "turn": 44,
+      "creatures": 58,
+      "declarations": 229,
+      "largest_attack": 56,
+      "multi_attacks": 4
+    },
+    {
+      "turn": 46,
+      "creatures": 116,
+      "declarations": 461,
+      "largest_attack": 114,
+      "multi_attacks": 4
+    },
+    {
+      "turn": 48,
+      "creatures": 229,
+      "declarations": 913,
+      "largest_attack": 227,
+      "multi_attacks": 4
+    },
+    {
+      "turn": 50,
+      "creatures": 457,
+      "declarations": 1024,
+      "largest_attack": 1,
+      "multi_attacks": 0
+    },
+    {
+      "turn": 52,
+      "creatures": 910,
+      "declarations": 1024,
+      "largest_attack": 1,
+      "multi_attacks": 0
+    },
+    {
+      "turn": 54,
+      "creatures": 1818,
+      "declarations": 1024,
+      "largest_attack": 1,
+      "multi_attacks": 0
+    },
+    {
+      "turn": 56,
+      "creatures": 3630,
+      "declarations": 1024,
+      "largest_attack": 1,
+      "multi_attacks": 0
+    },
+    {
+      "turn": 58,
+      "creatures": 7258,
+      "declarations": 1024,
+      "largest_attack": 1,
+      "multi_attacks": 0
+    }
+  ],
+  "emblem_resolution_timings": [
+    {
+      "replay": "growth replay",
+      "step": 2010,
+      "seconds": 1.72
+    },
+    {
+      "replay": "growth replay",
+      "step": 2122,
+      "seconds": 7.78
+    },
+    {
+      "replay": "growth replay",
+      "step": 2232,
+      "seconds": 35.15
+    },
+    {
+      "replay": "earlier replay",
+      "step": 2010,
+      "seconds": 1.92
+    },
+    {
+      "replay": "earlier replay",
+      "step": 2122,
+      "seconds": 8.63
+    },
+    {
+      "replay": "earlier replay",
+      "step": 2232,
+      "seconds": 42.23
+    }
+  ],
+  "theoretical_growth": [
+    {
+      "events": 0,
+      "liliana_zombies": 0,
+      "scutes": 1,
+      "scutes_one_token_doubler": 1,
+      "life_gain_two_wardens": 0,
+      "life_gain_two_wardens_one_life_doubler": 0
+    },
+    {
+      "events": 1,
+      "liliana_zombies": 2,
+      "scutes": 2,
+      "scutes_one_token_doubler": 3,
+      "life_gain_two_wardens": 4,
+      "life_gain_two_wardens_one_life_doubler": 8
+    },
+    {
+      "events": 2,
+      "liliana_zombies": 6,
+      "scutes": 4,
+      "scutes_one_token_doubler": 9,
+      "life_gain_two_wardens": 16,
+      "life_gain_two_wardens_one_life_doubler": 32
+    },
+    {
+      "events": 3,
+      "liliana_zombies": 14,
+      "scutes": 8,
+      "scutes_one_token_doubler": 27,
+      "life_gain_two_wardens": 52,
+      "life_gain_two_wardens_one_life_doubler": 104
+    },
+    {
+      "events": 4,
+      "liliana_zombies": 30,
+      "scutes": 16,
+      "scutes_one_token_doubler": 81,
+      "life_gain_two_wardens": 160,
+      "life_gain_two_wardens_one_life_doubler": 320
+    },
+    {
+      "events": 5,
+      "liliana_zombies": 62,
+      "scutes": 32,
+      "scutes_one_token_doubler": 243,
+      "life_gain_two_wardens": 484,
+      "life_gain_two_wardens_one_life_doubler": 968
+    },
+    {
+      "events": 6,
+      "liliana_zombies": 126,
+      "scutes": 64,
+      "scutes_one_token_doubler": 729,
+      "life_gain_two_wardens": 1456,
+      "life_gain_two_wardens_one_life_doubler": 2912
+    },
+    {
+      "events": 7,
+      "liliana_zombies": 254,
+      "scutes": 128,
+      "scutes_one_token_doubler": 2187,
+      "life_gain_two_wardens": 4372,
+      "life_gain_two_wardens_one_life_doubler": 8744
+    },
+    {
+      "events": 8,
+      "liliana_zombies": 510,
+      "scutes": 256,
+      "scutes_one_token_doubler": 6561,
+      "life_gain_two_wardens": 13120,
+      "life_gain_two_wardens_one_life_doubler": 26240
+    }
+  ],
+  "field_dates": [
+    {
+      "source": "23573_363262",
+      "date": "2019-11-02"
+    },
+    {
+      "source": "23589_363393",
+      "date": "2019-11-04"
+    },
+    {
+      "source": "23647_364013",
+      "date": "2019-11-11"
+    },
+    {
+      "source": "23651_364089",
+      "date": "2019-11-11"
+    },
+    {
+      "source": "23691_364428",
+      "date": "2019-11-08"
+    },
+    {
+      "source": "23705_364538",
+      "date": "2019-11-16"
+    },
+    {
+      "source": "23729_364730",
+      "date": "2019-11-18"
+    },
+    {
+      "source": "23731_364766",
+      "date": "2019-11-17"
+    },
+    {
+      "source": "23736_364800",
+      "date": "2019-11-17"
+    },
+    {
+      "source": "23743_364886",
+      "date": "2019-11-15"
+    },
+    {
+      "source": "23746_364917",
+      "date": "2019-11-17"
+    },
+    {
+      "source": "23769_365111",
+      "date": "2019-11-21"
+    },
+    {
+      "source": "23804_365420",
+      "date": "2019-11-25"
+    },
+    {
+      "source": "23823_365634",
+      "date": "2019-11-23"
+    },
+    {
+      "source": "23823_365635",
+      "date": "2019-11-23"
+    },
+    {
+      "source": "23824_365648",
+      "date": "2019-11-23"
+    },
+    {
+      "source": "23834_365721",
+      "date": "2019-11-22"
+    },
+    {
+      "source": "23834_365722",
+      "date": "2019-11-22"
+    },
+    {
+      "source": "23834_365725",
+      "date": "2019-11-22"
+    },
+    {
+      "source": "23846_365831",
+      "date": "2019-11-24"
+    },
+    {
+      "source": "23868_366023",
+      "date": "2019-11-25"
+    },
+    {
+      "source": "23869_366030",
+      "date": "2019-11-28"
+    },
+    {
+      "source": "23869_366033",
+      "date": "2019-11-28"
+    },
+    {
+      "source": "23877_366125",
+      "date": "2019-11-23"
+    },
+    {
+      "source": "23895_366282",
+      "date": "2019-11-30"
+    },
+    {
+      "source": "23926_366575",
+      "date": "2019-11-30"
+    },
+    {
+      "source": "23932_366650",
+      "date": "2019-11-30"
+    },
+    {
+      "source": "23932_366653",
+      "date": "2019-11-30"
+    },
+    {
+      "source": "23972_367060",
+      "date": "2019-12-07"
+    },
+    {
+      "source": "23975_367079",
+      "date": "2019-12-08"
+    },
+    {
+      "source": "24021_367530",
+      "date": "2019-11-30"
+    },
+    {
+      "source": "24035_367666",
+      "date": "2019-12-14"
+    },
+    {
+      "source": "24035_367667",
+      "date": "2019-12-14"
+    },
+    {
+      "source": "24047_367755",
+      "date": "2019-12-16"
+    },
+    {
+      "source": "24060_367930",
+      "date": "2019-12-14"
+    },
+    {
+      "source": "24067_368006",
+      "date": "2019-12-13"
+    },
+    {
+      "source": "24099_368182",
+      "date": "2019-12-08"
+    },
+    {
+      "source": "24109_368253",
+      "date": "2019-12-23"
+    },
+    {
+      "source": "24117_368312",
+      "date": "2019-12-23"
+    },
+    {
+      "source": "24117_368315",
+      "date": "2019-12-23"
+    },
+    {
+      "source": "24121_368344",
+      "date": "2019-12-21"
+    },
+    {
+      "source": "24126_368389",
+      "date": "2019-12-22"
+    },
+    {
+      "source": "24126_368391",
+      "date": "2019-12-22"
+    },
+    {
+      "source": "24148_368536",
+      "date": "2019-12-28"
+    },
+    {
+      "source": "24153_368579",
+      "date": "2019-12-28"
+    },
+    {
+      "source": "24157_368608",
+      "date": "2019-12-30"
+    },
+    {
+      "source": "24157_368610",
+      "date": "2019-12-30"
+    },
+    {
+      "source": "24157_368612",
+      "date": "2019-12-30"
+    },
+    {
+      "source": "24170_368693",
+      "date": "2019-12-30"
+    },
+    {
+      "source": "24182_368797",
+      "date": "2019-12-31"
+    },
+    {
+      "source": "24209_368940",
+      "date": "2020-01-04"
+    },
+    {
+      "source": "24213_368955",
+      "date": "2019-12-30"
+    },
+    {
+      "source": "24226_369071",
+      "date": "2020-01-05"
+    },
+    {
+      "source": "24226_369074",
+      "date": "2020-01-05"
+    },
+    {
+      "source": "24248_369262",
+      "date": "2019-12-30"
+    },
+    {
+      "source": "24258_369338",
+      "date": "2020-01-05"
+    },
+    {
+      "source": "24267_369393",
+      "date": "2020-01-09"
+    },
+    {
+      "source": "24281_369513",
+      "date": "2020-01-12"
+    },
+    {
+      "source": "24281_369514",
+      "date": "2020-01-12"
+    },
+    {
+      "source": "24284_369541",
+      "date": "2020-01-11"
+    },
+    {
+      "source": "24296_369644",
+      "date": "2020-01-11"
+    },
+    {
+      "source": "24327_369898",
+      "date": "2020-01-12"
+    },
+    {
+      "source": "24328_369909",
+      "date": "2020-01-11"
+    },
+    {
+      "source": "24331_369932",
+      "date": "2020-01-12"
+    }
+  ],
+  "model_assumptions": [
+    "Liliana starts at zero Zombies, with one emblem and no losses or other token creation.",
+    "Scute starts at one Scute Swarm and has six or more lands when each trigger resolves.",
+    "Each land enters after all triggers from the preceding land have resolved.",
+    "No removal, extra triggers, or other changes to the setup.",
+    "Life curves assume one token doubler and two Wardens already on the battlefield.",
+    "Life is cumulative gain from the new Scutes only, not total life or a remembered game."
+  ],
+  "rules_sources": [
+    "https://magic.wizards.com/en/news/feature/zendikar-rising-release-notes-2020-09-10",
+    "https://media.wizards.com/2026/downloads/MagicCompRules%2020261106.txt"
+  ]
+}
