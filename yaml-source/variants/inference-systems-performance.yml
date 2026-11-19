@@ -5,10 +5,9 @@ output: Levi-Neuwirth-CV-Inference-Systems-Performance.pdf
 document_title: Systems \& Research Engineer — AI Infrastructure \& Performance
 summary: >-
   Systems and research engineer working across ML execution, accelerator
-  performance, and correctness. Current work builds and validates workload
-  profilers, execution DAGs, calibrated performance and proving-cost models,
-  and partition analyses for verifiable frontier-model inference, including
-  live NVIDIA B200 validation. Background includes low-level cryptographic
+  performance, and correctness. Built a dry-run profiler and calibrated its
+  cost model on an NVIDIA B200 to compare partition plans for verifiable
+  frontier-model inference. Background includes low-level cryptographic
   optimization, distributed systems, frontier-model evaluation, and formal
   verification.
 
@@ -58,10 +57,24 @@ sections:
 
 presentation_sets:
   experience:
-    mars-v: inference-systems-performance
     frontier-ai-contracting: inference-systems-performance
 
 overrides:
+  experience:
+    mars-v:
+      bullets:
+        - >-
+          Built a Python profiler that extracts workload manifests and an
+          execution DAG to estimate proving costs. On an NVIDIA B200 it
+          counted 109.27M witness rows for Llama 4 Maverick, matching the
+          archived run to its reported precision.
+        - >-
+          Corrected estimated cross-shard traffic from roughly 950 GB to
+          2.4--2.8 GB per sweep by accounting for local reductions.
+        - >-
+          Built a GPU cache for decoded weights. On the same B200 host and
+          100-token workload, proving time fell from 1,891 to 1,787 seconds
+          while peak GPU memory rose from 48 to 109 GiB.
   skills:
     ai-evaluation:
       label: ML correctness and evaluation

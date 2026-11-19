@@ -16,8 +16,8 @@ sections:
   - id: selected-experience
     label: Selected Experience
     entries:
-      - experience:mars-v
       - experience:frontier-ai-contracting
+      - experience:mars-v
       - experience:shu-lab-undergrad
 
   - id: assurance-research-engineering
@@ -58,34 +58,45 @@ sections:
 
 presentation_sets:
   experience:
-    mars-v: frontier-evals-control
-    frontier-ai-contracting: frontier-evals-control
+    frontier-ai-contracting: evaluation-reliability
+  projects:
+    levcs: software-engineering-systems
 
 overrides:
   experience:
+    mars-v:
+      description: >-
+        Worked on VerInf with James Petrie (Future of Life Institute).
+        \href{https://www.anthropic.com/research/provable-inference}{Anthropic}
+        cited VerInf's Llama 4 Maverick proof as prior work.
+      bullets:
+        - >-
+          Built a Python workload profiler and checked two independent
+          workload manifests against an archived Maverick run. Calibrated
+          the cost model on an NVIDIA B200.
+        - >-
+          Integrated a collaborator's expert-weight bridge and repaired
+          enrollment and verifier checks. Hardened the test harness so a
+          crashed or silent verifier could no longer count as a rejection.
     shu-lab-undergrad:
       preamble: null
       bullets:
         - >-
-          Built and owned ML research systems over multiple years: co-led Deep
-          Sets outcome models trained on more than 113 million hospitalizations
-          and deployed their public calculator; technical lead for NeuroPose's
-          Python/TensorFlow inference and Rust-backed analysis platform across
-          four externally funded sub-projects.
+          Co-developed readmission and mortality models and deployed their
+          public calculator. On 3.23M held-out discharges, the readmission
+          model scored 0.750 AUROC versus 0.655 for the Charlson index.
+          Led NeuroPose's inference and analysis work across four funded projects.
 
   projects:
     proof-broker:
+      label: '\href{https://levineuwirth.org/essays/eighty-witnesses-six-proofs/}{Proof Broker}'
       description: >-
-        Routes Lean 4 and Rocq proof goals to untrusted SMT, automated, and LLM
-        provers, then checks certificates and lifts proof terms into the home
-        system's small trusted kernel; the Vampire path closes a goal end to
-        end without adding axioms.
-    levcs:
-      description: >-
-        Built a federated version-control system in Rust (roughly 10 crates,
-        194 tests) with BLAKE3 content addressing, signed Ed25519 authority
-        chains, three storage modes, and a cascading
-        format/tree-sitter/wasm merge engine.
+        Built an OCaml broker that checks certificates from untrusted solvers.
+        Evaluated model-generated proof certificates against a deterministic
+        baseline on 15 fixed Lean obligations. The live workflow proved the
+        same six obligations across eight draws. In a separate offline replay,
+        the repaired checker validated all 36 retained certificates across four
+        obligations without adding axioms.
     weenix:
       description: >-
         Built and extended a 10{,}000-line Unix-like kernel in C: virtual
@@ -100,10 +111,9 @@ overrides:
     pqc-avx2:
       label: Post-Quantum Cryptography / SIMD
       description: >-
-        Profiled ML-KEM / Kyber on Brown's OSCAR cluster; hand-written x86-64
-        AVX2 achieved 35--56× speedup for core NTT arithmetic and 5.4--7.1×
-        end-to-end KEM speedup over compiler-optimized C, with a reproducible
-        artifact and statistical analysis.
+        Audited ML-KEM benchmarks comparing portable C and hand-written AVX2.
+        Traced the original speedup estimates to measurements pooled across
+        seven nodes and revised the analysis to compare run medians within each node.
 
   skills:
     programming:

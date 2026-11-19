@@ -560,9 +560,9 @@ class RepositoryCompatibilityTests(unittest.TestCase):
                 "presentation_sets"
             ]["experience"],
             {
-                "mars-v": "agent-platform-systems",
+                "mars-v": "software-engineering-systems",
                 "frontier-ai-contracting": "frontier-evals-control",
-                "shu-lab-undergrad": "agent-platform-systems",
+                "shu-lab-undergrad": "software-engineering-systems",
             },
         )
 
@@ -646,9 +646,9 @@ class RepositoryCompatibilityTests(unittest.TestCase):
         )
         self.assertIn("NVIDIA B200", experience_text)
         self.assertIn("apparent failures arise", experience_text)
-        self.assertIn("v1.1.0", project_text)
-        self.assertIn("194 tests", project_text)
-        self.assertIn("small trusted kernel", project_text)
+        self.assertIn("CRDT-backed buffers", project_text)
+        self.assertIn("idempotent retries", project_text)
+        self.assertIn("proof reconstruction", project_text)
         self.assertIn("open-ended technical questions", resolved.config["summary"])
 
         skills = {

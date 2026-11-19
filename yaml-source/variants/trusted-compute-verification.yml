@@ -5,10 +5,9 @@ output: Levi-Neuwirth-CV-Trusted-Compute-Verification.pdf
 document_title: Systems \& Research Engineer — Verification \& Trusted AI Infrastructure
 summary: >-
   Systems and research engineer working on trustworthy AI execution across
-  cryptography, formal verification, and systems. Current work develops
-  zero-knowledge mechanisms and independently inspectable workload evidence for
-  frontier-model inference, validated against an archived full-scale proof and
-  live NVIDIA B200 hardware. Background includes trusted checking of untrusted
+  cryptography, formal verification, and systems. Built verifier checks for
+  frontier-model inference and calibrated its workload cost model on NVIDIA
+  B200 hardware. Background includes trusted checking of untrusted
   provers, implementation-level cryptography, signed-authority distributed
   systems, low-level OS and networking work, and frontier-model evaluation.
 
@@ -62,22 +61,34 @@ sections:
 
 presentation_sets:
   experience:
-    mars-v: trusted-compute-verification
     frontier-ai-contracting: inference-systems-performance
-  projects:
-    levcs: trusted-compute-verification
 
 overrides:
+  experience:
+    mars-v:
+      bullets:
+        - >-
+          Integrated a collaborator's expert-weight bridge and repaired the
+          verifier's enrollment, Merkle-opening and sumcheck-round checks.
+          Added tests that require an explicit verdict from the Rust verifier.
+        - >-
+          Implemented and upstreamed enrolled-weight sharding. Two- and
+          three-way splits on one GPU reproduced the unsharded proof byte for
+          byte with fixed randomness and passed the existing verifier.
+        - >-
+          Repaired causal softmax, SiLU and surprisal constraints after
+          protocol review. Earlier full-scale proofs do not verify under
+          the repaired constraints.
   skills:
     systems-performance:
-      label: Execution and systems evidence
+      label: Systems performance
       items:
         - Accelerator calibration and workload profiling
         - Performance and proving-cost modeling
         - Benchmarking and systems measurement
         - Distributed systems
     ai-evaluation:
-      label: AI assurance and evaluation
+      label: AI evaluation
       items:
         - Frontier-model evaluation
         - Evaluation-environment design

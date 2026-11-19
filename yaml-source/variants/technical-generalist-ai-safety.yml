@@ -5,10 +5,9 @@ description: Reusable one-page résumé for technical-generalist, special-projec
 output: Levi-Neuwirth-Resume-Technical-Generalist-AI-Safety.pdf
 document_title: Technical Generalist — AI Safety \& Systems
 summary: >-
-  Brown Mathematics and Computer Science graduate working across frontier-model
-  evaluation, verifiable AI infrastructure, and deployed ML. Builds projects
-  from open-ended technical questions through modeling, implementation,
-  empirical validation, and deployment.
+  Brown mathematics and computer science graduate who investigates open-ended
+  technical questions through model evaluations, inference verification and
+  deployed ML systems.
 
 header:
   links:
@@ -47,35 +46,32 @@ sections:
 
 presentation_sets:
   experience:
-    mars-v: agent-platform-systems
+    mars-v: software-engineering-systems
     frontier-ai-contracting: frontier-evals-control
-    shu-lab-undergrad: agent-platform-systems
+    shu-lab-undergrad: software-engineering-systems
   projects:
-    levcs: null
     weenix: null
     networking-stack: null
     pqc-avx2: null
 
 overrides:
+  experience:
+    mars-v:
+      description: >-
+        \href{https://www.anthropic.com/research/provable-inference}{Anthropic}
+        cited VerInf's Llama 4 Maverick proof as prior work.
   projects:
     pmacs:
       description: >-
-        Built and released a Rust-cored, Lua-scripted editor at v1.1.0 with
-        prebuilt binaries. Separated a long-lived async/process runtime from TUI
-        and GPU frontends over a typed protocol; optional CRDT-backed buffers
-        support concurrent editing.
-    levcs:
-      description: >-
-        Built a federated version-control system in Rust (roughly 10 crates,
-        194 tests) with signed Ed25519 authority chains, three storage modes, a
-        crash-recoverable transaction journal, and a cascading
-        textual/structural/wasm merge engine.
+        Released a Rust/Lua editor with terminal and GPU clients. A shared
+        daemon preserves sessions across reconnects, and CRDT-backed buffers
+        support concurrent edits.
     proof-broker:
+      label: '\href{https://levineuwirth.org/essays/proof-broker/}{Proof Broker}'
       description: >-
-        Built a broker routing Lean 4 and Rocq goals to untrusted SMT,
-        automated, and LLM provers, then checking certificates in the home
-        system's small trusted kernel; the Vampire path closes a goal end to end
-        without adding axioms.
+        Built an OCaml broker for Lean 4 and Rocq. Evaluated model-generated
+        certificates on 15 fixed Lean obligations and traced failures to goal
+        representation and proof reconstruction.
 
   skills:
     programming:
