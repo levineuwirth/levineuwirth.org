@@ -136,6 +136,7 @@ site-files:
 - tests/test_nginx_logging.py
 - tests/test_sections.py
 - tests/test_site_yaml.py
+- tests/test_ssh_wall_page.py
 - tests/test_vps_config_backup.py
 - tools/anki-sync-backup.sh
 - tools/anki-sync-hash
@@ -159,6 +160,7 @@ site-files:
 - tools/initials-logos-hand.js
 - tools/initials-logos-hand.py
 - tools/levcs-instance-backup.sh
+- tools/ssh-wall-page.py
 - tools/vps-config-backup.sh
 - tools/vps-offsite-verify.sh
 - tools/vps-status
