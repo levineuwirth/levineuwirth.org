@@ -1,6 +1,7 @@
 ---
 title: Violin Concerto
 date: 2026-09-29
+license: "All rights reserved"
 year: 2023
 composed: 2022 – 2023
 tags:

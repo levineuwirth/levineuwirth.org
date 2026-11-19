@@ -29,6 +29,14 @@ paper PDFs: consult the notice on the individual work. A page's prose
 license does not relicense its embedded works, quotations or linked files.
 Earlier grants and more specific notices on individual works remain in effect.
 
+## Musical compositions
+
+Levi Neuwirth's musical compositions, at [/music/](/music/), are
+copyrighted and all rights are reserved: their scores, recordings and the
+pages that present them are under no public license. Each composition's
+page says so in its rights notice. Ask the composer for permission to
+perform, record, copy or arrange them.
+
 ## Public-domain works
 
 - William Shakespeare, *Sonnet 60* (1609), at

@@ -1,6 +1,7 @@
 ---
 title: Concerto for Bassoon and Orchestra
 date: 2026-09-29
+license: "All rights reserved"
 year: 2026
 composed: 2025 – 2026
 tags:

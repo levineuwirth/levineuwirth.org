@@ -1,6 +1,7 @@
 ---
 title: Symphony No. 5
 date: 2026-09-29
+license: "All rights reserved"
 completed: 30 December 2024
 year: 2024
 opus: '17'

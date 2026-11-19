@@ -82,5 +82,6 @@ Levi Neuwirth's original prose and textual content data are licensed under
 [CC BY-NC-SA 4.0](LICENSE-CONTENT), unless a page says otherwise. These grants
 do not relicense third-party material or public-domain works, and do not
 automatically cover photographs, artwork, scores, recordings or papers.
+Musical compositions are copyrighted, all rights reserved.
 See [the scope and third-party notices](THIRD-PARTY.md), also published at
 [/licenses.html](https://levineuwirth.org/licenses.html).

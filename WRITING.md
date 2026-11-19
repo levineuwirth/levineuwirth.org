@@ -241,6 +241,7 @@ Compositions live in their own directory. See the Music section for full details
 ---
 title: "Symphony No. 1"
 date: 2026-01-15                  # when the page was published — required (feeds)
+license: "All rights reserved"    # required for a composition: the music is not under the site's CC license
 completed: "30 December 2025"     # optional; when the work was finished
 abstract: >
   A four-movement work for large orchestra.
