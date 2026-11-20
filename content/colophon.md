@@ -5,11 +5,12 @@ date: 2026-03-21
 status: "Durable"
 confidence: 93
 tags: [meta]
-abstract: On the design, tools, and philosophy of this site — and by extension, its author.
+abstract: On the design, tools, and philosophy of this site.
 description: >-
   Why this site is built the way it is: a personal website as a position
   rather than a publication, and the design decisions that follow from it.
 history:
+  - date: "2026-11-20"
   - date: "2026-09-03"
   - date: "2026-08-31"
   - date: "2026-06-10"
@@ -27,9 +28,8 @@ history:
 
 ---
 
-::: dropcap
 A personal website is not a publication. It is a position. A publication presents work
-in a finalized, immutable state, and carries with it some sort of declaration - "this is my most polished and prized work!";
+in a finalized, immutable state, and carries with it some sort of declaration - "this is my most polished and prized work!" -
 a position is something you inhabit, argue from, and continuously
 revise in public. This page explains the design decisions forming my broader **position** and why they took the form they did.
 
@@ -37,131 +37,16 @@ What follows is a colophon in the grand old sense: a printer's note at the end o
 recording how it was made, who made it, etc. The difference: here, the
 printer and the author are the same person, and the process of making is itself not only *a* form
 of argument, but *the only* form of argument permitted.
-:::
 
 ---
 
-## Typography
-
-::: dropcap
-You are reading this sentence in SPECTRAL, which is not only a font with particular personal importance to me, but also an exceedingly pleasing font to read.  [OpenType]{.smallcaps} features — `smcp`, `onum`, `liga`, `calt` are used throughout the website, which necessitates our self-hosting setup.^[Google Fonts strips OpenType features during
-subsetting for bandwidth. Self-hosting with `pyftsubset` preserves `smcp` (small
-capitals), `onum` (old-style figures), `liga` (common ligatures), and the full optical
-size range. The difference is visible: old-style figures sit on the baseline rather
-than hanging above it, small capitals are drawn to match the x-height rather than being
-shrunken full caps, and ligatures prevent collisions in letter pairs like *fi* and *fl*.]
-:::
-
-The UI and headers are Fira Sans. Variation is good, and moreover, humanist sans are rather ubiquitous (we have Frutiger to thank for this fact!) - perhaps I am making some type of statement by not choosing one of the more corporate variations of it, like the dreaded Calibri and Tahoma you might recognize from Microsoft products. Code uses Jetbrains Mono, which is simply the font that I use within my editor. Code should look like code, simple as that.
-
-The monochrome palette is an application of restraint grounded in my studies of Tools for Thought.
-Color is often used to do work that typography
-should do, such as demonstrating hierarchy, creating emphasis, etc. When those
-functions are handled by weight, size, and spacing instead^[Color and saturation/hue are actually well known to be less effective than other means of distinguishment. I refer you to Tufte's *The Visual Display of Quantitative Information* for more.], color becomes available for the things it cannot be substituted for — and on a site with no data visualizations
-requiring color encoding, those things turn out to be very few.^[The one exception is
-the heatmap on the statistics page, which uses a four-step greyscale scale. Even there,
-the encoding is luminance rather than hue.]
----
-
-## The Build
-
-This is a [Static Website](https://en.wikipedia.org/wiki/Static_web_page). For the purposes of this website, though the content is highly dynamic and iterated upon, the medium of expression is rather stable. There are numerous advantages to using a static webpage, many of which are focused at the Hetzner box from which this webpage is served. I use [Hakyll](https://jaspervdj.be/hakyll/) for reasons of performance, extensibility, and, of course given the underlying language Haskell, elegance! I had been wanting to do a project in Haskell ever since I took my undergraduate programming languages course,^[The programming languages course at Brown, somewhat infamous, is taught entirely with Racket, which is essentially a dialect of Lisp. The course itself is extremely focused within the functional paradigm as far as implementations go. I am aware that Racket itself, curiously, has some means by which static webpages can be built - the course infrastructure was produced this way, and this website has in a few places taken minor inspiration from it!] and Hakyll was more extensible and thus suitable than the alternative I was looking at most strongly, Hugo (in Go, a language with which I am intimately familiar). The philosophy of a static website is that the website is a program and the content is the source code^[Source code here **chiefly distinct** from mere markup language, like HTML.]. The step of compilation present in Haskell, which is outlined below, means that what you have here received in your browser is not merely a runtime rendering decision, but rather a deterministic artifact. By this step of compilation, the [Markdown](https://en.wikipedia.org/wiki/Markdown) in which I write these webpages is transformed to exactly what you currently see.
-
-The [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree) we use is heavily customized and modified. The chain is roughly markdown -> pandoc -> citations -> wikilinks -> preprocessing -> sidenotes -> smallcaps and dropcaps -> links -> images -> math. Mathematics with LaTeX requires a second pass and is rendered at build-time with KaTeX - no math rendering occurs in your browser. Samples from music are displayed as SVGs, generally typeset with Lilypond through some helper scripts I wrote to automate the process.
-
-Not all content on this site is markdown. A handful of pages — the [[Library]], the [[Commonplace]], and [[Current]] — are driven instead by YAML files under `data/`, rendered through dedicated Haskell modules that parse the schema, apply a sort or filter discipline particular to the surface, and emit the rendered HTML directly into a template. The split is deliberate: prose belongs in markdown, where the discipline is rhetorical; curated lists belong in YAML, where the discipline is editorial. The Current page, for instance, ladders entries by status (*in-review* → *revising* → *drafting* → *building*) before falling back to recency, and stamps each entry with its own "last updated" date — features that would be tedious to maintain in markdown but trivial to express in a small declarative schema.
-
-The semantic search model is a particularly intriguing aspect of the website. The model used is self-hosted, with weights served from the same origin. There are NO external API calls when you use this, in contrast to just about every other similar feature on other websites. This is essential for the privacy model that this site strives to achieve - see **Design Decisions** for more.
-
-A full accounting of what this build process has actually produced is available at the [[Build]] page. It is generated automatically at each compile: corpus word counts, length distributions, tag frequencies, link analysis, epistemic coverage, repository metrics, and build timing — all computed from the same source tree that produces the content. Think of it as the build system reporting on itself.
-
-{{build}}
-
----
-
-## The Computing Environment
-
-::: dropcap
-I am, like many passionate nerds within the realm of computing, obsessive over my technological choices. They are the subject of constant critique, review, revision, etc. I believe in the value of putting deep thought into the systems that one interacts with, rather than accepting the first showing of convenience and going with the flow. A system interacted with is an experience moreso than a mere tool.
-:::
-
-### Desktop
-
-My primary desktop is a rig I built myself, running **Gentoo Linux** with **Hyprland** and a custom shell, *Levshell*, implemented with [Quickshell](https://github.com/quickshell-mirror/quickshell). The reasons for Gentoo are worth stating explicitly, since the choice is frequently met with bewilderment:
-
-- Compiling software from source delivers measurable performance increases — not marginal ones.
-- It provides fine-grained control over software configuration via [USE]{.smallcaps} flags, linking options, and the like. This matters for a machine tuned to a high degree of specificity.
-- It is, in my experience, the best-maintained Linux distribution.
-- The community is phenomenal.
-
-I have strong hardware preferences to match; [AMD]{.smallcaps} hardware is used in favor of Intel and NVIDIA. I have used at least 2 distinct chips from each manufacturer and consistently find that, as far as x86-64 is concerned, AMD is the clear winner. As for my preference for AMD gpus, not only do I quite disagree with the business direction of NVIDIA, but the VRAM offerings are simply superior from AMD.
-
-### Laptop
-
-For mobile computing, I use a [P]{.smallcaps}-series ThinkPad running **Arch Linux** — the same Hyprland environment, the same *Levshell*, the same muscle memory down to the config file. Gentoo is impractical on battery-constrained hardware, as compilation times are simply too long and require active power connection. Arch is a sound alternative, configurable enough to pass. Portage is better than pacman in my opinion, but pacman is still far better than horrid package managers like apt.
-
-### Editor
-
-For a long time I was an **Emacs** enthusiast. I have since decided that the shortcomings of Emacs due to its age are too severe. In September 2025 I first envisioned writing a new text editor in the vein of my beloved, but with more modern features and in a more modern programming language.
-
-I did not have the time to see this through until 2026. I now write all of my code in [Pmacs](https://github.com/levineuwirth/pmacs), which stands for "Parallel Emacs." You can guess from this title what the primary improvement is, but there are many other modifications and modernizations. The editor is still quite young and not really suitable for widespread use yet, but this will change.
-
-### Privacy-First Computing
-
-My email and [VPN]{.smallcaps} are self-hosted; I use Thunderbird as a client for the former. For browsing I use [LibreWolf](https://librewolf.net/), not Firefox: the Chromium monopoly and Mozilla's evident incompetence at browser development are, to me, equally concerning developments, and LibreWolf is the most coherent response to both. My phone runs [GrapheneOS](https://grapheneos.org/) — the only reasonably secure and private option for a mobile device, and one whose restrictions are, frankly, a feature rather than a limitation.
-
-The principle underlying all of these choices is the same one underlying the site's **No Tracking** policy: privacy is an architectural decision, not a settings toggle. Bolting on privacy after the fact, whether in a browser or on a website, is not privacy — it is the appearance of privacy.
-
----
-
-## [AI]{.smallcaps} and This Site
-
-<figure class="prose-excerpt">
-<blockquote>
-<p>Ac proinde haec cognitio, ego cogito, ergo sum, est omnium prima & certissima, quae cuilibet ordine philosophanti occurrat.</p>
-</blockquote>
-<figcaption>Descartes — <em>Principia Philosophiae</em></figcaption>
-</figure>
-
-::: dropcap
-I will never have an AI system of any type autonomously write anything that goes out under my name, whether in my personal communications or in pieces on this website. This is a boundary of authority: I keep the final say and every direction call, without exception, and the argument a piece makes is mine. For substantive writing — on this website in particular, essays, letters — I work entirely by hand. Writing is religious in severity to me, and I do not intend to outsource it. Doing so would also constitute outsourcing of my thinking, and though I may not agree with everything he says, I won't go against [Descartes](https://en.wikipedia.org/wiki/Cogito,_ergo_sum) so easily. 
-:::
-
-I hope it is clear that this is a narrower claim than "I never touch the tools." I use AI extensively as something to ideate with, typically through arguments. I will use it to get relentless pushback on an idea, to surface objections and similar writings, and to draft what I call "variant outlines," which serve to help me consider multiple various structures for a project before I commit to trying one^[This is something that I have long struggled with. I can vividly remember being in fourth grade and getting feedback on my essays that I would probably still get now, along the lines of "this could be organized to be more conducive to the point you are making!" The process of struggling against organizational challenges, which at a high level are perhaps *the* challenges involved in any task of considerable complexity, is a process I still greatly enjoy and will not fully automate. AI thus serves to augment me in the way that I propose it should augment us all in other writings on this website.]. I am averse to even having AI generate entire drafts for me, and will absolutely under no conditions let it "hold the pen" on something I sign. 
-
-I do treat technical write-ups as an exception. Where a piece exists to document an artifact — say, for example, a case study about code anyone can read, results anyone can rerun — I am more willing to work with AI on the prose, because the artifact is the claim and the write-up is secondary to it. The discipline that matters in that case is the one recorded in the work itself: what was measured, what was modeled, issues of provenance (what is mine and what is upstream). Where the writing *is* the artifact, the paragraph above applies without qualification.
-
-Much of the code that comprises the build system of this website was created in collaboration with AI. Rather than "vibe coding" proper, this was the result of an intensive engineering process where AI and I were equals in collaboration. Notably, all of the major architectural choices, design decisions, idiosyncracies, and elements of the tech stack were chosen entirely by me, and AI systems were only used to automate production of some (but not all) of the code that was required.
-
-The commit history, of course, is available for you to view and licensed accordingly - see **No Tracking** for more.
-
----
-
-## Design Decisions
-
-### Sidenotes
-
-The sidenotes are provided by a JavaScript file that was forked from the website of Gwern Branwen and authored by
-Said Achmiz; I have simplified the script to fit the needs of this website and made some minor modifications.
-
-
-### No Tracking
-
-The site has no analytics, no visit counters, no fingerprinting, and no third-party
-scripts.^[This is enforced at the nginx level via [CSP]{.smallcaps} headers, not just
-by omission. The Content Security Policy prevents any script not explicitly whitelisted
-from executing. The whitelist is short.] The Hetzner VPS that provides this content runs
-only open source software, and my machines use *almost exclusively*^[It is nearly impossible to run an entirely free system, but in approximation, it is actually wonderfully easy.] the same. The code is licensed under the GPL and hosted
-on a [self-hosted Forgejo instance](https://git.levineuwirth.org/neuwirth/levineuwirth.org) at this domain, with a [GitHub mirror](https://github.com/levineuwirth/levineuwirth.org); you are welcome
-to inspect it, fork it, or build on it under the terms of [its license](/licenses.html).
-
-### Living Documents
+## Living Documents
 
 The dominant convention of academic and professional publication is that a document, once released, is finished. It carries an implicit claim: *this is what I think, full stop.*^[This is particularly problematic in academia, where there is a long tradition of researchers whose work was eventually disproven taking an extreme defensive stance, usually rooted in [confirmation bias](https://en.wikipedia.org/wiki/Confirmation_bias).] I find this convention dishonest in proportion to how seldom it is actually true. Thinking is continuous; positions shift; evidence accumulates; people change their minds and rarely say so in public. This site operates under a different premise, one that I strive to operate all of my life under.
 
-Every essay and post on this site carries an **epistemic footer** — a structured block that reports my current relationship to the work. The footer only appears when a `status` field is set in the document's frontmatter; standalone pages and very short items omit it.
+Every essay and post on this site carries an **epistemic footer** — a structured block that reports my current relationship to the work.  We package the values into an "epistemic seal" that combines the page's mark (an SVG illustration, more on this later) with the values; a card with more details can be obtained upon hovering over this illustration, and the page footer will be the comprehensive guide. The footer only appears when a `status` field is set in the document's frontmatter; standalone pages and some short items omit it.
 
-The vocabulary below is genre-general but reads differently across genres. For a personal essay, *confidence* reflects credence in a thesis — "I might change my mind." For an empirical research paper, it reflects expected generalization — "this would replicate." For formal mathematics, it reflects credence in proof correctness, with a special value `proved` available for theorems with complete proofs (where any numeric value would be false precision). *Evidence* reads analogously: the strength of arguments and supporting writing in essays, the empirical base in research, the structure of the proof in mathematics.
+The vocabulary below is genre-general, but reads differently across genres. For a personal essay, *confidence* reflects credence in a thesis — "I might change my mind." For an empirical research paper, it reflects expected generalization — "this would replicate." For formal mathematics, it reflects credence in proof correctness, with a special value `proved` available for theorems with complete proofs (where any numeric value would be false precision). *Evidence* reads analogously: the strength of arguments and supporting writing in essays, the empirical base in research, the structure of the proof in mathematics.
 
 The full set of fields:
 
@@ -189,11 +74,93 @@ The [[Current]] page extends this premise from essays to ongoing work. Every res
 
 The point of all this is simple: when you read something on this site, you should know what kind of claim I am making. The date a document was last modified is not decorative. A 40% confidence rating is not self-deprecation. The system is an attempt to make explicit something that most writing leaves implicit — where the author actually stands.
 
+### Marks
+The Marks are an SVG illustration that I devise for each page. They are intended to visually *say* what the piece is about, both on the page itself and in the preview popups. Different marks have been devised over different matters, but in general I try to come up with a list of ideas^[unless I have one clear standout; an example of that is the Crawler Chronicles, where I knew exactly what I wanted from the onset!] and then have an LLM mock them up so I can compare. The final mark is then created through an iterative process with the LLMs and manual tweaking. 
+
+In the future, the website might use other illustrative means for specific pieces, but at present I have not decided to make this a priority, and the engine does not support it.
+
+## Typography
+
+::: dropcap
+You are reading this sentence in SPECTRAL, which is not only a font with particular personal importance to me, but also an exceedingly pleasing font to read.  [OpenType]{.smallcaps} features — `smcp`, `onum`, `liga`, `calt` are used throughout the website, which necessitates our self-hosting setup.^[Google Fonts strips OpenType features during
+subsetting for bandwidth. Self-hosting with `pyftsubset` preserves `smcp` (small
+capitals), `onum` (old-style figures), `liga` (common ligatures), and the full optical
+size range. The difference is visible: old-style figures sit on the baseline rather
+than hanging above it, small capitals are drawn to match the x-height rather than being
+shrunken full caps, and ligatures prevent collisions in letter pairs like *fi* and *fl*.]
+:::
+
+The UI and Headers are also Spectral. I previously used Fira Sans, but came to strongly dislike that look on the website, and have moved to unifying the bulk of the text in Spectral. Code uses IBM Plex Mono; we previously used Jetbrains Mono, but I have since come to decide that IBM Plex Mono matches the feel of the website and is a bit more readable at a glance for speedy eyes. 
+
+### Dropcaps
+This website uses dropcaps, though currently sparingly - I am rolling out dropcaps incrementally as I would prefer to take the time to get them right. A personal project of mine, [formschneider](https://github.com/levineuwirth/formschneider), is the primary system used for creating the dropcaps, their animations, and subtle variations - see that project's repository for more. Other dropcaps that are used or adapted into variations in formschneider are freely licensed. 
+
+
+## The Rest of the Look
+The website avoids color where possible, preferring a "paper and ink" look. The palette is an application of restraint grounded in my studies of Tools for Thought. A prominent example is that there is no accent color on the website, for instance when one hovers over a hyperlink. I experimented with many different potential accent colors and found that all of them felt they took away from the paper and ink look, rather than contributing something to it. Color is often used to do work that typography should do, such as demonstrating hierarchy, creating emphasis, etc. When those functions are handled by weight, size, and spacing instead^[Color and saturation/hue are actually well known to be less effective than other means of distinguishment. I refer you to Tufte's *The Visual Display of Quantitative Information* for more.], color becomes available for the things it cannot be substituted for — and on a site with no data visualizations requiring color encoding, those things turn out to be very few.^[Ones exception is the heatmap on the statistics page, which uses a four-step greyscale scale. Even there, the encoding is luminance rather than hue.] Previously, colors weren't even used in [syntax highlighting](https://en.wikipedia.org/wiki/Syntax_highlighting) of inline code, but I have since decided that this is another useful exception. 
+
+A major redesign of the website's visuals in November 2026 brought a few new features and variations. Firstly, a previous topbar was replaced with a masthead in the left column that scrolls away to reveal an empty margin. The top bar in the previous iteration of the website was originally conceived as a mechanicism for quick navigation of the website; I've since realized that I rely on hyperlinks and otherwise and that the bar was simply taking up space rather than serving this purpose. 
+
+Secondly, the background of the website allows some variation now, between a plain color and two variations. I experimented widely with many different potential variations and chose two that are subtle and stay out of the way of the content. Others are certainly possible, but in aiming for the look described above, I found these to be the most effective candidates. 
+
+Thirdly, a subsystem for special themes was introduced. The first run of this was the Halloween 2026 theme, and more special themes will come from time to time. These operate with a predefined date range in which they supersede the default, but can always be opted out of.
+
+Finally, several options are configurable, and some are automatically configured. Text size can be increased or decreased; we automatically adapt it in certain instances, such as for mobile devices. We also provide a focus mode and reduced motion as configurable options at all times, and more configurability may come at some point.^[I promise you, much more has been prototyped, but finding what's *actually* appropriate for the website's feel, which, if you couldn't tell, is quite important to me, is a very difficult balancing game.]
 ---
 
-## Influences
+## Nothing is watching you
 
-The amount of influences on this website is immense, and cannot be detailed in the fullest extent. Every other webpage that I have visited, whether beautiful or pitiful, has evoked some type of reaction or response in me, and that response has played some role, even if minute, in the design of this website. I can point to Tufte's influence on many of my design choices, and for the introduction to Tufte, I am thankful to CSCI1377 at Brown. I am thankful to the many other courses I took in my undergrad that influenced how I interact or ideologically view visualizations, networks, systems, etc.
+The site has no analytics, no visit counters, no fingerprinting, and no third-party
+scripts.^[This is enforced at the nginx level via [CSP]{.smallcaps} headers, not just
+by omission. The Content Security Policy prevents any script not explicitly whitelisted
+from executing. The whitelist is short.] The Hetzner VPS that provides this content runs
+only open source software, and my machines use *almost exclusively*^[It is nearly impossible to run an entirely free system, but in approximation, it is actually wonderfully easy.] the same. The code is licensed under the GPL and hosted
+on a [self-hosted Forgejo instance](https://git.levineuwirth.org/neuwirth/levineuwirth.org) at this domain, with a [GitHub mirror](https://github.com/levineuwirth/levineuwirth.org); you are welcome to inspect it, fork it, or build on it under the terms of [its license](/licenses.html).
+
+Your browser will make external requests, of course, when visualizing popups for hyperlinks and in the event that you click any outbound hyperlink. At present, these requests can be made to arXiv, Crossref, GitHub, Open Library, and Wikipedia, among others. Requests can also be made if you peruse the photography map tiles. In the website repo, `nginx/security-headers.conf` is the place to look if you are curious. 
+
+The `.git` subdomain of this website runs my personal Forgejo instance. Unfortunately, due to an influx of automated traffic, [Anubis](https://github.com/TecharoHQ/anubis) is used alongside some analytics and statistical analysis software that I have written entirely from scratch. Nginx logs and CSP reports, along with analysis of failed Anubis challenges, are monitored and reviewed for the subdomain. I have tried to find a middle ground that avoids analytics on the main domain (which I feel quite strongly about; I do *not* want the typical analytics and privacy invasions that come with most websites!) with success at the present moment.
+
+## The Build
+
+This is a [Static Website](https://en.wikipedia.org/wiki/Static_web_page). For the purposes of this website, though the content is highly dynamic and iterated upon, the medium of expression is rather stable. There are numerous advantages to using a static webpage, many of which are focused at the Hetzner box from which this webpage is served. 
+
+The engine of this website, **Ozymandias**, uses [Hakyll](https://jaspervdj.be/hakyll/) for reasons of performance, extensibility, and, of course given the underlying language Haskell, elegance! We refer you to the upcoming Ozymandias article for further technical information. I had been wanting to do a project in Haskell ever since I took my undergraduate programming languages course,^[The programming languages course at Brown, somewhat infamous, is taught entirely with Racket, which is essentially a dialect of Lisp. The course itself is extremely focused within the functional paradigm as far as implementations go. I am aware that Racket itself, curiously, has some means by which static webpages can be built - the course infrastructure was produced this way, and this website has in a few places taken minor inspiration from it!] and Hakyll was more extensible and thus suitable than the alternatives I reviewed. The philosophy of a static website is that the website is a program and the content is the source code^[Source code here **chiefly distinct** from mere markup language, like HTML.]. This engine is licensed as free software and you are welcome to use it for your own website if you wish; it is highly extensible and configurable, both with features beyond those present on this website and the ability to condense the enabled features to a subset of what is used here. 
+
+Mathematics on this website is written at build time and drawn by the browser. This is a tradeoff; we previously shipped rendered mathematics that was *not* drawn by the browser, but have since switched, and use MathML.
+
+A full accounting of what this build process has actually produced is available at the [[Build]] page. It is generated automatically at each compile: corpus word counts, length distributions, tag frequencies, link analysis, epistemic coverage, repository metrics, and build timing — all computed from the same source tree that produces the content. Think of it as the build system reporting on itself.
+
+## [AI]{.smallcaps} and This Site
+
+<figure class="prose-excerpt">
+<blockquote>
+<p>Ac proinde haec cognitio, ego cogito, ergo sum, est omnium prima & certissima, quae cuilibet ordine philosophanti occurrat.</p>
+</blockquote>
+<figcaption>Descartes — <em>Principia Philosophiae</em></figcaption>
+</figure>
+
+::: dropcap
+I will never have an AI system of any type autonomously write anything that goes out under my name, whether in my personal communications or in pieces on this website. This is a boundary of authority: I keep the final say and every direction call, without exception, and the argument a piece makes is mine. For substantive writing — on this website in particular, essays, letters — I work entirely by hand. Writing is religious in severity to me, and I do not intend to outsource it. Doing so would also constitute outsourcing of my thinking, and though I may not agree with everything he says, I won't go against [Descartes](https://en.wikipedia.org/wiki/Cogito,_ergo_sum) so easily. 
+:::
+
+I hope it is clear that this is a narrower claim than "I never touch the tools." I use AI extensively as something to ideate with, typically through arguments. I will use it to get relentless pushback on an idea, to surface objections and similar writings, and to draft what I call "variant outlines," which serve to help me consider multiple various structures for a project before I commit to trying one^[This is something that I have long struggled with. I can vividly remember being in fourth grade and getting feedback on my essays that I would probably still get now, along the lines of "this could be organized to be more conducive to the point you are making!" The process of struggling against organizational challenges, which at a high level are perhaps *the* challenges involved in any task of considerable complexity, is a process I still greatly enjoy and will not fully automate. AI thus serves to augment me in the way that I propose it should augment us all in other writings on this website.]. I am quite averse to having AI generate entire drafts for me, and will absolutely under no conditions let it "hold the pen" on something I sign. 
+
+I do treat technical write-ups as an exception. Where a piece exists to document an artifact — say, for example, a case study about code anyone can read, results anyone can rerun — I am more willing to work with AI on the prose, because the artifact is the claim and the write-up is secondary to it. Where the writing *is* the artifact, the paragraph above applies without qualification.
+
+The majority of the code that comprises the build system of this website was created in collaboration with AI. The initial versions of the website and Ozymandias were much more human implemented, with roughly equal contribution from myself and LLMs in terms of pure code output. As models have progressed substantially since that time, a point has been reached where it is no longer efficient for me to write the website's code myself, and as of late 2026, I no longer contribute very much code at all to the website. All code that makes it into the repositories of the website and engine, however, is reviewed by me — and in that case, I have taken more of a higher level role, making administrative decisions about directions, doing extensive code review, and occasionally implementing a bit by hand, usually at this point constrained to test coverage.
+
+---
+
+## Influences and Attributions
+
+The amount of influences on this website is immense, and cannot be detailed in the fullest extent. Every other webpage that I have visited, whether beautiful or pitiful, has evoked some type of reaction or response in me, and that response has played some role, even if minute, in the design of this website. 
+
+## Code
+Certain code on this website or in the Ozymandias engine underneath it was adapted from other websites or systems; **I stand on the shoulders of giants.** [Pandoc](https://pandoc.org/) and [texmath](https://github.com/jgm/texmath), both projects of John McFarlane, are core components of this website's toolchain, and the website would not possibly exist without them; Hakyll has already been mentioned, so thanks to Jasper Van der Jeugt; the website's search is built on `transformers.js` by Joshua Lochner and all-MiniLM-L6-v2 by Reimers and Gurevych; [Lilypond](https://github.com/lilypond/lilypond) and [MuseScore](https://github.com/musescore/musescore) are currently used for engraving musical compositions displayed on this website (but will be superseded soon by my upcoming Epiphany; thanks is also due to Mozilla for `PDF.js`.
+
+### Ideas
+Many others influenced the ideas that make this website what it is. The original^[This is no longer the case, as the system has been redesigned from the ground up.] sidenotes script was inspired by the website of Gwern Branwen, and, in fact was a fork of that website's script (authored by Said Achmiz); the build telemetry and much inspiration on design principles was taken from Matthew Butterick's [Practical Typography](https://practicaltypography.com/) and, by extension, the course websites implemented in Racket of Shriram Krishnamurthi, whom I was fortunate to study under at Brown; the influence of tools for thought can be directly traced to CSCI1377 at Brown and Will Crichton, and more broadly attributed to Andy Matuschak and Michael Nielsen; the `/now` page is inspired by that of Derek Sivers; of course, I should probably also name Tufte once more here to close.
 
 The tradition of the personal website is one that is built on a sense of community and interaction. I am thankful to everyone else who has a personal website and shares their content with the world. I am also particularly greatful to the open source and broader open culture movements, who have given me and the world so much. This website would not exist without you - and I wouldn't be the person I am without your influence - what a role model!
 
@@ -202,5 +169,3 @@ The tradition of the personal website is one that is built on a sense of communi
 ## The Future
 
 This site is unfinished, deliberately! The nature of (and beauty of) living documents is that they can never be finished in the absolute sense. Thus the website has a future for as long as I have one. I think that is something to appreciate.
-
-The colophon itself is a living document. When the site changes substantially, this page will change with it. The git repository on Forgejo (hosted on the git subdomain here) should always be considered to take precedence.
