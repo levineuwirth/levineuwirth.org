@@ -159,6 +159,11 @@ static/leaflet/
 # To intentionally commit a WebP, use: git add -f path/to/file.webp
 static/**/*.webp
 content/**/*.webp
+# Which of those, and which photograph variants, the tools made
+# (engine/tools/derived_images.py), and what the build makes of that for
+# its pages (engine/build/DerivedImages.hs). Local state, like the files.
+data/derived-images.json
+data/pairings/
 
 # Photography sidecars (produced by tools/extract-exif.py and
 # tools/extract-palette.py at build time; consumed by Hakyll). Recreated
