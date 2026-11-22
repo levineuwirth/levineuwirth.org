@@ -106,6 +106,7 @@ Secondly, the background of the website allows some variation now, between a pla
 Thirdly, a subsystem for special themes was introduced. The first run of this was the Halloween 2026 theme, and more special themes will come from time to time. These operate with a predefined date range in which they supersede the default, but can always be opted out of.
 
 Finally, several options are configurable, and some are automatically configured. Text size can be increased or decreased; we automatically adapt it in certain instances, such as for mobile devices. We also provide a focus mode and reduced motion as configurable options at all times, and more configurability may come at some point.^[I promise you, much more has been prototyped, but finding what's *actually* appropriate for the website's feel, which, if you couldn't tell, is quite important to me, is a very difficult balancing game.]
+
 ---
 
 ## Nothing is watching you
