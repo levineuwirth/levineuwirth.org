@@ -13,7 +13,7 @@ result-shape: mixed
 authors:
   - "Levi Neuwirth | /me.html"
 abstract: >
-  We propose a natural order hypothesis: language models trained on substantially shared information become able to solve problems reliably in approximately the same order, with training methods chiefly changing how quickly and how far learning proceeds. We postulate this weak form and conjecture a strong one, in which a single capability scale would also govern how often different labs' models make the same discovery. Evidence from open mathematical conjectures and chess training runs shows often nearly nested solved sets, the cross-sectional signature expected from approximately common order, and substantial descriptive order agreement on one chess bank; the strong form has little support. We give one dated forecast and propose tests that separate the forms.
+  We formalize and test a natural order hypothesis: language models trained on substantially shared information become able to solve problems reliably in approximately the same order, with training methods chiefly changing how quickly and how far learning proceeds. We distinguish this weak form from a strong form, in which a single capability scale would also govern how often different labs' models make the same discovery. On 492 open mathematical conjectures, four models from three labs have nearly nested solved sets: two of six pairs nest exactly and one crosses. In self-play chess, a precedent for order but not for shared data, two Leela runs reverse 8% of acquisition-order pairs on 1,801 Lichess puzzles (upper bound 9%, against 50% for unrelated orders) but 24% on 493 tablebase endgames. The strong form finds little support. We forecast that the first Anthropic and OpenAI releases evaluated before 2028 will share at least three quarters of the smaller set of new solves on 43 of these conjectures that both labs' latest models leave unsolved, and propose tests that separate the two forms.
 tags:
   - ai
   - research
@@ -22,6 +22,8 @@ bibliography: content/essays/natural-order-hypothesis/references.bib
 preprint: /essays/natural-order-hypothesis/main.pdf
 license: "All rights reserved"
 history:
+  - date: "2027-11-22"
+    note: "Update abstract for arXiv"
   - date: "2026-11-17"
     note: "Scientific clarification and dated forecast amendment."
 ---
