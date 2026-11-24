@@ -24,8 +24,9 @@
   {\headerfont\small\color{metagray}CURRICULUM VITAE \textperiodcentered\ Last updated (((build_date)))}\\[0.8em]
   {\small
     \href{mailto:(((personal.email)))}{(((personal.email)))}
-    \ \textperiodcentered\
-    (((personal.phone)))
+    ((* if personal.phone *))
+    \ \textperiodcentered\ (((personal.phone)))
+    ((* endif *))
     \ \textperiodcentered\
     \href{(((personal.website_url)))}{(((personal.website)))}
     ((* for link in personal.links if link.cv_visible *))

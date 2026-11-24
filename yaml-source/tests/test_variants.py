@@ -133,6 +133,9 @@ class VariantResolutionTests(ResolverFixture):
         self.assertFalse(resolver.is_private("base"))
         self.assertEqual(resolved.config["layout"], "application")
         self.assertEqual(resolved.output, "Private-Application.pdf")
+        self.assertNotIn("phone", resolved.data["personal"])
+        (self.variants / "private" / "phone.txt").write_text("555-0100\n")
+        self.assertEqual(resolver.resolve("private-application").data["personal"]["phone"], "555-0100")
 
     def test_inheritance_selection_ordering_and_presentation_overrides(self):
         self.write_variant(
@@ -496,6 +499,17 @@ class RepositoryCompatibilityTests(unittest.TestCase):
                 resolved = self.resolver.resolve(target)
                 self.assertEqual(resolved.template, template)
                 self.assertEqual(resolved.output, output)
+
+    def test_website_pdfs_omit_the_phone(self):
+        data = build.load_all_data()
+        self.assertNotIn("phone", data["personal"])
+        data["personal"]["phone"] = "555-0100"
+        resolver = build.VariantResolver(data)
+        for name in ("cv", "resume"):
+            with self.subTest(name=name):
+                resolved = resolver.resolve(name)
+                self.assertNotIn("phone", resolved.data["personal"])
+                self.assertNotIn("555-0100", build.render(resolved.template, resolved.data))
 
     def test_public_documents_select_research_engineering_and_brown_only(self):
         for name, parent in [("cv", "application-cv"), ("resume", "ats-application")]:

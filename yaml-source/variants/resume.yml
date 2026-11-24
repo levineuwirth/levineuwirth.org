@@ -9,6 +9,9 @@ summary: >-
   Combines cryptographic verifier hardening and GPU workload profiling with
   evaluator calibration, agent failure analysis and reproducible experiments.
 
+header:
+  show_phone: false
+
 # Use the same canonical evidence sets as the public CV. The content-free
 # ATS base keeps one-page selections independent of the CV's longer projects.
 sections:

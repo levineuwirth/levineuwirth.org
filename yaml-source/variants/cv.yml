@@ -12,6 +12,7 @@ summary: >-
 # Public technical-assurance profile, using employer-neutral evidence.
 # The formal record remains on Vita; this is the public research-engineering CV.
 header:
+  show_phone: false
   links: [github, linkedin]
 
 sections:

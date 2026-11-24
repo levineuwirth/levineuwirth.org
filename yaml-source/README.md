@@ -271,6 +271,10 @@ their canonical labels or URLs. `document_title`, `summary`, and `availability`
 belong to the application profile rather than the biography. They therefore
 live in variants.
 
+Application PDFs can include a phone number from the Git-ignored
+`variants/private/phone.txt`. Store the number on one line in display format.
+The website CV and résumé set `header.show_phone: false`.
+
 An unset `availability: null` prints nothing. Fill it only when the exact
 full-time/relocation statement is known.
 

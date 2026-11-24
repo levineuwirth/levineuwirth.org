@@ -152,7 +152,9 @@
   ((* endif *))
   {\small
     \href{mailto:(((personal.email)))}{(((personal.email)))}
+    ((* if personal.phone *))
     \ \textperiodcentered\ (((personal.phone)))
+    ((* endif *))
     \ \textperiodcentered\ \href{(((personal.website_url)))}{(((personal.website)))}
     ((* for link in variant.header_links *))
     \ \textperiodcentered\ \href{(((link.href)))}{(((link.label)))}
@@ -188,8 +190,9 @@
   {\headerfont\Large\bfseries (((personal.name)))}\\[0.25em]
   {\small
     \href{mailto:(((personal.email)))}{(((personal.email)))}
-    \ \textperiodcentered\
-    (((personal.phone)))
+    ((* if personal.phone *))
+    \ \textperiodcentered\ (((personal.phone)))
+    ((* endif *))
     \ \textperiodcentered\
     \href{(((personal.website_url)))}{(((personal.website)))}
     ((* for link in personal.links if link.resume_visible *))

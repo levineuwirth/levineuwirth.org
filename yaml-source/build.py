@@ -71,7 +71,7 @@ VARIANT_KEYS = {
 }
 SECTION_KEYS = {"id", "label", "entries", "page_break_before"}
 REQUIRED_SECTION_KEYS = {"id", "label", "entries"}
-HEADER_KEYS = {"links"}
+HEADER_KEYS = {"links", "show_phone"}
 LAYOUT_KEYS = {"template", "description"}
 COMMON_PRESENTATION_FIELDS = {
     "label",
@@ -503,6 +503,8 @@ class VariantResolver:
                 f"variant '{name}': header has unknown field(s): "
                 f"{', '.join(unknown_header)}"
             )
+        if not isinstance(header.get("show_phone", True), bool):
+            raise VariantError(f"variant '{name}': header.show_phone must be true or false")
         header_links = header.get("links", [])
         if not isinstance(header_links, list):
             raise VariantError(f"variant '{name}': header.links must be a list")
@@ -670,9 +672,16 @@ class VariantResolver:
         layout = copy.deepcopy(self.layouts[config["layout"]])
         materialized = copy.deepcopy(self.data)
 
+        header = config.get("header", {})
+        phone_file = self.variant_dir / "private" / "phone.txt"
+        if not header.get("show_phone", True):
+            materialized["personal"].pop("phone", None)
+        elif phone_file.is_file():
+            materialized["personal"]["phone"] = phone_file.read_text(encoding="utf-8").strip()
+
         header_links = [
             copy.deepcopy(self.indexes["header_links"][link_id])
-            for link_id in config.get("header", {}).get("links", [])
+            for link_id in header.get("links", [])
         ]
 
         section_map = {}
