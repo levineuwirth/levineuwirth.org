@@ -8,6 +8,9 @@ tags:
   - nonfiction/philosophy
 authors:
   - "Levi Neuwirth | /me.html"
+# Kept on the site, out of search engines (and so out of Google Scholar,
+# which indexed it by its layout): an undergraduate class paper.
+noindex: true
 history:
   - date: "2026-04-26"
   - date: "2026-04-19"

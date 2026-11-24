@@ -27,6 +27,7 @@ affiliation:
   - "Brown University | https://www.brown.edu"
 bibliography: data/timed-guarding-in-degree-reduction-clouds.bib
 preprint: /papers/timed-guarding-in-degree-reduction-clouds.pdf
+scholarly: true
 no-collapse: true
 status: "Durable"
 confidence: proved

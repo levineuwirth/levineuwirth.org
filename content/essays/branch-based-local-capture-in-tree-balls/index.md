@@ -30,6 +30,7 @@ affiliation:
   - "Brown University | https://www.brown.edu"
 bibliography: data/branch-capture-paper.bib
 preprint: /papers/branch-capture-paper.pdf
+scholarly: true
 no-collapse: true
 status: "Durable"
 confidence: proved

@@ -39,6 +39,7 @@ affiliation:
   - "Brown University | https://www.brown.edu"
 bibliography: data/ball-occupation-paper.bib
 preprint: /papers/ball-occupation-paper.pdf
+scholarly: true
 no-collapse: true
 status: "Durable"
 confidence: proved

@@ -20,6 +20,9 @@ tags:
   - research/machine-learning
 bibliography: content/essays/natural-order-hypothesis/references.bib
 preprint: /essays/natural-order-hypothesis/main.pdf
+scholarly: true
+# The manuscript's own date (its title page); date: is when it came here.
+citation-date: 2026-11-13
 license: "All rights reserved"
 history:
   - date: "2027-11-22"

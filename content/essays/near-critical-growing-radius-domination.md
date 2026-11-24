@@ -30,6 +30,9 @@ authors:
   - "Levi Neuwirth | /me.html"
 bibliography: data/growing-radius-domination-preprint.bib
 preprint: /papers/near-critical-growing-radius-domination-paper.pdf
+scholarly: true
+# Brown University: the PDF's address block; this page has no affiliation:.
+citation-institution: "Brown University"
 no-collapse: true
 status: "Durable"
 confidence: proved
