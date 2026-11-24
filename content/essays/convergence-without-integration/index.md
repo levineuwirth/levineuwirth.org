@@ -241,7 +241,7 @@ vaults for just about everything on my device, one that is written exclusively b
 me and one written exclusively by AI agents (with a corpus of roughly 2.7 million words of distinct prose). I did a linguistic
 analysis between the agentic vault and my own vault (supplemented with some of my other writings, like
 those on this website), even going so far as to create a [Mark V. Shaney](https://en.wikipedia.org/wiki/Mark_V._Shaney)-like
-system, [`shaney.py`](shaney.py){.source-ref data-source-path="content/essays/convergence-without-integration/shaney.py"}, trained on each corpus, expecting to show how disjunct they were. They weren't, and I'll come back to that at the end.  Another way I've seen this
+system, [`shaney.py`](/essays/convergence-without-integration/shaney.py){.source-ref data-source-path="content/essays/convergence-without-integration/shaney.py"}, trained on each corpus, expecting to show how disjunct they were. They weren't, and I'll come back to that at the end.  Another way I've seen this
 is how the labs keep arriving at the same results at roughly the
 same time, without coordination and, often, without knowing how close the
 others are: convergence without common knowledge, again. I've rigorously written
