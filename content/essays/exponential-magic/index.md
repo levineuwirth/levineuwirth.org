@@ -107,7 +107,7 @@ for _ in 0..x {
 
 Here, `x` counts the *new arrivals*, and the loop produces a separate `CreateToken` effect for every one of them. The engine then has to process all those arrivals, including the rules checks and any abilities they set off. As the army grows, so does the work required to resolve the emblem's ability.
 
-## What one engine step costs
+## One step at a time
 
 Let's step back for a second. I was trying to decide which gaps in Arcana's rules to fix next. I had 64 Pioneer decks^[These came from camilonunez’s collection of MTGTop8 tournament decks on Kaggle. Of the 800 distinct Pioneer decks I checked, Arcana had every card in the 60-card maindeck for 64 of them.] and a list of 37 cards with known issues. There were 2,016 distinct pairs of decks. I played each pair twice, once with each deck going first, giving me 4,032 games in which to count how often those situations came up.
 
