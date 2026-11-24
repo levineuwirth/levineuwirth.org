@@ -139,6 +139,8 @@
 }
 ((* endif *))
 
+((* from 'shared/publication.tex.j2' import publication *))
+
 \begin{document}
 
 ((* if variant_sections *))
@@ -170,6 +172,8 @@
 (((experience(entry.record))))
 ((* elif entry.collection == 'projects' *))
 (((project(entry.record))))
+((* elif entry.collection == 'publications' *))
+(((publication(entry.record))))
 ((* elif entry.collection == 'education' *))
 (((education(entry.record))))
 ((* elif entry.collection == 'skills' *))
@@ -232,6 +236,14 @@
 \noindent\textbf{(((proj.name)))} \textit{(((proj.start)))((* if proj.end *)) -- (((proj.end)))((* endif *))}. (((proj.description)))
 \par\vspace{0.3em}
 ((* endfor *))
+
+((* set resume_publications = publications | selectattr('resume_visible') | list *))
+((* if resume_publications *))
+\section*{Selected Publications and Preprints}
+((* for record in resume_publications *))
+(((publication(record))))
+((* endfor *))
+((* endif *))
 
 %% EDUCATION
 \section*{Education}

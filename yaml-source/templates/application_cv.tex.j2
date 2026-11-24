@@ -101,17 +101,7 @@
 \end{samepage}
 ((* endmacro *))
 
-((* macro publication(record) *))
-\noindent
-((* if record.title *))
-\textbf{(((record.authors))).} \textit{((* if record.links *))\href{(((record.links[0].href)))}{(((record.title)))}((* else *))(((record.title)))((* endif *)).}
-(((record.venue))), (((record.year)))((* if record.month *)), (((record.month)))((* endif *)).
-((* else *))
-\textbf{(((record.authors))).} (((record.venue))) (((record.year))).
-((* endif *))
-((* if record.description *)) {\small (((record.description))) }((* endif *))
-\par\vspace{0.18em}
-((* endmacro *))
+((* from 'shared/publication.tex.j2' import publication *))
 
 ((* macro presentation(record) *))
 \noindent\textbf{(((record.authors))).}

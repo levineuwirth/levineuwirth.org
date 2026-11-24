@@ -514,6 +514,16 @@ class RepositoryCompatibilityTests(unittest.TestCase):
                 self.assertEqual(education, {"brown-scb-math-cs"})
                 self.assertNotIn("xAI", build.render(resolved.template, resolved.data))
 
+    def test_preprint_links_render_in_the_cv_and_research_resumes(self):
+        paper = self.resolver.indexes["publications"]["natural-order-hypothesis"]
+        for name in ("cv", "resume", "resume-ats", "technical-generalist-ai-safety"):
+            with self.subTest(name=name):
+                resolved = self.resolver.resolve(name)
+                tex = build.render(resolved.template, resolved.data)
+                self.assertEqual(tex.count(paper["title"]), 1)
+                for link in paper["links"]:
+                    self.assertIn(r"\href{" + link["href"] + "}", tex)
+
     def test_gpu_inference_systems_is_a_brown_only_one_page_child(self):
         self.assertEqual(
             self.resolver.raw_variants["gpu-inference-systems"]["extends"],
@@ -632,7 +642,7 @@ class RepositoryCompatibilityTests(unittest.TestCase):
                 entry["id"]
                 for entry in resolved.data["variant_sections"][1]["entries"]
             ],
-            ["pmacs", "levcs", "proof-broker"],
+            ["pmacs", "levcs", "proof-broker", "natural-order-hypothesis"],
         )
 
         experience_text = " ".join(

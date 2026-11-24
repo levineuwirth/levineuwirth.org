@@ -2,6 +2,20 @@
 # with equal_contrib: true; the template renders the appropriate footnote.
 
 publications:
+  - id: natural-order-hypothesis
+    authors: "Neuwirth L"
+    title: "The Natural Order Hypothesis for LLMs"
+    venue: "Preprint"
+    year: 2026
+    month: November
+    links:
+      - label: Full text
+        href: https://levineuwirth.org/essays/natural-order-hypothesis/
+      - label: DOI
+        href: https://doi.org/10.5281/zenodo.24511608
+    cv_visible: true
+    resume_visible: true
+
   # Public research writing, distinct from papers/preprints. Selected by
   # research-application variants; omitted from the legacy academic record.
   - id: verified-inference-between-adversaries

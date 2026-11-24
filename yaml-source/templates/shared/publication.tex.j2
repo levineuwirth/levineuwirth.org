@@ -1,0 +1,14 @@
+((* macro publication(record) *))
+\noindent
+((* if record.title *))
+\textbf{(((record.authors))).} \textit{((* if record.links *))\href{(((record.links[0].href)))}{(((record.title)))}((* else *))(((record.title)))((* endif *)).}
+(((record.venue))), (((record.year)))((* if record.month *)), (((record.month)))((* endif *)).
+((* for link in record.links if link.href.startswith('https://doi.org/') *))
+\href{(((link.href)))}{\mbox{DOI~(((link.href.removeprefix('https://doi.org/'))))}}
+((* endfor *))
+((* else *))
+\textbf{(((record.authors))).} (((record.venue))) (((record.year))).
+((* endif *))
+((* if record.description *)) {\small (((record.description))) }((* endif *))
+\par\vspace{0.18em}
+((* endmacro *))

@@ -46,6 +46,7 @@ sections:
   - id: selected-research
     label: Selected Research \& Presentations
     entries:
+      - publications:natural-order-hypothesis
       - publications:icd-embeddings-jamia
       - presentations:mars-v-verified-inference
       - publications:timed-guarding-degree-reduction-clouds

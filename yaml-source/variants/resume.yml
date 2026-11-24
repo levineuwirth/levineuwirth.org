@@ -19,6 +19,11 @@ sections:
       - experience:frontier-ai-contracting
       - projects:proof-broker
       - experience:shu-lab-undergrad
+  - id: publications
+    label: Selected Publications and Preprints
+    entries:
+      - publications:natural-order-hypothesis
+
   - id: education
     label: Education
     entries:

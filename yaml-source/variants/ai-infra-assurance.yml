@@ -43,6 +43,7 @@ sections:
   - id: selected-research
     label: Selected Research / Talks
     entries:
+      - publications:natural-order-hypothesis
       - presentations:mars-v-verified-inference
       - publications:pqc-avx2-report
       - publications:branch-tube-persistence

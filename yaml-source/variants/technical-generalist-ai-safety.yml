@@ -5,9 +5,8 @@ description: Reusable one-page résumé for technical-generalist, special-projec
 output: Levi-Neuwirth-Resume-Technical-Generalist-AI-Safety.pdf
 document_title: Technical Generalist — AI Safety \& Systems
 summary: >-
-  Brown mathematics and computer science graduate who investigates open-ended
-  technical questions through model evaluations, inference verification and
-  deployed ML systems.
+  I investigate open-ended technical questions through model evaluations,
+  inference verification and deployed ML systems.
 
 header:
   links:
@@ -23,11 +22,12 @@ sections:
       - experience:shu-lab-undergrad
 
   - id: selected-projects
-    label: Selected Projects
+    label: Selected Projects and Publications
     entries:
       - projects:pmacs
       - projects:levcs
       - projects:proof-broker
+      - publications:natural-order-hypothesis
 
   - id: education
     label: Education
