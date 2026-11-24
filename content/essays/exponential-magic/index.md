@@ -91,8 +91,6 @@ This forms Liliana's purple curve in the [comparison above](#fig-scute-growth): 
 
 Arcana implements that counting rule directly:
 
-<!-- Abridged from the pinned card implementation; token-definition boilerplate omitted. -->
-
 ```rust
 let zombies = script::count_matching(state, &filter, trig.controller);
 let x = 2 + zombies;

@@ -25,6 +25,7 @@ source-preview:
   - content/essays/crawler_chronicles/data/*.py
   - content/essays/crawler_chronicles/data/commit-response/source/*.py
   - content/essays/crawler_chronicles/data/commit-response/source/*.sh
+  - content/essays/convergence-without-integration/shaney.py
   - nginx/**.conf
   - data/*.yaml
   - data/*.md
