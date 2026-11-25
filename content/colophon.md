@@ -177,7 +177,7 @@ Many others influenced the ideas that make this website what it is.
 - The `/now` page is inspired by that of Derek Sivers.
 - Of course, I should probably also name Tufte once more here to close.
 
-The tradition of the personal website is one that is built on a sense of community and interaction. I am thankful to everyone else who has a personal website and shares their content with the world. I am also particularly greatful to the open source and broader open culture movements, who have given me and the world so much. This website would not exist without you - and I wouldn't be the person I am without your influence - what a role model!
+The tradition of the personal website is one that is built on a sense of community and interaction. I am thankful to everyone else who has a personal website and shares their content with the world!
 
 ---
 
