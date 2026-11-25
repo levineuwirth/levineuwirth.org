@@ -367,6 +367,17 @@ tooltip: "formal and less formal inquiry"
 ---
 ```
 
+A portal the tag map does not draw (a form: Music, Photography) may also
+name a `cover:`, an image the home page's shelf shows in the map's place
+while that portal's spine is pointed at:
+
+```yaml
+---
+tooltip: "compositions, scores, and recordings"
+cover: "/music/liebe-ohne-zeit/scores/thumb.webp"
+---
+```
+
 The page title comes from the tag itself; the body is unused. Files in
 `content/tag-meta/` are sidecars consumed by the Tags context, not
 authored pages — they're the one place in `content/` where the standard

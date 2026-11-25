@@ -198,6 +198,7 @@ switches:
   footer-build-time: true
   tag-pages: true
   tag-map: true
+  portal-shelf: true
   new: true
   authors: true
   random: true
