@@ -149,10 +149,11 @@ library:
     Everything on this site, arranged by shelf: essays, fiction, poetry,
     music, photography, and research.
   see-also:
-    - {label: New, href: /new.html}
-    - {label: Commonplace, href: /commonplace.html}
-    - {label: Colophon, href: /colophon.html}
     - {label: Bibliography, href: /bibliography/}
+    - {label: Colophon, href: /colophon.html}
+    - {label: Commonplace, href: /commonplace.html}
+    - {label: Map, href: /map/}
+    - {label: New, href: /new.html}
 # One-off pages: source, route, template (under templates/) and the engine
 # context they are compiled with (essay, page, now, vita, projects). scores
 # copies the score fragments beside a source in its own directory; dingbat is

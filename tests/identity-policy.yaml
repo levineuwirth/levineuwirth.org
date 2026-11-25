@@ -100,7 +100,6 @@ site-files:
 - templates/partials/footer.html
 - templates/partials/ornament.html
 - templates/projects.html
-- templates/vita.html
 - tests/browser-baseline/axe.json
 - tests/browser-baseline/budgets.json
 - tests/browser-baseline/outside.json
