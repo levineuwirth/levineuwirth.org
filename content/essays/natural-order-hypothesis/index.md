@@ -24,7 +24,7 @@ scholarly: true
 citation-date: 2026-11-13
 license: "All rights reserved"
 history:
-  - date: "2027-11-22"
+  - date: "2026-11-22"
     note: "Update abstract for arXiv"
   - date: "2026-11-17"
     note: "Scientific clarification and dated forecast amendment."
