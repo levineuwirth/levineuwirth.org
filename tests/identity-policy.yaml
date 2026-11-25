@@ -118,6 +118,7 @@ site-files:
 - tests/test_anubis_update.py
 - tests/test_backup_pair.py
 - tests/test_bibliography.py
+- tests/test_commonplace_add.py
 - tests/test_browser_gear.py
 - tests/test_couchdb_backup.py
 - tests/test_couchdb_update.py
@@ -150,6 +151,7 @@ site-files:
 - tools/borg-offhost.sh
 - tools/browser/prod_smoke.py
 - tools/build-graph-papers.py
+- tools/commonplace-add.py
 - tools/couchdb-backup.sh
 - tools/couchdb-update.sh
 - tools/cv-pdfs.py

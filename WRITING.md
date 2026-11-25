@@ -862,6 +862,12 @@ The passage you want to quote goes here.
 The `/commonplace` page is a YAML-driven quotation collection. Add entries to
 `data/commonplace.yaml`; the page rebuilds automatically.
 
+`tools/commonplace-add.py` writes an entry for you: it asks for the passage
+(or takes it from the clipboard with `--clipboard`, or from standard input),
+the attribution, and the optional fields, dates it today, refuses a passage
+already in the book, and leaves the file as it was if anything goes wrong.
+`--dry-run` prints the entry without writing it.
+
 ```yaml
 - text: |-
     Like as the waves make towards the pebbled shore,
