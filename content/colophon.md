@@ -10,6 +10,7 @@ description: >-
   Why this site is built the way it is: a personal website as a position
   rather than a publication, and the design decisions that follow from it.
 history:
+  - date: "2026-11-25"
   - date: "2026-11-20"
   - date: "2026-09-03"
   - date: "2026-08-31"
@@ -157,11 +158,23 @@ The majority of the code that comprises the build system of this website was cre
 
 The amount of influences on this website is immense, and cannot be detailed in the fullest extent. Every other webpage that I have visited, whether beautiful or pitiful, has evoked some type of reaction or response in me, and that response has played some role, even if minute, in the design of this website. 
 
-## Code
-Certain code on this website or in the Ozymandias engine underneath it was adapted from other websites or systems; **I stand on the shoulders of giants.** [Pandoc](https://pandoc.org/) and [texmath](https://github.com/jgm/texmath), both projects of John McFarlane, are core components of this website's toolchain, and the website would not possibly exist without them; Hakyll has already been mentioned, so thanks to Jasper Van der Jeugt; the website's search is built on `transformers.js` by Joshua Lochner and all-MiniLM-L6-v2 by Reimers and Gurevych; [Lilypond](https://github.com/lilypond/lilypond) and [MuseScore](https://github.com/musescore/musescore) are currently used for engraving musical compositions displayed on this website (but will be superseded soon by my upcoming Epiphany; thanks is also due to Mozilla for `PDF.js`.
+### Code
+Certain code on this website or in the Ozymandias engine underneath it was adapted from other websites or systems; **I stand on the shoulders of giants.**
+
+- [Pandoc](https://pandoc.org/) and [texmath](https://github.com/jgm/texmath), both projects of John McFarlane, are core components of this website's toolchain, and the website would not possibly exist without them.
+- Hakyll has already been mentioned, so thanks to Jasper Van der Jeugt.
+- The website's search is built on `transformers.js` by Joshua Lochner and all-MiniLM-L6-v2 by Reimers and Gurevych.
+- [Lilypond](https://github.com/lilypond/lilypond) and [MuseScore](https://github.com/musescore/musescore) are currently used for engraving musical compositions displayed on this website (but will be superseded soon by my upcoming Epiphany).
+- Thanks is also due to Mozilla for `PDF.js`.
 
 ### Ideas
-Many others influenced the ideas that make this website what it is. The original^[This is no longer the case, as the system has been redesigned from the ground up.] sidenotes script was inspired by the website of Gwern Branwen, and, in fact was a fork of that website's script (authored by Said Achmiz); the build telemetry and much inspiration on design principles was taken from Matthew Butterick's [Practical Typography](https://practicaltypography.com/) and, by extension, the course websites implemented in Racket of Shriram Krishnamurthi, whom I was fortunate to study under at Brown; the influence of tools for thought can be directly traced to CSCI1377 at Brown and Will Crichton, and more broadly attributed to Andy Matuschak and Michael Nielsen; the `/now` page is inspired by that of Derek Sivers; of course, I should probably also name Tufte once more here to close.
+Many others influenced the ideas that make this website what it is.
+
+- The original^[This is no longer the case, as the system has been redesigned from the ground up.] sidenotes script was inspired by the website of Gwern Branwen, and, in fact was a fork of that website's script (authored by Said Achmiz).
+- The build telemetry and much inspiration on design principles was taken from Matthew Butterick's [Practical Typography](https://practicaltypography.com/) and, by extension, the course websites implemented in Racket of Shriram Krishnamurthi, whom I was fortunate to study under at Brown.
+- The influence of tools for thought can be directly traced to CSCI1377 at Brown and Will Crichton, and more broadly attributed to Andy Matuschak and Michael Nielsen.
+- The `/now` page is inspired by that of Derek Sivers.
+- Of course, I should probably also name Tufte once more here to close.
 
 The tradition of the personal website is one that is built on a sense of community and interaction. I am thankful to everyone else who has a personal website and shares their content with the world. I am also particularly greatful to the open source and broader open culture movements, who have given me and the world so much. This website would not exist without you - and I wouldn't be the person I am without your influence - what a role model!
 
