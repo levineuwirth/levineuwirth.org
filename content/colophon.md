@@ -171,6 +171,7 @@ Certain code on this website or in the Ozymandias engine underneath it was adapt
 Many others influenced the ideas that make this website what it is.
 
 - The original^[This is no longer the case, as the system has been redesigned from the ground up.] sidenotes script was inspired by the website of Gwern Branwen, and, in fact was a fork of that website's script (authored by Said Achmiz).
+- More broadly, I can thank not only Gwern but the entire [Open Source](https://en.wikipedia.org/wiki/Open-source_software), and, more broadly, [Free Culture](https://en.wikipedia.org/wiki/Free-culture_movement) movements for inspiring the strong ideals of working in public that I hope this website endures in exhibiting. 
 - The build telemetry and much inspiration on design principles was taken from Matthew Butterick's [Practical Typography](https://practicaltypography.com/) and, by extension, the course websites implemented in Racket of Shriram Krishnamurthi, whom I was fortunate to study under at Brown.
 - The influence of tools for thought can be directly traced to CSCI1377 at Brown and Will Crichton, and more broadly attributed to Andy Matuschak and Michael Nielsen.
 - The `/now` page is inspired by that of Derek Sivers.
