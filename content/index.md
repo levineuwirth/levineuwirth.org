@@ -35,7 +35,7 @@ This website is *not* an academic homepage, nor a blog, nor a portfolio — thou
 :::
 
 <div class="hp-pro-row">
-<span class="hp-item"><a href="/cv.pdf">CV</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="mailto:ln@levineuwirth.org">Email</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="https://git.levineuwirth.org/neuwirth">Forgejo</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="https://github.com/levineuwirth">GitHub</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="/gpg.html">GPG</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="https://orcid.org/0009-0002-0162-3587">ORCID</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="/about.html">Vita</a></span>
+<span class="hp-item"><a href="/cv.pdf">CV</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="mailto:ln@levineuwirth.org">Email</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="https://git.levineuwirth.org/neuwirth">Forgejo</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="https://github.com/levineuwirth">GitHub</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="/gpg.html">GPG</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="https://orcid.org/0009-0002-0162-3587">ORCID</a><span class="hp-sep" aria-hidden="true">·</span></span><span class="hp-item"><a href="/work.html">Work</a></span>
 </div>
 
 <div class="hp-curiosity-row">

@@ -69,7 +69,7 @@ From anywhere:
 ```sh
 curl -s -o /dev/null -w '%{http_code} %{size_download}\n' https://levineuwirth.org/x-missing   # 404 and ~10 KB: the site's page
 curl -s -o /dev/null -w '%{http_code}\n' https://levineuwirth.org/404.html                     # 404
-curl -s -o /dev/null -w '%{http_code}\n' https://levineuwirth.org/about                        # 200
+curl -s -o /dev/null -w '%{http_code}\n' https://levineuwirth.org/work                         # 200
 curl -sI https://levineuwirth.org/ https://levineuwirth.org/x-missing https://levineuwirth.org/archive/ \
   | grep -ci '^cache-control: no-cache'                                                          # 3: pages revalidate
 v=$(curl -s https://levineuwirth.org/ | grep -o '/assets/[0-9a-f]*' | head -1)

@@ -33,7 +33,6 @@ pages:
   pdfjs:             '/pdfjs/web/viewer.html?file=/cv.pdf'
   search:            /search.html
   current:           /current.html
-  cv-about:          /about.html
   cv-projects:       /cv/projects/
   me:                /me.html
   links:             /links.html
@@ -82,15 +81,14 @@ kinds:
   archive-entry: archive-snapshot
   commonplace: commonplace
   now: current
-  vita: cv-about
   stats: stats
   build: build
   tag-map: tag-map
 
 # The pages each narrower run visits.
 keyboard: [home, essay-proofbroker, essay-r6, essay-grd, photo-index, photo-series, photo-single, search, composition, score-reader, links, library, commonplace, music-index, me, current]   # kbd_run.py: Tab stops
-motion: [home, essay-r6, essay-proofbroker, photo-index, photo-series, photo-map, music-index, composition, score-reader, search, colophon, library, memento, cv-about]   # motion_run.py
-perf: [home, essay-r6, essay-grd, essay-simd, photo-index, photo-series, photo-single, photo-contact, photo-year, photo-map, music-index, composition, score-reader, search, library, new, current, colophon, cv-about, stats, me]   # perf_run.py
+motion: [home, essay-r6, essay-proofbroker, photo-index, photo-series, photo-map, music-index, composition, score-reader, search, colophon, library, memento]   # motion_run.py
+perf: [home, essay-r6, essay-grd, essay-simd, photo-index, photo-series, photo-single, photo-contact, photo-year, photo-map, music-index, composition, score-reader, search, library, new, current, colophon, stats, me]   # perf_run.py
 axe-skip: [pdfjs]   # axe_run.py leaves out: the vendored PDF.js viewer
 dropcaps: [home, me, colophon, memento]   # test_browser_dropcaps.py: pages with several dropcaps, plain and drawn
 popup-sweep: [essay-grd, memento, essay-simd, /essays/near-critical-growing-radius-domination.html,
@@ -110,7 +108,7 @@ probes:
   pdf-viewer: [pdfjs]
   archive-snapshot: [archive-snapshot]   # an HTML snapshot, in a frame
   archive-pdf: [archive-pdf]
-  pdf-links: [cv-about, work, cv-projects]
+  pdf-links: [work, cv-projects]
   composition: [composition]
   transclusion: []
   commonplace: [commonplace]

@@ -231,5 +231,5 @@ untrusted?
 
 - [Essays](/essays/) — on the above, and on much else
 - [Current](/current.html) — what is actually moving this month
-- [Vita](/about.html) — the formal record, and [résumé](/resume.pdf)
+- [CV](/cv.pdf) — the formal record, and [résumé](/resume.pdf)
 :::
