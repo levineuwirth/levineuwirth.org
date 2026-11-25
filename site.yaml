@@ -102,6 +102,17 @@ tag-names:
   tech/hpc: HPC
   research/preprint: Preprints
   epistemology/social: Social epistemology
+# The languages a work's own code is written in, by key: projects.yml's
+# `languages`, and an essay's own where it has no project, name these keys,
+# and a key not listed fails the build. Not tags: no pages, no portals.
+languages:
+  asm: x86-64 assembly
+  c: C
+  haskell: Haskell
+  javascript: JavaScript
+  lua: Lua
+  python: Python
+  rust: Rust
 # Home-page portals in order; each is a top-level tag with a page at /<tag>/.
 # Every top-level tag is one. facet groups them: form (the sections),
 # research (the one mode), subject.

@@ -11,7 +11,7 @@
  },
  "essay-grd": {
   "empty-table-header": 4,
-  "region": 6
+  "region": 7
  },
  "essay-notes": {
   "heading-order": 1,
@@ -27,10 +27,10 @@
   "region": 6
  },
  "essay-simd": {
-  "region": 4
+  "region": 5
  },
  "essay-verified": {
-  "region": 6
+  "region": 7
  },
  "me": {
   "region": 6

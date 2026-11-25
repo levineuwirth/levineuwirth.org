@@ -10,6 +10,10 @@
 # surfaces cannot disagree. Individual project *writeups* stay as essays —
 # they are informal presentations, not records, and `essay` points at them.
 #
+# `languages` lists what the project's own code is written in, by the keys of
+# site.yaml's `languages`; the web index shows them under the title, and the
+# project's essay in its metadata. The CV and résumé leave them out.
+#
 # `group` drives the index's section headings and renders in first-appearance
 # order, like now.yaml's sections. Descriptions are LaTeX-flavoured because
 # xelatex is the first consumer; build/Vita.hs converts the same subset for
@@ -19,6 +23,7 @@ projects:
   - id: verinf
     name: VerInf — Verifiable LLM Inference
     group: Technical AI Assurance
+    languages: [python, rust]
     essay: /essays/verified-inference/
     start: July 2026
     end: Present
@@ -68,6 +73,7 @@ projects:
   - id: pqc-avx2
     name: Post-Quantum Cryptography on x86 AVX2
     group: Systems & Infrastructure
+    languages: [c, asm]
     essay: /essays/where-does-simd-help-post-quantum-cryptography/
     start: March 2025
     end: Present
@@ -93,6 +99,7 @@ projects:
   - id: levcs
     name: LeVCS
     group: Systems & Infrastructure
+    languages: [rust, haskell]
     essay: /essays/levcs.html
     start: April 2026
     end: Present
@@ -135,6 +142,7 @@ projects:
   - id: weenix
     name: Weenix
     group: Systems & Infrastructure
+    languages: [c]
     essay: /essays/weenix/
     start: January 2025
     end: August 2025
@@ -183,6 +191,7 @@ projects:
   - id: pmacs
     name: Pmacs
     group: Personal
+    languages: [rust, lua]
     start: "2025"
     end: Present
     description: "Parallel Emacs: a Rust-cored, Lua-scripted editor in the Emacs tradition, at v1.1.0 with prebuilt binaries. The hot path (rope, buffers, views, async runtime, process supervision) is Rust; commands, keymaps, hooks, and packages are an embedded Lua VM. Partitioned into a long-lived instance and thin frontends over a typed protocol: a \\texttt{crossterm} TUI attachable over SSH with \\texttt{mosh}-style reconnect, and a GPU frontend (wgpu / winit / glyphon) that renders from a semantic projection of editor state and edits optimistically against a local CRDT replica. Buffers are optionally CRDT-backed, so both frontends can edit the same buffer concurrently. 4{,}476 tests across 120 suites."
@@ -203,6 +212,7 @@ projects:
   - id: levshell
     name: Levshell
     group: Personal
+    languages: [rust]
     start: "2026"
     end: Present
     description: "Wayland-targeted productivity and research shell, in daily use as my main environment. Six Rust crates over a sway/i3-ipc substrate: a capture-and-restore planner for desktop state, an event-logged store with UUIDv7 ids, a daemon whose every action is a persisted job under a global lock with rollback capsules taken before any mutating restore, a control CLI, and a live window over daemon state. Recent work adds a reading-library surface whose paper records fill from OpenAlex. Project resume is the hero verb."
@@ -221,6 +231,7 @@ projects:
   - id: epiphany
     name: Epiphany
     group: Personal
+    languages: [rust]
     start: "2026"
     end: Present
     description: "FOSS music-notation platform: a specified, deterministic, CRDT-based score model whose LaTeX specification suite is the source of truth rather than its documentation. Twelve Rust crates across two tracks — the wire format, bundle, operations, and text projection on one; the editing seam, engraving, and layout IR on the other. Work is scoped into ratified contracts with numbered pins, mutation tables, and adversarial review rounds before any code is dispatched."
@@ -234,6 +245,7 @@ projects:
   - id: levo
     name: Levo
     group: Personal
+    languages: [rust]
     start: "2026"
     end: Present
     description: "Python-successor language designed adversarially, every claim falsified before it was believed: unannotated code statically inferred by algebraic subtyping, cooperative tasks with no GIL and suspension only at marked points, multiple inheritance with no MRO, and errors as values or supervised task outcomes. Specification, reference machine, language server, and debugger exist and \\texttt{.levo} files run, held by 1{,}061 tests across 182 suites — differential testing of every surface construct against hand-written kernel elaborations, schedule-permutation campaigns, and adversarial canaries the suite must catch. With no I/O and no standard library it remains a conformance machine rather than a runtime."
@@ -247,6 +259,7 @@ projects:
   - id: icd-embeddings-calculator
     name: ICD-10-CM outcome calculator
     group: Machine Learning & Deployed
+    languages: [python, javascript]
     essay: /essays/beyond-comorbidity-indices/
     start: "2025"
     end: Present

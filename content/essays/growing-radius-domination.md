@@ -17,6 +17,7 @@ abstract: >
 tags:
   - research
   - mathematics/graph-theory
+languages: [python]
 authors:
   - "Levi Neuwirth | /me.html"
 preprint: /papers/near-critical-growing-radius-domination-paper.pdf

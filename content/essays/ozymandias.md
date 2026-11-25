@@ -9,6 +9,7 @@ abstract: >
 tags:
   - meta
   - tech
+languages: [haskell]
 status: "Superseded"
 confidence: 80
 importance: 2
