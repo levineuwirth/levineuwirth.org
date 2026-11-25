@@ -110,7 +110,7 @@ probes:
   archive-pdf: [archive-pdf]
   pdf-links: [cv-about, work, cv-projects]
   composition: [composition]
-  transclusion: [colophon]
+  transclusion: []
   commonplace: [commonplace]
   math: [essay-grd]
 

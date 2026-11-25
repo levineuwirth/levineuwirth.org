@@ -466,6 +466,12 @@ not derivable from the page title.
 Embed the rendered content of another page (or a section of it) inline using
 `{{slug}}` directives. The directive must be on its own line.
 
+Off on this site since November 2026, when no published page used it: with
+`transclusion: false` in `site.yaml`'s switches, a directive is a link to
+the passage instead. To use one, turn the switch on and name the page under
+`transclusion` in `tests/routes.yaml`'s probes, which the CSP browser test
+checks it on.
+
 ```markdown
 {{my-essay}}                 → embeds the full body of /my-essay.html
 {{essays/deep-dive}}         → embeds /essays/deep-dive.html

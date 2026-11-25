@@ -210,6 +210,6 @@ switches:
   search-filters: true
   semantic-search: true
   similar-links: true
-  transclusion: true
+  transclusion: false
   dingbats: true
   reading-progress: true
