@@ -48,6 +48,7 @@ pages:
   new:               /new.html
   memento:           /memento-mori.html
   build:             /build/
+  tag-map:           /map/
   stats:             /stats/
   author:            /authors/levi-neuwirth/
   photo-years:       /photography/by-year/
@@ -84,6 +85,7 @@ kinds:
   vita: cv-about
   stats: stats
   build: build
+  tag-map: tag-map
 
 # The pages each narrower run visits.
 keyboard: [home, essay-proofbroker, essay-r6, essay-grd, photo-index, photo-series, photo-single, search, composition, score-reader, links, library, commonplace, music-index, me, current]   # kbd_run.py: Tab stops
