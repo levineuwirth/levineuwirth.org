@@ -1,7 +1,7 @@
 # This site's make targets: the engine's (engine/engine.mk: the build and
 # its steps, the tests, the reports) and its own, the CV PDFs and the deploy.
 
-.PHONY: pdfs deploy deploy-locked deploy-guard deploy-preflight deploy-engine-check deploy-engine-built deploy-push-engine deploy-recheck deploy-rsync-inplace deploy-rsync-atomic deploy-clean
+.PHONY: pdfs deploy deploy-locked deploy-guard deploy-preflight deploy-engine-check deploy-engine-built deploy-push deploy-push-engine deploy-push-site deploy-recheck deploy-rsync-inplace deploy-rsync-atomic deploy-clean
 
 # Source .env for the deploy target if it exists.
 # .env format: KEY=value (one per line, no `export` prefix, no quotes needed).
@@ -104,16 +104,16 @@ deploy-preflight:
 	   echo "        commits to main while the site is built from it." >&2; \
 	   exit 1; \
 	 fi
-	# Fetch what the build would fetch before judging the tree, so that a
-	# snapshot for a newly linked page or code file is caught below.
+# Fetch what the build would fetch before judging the tree, so that a
+# snapshot for a newly linked page or code file is caught below.
 	@python3 $(call tool,code-refs.py) fetch
 	@if [ -x $(VENV_PY) ]; then $(VENV_PY) $(call tool,archive.py) fetch; fi
-	# Tracked modifications anywhere in BUILD_INPUTS, plus untracked files in
-	# all of them except data/. data/ is excluded from the untracked check
-	# on purpose: it is where every build artifact and state file lands
-	# (semantic-index.bin, similar-links.json, the freshness stamps), all
-	# gitignored or generated, and none of it is a source input a reader
-	# could be missing.
+# Tracked modifications anywhere in BUILD_INPUTS, plus untracked files in
+# all of them except data/. data/ is excluded from the untracked check
+# on purpose: it is where every build artifact and state file lands
+# (semantic-index.bin, similar-links.json, the freshness stamps), all
+# gitignored or generated, and none of it is a source input a reader
+# could be missing.
 	@mkdir -p data; \
 	 dirty=$$($(call dirty_inputs,$(BUILD_INPUTS))); \
 	 if [ -n "$$dirty" ]; then \
@@ -139,8 +139,8 @@ deploy-preflight:
 	   echo "deploy: build inputs are clean at $$(git rev-parse --short HEAD)"; \
 	 fi
 	@$(MAKE) --no-print-directory deploy-engine-check
-	# Score pages are ignored by git: a fresh checkout builds without them,
-	# but deploying it would remove the published scores.
+# Score pages are ignored by git: a fresh checkout builds without them,
+# but deploying it would remove the published scores.
 	@$(PY) $(call tool,music-import.py) check
 
 # The engine, once it is a repository of its own (A10b): the site's status
@@ -222,18 +222,19 @@ VPS_DOCROOT = $(patsubst %/,%,$(strip $(VPS_PATH)))
 
 # Everything that must hold before anything is pushed or rsynced. The rsync
 # targets depend on it too, so it holds when one is re-run by hand after a
-# failed transfer (audit D04).
+# failed transfer (audit D04), and so that what they send to is what was
+# checked: each sub-make reads .env afresh.
 deploy-guard:
 	@python3 $(call tool,build-provenance.py) check
 	@test -n "$(strip $(VPS_USER))" || { echo "deploy: VPS_USER not set in .env" >&2; exit 1; }
 	@test -n "$(strip $(VPS_HOST))" || { echo "deploy: VPS_HOST not set in .env" >&2; exit 1; }
 	@$(call tool,deploy-guard.sh) docroot "$(VPS_PATH)" >/dev/null
-	# Refuse to deploy a manifestly broken build. _site/index.html must
-	# exist and be non-empty before we run rsync --delete on the VPS.
+# Refuse to deploy a manifestly broken build. _site/index.html must
+# exist and be non-empty before we run rsync --delete on the VPS.
 	@test -s _site/index.html || { echo "deploy: _site/index.html is missing or empty — refusing to rsync" >&2; exit 1; }
-	# Dev artifacts must never ship. `make build` purges _site/drafts, so
-	# this firing means _site was produced by something else (e.g. a raw
-	# `cabal run site -- build` after a watch session) — rebuild properly.
+# Dev artifacts must never ship. `make build` purges _site/drafts, so
+# this firing means _site was produced by something else (e.g. a raw
+# `cabal run site -- build` after a watch session) — rebuild properly.
 	@if [ -d _site/drafts ]; then \
 	  echo "deploy: _site/drafts exists — dev drafts must not deploy; run 'make build' (or 'make deploy-clean')" >&2; \
 	  exit 1; \
@@ -248,12 +249,14 @@ deploy:
 # it runs, a sub-make, sees it. `make deploy REQUIRE_WEBP=` overrides it,
 # knowingly.
 deploy-locked: export REQUIRE_WEBP = 1
+# The suites report a line of dots, not every test by name (engine.mk).
+deploy-locked: export TEST_VERBOSE =
 deploy-locked: deploy-preflight build-locked validate sign
 	@$(MAKE) --no-print-directory deploy-guard
-	# The revision that was actually compiled. tools/build-freshness.sh
-	# writes data/last-build-commit.txt from `git rev-parse HEAD` right
-	# after the last successful compile pass; if HEAD has moved since, the
-	# push below would advertise a commit the published HTML never saw.
+# The revision that was actually compiled. tools/build-freshness.sh
+# writes data/last-build-commit.txt from `git rev-parse HEAD` right
+# after the last successful compile pass; if HEAD has moved since, the
+# push below would advertise a commit the published HTML never saw.
 	@test -f data/last-build-commit.txt || { echo "deploy: no data/last-build-commit.txt — run 'make build' first" >&2; exit 1; }
 	@built=$$(cat data/last-build-commit.txt); head=$$(git rev-parse HEAD); \
 	 if [ "$$built" != "$$head" ]; then \
@@ -264,19 +267,37 @@ deploy-locked: deploy-preflight build-locked validate sign
 	@$(MAKE) --no-print-directory deploy-engine-built
 	@$(MAKE) --no-print-directory deploy-recheck
 	@command -v notify-send >/dev/null 2>&1 && notify-send "make deploy" "Ready to push & rsync — waiting for auth" || true
-	# Push first: a successful push is cheap to roll back, while a
-	# half-completed rsync is harder to recover from. If the push
-	# fails (auth, branch protection, network), abort before touching
-	# the VPS so the public source repo and the live site stay in sync.
-	# The engine's main goes first, so the site never names an engine commit
-	# that isn't published.
-	@$(MAKE) --no-print-directory deploy-push-engine
-	git push -u origin main
+# Push first: a successful push is cheap to roll back, while a
+# half-completed rsync is harder to recover from. If the push
+# fails (auth, branch protection, network), abort before touching
+# the VPS so the public source repo and the live site stay in sync.
+# The engine's main goes first, so the site never names an engine commit
+# that isn't published.
+	@$(MAKE) --no-print-directory deploy-push
 	@if [ "$(ATOMIC_DEPLOY)" = "1" ]; then \
 	  $(MAKE) --no-print-directory deploy-rsync-atomic; \
 	else \
 	  $(MAKE) --no-print-directory deploy-rsync-inplace; \
 	fi
+
+# Both pushes go to Forgejo, so the token is asked for once: they share a
+# credential cache private to this deploy (tools/with-deploy-credentials.sh).
+# The pushes are in sub-make targets of their own, as ordinary recipe lines:
+# make runs a line that names $(MAKE) even under -n, so a push sharing one
+# would run in `make -n deploy`. The engine's push is a prerequisite of the
+# site's, not a goal beside it, so that even `make -k` never pushes the site
+# after the engine's push has failed.
+FORGEJO_URL := https://git.levineuwirth.org
+
+deploy-push:
+	@tools/with-deploy-credentials.sh "$(FORGEJO_URL)" $(MAKE) --no-print-directory deploy-push-site
+
+deploy-push-site: deploy-push-engine
+	git push -u origin main
+
+# rsync reports its totals only; the file-by-file list (-v) ran to
+# hundreds of lines. `make deploy RSYNC_INFO=-v` brings it back.
+RSYNC_INFO ?= --info=stats1
 
 # The default publication path: rsync straight into the live document root. Not
 # atomic — for the ~30 seconds rsync runs, a visitor can get a page whose
@@ -296,9 +317,11 @@ deploy-rsync-inplace: deploy-guard
 	@$(call tool,deploy-guard.sh) target _site "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$(VPS_DOCROOT)/" data/deploy-filter.txt
 	@python3 $(call tool,asset-versions.py) attempt _site
 	@python3 $(call tool,build-provenance.py) check
-	rsync -avzR "_site/./assets/$$(python3 $(call tool,asset-versions.py) current _site)/" "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$(VPS_DOCROOT)/"
+	@echo "deploy: sending this build's assets"
+	@rsync -azR $(RSYNC_INFO) "_site/./assets/$$(python3 $(call tool,asset-versions.py) current _site)/" "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$(VPS_DOCROOT)/"
 	@python3 $(call tool,build-provenance.py) check
-	rsync -avz --delete --filter="merge data/deploy-filter.txt" _site/ "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$(VPS_DOCROOT)/"
+	@echo "deploy: sending the site"
+	@rsync -az $(RSYNC_INFO) --delete --filter="merge data/deploy-filter.txt" _site/ "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$(VPS_DOCROOT)/"
 	@python3 $(call tool,asset-versions.py) deployed _site
 
 # ---------------------------------------------------------------------------
@@ -349,7 +372,7 @@ deploy-rsync-atomic: deploy-guard
 	 if [ -n "$$prev" ]; then linkdest="--link-dest=$$prev"; fi; \
 	 python3 $(call tool,asset-versions.py) attempt _site; \
 	 python3 $(call tool,build-provenance.py) check; \
-	 rsync -avz --delete $$linkdest _site/ "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$$rel/$$ts/"; \
+	 rsync -az $(RSYNC_INFO) --delete $$linkdest _site/ "$(strip $(VPS_USER))@$(strip $(VPS_HOST)):$$rel/$$ts/"; \
 	 python3 $(call tool,build-provenance.py) check; \
 	 { echo 'set -e'; \
 	   if [ -n "$$prev" ]; then for kept in $$keep; do \

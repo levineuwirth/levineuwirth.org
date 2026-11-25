@@ -125,6 +125,7 @@ site-files:
 - tests/test_credit.py
 - tests/test_cv_pdfs.py
 - tests/test_deploy_assets.py
+- tests/test_deploy_credentials.py
 - tests/test_forgejo_backup_offhost.py
 - tests/test_forgejo_reconcile.py
 - tests/test_forgejo_update.py
@@ -164,6 +165,7 @@ site-files:
 - tools/vps-config-backup.sh
 - tools/vps-offsite-verify.sh
 - tools/vps-status
+- tools/with-deploy-credentials.sh
 - yaml-source/
 vendored-files:
 - static/js/prism.min.js

@@ -110,6 +110,63 @@ class DeployEngine(unittest.TestCase):
         self.assertEqual(done.returncode, 0, done.stderr)
         self.assertEqual(git(self.origin, "rev-parse", "main"), head)
 
+    def site_with_an_origin(self) -> Path:
+        site_origin = self.root / "site-origin.git"
+        git(self.root, "init", "-q", "--bare", "-b", "main", str(site_origin))
+        (self.site / "tools").mkdir()
+        shutil.copy2(SITE_ROOT / "tools/with-deploy-credentials.sh", self.site / "tools")
+        git(self.site, "add", "-A")
+        git(self.site, "commit", "-qm", "site")
+        git(self.site, "remote", "add", "origin", str(site_origin))
+        return site_origin
+
+    def test_both_pushes_run_under_one_credential_cache(self):
+        site_origin = self.site_with_an_origin()
+        head = self.commit("two\n")
+        done = self.make("deploy-push")
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertEqual(git(self.origin, "rev-parse", "main"), head)
+        self.assertEqual(git(site_origin, "rev-parse", "main"), git(self.site, "rev-parse", "HEAD"))
+
+    def test_a_dry_run_pushes_nothing(self):
+        # make runs a recipe line that names $(MAKE) even under -n: a push
+        # sharing such a line ran in `make -n deploy` (review, 2026-11-25).
+        site_origin = self.site_with_an_origin()
+        before = git(self.origin, "rev-parse", "main")
+        self.commit("two\n")
+        done = self.make("-n", "deploy-push")
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertIn("git push -u origin main", done.stdout)
+        self.assertIn("git -C engine push origin main", done.stdout)
+        self.assertEqual(git(self.origin, "rev-parse", "main"), before)
+        self.assertEqual(git(site_origin, "for-each-ref"), "")
+
+    def test_a_failed_engine_push_keeps_the_site_back_even_under_k(self):
+        # Two goals of one sub-make: -k pushed the site after the engine's
+        # push had failed (review, 2026-11-25).
+        site_origin = self.site_with_an_origin()
+        self.commit("two\n")
+        git(self.engine, "remote", "set-url", "origin", str(self.root / "nowhere.git"))
+        for flags in ((), ("-k",)):
+            with self.subTest(flags=flags):
+                done = self.make(*flags, "deploy-push")
+                self.assertNotEqual(done.returncode, 0)
+                self.assertIn("the engine's push failed", done.stderr)
+                self.assertEqual(git(site_origin, "for-each-ref"), "")
+
+    def test_no_recipe_line_that_runs_under_n_pushes(self):
+        lines, line = [], ""
+        for raw in (SITE_ROOT / "Makefile").read_text().splitlines():
+            line += raw
+            if raw.endswith("\\"):
+                continue
+            lines.append(line)
+            line = ""
+        for line in lines:
+            if line.startswith("\t") and "$(MAKE)" in line:
+                self.assertNotIn("git push", line)
+                self.assertNotIn(" push ", line)
+
     def test_a_failed_engine_push_stops_the_deploy(self):
         self.commit("two\n")
         git(self.engine, "remote", "set-url", "origin", str(self.root / "nowhere.git"))
