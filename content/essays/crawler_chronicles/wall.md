@@ -5,7 +5,9 @@ date: 2026-11-19
 abstract: >
   Who knocks on this server's SSH doors, from which networks, with which names and which software: a monthly ledger of attempts that cannot succeed.
 description: "A monthly ledger of the SSH login attempts made on this website's server: networks, usernames and client software."
-tags: [meta, systems, tech]
+tags:
+  - meta
+  - tech
 ---
 
 Every server on the internet is knocked on all day. This one takes no passwords, so none of these attempts can succeed; they are tallied here beside the [Crawler Chronicles](index.html).

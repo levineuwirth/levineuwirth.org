@@ -4,13 +4,9 @@ date: 2026-11-24
 abstract: >
   Broadcast television gave its audience two things at once: they saw the same things, and they knew that everyone else had seen them too. A shared language model gives back the first without the second. It homogenizes through defaults its users never notice, and when its text circulates as if people wrote it, one source passes for a consensus of many. We argue that this loss of common knowledge, and not the loss of diversity alone, is what a public stands to lose; that detecting machine text pushes the convergence deeper rather than exposing it; and that provenance, though no cure, is what could make it visible again, and experiment on my own corpus of LLM generated texts against texts of my own.
 tags:
-  - ai
-  - llm
-  - nonfiction
-  - nonfiction/philosophy
-  - research
-  - research/informal
+  - ai/llm
   - sociology
+  - epistemology/social
 history:
   - date: "2026-11-24"
   - date: "2026-11-23"

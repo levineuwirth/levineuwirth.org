@@ -23,9 +23,8 @@ abstract: >
   pursuit-evasion games. Quenched matching and the direct two-branch leading
   constant remain open.
 tags:
-  - research
-  - research/mathematics
-  - research/graph-theory
+  - research/preprint
+  - mathematics/graph-theory
 authors:
   - "Levi Neuwirth | /me.html"
 bibliography: data/growing-radius-domination-preprint.bib

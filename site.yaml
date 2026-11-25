@@ -95,17 +95,30 @@ sections:
   - {dir: fiction, kind: Fiction, dingbat: asterisks}
   - {dir: music, kind: Composition, dingbat: clef}
   - {dir: photography, kind: Photo}
+# What a subtag is called where its last segment will not do
+# (tech/cryptography is "Cryptography" without one).
+tag-names:
+  ai/llm: LLMs
+  tech/hpc: HPC
+  research/preprint: Preprints
+  epistemology/social: Social epistemology
 # Home-page portals in order; each is a top-level tag with a page at /<tag>/.
+# Every top-level tag is one. facet groups them: form (the sections),
+# research (the one mode), subject.
 portals:
-  - {name: Research, tag: research}
-  - {name: Nonfiction, tag: nonfiction}
-  - {name: Fiction, tag: fiction}
-  - {name: Poetry, tag: poetry}
-  - {name: Music, tag: music}
-  - {name: Photography, tag: photography}
-  - {name: AI, tag: ai}
-  - {name: Tech, tag: tech}
-  - {name: Miscellany, tag: miscellany}
+  - {name: Research, tag: research, facet: research}
+  - {name: Fiction, tag: fiction, facet: form}
+  - {name: Poetry, tag: poetry, facet: form}
+  - {name: Music, tag: music, facet: form}
+  - {name: Photography, tag: photography, facet: form}
+  - {name: AI, tag: ai, facet: subject}
+  - {name: Tech, tag: tech, facet: subject}
+  - {name: Mathematics, tag: mathematics, facet: subject}
+  - {name: Epistemology, tag: epistemology, facet: subject}
+  - {name: Philosophy, tag: philosophy, facet: subject}
+  - {name: Sociology, tag: sociology, facet: subject}
+  - {name: Education, tag: education, facet: subject}
+  - {name: Meta, tag: meta, facet: subject}
 nav-primary:
   - {label: Home, href: /}
   - {label: Current, href: /current.html}
@@ -118,6 +131,9 @@ nav-primary:
 library:
   shelf-cap: 4
   shelf-max: 5
+  # Shelves are the sections, with Research first; subjects are a row.
+  shelve-by: sections
+  leading: [research]
   description: >-
     Everything on this site, arranged by shelf: essays, fiction, poetry,
     music, photography, and research.
@@ -181,6 +197,7 @@ switches:
   build-page: true
   footer-build-time: true
   tag-pages: true
+  tag-map: true
   new: true
   authors: true
   random: true

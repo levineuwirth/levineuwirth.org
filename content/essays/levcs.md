@@ -7,7 +7,8 @@ abstract: >
   as a first-class concept, a cascading merge engine that dispatches per-file to format-aware and tree-sitter handlers,
   BLAKE3 hashing throughout, and releases as signed artifacts rather than mutable name pointers. v0.1.0 ships the
   protocol substrate; the workflow surface — review, issues, web UI — is the next layer up.
-tags: [systems, projects, releases]
+tags:
+  - tech/systems
 status: "Superseded"
 confidence: 85
 importance: 3

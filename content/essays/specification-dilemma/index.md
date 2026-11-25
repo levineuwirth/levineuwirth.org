@@ -4,14 +4,9 @@ date: 2026-05-01
 abstract: >
   As we approach AGI, the increase in the ability of Artificial Intelligence models to infer a robust specification from a sparse prompt will lead to a devastating trend of homogeneity. We argue that this is the primary concern regarding the interaction of AI and human intelligence, rather than blanket claims that "AI reduces human cognitive ability."
 tags:
-  - ai
-  - llm
-  - nonfiction
-  - nonfiction/philosophy
-  - research
-  - research/machine-learning
+  - ai/llm
   - tech
-  - tft
+  - epistemology/social
 
 status: "Durable"
 confidence: 95

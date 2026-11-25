@@ -6,7 +6,9 @@ abstract: >
   is a full-featured Hakyll and Pandoc setup for long-form writing: sidenotes, epistemic profiles, backlinks,
   wikilinks, a swipeable score reader, a semantic search pipeline, and more — configurable from a single YAML file
   and deployable with a single make command.
-tags: [meta, projects, releases]
+tags:
+  - meta
+  - tech
 status: "Superseded"
 confidence: 80
 importance: 2

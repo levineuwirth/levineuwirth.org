@@ -14,8 +14,9 @@ abstract: >
   evidence opens.
 tags:
   - research
-  - tech
   - ai
+  - tech
+  - epistemology
 status: "Working model"
 confidence: 87
 importance: 4

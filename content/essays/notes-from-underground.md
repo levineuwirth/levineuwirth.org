@@ -4,8 +4,7 @@ date: 2025-10-24
 abstract: >
   *Notes from Underground* is widely admired as a cornerstone of literature, culture, and philosophy. This paper develops the argument that the primary philosophical undercurrent is a rejection of logic and science as end-alls in modern life, traced through comparison with the more explicitly articulated works of Dostoevsky's contemporaries and successors: Nietzsche, Heidegger, Shestov, Ellul, Sartre, Camus, Husserl, and Arendt.
 tags:
-  - nonfiction
-  - nonfiction/philosophy
+  - philosophy
 authors:
   - "Levi Neuwirth | /me.html"
 # Kept on the site, out of search engines (and so out of Google Scholar,

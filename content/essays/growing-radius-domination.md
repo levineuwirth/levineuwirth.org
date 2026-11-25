@@ -16,9 +16,7 @@ abstract: >
   proof before it reached its final shape.
 tags:
   - research
-  - research/mathematics
-  - research/graph-theory
-  - tech/python
+  - mathematics/graph-theory
 authors:
   - "Levi Neuwirth | /me.html"
 preprint: /papers/near-critical-growing-radius-domination-paper.pdf

@@ -9,9 +9,9 @@ abstract: >
   work on profiling, prover optimization, and scale-out during the MARS V fellowship.
 tags:
   - research
-  - research/machine-learning
-  - ai
-  - tech
+  - ai/machine-learning
+  - tech/cryptography
+  - epistemology
 status: "Working model"
 confidence: 85
 importance: 5

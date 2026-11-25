@@ -19,6 +19,7 @@ tags:
   - research
   - ai
   - tech
+  - epistemology
 figure-numbering: true
 status: "Durable"
 confidence: 90

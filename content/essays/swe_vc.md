@@ -4,7 +4,11 @@ subtitle: "Code Was Never the Hard Part"
 date: 2026-08-10
 abstract: >
   Software engineering does so little epistemic work that it hardly earns the name "engineering." The field has never learned to distinguish provenance — where an artifact came from — from warrant — why anyone is entitled to rely on it. Authorship, a passing test suite, and a completed review are routinely mistaken for the second when they are only ever the first; libraries are the rare exception, where warrant is actually constructed and amortized across users who never read the source. LLM-generated code inherits neither comforting story, and the discomfort that provokes is not a new problem but the oldest one in the profession, finally felt without the anaesthetic that provenance usually supplies.
-tags: [ai, tech, nonfiction/philosophy, education]
+tags:
+  - ai
+  - tech
+  - education
+  - epistemology
 status: Working model
 confidence: 60
 importance: 4

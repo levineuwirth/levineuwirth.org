@@ -5,9 +5,7 @@ abstract: >
   Curricula in mathematics and the sciences optimize for procedural fluency — the half of what they teach that decays once the student stops being a student. What survives twenty years on is conceptual residue, generated only as an accidental byproduct of the curriculum's intended work. The asymmetry compounds across generations of teachers and produces a population unable to do the work that civic life requires of it.
 tags:
   - education
-  - nonfiction
-  - nonfiction/philosophy
-  - political
+  - epistemology/social
 authors:
   - "Levi Neuwirth | /me.html"
 

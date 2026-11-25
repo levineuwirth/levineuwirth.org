@@ -5,7 +5,7 @@ abstract: >
   3D pose-estimation and kinematic-analysis system for neurological-recovery research, developed in Liqi Shu's laboratory at the Brown University Department of Neurology. Python/TensorFlow inference, MATLAB-based statistical post-processing, Rust backend with HTML/JS frontends. Four externally-funded sub-projects since 2023; clinical-implications manuscript in preparation.
 tags:
   - research
-  - research/machine-learning
+  - ai/machine-learning
 authors:
   - "Levi Neuwirth | /me.html"
   - "Liqi Shu"

@@ -30,9 +30,8 @@ abstract: >
   stopping tower under these same fixed multistage hypotheses, using timed
   cloud guards rather than full-fiber occupation.
 tags:
-  - research
-  - research/mathematics
-  - research/graph-theory
+  - research/preprint
+  - mathematics/graph-theory
 authors:
   - "Levi Neuwirth | /me.html"
 affiliation:

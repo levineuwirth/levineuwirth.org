@@ -42,11 +42,13 @@ instead: <a href="/library.html">Library</a> (everything, filterable),
 <a href="/new.html">New</a> (most recent first),
 <a href="/current.html">Current</a>, <a href="/me.html">Me</a>,
 <a href="/work.html">Work</a>, <a href="/links.html">Links</a>, or the portals —
-<a href="/ai/">AI</a>, <a href="/fiction/">Fiction</a>,
-<a href="/miscellany/">Miscellany</a>, <a href="/music/">Music</a>,
-<a href="/nonfiction/">Nonfiction</a>, <a href="/photography/">Photography</a>,
-<a href="/poetry/">Poetry</a>, <a href="/research/">Research</a>,
-<a href="/tech/">Tech</a>. The filter controls below are also inert without
+<a href="/research/">Research</a>, <a href="/fiction/">Fiction</a>,
+<a href="/poetry/">Poetry</a>, <a href="/music/">Music</a>,
+<a href="/photography/">Photography</a>, <a href="/ai/">AI</a>,
+<a href="/tech/">Tech</a>, <a href="/mathematics/">Mathematics</a>,
+<a href="/epistemology/">Epistemology</a>, <a href="/philosophy/">Philosophy</a>,
+<a href="/sociology/">Sociology</a>, <a href="/education/">Education</a>,
+<a href="/meta/">Meta</a>. The filter controls below are also inert without
 scripting.</p>
 </noscript>
 

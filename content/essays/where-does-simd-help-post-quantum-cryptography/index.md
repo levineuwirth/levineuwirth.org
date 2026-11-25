@@ -6,14 +6,8 @@ abstract: >
 figure-numbering: true
 tags:
   - research
-  - research/cryptography
-  - research/hpc
-  - research/compilers
-  - research/systems
-  - tech
   - tech/hpc
-  - tech/asm
-  - tech/C
+  - tech/cryptography
   
 authors:
   - "Levi Neuwirth | /me.html"

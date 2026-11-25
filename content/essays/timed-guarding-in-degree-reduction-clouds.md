@@ -18,9 +18,8 @@ abstract: >
   retains the full remaining-ball Hall demand and does not give an
   all-graphs Meyniel bound.
 tags:
-  - research
-  - research/mathematics
-  - research/graph-theory
+  - research/preprint
+  - mathematics/graph-theory
 authors:
   - "Levi Neuwirth | /me.html"
 affiliation:

@@ -5,7 +5,9 @@ status: "Working model"
 description: "Computational strangers known and unknown wreak havoc (or, at least, attempt to do so) upon levineuwirth.org."
 abstract: >
   Computational strangers known and unknown wreak havoc (or, at least, attempt to do so) upon levineuwirth.org.
-tags: [meta, systems, tech]
+tags:
+  - meta
+  - tech
 summary: |
   Throughout the summer of 2026, traffic from crawlers and scraping of levineuwirth.org (especially the git.levineuwirth.org Forgejo instance) related to AI organizations rapidly increased. By October 2026, git.levineuwirth.org was receiving over 200,000 repository requests per day; over 50% came from crawlers directly attributed to Meta. On October 4th, Anubis was introduced; I also began logging automated requests to gain insight into how they operate.
 history:

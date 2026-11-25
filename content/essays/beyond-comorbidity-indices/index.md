@@ -5,7 +5,7 @@ abstract: >
   A deep learning model using ICD-10-CM diagnosis codes with a permutation-invariant Deep Sets aggregator improved 30-day unplanned readmission (AUC 0.7496 vs 0.6553 for CCI) and 30-day postdischarge in-hospital mortality (AUC 0.8557 vs 0.7844 for age-adjusted CCI) compared with Charlson and Elixhauser comorbidity-index benchmarks in a national claims database of over 113 million adult hospitalizations.
 tags:
   - research
-  - research/machine-learning
+  - ai/machine-learning
 authors:
   - "Levi Neuwirth | /me.html"
   - "Liqi Shu"

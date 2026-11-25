@@ -21,9 +21,8 @@ abstract: >
   it treats neither arbitrary robber walks nor a robber-independent cop
   strategy, and it gives no cop-number bound.
 tags:
-  - research
-  - research/mathematics
-  - research/graph-theory
+  - research/preprint
+  - mathematics/graph-theory
 authors:
   - "Levi Neuwirth | /me.html"
 affiliation:

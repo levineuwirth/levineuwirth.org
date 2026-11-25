@@ -29,7 +29,7 @@ pages:
   composition:       /music/bassoon-concerto/
   score-reader:      /music/bassoon-concerto/score/
   research:          /research/
-  tag-page:          /research/graph-theory/
+  tag-page:          /epistemology/
   pdfjs:             '/pdfjs/web/viewer.html?file=/cv.pdf'
   search:            /search.html
   current:           /current.html
@@ -127,7 +127,7 @@ roles:
   photo-series: photo-series
   photo-series-slideshow: /photography/europa-2024/
   list: new                                 # more cards than the first page of a list (25)
-  list-other: tag-page                      # a second list page
+  list-other: null                          # a tag page offers the count only above 25 cards, and none has that many
   # A work's page, ending in /: its score reader is at <page>score/.
   score: /music/bassoon-concerto/           # a work with score pages, timing and audio
   score-other: /music/symphony-no-5/        # a second such work

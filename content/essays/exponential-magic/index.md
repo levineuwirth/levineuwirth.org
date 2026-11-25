@@ -5,7 +5,8 @@ date: 2026-11-18
 abstract: ""
 description: "Development of Arcana, a rules engine for doing RL on Magic: The Gathering, offers insights into the challenges of dealing with game states that incorporate compounding exponential behavior."
 summary: "In perhaps the first instance where Magic: The Gathering caused a legitimate supercomputer to time out, exponential behavior strikes again as the bane of every computer scientist's existence, prompting reflection: What *is* it about Magic: The Gathering that is so unique? Why *has* it been so hard to achieve a true software implementation of the game?"
-tags: [tech, tech/rust, mtg, hpc]
+tags:
+  - tech/hpc
 authors:
   - "Levi Neuwirth | /me.html"
 repository: https://github.com/levineuwirth/arcana

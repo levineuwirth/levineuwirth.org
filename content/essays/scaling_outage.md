@@ -6,8 +6,6 @@ abstract: >
 tags:
   - ai
   - tech
-  - speculative
-  - open
 status: "Draft"
 confidence: 55
 importance: 3
