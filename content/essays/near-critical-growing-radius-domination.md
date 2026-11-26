@@ -60,6 +60,7 @@ history:
     note: "Audit corrections followed by the Duckworth–Mans attribution correction and radius-two literature comparison."
   - date: "2026-07-27"
   - date: "2026-07-24"
+    note: "Superseded by a proof of the full bounded critical window and its universal scaling function; retitled and restructured to match the new preprint."
   - date: "2026-07-22"
 
 ---
