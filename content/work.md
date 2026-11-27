@@ -122,8 +122,8 @@ independent consumers remain open.
 ::: {.work-entry-links}
 [Technical write-up](/essays/proof-broker/) ·
 [Downstream demo](https://github.com/levineuwirth/proof-broker-demo) ·
-[Repository](https://github.com/levineuwirth/proof-broker) ·
-[Releases](https://github.com/levineuwirth/proof-broker/releases)
+[Records](https://git.levineuwirth.org/neuwirth/proof-broker-records) ·
+[Releases](https://git.levineuwirth.org/neuwirth/proof-broker-records/src/branch/main/RELEASES)
 :::
 :::
 

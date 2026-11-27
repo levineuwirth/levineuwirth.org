@@ -278,47 +278,5 @@
   "commit": "/code-refs/github/levineuwirth/arcana/6b930542600f910443e11c9b91d81d63faa65fe5/commit.json",
   "date": "2026-11-10T11:42:48Z",
   "fetched": "2026-11-18"
- },
- "https://github.com/levineuwirth/proof-broker/blob/fc9c011c2379c8656ecb4f034d58e8a1d586d8c1/experiments/r6/R6-QUALIFICATION-1-ADDENDUM-1.md": {
-  "kind": "blob",
-  "host": "github",
-  "owner": "levineuwirth",
-  "repo": "proof-broker",
-  "ref": "fc9c011c2379c8656ecb4f034d58e8a1d586d8c1",
-  "sha": "fc9c011c2379c8656ecb4f034d58e8a1d586d8c1",
-  "path": "experiments/r6/R6-QUALIFICATION-1-ADDENDUM-1.md",
-  "pinned": true,
-  "src": "/code-refs/github/levineuwirth/proof-broker/fc9c011c2379c8656ecb4f034d58e8a1d586d8c1/blob/experiments/r6/R6-QUALIFICATION-1-ADDENDUM-1.md.txt",
-  "commit": "/code-refs/github/levineuwirth/proof-broker/fc9c011c2379c8656ecb4f034d58e8a1d586d8c1/commit.json",
-  "date": "2026-10-01T08:36:03Z",
-  "fetched": "2026-10-01"
- },
- "https://github.com/levineuwirth/proof-broker/blob/fc9c011c2379c8656ecb4f034d58e8a1d586d8c1/experiments/r6/R6-QUALIFICATION-1.md": {
-  "kind": "blob",
-  "host": "github",
-  "owner": "levineuwirth",
-  "repo": "proof-broker",
-  "ref": "fc9c011c2379c8656ecb4f034d58e8a1d586d8c1",
-  "sha": "fc9c011c2379c8656ecb4f034d58e8a1d586d8c1",
-  "path": "experiments/r6/R6-QUALIFICATION-1.md",
-  "pinned": true,
-  "src": "/code-refs/github/levineuwirth/proof-broker/fc9c011c2379c8656ecb4f034d58e8a1d586d8c1/blob/experiments/r6/R6-QUALIFICATION-1.md.txt",
-  "commit": "/code-refs/github/levineuwirth/proof-broker/fc9c011c2379c8656ecb4f034d58e8a1d586d8c1/commit.json",
-  "date": "2026-10-01T08:36:03Z",
-  "fetched": "2026-10-01"
- },
- "https://github.com/levineuwirth/proof-broker/blob/main/experiments/r6/R6-SYNTHESIS.md": {
-  "kind": "blob",
-  "host": "github",
-  "owner": "levineuwirth",
-  "repo": "proof-broker",
-  "ref": "main",
-  "sha": "6cd97537eb39ce2eb09b78e835dd9ee82232c290",
-  "path": "experiments/r6/R6-SYNTHESIS.md",
-  "pinned": false,
-  "src": "/code-refs/github/levineuwirth/proof-broker/6cd97537eb39ce2eb09b78e835dd9ee82232c290/blob/experiments/r6/R6-SYNTHESIS.md.txt",
-  "commit": "/code-refs/github/levineuwirth/proof-broker/6cd97537eb39ce2eb09b78e835dd9ee82232c290/commit.json",
-  "date": "2026-11-04T17:41:58Z",
-  "fetched": "2026-11-04"
  }
 }

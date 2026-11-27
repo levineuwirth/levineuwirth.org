@@ -330,8 +330,8 @@ projects:
     links:
       - label: Writeup
         href: /essays/proof-broker/
-      - label: Source
-        href: https://github.com/levineuwirth/proof-broker
+      - label: Records
+        href: https://git.levineuwirth.org/neuwirth/proof-broker-records
       - label: Demo
         href: https://github.com/levineuwirth/proof-broker-demo
     cv_visible: false

@@ -1,13 +1,14 @@
 """Extract the R6 figure data from Proof Broker's frozen analysis.
 
 Run by hand, never at build time; the figure scripts read only the CSVs
-this writes into data/. The source is the r6 tag of
-https://github.com/levineuwirth/proof-broker, file
+this writes into data/. The source is the r6 tag of Proof Broker's
+published records, https://git.levineuwirth.org/neuwirth/proof-broker-records,
+file
 experiments/r6/reviews/2026-09-29/R6-014-BLOCK2-ANALYSIS.json, and the
 reviewed declaration families in experiments/r6/analysis_r6.py; runs.csv
 reads each run's ledger reconciliation under experiments/r6/cohort-live-v9/.
 
-    python3 figures/extract_r6_data.py <proof-broker checkout at r6>
+    python3 figures/extract_r6_data.py <proof-broker-records checkout at r6>
 
 Every total the essay states is asserted before anything is written, so a
 different input fails here rather than drawing a different figure.

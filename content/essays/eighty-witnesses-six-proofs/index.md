@@ -420,10 +420,10 @@ discipline pointed at different claims: check the claim without trusting
 its author, and say plainly what you changed along the way.
 
 ::: {.work-entry-links}
-[R6 synthesis](https://github.com/levineuwirth/proof-broker/blob/main/experiments/r6/R6-SYNTHESIS.md) ·
-[Qualification 1](https://github.com/levineuwirth/proof-broker/blob/fc9c011c2379c8656ecb4f034d58e8a1d586d8c1/experiments/r6/R6-QUALIFICATION-1.md) ·
-[Its addendum: the audit](https://github.com/levineuwirth/proof-broker/blob/fc9c011c2379c8656ecb4f034d58e8a1d586d8c1/experiments/r6/R6-QUALIFICATION-1-ADDENDUM-1.md) ·
-[Release: R6](https://github.com/levineuwirth/proof-broker/releases/tag/r6) ·
-[Code](https://github.com/levineuwirth/proof-broker) ·
+[R6 synthesis](https://git.levineuwirth.org/neuwirth/proof-broker-records/src/branch/main/experiments/r6/R6-SYNTHESIS.md) ·
+[Qualification 1](https://git.levineuwirth.org/neuwirth/proof-broker-records/src/commit/d9162f07b56ab4ddb353eae9be0e2c50a0114ce6/experiments/r6/R6-QUALIFICATION-1.md) ·
+[Its addendum: the audit](https://git.levineuwirth.org/neuwirth/proof-broker-records/src/commit/d9162f07b56ab4ddb353eae9be0e2c50a0114ce6/experiments/r6/R6-QUALIFICATION-1-ADDENDUM-1.md) ·
+[Release: R6](https://git.levineuwirth.org/neuwirth/proof-broker-records/src/branch/main/RELEASES/r6.md) ·
+[Records](https://git.levineuwirth.org/neuwirth/proof-broker-records) ·
 [Architecture essay](/essays/proof-broker/)
 :::

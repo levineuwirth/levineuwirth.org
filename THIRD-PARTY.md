@@ -76,9 +76,6 @@ at the recorded commit. They are excluded from this site's blanket grants.
   `2bdf823b08ea012cf5d26eeaac1c65698bb51e20` snapshot predates that file;
   consult the upstream author for its reuse terms. This site grants no
   additional rights in it.
-- Levi Neuwirth's [proof-broker](https://github.com/levineuwirth/proof-broker)
-  snapshots retain the upstream repository's terms. This website's prose
-  license does not change those terms.
 
 ## Fonts
 
