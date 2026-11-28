@@ -36,24 +36,32 @@
 # Sorted newest-first at render time. Curate by hand — items don't
 # auto-prune. Move things off the list when they stop earning the slot.
 
-last-updated: 2026-11-06
+last-updated: 2026-11-28
 
 # Dates below follow the cited development, not this page's editorial refresh.
-# Source checks, 2026-11-04:
-# - VerInf: Anthropic's 2026-11-02 FlashProve article; upstream PR 31 remains
-#   an open draft (updated 2026-10-21), with GPU validation and re-proof pending.
-# - Proof Broker: paper/README.md in the local manuscript working tree (unreleased);
-#   public R6-016 at 2eed25306, recorded 2026-10-02. November's language-bar
-#   maintenance is not a new research milestone.
-# - Graph theory: meyniel/HANDOFF.md, "Penalty series read (October 6)";
-#   manuscripts and release assets remain unchanged by those experiments.
-# - ICD: local cleanup branch 8f96452, 2026-09-25; the author confirmed on
-#   2026-11-04 that the manuscript remains under review at JAMIA.
-# - Pmacs: public main ebf46e7e7; E10o merged as 5cf359b1b on 2026-11-04.
-# - Epiphany: public PR 14, merged 2026-11-03 as 3ed66d60b; its README's
-#   engraver limitations predate this work.
-# - Arcana: public main d1b582d2a, committed 2026-10-14; sampled-world search
-#   at 767499b84 and the README's explicitly frozen RL line.
+# Source checks, 2026-11-27:
+# - VerInf: the author confirmed on 2026-11-27 that the paper is still being
+#   drafted (drafts are kept elsewhere); no change to the entry.
+# - Proof Broker: source repository private since 2026-11-26; SDK Farkas and
+#   Tier 3 tightening merged to main as faf55313 (PR 106, 2026-11-22); the
+#   standalone Haskell checker is on branch checker/farkas-haskell (a5b0d4c4,
+#   2026-11-20), unmerged; manuscript still an uncommitted working tree.
+#   Public R6 records: proof-broker-records d9162f07 (tag r6).
+# - Graph theory: meyniel/HANDOFF.md, "Penalty series read (October 6)". The
+#   2026-11-14 sphere-size observation (7343af9) is not yet audited by the
+#   author, so the entry keeps its October date.
+# - ICD: no repository change since 8f96452, 2026-09-25; JAMIA review status
+#   as confirmed on 2026-11-04.
+# - Pmacs: public main de59feb, E10v merged 2026-11-25; E10r, E10z and E10a
+#   between 2026-11-10 and 2026-11-22.
+# - Epiphany: main 985b0d4 (x6, PR 25), 2026-11-26. The GitHub repository is
+#   now private, so the entry carries no link.
+# - Arcana: public main a030ea3d, A2 fidelity and search merges 2026-11-18;
+#   README's A2 section names A2.3 as next.
+# - Ozymandias: public main 2c50b1c, 2026-11-26; engine left this repository
+#   2026-11-09. Hakyll PR 1116 open since 2026-11-25.
+# - LeVCS: public main, version 0.2.2 (PR 46, 2026-11-21); documentation
+#   corrected against the v1 code 2026-11-23.
 # - Levshell: local main de24183, 2026-09-30; uncommitted work is not a release.
 # - Levo: local main 8b2f384, 2026-09-13, and review/programs/stackvm/README.md.
 
@@ -61,7 +69,7 @@ entries:
   - title: "VerInf: Verifiable LLM Inference (MARS V)"
     section: research
     status: drafting
-    updated: 2026-11-06
+    updated: 2026-11-25
     priority: 2
     link: /essays/verified-inference/
     note: >-
@@ -73,29 +81,25 @@ entries:
   - title: "Proof Broker"
     section: research
     status: drafting
-    updated: 2026-10-02
+    updated: 2026-11-22
     priority: 1
     link: /essays/proof-broker/
     note: >-
       Proof Broker connects Lean and Rocq to untrusted solvers and model-generated
       certificates, with independent checks and kernel-checked proofs.
-      I am preparing a manuscript on certificate attribution: whether the
-      returned evidence actually justifies the accepted proof. The draft and
-      its retrospective binding audit remain unreleased; the published R6
-      experiments and subsequent replay provide the evidence base.
+      November work tightened how the SDK reads and checks Farkas certificates,
+      and a standalone Haskell checker for them is being compared against it.
+      A manuscript on certificate attributionis forthcoming.
 
   - title: "Graph theory: pursuit and initial placement"
     section: research
     status: building
-    updated: 2026-10-06
+    updated: 2026-11-26
     link: /essays/timed-guarding-in-degree-reduction-clouds.html
     note: >-
       Studying how initial cop placement and travel time constrain pursuit
       strategies, alongside the public preprints on conditional pursuit bounds
-      and growing-radius domination. Recent optimization experiments measure
-      the cost of one placement serving several possible robber starting
-      positions, with certificates checked in exact arithmetic. Extending
-      these finite results to general pursuit guarantees remains open.
+      and growing-radius domination.
 
   - title: "Order-Invariant ICD-10-CM Embedding"
     section: research
@@ -110,63 +114,75 @@ entries:
   - title: "Pmacs"
     section: engineering
     status: building
-    updated: 2026-11-04
+    updated: 2026-11-27
     link: https://github.com/levineuwirth/pmacs
     note: >-
       A Rust-cored, Lua-scripted editor with terminal and GPU frontends sharing
-      a persistent instance. Recent work improves typing in large buffers,
-      theme configuration, and undo across concurrent frontend edits.
-      Development continues on everyday editing and frontend reliability.
+      a persistent instance. November work keeps frames flowing to a frontend
+      on a slow link, has both frontends wait for the daemon to acknowledge
+      each key, and makes language-server results hold across restarts and
+      renames. Development continues, particularly the GUI.
 
   - title: "Epiphany"
     section: engineering
     status: building
-    updated: 2026-11-03
-    link: https://github.com/levineuwirth/epiphany
+    updated: 2026-11-27
     note: >-
-      An open-source music-notation platform with a deterministic score model,
-      persistent documents, and an engraver tested against real MusicXML scores.
-      Recent work adds expression text, pedal lines, ottavas, and grace notes.
-      Engraving coverage is still growing; unsupported notation is reported
-      explicitly, and editor integration remains in development.
+      A music-notation platform with a deterministic score model, persistent
+      documents, and an engraver tested against real MusicXML scores.
+      November work adds vertical spacing, barlines and courtesy signs, and
+      common and cut time to the engraver, then the first editing primitives
+      and a score canvas, with each edit applied to the score a session keeps.
+      Engraving coverage is still growing, and the editor is at an early stage.
 
   - title: "Arcana"
     section: engineering
     status: building
-    updated: 2026-10-14
+    updated: 2026-11-18
     link: https://github.com/levineuwirth/arcana
     note: >-
       A Magic: The Gathering rules engine and playable browser client.
-      October work improves the interface and makes bot search and suggestions
-      use sampled hidden-information states instead of the actual hidden state.
-      The earlier reinforcement-learning experiments remain frozen.
+      Research resumed in October on a field of 64 Pioneer decks, every pair
+      played under search and random referees. November work repairs the
+      engine's fidelity to the rules, the groundwork for policy learning on a
+      pinned engine. The earlier reinforcement-learning experiments stay closed.
 
-  - title: "Levshell"
+  - title: "Ozymandias"
     section: engineering
     status: building
-    updated: 2026-09-30
+    updated: 2026-11-26
+    link: https://github.com/levineuwirth/ozymandias
     note: >-
-      My Wayland research shell, built around returning to a project's working
-      context. Recent work adds audio-output selection alongside the paper
-      library and live views of the daemon's state. Desktop controls and
-      research workflows continue to develop in daily use.
+      The static-site engine behind this site, on Hakyll and Pandoc, moved into
+      a repository of its own in November so that other sites can be built on
+      it. Recent work adds sections, banners, and blog images, and checks each
+      site's routes at build time. A fix to Hakyll's srcset handling is open upstream.
 
-  - title: "Levo"
+  - title: "LeVCS"
     section: engineering
-    status: early-stage
-    updated: 2026-09-13
+    status: building
+    updated: 2026-11-23
+    link: /essays/levcs.html
     note: >-
-      An experimental language with inferred types, structured concurrency,
-      and an executable reference machine. A completed stack-machine case
-      study exercises parsing, execution, host integration, and refactoring,
-      including 200 differential programs checked against an independent oracle.
-      The implementation remains a research prototype with limited libraries
-      and runtime capabilities.
+      A distributed version-control system with signed repository membership,
+      per-file merge rules, and a federation API. Version 0.2.2 can push to and
+      clone from an instance, and its authority semantics now say what the
+      implementation enforces. A rewrite of instance storage and protocol is planned.
 
 shipped:
+
+  - title: "The Natural Order Hypothesis for LLMs"
+    completed: 2026-11-24
+    link: /essays/natural-order-hypothesis/
+    note: >-
+      A preprint testing whether language models trained on shared data come
+      to solve problems in roughly the same order. On 492 open conjectures,
+      four models from three labs have nearly nested solved sets; the stronger
+      form of the hypothesis finds little support.
+
   - title: "Proof Broker: R6 audited replay"
     completed: 2026-10-02
-    link: https://github.com/levineuwirth/proof-broker/blob/2eed25306046dbe24331763654b450fca74a3e7a/experiments/r6/R6-016.md
+    link: https://git.levineuwirth.org/neuwirth/proof-broker-records/src/commit/d9162f07b56ab4ddb353eae9be0e2c50a0114ce6/experiments/r6/R6-016.md
     note: >-
       A separate offline replay turned all 36 retained certificates at four
       obligations into kernel-checked proofs with no added axioms, meeting

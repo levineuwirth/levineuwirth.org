@@ -4,6 +4,8 @@ description: >-
   A working index of what I am building, writing, and thinking through
   right now, rebuilt whenever an entry moves.
 history:
+  - date: "2026-11-27"
+    note: "November's work across the projects; Ozymandias and LeVCS added; three new pieces under recent completions."
   - date: "2026-11-04"
     note: "Reconciled project status, shortened entries, and refreshed recent completions."
   - date: "2026-08-30"

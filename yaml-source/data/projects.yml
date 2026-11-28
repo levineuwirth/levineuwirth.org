@@ -235,9 +235,6 @@ projects:
     start: "2026"
     end: Present
     description: "FOSS music-notation platform: a specified, deterministic, CRDT-based score model whose LaTeX specification suite is the source of truth rather than its documentation. Twelve Rust crates across two tracks — the wire format, bundle, operations, and text projection on one; the editing seam, engraving, and layout IR on the other. Work is scoped into ratified contracts with numbered pins, mutation tables, and adversarial review rounds before any code is dispatched."
-    links:
-      - label: Source
-        href: https://github.com/levineuwirth/epiphany
     cv_visible: false
     resume_visible: false
     web_visible: true
